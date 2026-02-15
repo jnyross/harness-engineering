@@ -8,6 +8,8 @@ Harness Engineering is a coding agent harness forked from [badlogic/pi-mono](htt
 
 Upstream remote `upstream` tracks the original pi-mono repo. Our fork lives at `origin`.
 
+See [PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md) for detailed architecture.
+
 ## Build & Development Commands
 
 ```bash
@@ -83,12 +85,14 @@ All packages share version numbers (lockstep). Releasing bumps everything togeth
 
 ## Code Standards
 
-- **No `any` types** unless absolutely necessary
+- **No `any` types** unless absolutely necessary (mechanically enforced - see `biome.json`)
 - **No inline imports** -- always use standard top-level `import` statements
 - **Never hardcode keybindings** -- all keybindings go through `DEFAULT_EDITOR_KEYBINDINGS` or `DEFAULT_APP_KEYBINDINGS`
 - **Biome** for formatting/linting: tabs (width 3), line width 120
 - **TypeScript strict mode**, ES2022 target
 - Read every file in full before editing it
+
+See [docs/mechanical-enforcement.md](docs/mechanical-enforcement.md) for all enforced rules.
 
 ## Git Workflow
 
@@ -100,7 +104,7 @@ All packages share version numbers (lockstep). Releasing bumps everything togeth
 
 ## Adding a New LLM Provider
 
-Requires changes across 7 areas: types (`ai/src/types.ts`), provider impl (`ai/src/providers/`), stream integration (`ai/src/stream.ts`), model generation (`ai/scripts/generate-models.ts`), tests (11+ test files in `ai/test/`), coding-agent model resolver + CLI args, and documentation. See AGENTS.md for full checklist.
+Requires changes across 7 areas. See [docs/adding-provider.md](docs/adding-provider.md) for full checklist.
 
 ## Releasing
 
@@ -109,4 +113,4 @@ npm run release:patch    # Bug fixes and new features
 npm run release:minor    # API breaking changes
 ```
 
-Handles: version bump, CHANGELOG finalization, commit, tag, npm publish, and new `[Unreleased]` sections.
+Handles: version bump, CHANGELOG finalization, commit, tag, npm publish, and new `[Unreleased]` sections. See [docs/releasing.md](docs/releasing.md) for full process.

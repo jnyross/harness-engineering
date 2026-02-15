@@ -1,59 +1,61 @@
-# 🏖️ OSS Vacation
+# Harness Engineering
 
-**Issue tracker and PRs reopen February 16, 2026.**
+A TypeScript monorepo for building AI coding agents with mechanical rule enforcement.
 
-All PRs will be auto-closed until then. Approved contributors can submit PRs after vacation without reapproval. For support, join [Discord](https://discord.com/invite/3cU7Bz4UPx).
+Forked from [badlogic/pi-mono](https://github.com/badlogic/pi-mono). See [PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md) for architecture details.
 
----
-
-<p align="center">
-  <a href="https://shittycodingagent.ai">
-    <img src="https://shittycodingagent.ai/logo.svg" alt="pi logo" width="128">
-  </a>
-</p>
-<p align="center">
-  <a href="https://discord.com/invite/3cU7Bz4UPx"><img alt="Discord" src="https://img.shields.io/badge/discord-community-5865F2?style=flat-square&logo=discord&logoColor=white" /></a>
-  <a href="https://github.com/badlogic/pi-mono/actions/workflows/ci.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/badlogic/pi-mono/ci.yml?style=flat-square&branch=main" /></a>
-</p>
-<p align="center">
-  <a href="https://pi.dev">pi.dev</a> domain graciously donated by
-  <br /><br />
-  <a href="https://exe.dev"><img src="packages/coding-agent/docs/images/exy.png" alt="Exy mascot" width="48" /><br />exe.dev</a>
-</p>
-
-# Pi Monorepo
-
-> **Looking for the pi coding agent?** See **[packages/coding-agent](packages/coding-agent)** for installation and usage.
-
-Tools for building AI agents and managing LLM deployments.
+[![CI](https://github.com/jnyross/harness-engineering/actions/workflows/ci.yml/badge.svg)](https://github.com/jnyross/harness-engineering/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@mariozechner/pi-coding-agent)](https://www.npmjs.com/package/@mariozechner/pi-coding-agent)
 
 ## Packages
 
 | Package | Description |
 |---------|-------------|
-| **[@mariozechner/pi-ai](packages/ai)** | Unified multi-provider LLM API (OpenAI, Anthropic, Google, etc.) |
-| **[@mariozechner/pi-agent-core](packages/agent)** | Agent runtime with tool calling and state management |
-| **[@mariozechner/pi-coding-agent](packages/coding-agent)** | Interactive coding agent CLI |
-| **[@mariozechner/pi-mom](packages/mom)** | Slack bot that delegates messages to the pi coding agent |
-| **[@mariozechner/pi-tui](packages/tui)** | Terminal UI library with differential rendering |
-| **[@mariozechner/pi-web-ui](packages/web-ui)** | Web components for AI chat interfaces |
-| **[@mariozechner/pi-pods](packages/pods)** | CLI for managing vLLM deployments on GPU pods |
+| [pi-ai](packages/ai) | Unified multi-provider LLM API (20+ providers) |
+| [pi-agent-core](packages/agent) | Agent runtime with tool calling and state management |
+| [pi-coding-agent](packages/coding-agent) | Interactive coding agent CLI |
+| [pi-mom](packages/mom) | Slack bot powered by the coding agent |
+| [pi-tui](packages/tui) | Terminal UI framework with differential rendering |
+| [pi-web-ui](packages/web-ui) | Web components for AI chat interfaces |
+| [pi-pods](packages/pods) | CLI for managing vLLM deployments on GPU pods |
+
+## Quick Start
+
+```bash
+# Install coding agent
+npm install -g @mariozechner/pi-coding-agent
+export ANTHROPIC_API_KEY=sk-ant-...
+pi
+
+# Or use programmatically
+npm install @mariozechner/pi-ai @mariozechner/pi-agent-core
+```
+
+## Harness Engineering
+
+This fork applies **Harness Engineering** principles: every rule in documentation is backed by mechanical enforcement.
+
+### Mechanical Enforcement
+
+| Rule | Enforcement |
+|------|-------------|
+| No `any` types | `biome.json`: `noExplicitAny: "error"` |
+| Commit message format | `.husky/commit-msg` hook |
+| Dependency ordering | `scripts/check-architecture.ts` |
+| Lockstep versions | Architecture checks |
+| Strict TypeScript | All packages `strict: true` |
+
+### Running Checks
+
+```bash
+npm run check    # Biome + TypeScript + architecture checks
+npm run build    # Build all packages
+npm test         # Run tests
+```
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines and [AGENTS.md](AGENTS.md) for project-specific rules (for both humans and agents).
-
-## Development
-
-```bash
-npm install          # Install all dependencies
-npm run build        # Build all packages
-npm run check        # Lint, format, and type check
-./test.sh            # Run tests (skips LLM-dependent tests without API keys)
-./pi-test.sh         # Run pi from sources (must be run from repo root)
-```
-
-> **Note:** `npm run check` requires `npm run build` to be run first. The web-ui package uses `tsc` which needs compiled `.d.ts` files from dependencies.
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md) for rules.
 
 ## License
 
