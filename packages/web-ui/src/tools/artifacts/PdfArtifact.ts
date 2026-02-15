@@ -167,10 +167,10 @@ export class PdfArtifact extends ArtifactElement {
 
 				wrapper.appendChild(pageContainer);
 			}
-			// biome-ignore lint/suspicious/noExplicitAny: migration
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const message = error instanceof Error ? error.message : String(error);
 			console.error("Error rendering PDF:", error);
-			this.error = error?.message || i18n("Failed to load PDF");
+			this.error = message || i18n("Failed to load PDF");
 		} finally {
 			if (pdf) {
 				pdf.destroy();

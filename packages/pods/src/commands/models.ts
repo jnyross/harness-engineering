@@ -34,9 +34,9 @@ const getPod = (podOverride?: string): { name: string; pod: Pod } => {
  * Find next available port starting from 8001
  */
 const getNextPort = (pod: Pod): number => {
-	const usedPorts = Object.values(pod.models).map((m) => m.port);
+	const usedPorts = new Set(Object.values(pod.models).map((m) => m.port));
 	let port = 8001;
-	while (usedPorts.includes(port)) {
+	while (usedPorts.has(port)) {
 		port++;
 	}
 	return port;

@@ -72,31 +72,32 @@ export async function downloadChannel(channelId: string, botToken: string): Prom
 
 	console.error(`Fetching ${threadsToFetch.length} threads...`);
 
-	for (let i = 0; i < threadsToFetch.length; i++) {
-		const parent = threadsToFetch[i];
-		console.error(`  Thread ${i + 1}/${threadsToFetch.length} (${parent.reply_count} replies)...`);
+	await Promise.all(
+		threadsToFetch.map(async (parent, index) => {
+			console.error(`  Thread ${index + 1}/${threadsToFetch.length} (${parent.reply_count} replies)...`);
 
-		const replies: Message[] = [];
-		let threadCursor: string | undefined;
+			const replies: Message[] = [];
+			let threadCursor: string | undefined;
 
-		do {
-			const response = await client.conversations.replies({
-				channel: channelId,
-				ts: parent.ts,
-				limit: 200,
-				cursor: threadCursor,
-			});
+			do {
+				const response = await client.conversations.replies({
+					channel: channelId,
+					ts: parent.ts,
+					limit: 200,
+					cursor: threadCursor,
+				});
 
-			if (response.messages) {
-				// Skip the first message (it's the parent)
-				replies.push(...(response.messages as Message[]).slice(1));
-			}
+				if (response.messages) {
+					// Skip the first message (it's the parent)
+					replies.push(...(response.messages as Message[]).slice(1));
+				}
 
-			threadCursor = response.response_metadata?.next_cursor;
-		} while (threadCursor);
+				threadCursor = response.response_metadata?.next_cursor;
+			} while (threadCursor);
 
-		threadReplies.set(parent.ts, replies);
-	}
+			threadReplies.set(parent.ts, replies);
+		}),
+	);
 
 	// Output messages with thread replies interleaved
 	let totalReplies = 0;

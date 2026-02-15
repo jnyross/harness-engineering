@@ -10,9 +10,9 @@ export function calculate(expression: string): CalculateResult {
 	try {
 		const result = new Function(`return ${expression}`)();
 		return { content: [{ type: "text", text: `${expression} = ${result}` }], details: undefined };
-		// biome-ignore lint/suspicious/noExplicitAny: migration
-	} catch (e: any) {
-		throw new Error(e.message || String(e));
+	} catch (e: unknown) {
+		const message = e instanceof Error ? e.message : String(e);
+		throw new Error(message || String(e));
 	}
 }
 

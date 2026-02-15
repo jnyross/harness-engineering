@@ -181,10 +181,10 @@ export class DocxArtifact extends ArtifactElement {
 				}
 			`;
 			container.appendChild(style);
-			// biome-ignore lint/suspicious/noExplicitAny: migration
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const message = error instanceof Error ? error.message : String(error);
 			console.error("Error rendering DOCX:", error);
-			this.error = error?.message || i18n("Failed to load document");
+			this.error = message || i18n("Failed to load document");
 		}
 	}
 

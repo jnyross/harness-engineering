@@ -124,6 +124,9 @@ export class Agent {
 	private _transport: Transport;
 	private _maxRetryDelayMs?: number;
 
+	private static readonly MAX_STEERING_QUEUE = 100;
+	private static readonly MAX_MESSAGES = 1000;
+
 	constructor(opts: AgentOptions = {}) {
 		this._state = { ...this._state, ...opts.initialState };
 		this.convertToLlm = opts.convertToLlm || defaultConvertToLlm;
@@ -245,6 +248,9 @@ export class Agent {
 
 	appendMessage(m: AgentMessage) {
 		this._state.messages = [...this._state.messages, m];
+		if (this._state.messages.length > Agent.MAX_MESSAGES) {
+			this._state.messages = this._state.messages.slice(-Agent.MAX_MESSAGES);
+		}
 	}
 
 	/**
@@ -253,6 +259,9 @@ export class Agent {
 	 */
 	steer(m: AgentMessage) {
 		this.steeringQueue.push(m);
+		if (this.steeringQueue.length > Agent.MAX_STEERING_QUEUE) {
+			this.steeringQueue = this.steeringQueue.slice(-Agent.MAX_STEERING_QUEUE);
+		}
 	}
 
 	/**
@@ -521,8 +530,8 @@ export class Agent {
 					}
 				}
 			}
-			// biome-ignore lint/suspicious/noExplicitAny: migration
-		} catch (err: any) {
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : String(err);
 			const errorMsg: AgentMessage = {
 				role: "assistant",
 				content: [{ type: "text", text: "" }],
@@ -538,12 +547,12 @@ export class Agent {
 					cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
 				},
 				stopReason: this.abortController?.signal.aborted ? "aborted" : "error",
-				errorMessage: err?.message || String(err),
+				errorMessage: message,
 				timestamp: Date.now(),
 			} as AgentMessage;
 
 			this.appendMessage(errorMsg);
-			this._state.error = err?.message || String(err);
+			this._state.error = message;
 			this.emit({ type: "agent_end", messages: [errorMsg] });
 		} finally {
 			this._state.isStreaming = false;

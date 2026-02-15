@@ -158,10 +158,10 @@ export class ExcelArtifact extends ArtifactElement {
 				const sheetName = workbook.SheetNames[0];
 				wrapper.appendChild(this.renderExcelSheet(workbook.Sheets[sheetName], sheetName));
 			}
-			// biome-ignore lint/suspicious/noExplicitAny: migration
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const message = error instanceof Error ? error.message : String(error);
 			console.error("Error rendering Excel:", error);
-			this.error = error?.message || i18n("Failed to load spreadsheet");
+			this.error = message || i18n("Failed to load spreadsheet");
 		}
 	}
 

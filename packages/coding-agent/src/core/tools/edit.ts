@@ -207,8 +207,7 @@ export function createEditTool(cwd: string, options?: EditToolOptions): AgentToo
 							],
 							details: { diff: diffResult.diff, firstChangedLine: diffResult.firstChangedLine },
 						});
-						// biome-ignore lint/suspicious/noExplicitAny: migration
-					} catch (error: any) {
+					} catch (error: unknown) {
 						// Clean up abort handler
 						if (signal) {
 							signal.removeEventListener("abort", onAbort);

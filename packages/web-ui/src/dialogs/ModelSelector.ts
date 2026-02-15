@@ -30,6 +30,7 @@ export class ModelSelector extends DialogBase {
 	private scrollContainerRef = createRef<HTMLDivElement>();
 	private searchInputRef = createRef<HTMLInputElement>();
 	private lastMousePosition = { x: 0, y: 0 };
+	private abortController = new AbortController();
 
 	protected override modalWidth = "min(400px, 90vw)";
 
@@ -48,52 +49,67 @@ export class ModelSelector extends DialogBase {
 		// Focus the search input when dialog opens
 		this.searchInputRef.value?.focus();
 
+		const signal = this.abortController.signal;
+
 		// Track actual mouse movement
-		this.addEventListener("mousemove", (e: MouseEvent) => {
-			// Check if mouse actually moved
-			if (e.clientX !== this.lastMousePosition.x || e.clientY !== this.lastMousePosition.y) {
-				this.lastMousePosition = { x: e.clientX, y: e.clientY };
-				// Only switch to mouse mode on actual mouse movement
-				if (this.navigationMode === "keyboard") {
-					this.navigationMode = "mouse";
-					// Update selection to the item under the mouse
-					const target = e.target as HTMLElement;
-					const modelItem = target.closest("[data-model-item]");
-					if (modelItem) {
-						const allItems = this.scrollContainerRef.value?.querySelectorAll("[data-model-item]");
-						if (allItems) {
-							const index = Array.from(allItems).indexOf(modelItem);
-							if (index !== -1) {
-								this.selectedIndex = index;
+		this.addEventListener(
+			"mousemove",
+			(e: MouseEvent) => {
+				// Check if mouse actually moved
+				if (e.clientX !== this.lastMousePosition.x || e.clientY !== this.lastMousePosition.y) {
+					this.lastMousePosition = { x: e.clientX, y: e.clientY };
+					// Only switch to mouse mode on actual mouse movement
+					if (this.navigationMode === "keyboard") {
+						this.navigationMode = "mouse";
+						// Update selection to the item under the mouse
+						const target = e.target as HTMLElement;
+						const modelItem = target.closest("[data-model-item]");
+						if (modelItem) {
+							const allItems = this.scrollContainerRef.value?.querySelectorAll("[data-model-item]");
+							if (allItems) {
+								const index = Array.from(allItems).indexOf(modelItem);
+								if (index !== -1) {
+									this.selectedIndex = index;
+								}
 							}
 						}
 					}
 				}
-			}
-		});
+			},
+			{ signal },
+		);
 
 		// Add global keyboard handler for the dialog
-		this.addEventListener("keydown", (e: KeyboardEvent) => {
-			// Get filtered models to know the bounds
-			const filteredModels = this.getFilteredModels();
+		this.addEventListener(
+			"keydown",
+			(e: KeyboardEvent) => {
+				// Get filtered models to know the bounds
+				const filteredModels = this.getFilteredModels();
 
-			if (e.key === "ArrowDown") {
-				e.preventDefault();
-				this.navigationMode = "keyboard";
-				this.selectedIndex = Math.min(this.selectedIndex + 1, filteredModels.length - 1);
-				this.scrollToSelected();
-			} else if (e.key === "ArrowUp") {
-				e.preventDefault();
-				this.navigationMode = "keyboard";
-				this.selectedIndex = Math.max(this.selectedIndex - 1, 0);
-				this.scrollToSelected();
-			} else if (e.key === "Enter") {
-				e.preventDefault();
-				if (filteredModels[this.selectedIndex]) {
-					this.handleSelect(filteredModels[this.selectedIndex].model);
+				if (e.key === "ArrowDown") {
+					e.preventDefault();
+					this.navigationMode = "keyboard";
+					this.selectedIndex = Math.min(this.selectedIndex + 1, filteredModels.length - 1);
+					this.scrollToSelected();
+				} else if (e.key === "ArrowUp") {
+					e.preventDefault();
+					this.navigationMode = "keyboard";
+					this.selectedIndex = Math.max(this.selectedIndex - 1, 0);
+					this.scrollToSelected();
+				} else if (e.key === "Enter") {
+					e.preventDefault();
+					if (filteredModels[this.selectedIndex]) {
+						this.handleSelect(filteredModels[this.selectedIndex].model);
+					}
 				}
-			}
-		});
+			},
+			{ signal },
+		);
+	}
+
+	override disconnectedCallback() {
+		super.disconnectedCallback();
+		this.abortController.abort();
 	}
 
 	private async loadCustomProviders() {

@@ -303,9 +303,11 @@ async function executeToolCalls(
 	const results: ToolResultMessage[] = [];
 	let steeringMessages: AgentMessage[] | undefined;
 
+	const toolsByName = tools ? new Map(tools.map((t) => [t.name, t])) : undefined;
+
 	for (let index = 0; index < toolCalls.length; index++) {
 		const toolCall = toolCalls[index];
-		const tool = tools?.find((t) => t.name === toolCall.name);
+		const tool = toolsByName?.get(toolCall.name);
 
 		stream.push({
 			type: "tool_execution_start",
