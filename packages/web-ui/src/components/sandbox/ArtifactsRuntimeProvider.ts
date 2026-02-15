@@ -8,11 +8,13 @@ import type { SandboxRuntimeProvider } from "./SandboxRuntimeProvider.js";
 interface ArtifactsPanelLike {
 	artifacts: Map<string, { content: string }>;
 	tool: {
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		execute(toolCallId: string, args: { command: string; filename: string; content?: string }): Promise<any>;
 	};
 }
 
 interface AgentLike {
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	appendMessage(message: any): void;
 }
 
@@ -30,6 +32,7 @@ export class ArtifactsRuntimeProvider implements SandboxRuntimeProvider {
 		private readWrite: boolean = true,
 	) {}
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	getData(): Record<string, any> {
 		// Inject artifact snapshot for offline mode
 		const snapshot: Record<string, string> = {};
@@ -45,9 +48,12 @@ export class ArtifactsRuntimeProvider implements SandboxRuntimeProvider {
 			// Auto-parse/stringify for .json files
 			const isJsonFile = (filename: string) => filename.endsWith(".json");
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			(window as any).listArtifacts = async (): Promise<string[]> => {
 				// Online: ask extension
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				if ((window as any).sendRuntimeMessage) {
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					const response = await (window as any).sendRuntimeMessage({
 						type: "artifact-operation",
 						action: "list",
@@ -57,15 +63,19 @@ export class ArtifactsRuntimeProvider implements SandboxRuntimeProvider {
 				}
 				// Offline: return snapshot keys
 				else {
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					return Object.keys((window as any).artifacts || {});
 				}
 			};
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			(window as any).getArtifact = async (filename: string): Promise<any> => {
 				let content: string;
 
 				// Online: ask extension
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				if ((window as any).sendRuntimeMessage) {
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					const response = await (window as any).sendRuntimeMessage({
 						type: "artifact-operation",
 						action: "get",
@@ -76,9 +86,11 @@ export class ArtifactsRuntimeProvider implements SandboxRuntimeProvider {
 				}
 				// Offline: read snapshot
 				else {
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					if (!(window as any).artifacts?.[filename]) {
 						throw new Error(`Artifact not found (offline mode): ${filename}`);
 					}
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					content = (window as any).artifacts[filename];
 				}
 
@@ -93,11 +105,14 @@ export class ArtifactsRuntimeProvider implements SandboxRuntimeProvider {
 				return content;
 			};
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			(window as any).createOrUpdateArtifact = async (
 				filename: string,
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				content: any,
 				mimeType?: string,
 			): Promise<void> => {
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				if (!(window as any).sendRuntimeMessage) {
 					throw new Error("Cannot create/update artifacts in offline mode (read-only)");
 				}
@@ -110,6 +125,7 @@ export class ArtifactsRuntimeProvider implements SandboxRuntimeProvider {
 					finalContent = JSON.stringify(content, null, 2);
 				}
 
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				const response = await (window as any).sendRuntimeMessage({
 					type: "artifact-operation",
 					action: "createOrUpdate",
@@ -120,11 +136,14 @@ export class ArtifactsRuntimeProvider implements SandboxRuntimeProvider {
 				if (!response.success) throw new Error(response.error);
 			};
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			(window as any).deleteArtifact = async (filename: string): Promise<void> => {
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				if (!(window as any).sendRuntimeMessage) {
 					throw new Error("Cannot delete artifacts in offline mode (read-only)");
 				}
 
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				const response = await (window as any).sendRuntimeMessage({
 					type: "artifact-operation",
 					action: "delete",
@@ -135,6 +154,7 @@ export class ArtifactsRuntimeProvider implements SandboxRuntimeProvider {
 		};
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	async handleMessage(message: any, respond: (response: any) => void): Promise<void> {
 		if (message.type !== "artifact-operation") {
 			return;
@@ -180,6 +200,7 @@ export class ArtifactsRuntimeProvider implements SandboxRuntimeProvider {
 							timestamp: new Date().toISOString(),
 						});
 						respond({ success: true });
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 					} catch (err: any) {
 						respond({ success: false, error: err.message });
 					}
@@ -199,6 +220,7 @@ export class ArtifactsRuntimeProvider implements SandboxRuntimeProvider {
 							timestamp: new Date().toISOString(),
 						});
 						respond({ success: true });
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 					} catch (err: any) {
 						respond({ success: false, error: err.message });
 					}
@@ -208,6 +230,7 @@ export class ArtifactsRuntimeProvider implements SandboxRuntimeProvider {
 				default:
 					respond({ success: false, error: `Unknown artifact action: ${action}` });
 			}
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 		} catch (error: any) {
 			respond({ success: false, error: error.message });
 		}

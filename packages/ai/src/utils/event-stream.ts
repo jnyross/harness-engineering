@@ -42,6 +42,7 @@ export class EventStream<T, R = T> implements AsyncIterable<T> {
 		// Notify all waiting consumers that we're done
 		while (this.waiting.length > 0) {
 			const waiter = this.waiting.shift()!;
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			waiter({ value: undefined as any, done: true });
 		}
 	}

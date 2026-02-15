@@ -249,6 +249,7 @@ export function convertResponsesTools(tools: Tool[], options?: ConvertResponsesT
 		type: "function",
 		name: tool.name,
 		description: tool.description,
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		parameters: tool.parameters as any, // TypeBox already generates JSON Schema
 		strict,
 	}));

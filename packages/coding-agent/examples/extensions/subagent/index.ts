@@ -64,6 +64,7 @@ function formatUsageStats(
 function formatToolCall(
 	toolName: string,
 	args: Record<string, unknown>,
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	themeFg: (color: any, text: string) => string,
 ): string {
 	const shortenPath = (p: string) => {
@@ -172,6 +173,7 @@ function getFinalOutput(messages: Message[]): string {
 	return "";
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: migration
 type DisplayItem = { type: "text"; text: string } | { type: "toolCall"; name: string; args: Record<string, any> };
 
 function getDisplayItems(messages: Message[]): DisplayItem[] {
@@ -289,6 +291,7 @@ async function runSingleAgent(
 
 			const processLine = (line: string) => {
 				if (!line.trim()) return;
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				let event: any;
 				try {
 					event = JSON.parse(line);

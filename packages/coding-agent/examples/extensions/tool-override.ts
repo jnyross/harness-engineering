@@ -115,6 +115,7 @@ export default function (pi: ExtensionAPI) {
 					content: [{ type: "text", text }] as TextContent[],
 					details: { lines: lines.length },
 				};
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 			} catch (error: any) {
 				return {
 					content: [{ type: "text", text: `Error reading file: ${error.message}` }] as TextContent[],

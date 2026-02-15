@@ -25,10 +25,13 @@ describe("migrateSessionEntries", () => {
 		migrateSessionEntries(entries);
 
 		// Header should have version set (v3 is current after hookMessage->custom migration)
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		expect((entries[0] as any).version).toBe(3);
 
 		// Entries should have id/parentId
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const msg1 = entries[1] as any;
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const msg2 = entries[2] as any;
 
 		expect(msg1.id).toBeDefined();
@@ -71,8 +74,11 @@ describe("migrateSessionEntries", () => {
 		migrateSessionEntries(entries);
 
 		// IDs should be unchanged
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		expect((entries[1] as any).id).toBe("abc12345");
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		expect((entries[2] as any).id).toBe("def67890");
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		expect((entries[2] as any).parentId).toBe("abc12345");
 	});
 });

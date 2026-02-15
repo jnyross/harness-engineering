@@ -140,6 +140,7 @@ export interface ToolCall {
 	type: "toolCall";
 	id: string;
 	name: string;
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	arguments: Record<string, any>;
 	thoughtSignature?: string; // Google-specific: opaque signature for reusing thought context
 }
@@ -179,6 +180,7 @@ export interface AssistantMessage {
 	timestamp: number; // Unix timestamp in milliseconds
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: migration
 export interface ToolResultMessage<TDetails = any> {
 	role: "toolResult";
 	toolCallId: string;

@@ -77,6 +77,7 @@ Current working directory: ${process.cwd()}`;
 	// Call agent main function directly
 	try {
 		throw new Error("Not implemented");
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 	} catch (err: any) {
 		console.error(chalk.red(`Agent error: ${err.message}`));
 		process.exit(1);

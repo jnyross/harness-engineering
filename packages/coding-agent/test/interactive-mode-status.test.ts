@@ -20,6 +20,7 @@ describe("InteractiveMode.showStatus", () => {
 	});
 
 	test("coalesces immediately-sequential status messages", () => {
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const fakeThis: any = {
 			chatContainer: new Container(),
 			ui: { requestRender: vi.fn() },
@@ -27,10 +28,12 @@ describe("InteractiveMode.showStatus", () => {
 			lastStatusText: undefined,
 		};
 
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		(InteractiveMode as any).prototype.showStatus.call(fakeThis, "STATUS_ONE");
 		expect(fakeThis.chatContainer.children).toHaveLength(2);
 		expect(renderLastLine(fakeThis.chatContainer)).toContain("STATUS_ONE");
 
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		(InteractiveMode as any).prototype.showStatus.call(fakeThis, "STATUS_TWO");
 		// second status updates the previous line instead of appending
 		expect(fakeThis.chatContainer.children).toHaveLength(2);
@@ -39,6 +42,7 @@ describe("InteractiveMode.showStatus", () => {
 	});
 
 	test("appends a new status line if something else was added in between", () => {
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const fakeThis: any = {
 			chatContainer: new Container(),
 			ui: { requestRender: vi.fn() },
@@ -46,6 +50,7 @@ describe("InteractiveMode.showStatus", () => {
 			lastStatusText: undefined,
 		};
 
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		(InteractiveMode as any).prototype.showStatus.call(fakeThis, "STATUS_ONE");
 		expect(fakeThis.chatContainer.children).toHaveLength(2);
 
@@ -53,6 +58,7 @@ describe("InteractiveMode.showStatus", () => {
 		fakeThis.chatContainer.addChild({ render: () => ["OTHER"], invalidate: () => {} });
 		expect(fakeThis.chatContainer.children).toHaveLength(3);
 
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		(InteractiveMode as any).prototype.showStatus.call(fakeThis, "STATUS_TWO");
 		// adds spacer + text
 		expect(fakeThis.chatContainer.children).toHaveLength(5);
@@ -71,6 +77,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 		skills?: Array<{ filePath: string }>;
 		skillDiagnostics?: Array<{ type: "warning" | "error" | "collision"; message: string }>;
 	}) {
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const fakeThis: any = {
 			options: { verbose: options.verbose ?? false },
 			chatContainer: new Container(),
@@ -108,6 +115,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 			skills: [{ filePath: "/tmp/skill/SKILL.md" }],
 		});
 
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		(InteractiveMode as any).prototype.showLoadedResources.call(fakeThis, {
 			extensionPaths: ["/tmp/ext/index.ts"],
 			force: false,
@@ -124,6 +132,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 			skillDiagnostics: [{ type: "warning", message: "duplicate skill name" }],
 		});
 
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		(InteractiveMode as any).prototype.showLoadedResources.call(fakeThis, {
 			force: false,
 			showDiagnosticsWhenQuiet: true,

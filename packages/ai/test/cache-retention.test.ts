@@ -28,6 +28,7 @@ describe("Cache Retention (PI_CACHE_RETENTION)", () => {
 			"should use default cache TTL (no ttl field) when PI_CACHE_RETENTION is not set",
 			async () => {
 				const model = getModel("anthropic", "claude-3-5-haiku-20241022");
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				let capturedPayload: any = null;
 
 				const s = stream(model, context, {
@@ -51,6 +52,7 @@ describe("Cache Retention (PI_CACHE_RETENTION)", () => {
 		it.skipIf(!process.env.ANTHROPIC_API_KEY)("should use 1h cache TTL when PI_CACHE_RETENTION=long", async () => {
 			process.env.PI_CACHE_RETENTION = "long";
 			const model = getModel("anthropic", "claude-3-5-haiku-20241022");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			let capturedPayload: any = null;
 
 			const s = stream(model, context, {
@@ -80,6 +82,7 @@ describe("Cache Retention (PI_CACHE_RETENTION)", () => {
 				baseUrl: "https://my-proxy.example.com/v1",
 			};
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			let capturedPayload: any = null;
 
 			// We can't actually make the request (no proxy), but we can verify the payload
@@ -115,6 +118,7 @@ describe("Cache Retention (PI_CACHE_RETENTION)", () => {
 
 		it("should omit cache_control when cacheRetention is none", async () => {
 			const baseModel = getModel("anthropic", "claude-3-5-haiku-20241022");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			let capturedPayload: any = null;
 
 			const { streamAnthropic } = await import("../src/providers/anthropic.js");
@@ -141,6 +145,7 @@ describe("Cache Retention (PI_CACHE_RETENTION)", () => {
 
 		it("should add cache_control to string user messages", async () => {
 			const baseModel = getModel("anthropic", "claude-3-5-haiku-20241022");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			let capturedPayload: any = null;
 
 			const { streamAnthropic } = await import("../src/providers/anthropic.js");
@@ -169,6 +174,7 @@ describe("Cache Retention (PI_CACHE_RETENTION)", () => {
 
 		it("should set 1h cache TTL when cacheRetention is long", async () => {
 			const baseModel = getModel("anthropic", "claude-3-5-haiku-20241022");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			let capturedPayload: any = null;
 
 			const { streamAnthropic } = await import("../src/providers/anthropic.js");
@@ -199,6 +205,7 @@ describe("Cache Retention (PI_CACHE_RETENTION)", () => {
 			"should not set prompt_cache_retention when PI_CACHE_RETENTION is not set",
 			async () => {
 				const model = getModel("openai", "gpt-4o-mini");
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				let capturedPayload: any = null;
 
 				const s = stream(model, context, {
@@ -222,6 +229,7 @@ describe("Cache Retention (PI_CACHE_RETENTION)", () => {
 			async () => {
 				process.env.PI_CACHE_RETENTION = "long";
 				const model = getModel("openai", "gpt-4o-mini");
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				let capturedPayload: any = null;
 
 				const s = stream(model, context, {
@@ -250,6 +258,7 @@ describe("Cache Retention (PI_CACHE_RETENTION)", () => {
 				baseUrl: "https://my-proxy.example.com/v1",
 			};
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			let capturedPayload: any = null;
 
 			const { streamOpenAIResponses } = await import("../src/providers/openai-responses.js");
@@ -278,6 +287,7 @@ describe("Cache Retention (PI_CACHE_RETENTION)", () => {
 
 		it("should omit prompt_cache_key when cacheRetention is none", async () => {
 			const model = getModel("openai", "gpt-4o-mini");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			let capturedPayload: any = null;
 
 			const { streamOpenAIResponses } = await import("../src/providers/openai-responses.js");
@@ -306,6 +316,7 @@ describe("Cache Retention (PI_CACHE_RETENTION)", () => {
 
 		it("should set prompt_cache_retention when cacheRetention is long", async () => {
 			const model = getModel("openai", "gpt-4o-mini");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			let capturedPayload: any = null;
 
 			const { streamOpenAIResponses } = await import("../src/providers/openai-responses.js");

@@ -106,6 +106,7 @@ describe("Agent", () => {
 		expect(agent.state.thinkingLevel).toBe("high");
 
 		// Test setTools
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const tools = [{ name: "test", description: "test tool" } as any];
 		agent.setTools(tools);
 		expect(agent.state.tools).toBe(tools);
@@ -118,6 +119,7 @@ describe("Agent", () => {
 
 		// Test appendMessage
 		const newMessage = { role: "assistant" as const, content: [{ type: "text" as const, text: "Hi" }] };
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		agent.appendMessage(newMessage as any);
 		expect(agent.state.messages).toHaveLength(2);
 		expect(agent.state.messages[1]).toBe(newMessage);

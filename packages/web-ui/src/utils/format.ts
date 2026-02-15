@@ -5,6 +5,7 @@ export function formatCost(cost: number): string {
 	return `$${cost.toFixed(4)}`;
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: migration
 export function formatModelCost(cost: any): string {
 	if (!cost) return i18n("Free");
 	const input = cost.input || 0;

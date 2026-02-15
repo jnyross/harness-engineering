@@ -469,6 +469,7 @@ function createRunner(sandboxConfig: SandboxConfig, channelId: string, channelDi
 	const session = new AgentSession({
 		agent,
 		sessionManager,
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		settingsManager: settingsManager as any,
 		cwd: process.cwd(),
 		modelRegistry,
@@ -555,6 +556,7 @@ function createRunner(sandboxConfig: SandboxConfig, channelId: string, channelDi
 		} else if (event.type === "message_end") {
 			const agentEvent = event as AgentEvent & { type: "message_end" };
 			if (agentEvent.message.role === "assistant") {
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				const assistantMsg = agentEvent.message as any;
 
 				if (assistantMsg.stopReason) {
@@ -581,8 +583,10 @@ function createRunner(sandboxConfig: SandboxConfig, channelId: string, channelDi
 				const textParts: string[] = [];
 				for (const part of content) {
 					if (part.type === "thinking") {
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 						thinkingParts.push((part as any).thinking);
 					} else if (part.type === "text") {
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 						textParts.push((part as any).text);
 					}
 				}
@@ -602,9 +606,11 @@ function createRunner(sandboxConfig: SandboxConfig, channelId: string, channelDi
 				}
 			}
 		} else if (event.type === "auto_compaction_start") {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			log.logInfo(`Auto-compaction started (reason: ${(event as any).reason})`);
 			queue.enqueue(() => ctx.respond("_Compacting context..._", false), "compaction start");
 		} else if (event.type === "auto_compaction_end") {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const compEvent = event as any;
 			if (compEvent.result) {
 				log.logInfo(`Auto-compaction complete: ${compEvent.result.tokensBefore} tokens compacted`);
@@ -612,6 +618,7 @@ function createRunner(sandboxConfig: SandboxConfig, channelId: string, channelDi
 				log.logInfo("Auto-compaction aborted");
 			}
 		} else if (event.type === "auto_retry_start") {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const retryEvent = event as any;
 			log.logWarning(`Retrying (${retryEvent.attempt}/${retryEvent.maxAttempts})`, retryEvent.errorMessage);
 			queue.enqueue(
@@ -833,6 +840,7 @@ function createRunner(sandboxConfig: SandboxConfig, channelId: string, channelDi
 				const lastAssistantMessage = messages
 					.slice()
 					.reverse()
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					.find((m) => m.role === "assistant" && (m as any).stopReason !== "aborted") as any;
 
 				const contextTokens = lastAssistantMessage

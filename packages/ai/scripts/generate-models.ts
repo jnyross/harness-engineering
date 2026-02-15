@@ -56,13 +56,13 @@ const COPILOT_STATIC_HEADERS = {
 const AI_GATEWAY_MODELS_URL = "https://ai-gateway.vercel.sh/v1";
 const AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh";
 
-async function fetchOpenRouterModels(): Promise<Model<any>[]> {
+async function fetchOpenRouterModels(): Promise<Model<Api>[]> {
 	try {
 		console.log("Fetching models from OpenRouter API...");
 		const response = await fetch("https://openrouter.ai/api/v1/models");
 		const data = await response.json();
 
-		const models: Model<any>[] = [];
+		const models: Model<Api>[] = [];
 
 		for (const model of data.data) {
 			// Only include models that support tools
@@ -86,7 +86,7 @@ async function fetchOpenRouterModels(): Promise<Model<any>[]> {
 			const cacheReadCost = parseFloat(model.pricing?.input_cache_read || "0") * 1_000_000;
 			const cacheWriteCost = parseFloat(model.pricing?.input_cache_write || "0") * 1_000_000;
 
-			const normalizedModel: Model<any> = {
+			const normalizedModel: Model<Api> = {
 				id: modelKey,
 				name: model.name,
 				api: "openai-completions",
@@ -114,12 +114,12 @@ async function fetchOpenRouterModels(): Promise<Model<any>[]> {
 	}
 }
 
-async function fetchAiGatewayModels(): Promise<Model<any>[]> {
+async function fetchAiGatewayModels(): Promise<Model<Api>[]> {
 	try {
 		console.log("Fetching models from Vercel AI Gateway API...");
 		const response = await fetch(`${AI_GATEWAY_MODELS_URL}/models`);
 		const data = await response.json();
-		const models: Model<any>[] = [];
+		const models: Model<Api>[] = [];
 
 		const toNumber = (value: string | number | undefined): number => {
 			if (typeof value === "number") {
@@ -172,13 +172,13 @@ async function fetchAiGatewayModels(): Promise<Model<any>[]> {
 	}
 }
 
-async function loadModelsDevData(): Promise<Model<any>[]> {
+async function loadModelsDevData(): Promise<Model<Api>[]> {
 	try {
 		console.log("Fetching models from models.dev API...");
 		const response = await fetch("https://models.dev/api.json");
 		const data = await response.json();
 
-		const models: Model<any>[] = [];
+		const models: Model<Api>[] = [];
 
 		// Process Amazon Bedrock models
 		if (data["amazon-bedrock"]?.models) {
@@ -530,7 +530,7 @@ async function loadModelsDevData(): Promise<Model<any>[]> {
 						? "openai-responses"
 						: "openai-completions";
 
-				const copilotModel: Model<any> = {
+				const copilotModel: Model<Api> = {
 					id: modelId,
 					name: m.name || modelId,
 					api,
@@ -1271,7 +1271,7 @@ async function generateModels() {
 	allModels.push(...azureOpenAiModels);
 
 	// Group by provider and deduplicate by model ID
-	const providers: Record<string, Record<string, Model<any>>> = {};
+	const providers: Record<string, Record<string, Model<Api>>> = {};
 	for (const model of allModels) {
 		if (!providers[model.provider]) {
 			providers[model.provider] = {};

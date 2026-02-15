@@ -49,6 +49,7 @@ function hasVertexAdcCredentials(): boolean {
  */
 export function getEnvApiKey(provider: KnownProvider): string | undefined;
 export function getEnvApiKey(provider: string): string | undefined;
+// biome-ignore lint/suspicious/noExplicitAny: migration
 export function getEnvApiKey(provider: any): string | undefined {
 	// Fall back to environment variables
 	if (provider === "github-copilot") {

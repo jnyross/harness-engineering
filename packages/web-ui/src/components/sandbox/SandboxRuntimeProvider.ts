@@ -7,6 +7,7 @@ export interface SandboxRuntimeProvider {
 	 * Returns data to inject into window scope.
 	 * Keys become window properties (e.g., { attachments: [...] } -> window.attachments)
 	 */
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	getData(): Record<string, any>;
 
 	/**
@@ -25,6 +26,7 @@ export interface SandboxRuntimeProvider {
 	 * @param message - The message from the sandbox
 	 * @param respond - Function to send a response back to the sandbox
 	 */
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	handleMessage?(message: any, respond: (response: any) => void): Promise<void>;
 
 	/**

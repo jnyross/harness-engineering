@@ -65,6 +65,7 @@ export async function runRpcMode(session: AgentSession): Promise<never> {
 	// Pending extension UI requests waiting for response
 	const pendingExtensionRequests = new Map<
 		string,
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		{ resolve: (value: any) => void; reject: (error: Error) => void }
 	>();
 
@@ -629,6 +630,7 @@ export async function runRpcMode(session: AgentSession): Promise<never> {
 
 			// Check for deferred shutdown request (idle between commands)
 			await checkShutdownRequested();
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 		} catch (e: any) {
 			output(error(undefined, "parse", `Failed to parse command: ${e.message}`));
 		}

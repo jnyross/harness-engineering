@@ -16,6 +16,7 @@ export interface SandboxResult {
 	console: Array<{ type: string; text: string }>;
 	files?: SandboxFile[];
 	error?: { message: string; stack: string };
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	returnValue?: any;
 }
 
@@ -150,6 +151,7 @@ export class SandboxIframe extends LitElement {
 		const externalUrlHandler = (e: MessageEvent) => {
 			if (e.data.type === "open-external-url" && e.source === this.iframe?.contentWindow) {
 				// Use chrome.tabs API to open in new tab
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				const chromeAPI = (globalThis as any).chrome;
 				if (chromeAPI?.tabs) {
 					chromeAPI.tabs.create({ url: e.data.url });
@@ -265,6 +267,7 @@ export class SandboxIframe extends LitElement {
 		return new Promise((resolve, reject) => {
 			// 4. Create execution consumer for lifecycle messages
 			const executionConsumer: MessageConsumer = {
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				async handleMessage(message: any): Promise<void> {
 					if (message.type === "file-returned") {
 						files.push({
@@ -424,6 +427,7 @@ export class SandboxIframe extends LitElement {
 			}
 
 			return null;
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 		} catch (error: any) {
 			return error.message || "Unknown validation error";
 		}
@@ -533,6 +537,7 @@ export class SandboxIframe extends LitElement {
 		isStandalone: boolean = false,
 	): string {
 		// Collect all data from providers
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const allData: Record<string, any> = {};
 		for (const provider of providers) {
 			Object.assign(allData, provider.getData());

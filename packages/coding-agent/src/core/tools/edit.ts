@@ -207,6 +207,7 @@ export function createEditTool(cwd: string, options?: EditToolOptions): AgentToo
 							],
 							details: { diff: diffResult.diff, firstChangedLine: diffResult.firstChangedLine },
 						});
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 					} catch (error: any) {
 						// Clean up abort handler
 						if (signal) {

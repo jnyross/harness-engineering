@@ -1,6 +1,7 @@
 import type { SandboxRuntimeProvider } from "./SandboxRuntimeProvider.js";
 
 // Type declaration for chrome extension API (when available)
+// biome-ignore lint/suspicious/noExplicitAny: migration
 declare const chrome: any;
 
 /**
@@ -11,6 +12,7 @@ export interface MessageConsumer {
 	 * Handle a message from a sandbox.
 	 * All consumers receive all messages - decide internally what to handle.
 	 */
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	handleMessage(message: any): Promise<void>;
 }
 
@@ -41,9 +43,8 @@ interface SandboxContext {
 export class RuntimeMessageRouter {
 	private sandboxes = new Map<string, SandboxContext>();
 	private messageListener: ((e: MessageEvent) => void) | null = null;
-	private userScriptMessageListener:
-		| ((message: any, sender: any, sendResponse: (response: any) => void) => boolean)
-		| null = null;
+	private userScriptMessageListener: // biome-ignore lint/suspicious/noExplicitAny: migration
+	((message: any, sender: any, sendResponse: (response: any) => void) => boolean) | null = null;
 
 	/**
 	 * Register a new sandbox with its runtime providers.
@@ -133,6 +134,7 @@ export class RuntimeMessageRouter {
 				}
 
 				// Create respond() function for bidirectional communication
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				const respond = (response: any) => {
 					context.iframe?.contentWindow?.postMessage(
 						{
@@ -170,6 +172,7 @@ export class RuntimeMessageRouter {
 				return;
 			}
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			this.userScriptMessageListener = (message: any, _sender: any, sendResponse: (response: any) => void) => {
 				const { sandboxId } = message;
 				if (!sandboxId) return false;
@@ -177,6 +180,7 @@ export class RuntimeMessageRouter {
 				const context = this.sandboxes.get(sandboxId);
 				if (!context) return false;
 
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				const respond = (response: any) => {
 					sendResponse({
 						...response,

@@ -282,24 +282,35 @@ Content`,
 		});
 
 		it("should parse package source types from docs examples", () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((packageManager as any).parseSource("npm:@scope/pkg@1.2.3").type).toBe("npm");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((packageManager as any).parseSource("npm:pkg").type).toBe("npm");
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((packageManager as any).parseSource("git:github.com/user/repo@v1").type).toBe("git");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((packageManager as any).parseSource("https://github.com/user/repo@v1").type).toBe("git");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((packageManager as any).parseSource("git:git@github.com:user/repo@v1").type).toBe("git");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((packageManager as any).parseSource("ssh://git@github.com/user/repo@v1").type).toBe("git");
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((packageManager as any).parseSource("/absolute/path/to/package").type).toBe("local");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((packageManager as any).parseSource("./relative/path/to/package").type).toBe("local");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((packageManager as any).parseSource("../relative/path/to/package").type).toBe("local");
 		});
 
 		it("should never parse dot-relative paths as git", () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const dotSlash = (packageManager as any).parseSource("./packages/agent-timers");
 			expect(dotSlash.type).toBe("local");
 			expect(dotSlash.path).toBe("./packages/agent-timers");
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const dotDotSlash = (packageManager as any).parseSource("../packages/agent-timers");
 			expect(dotDotSlash.type).toBe("local");
 			expect(dotDotSlash.path).toBe("../packages/agent-timers");
@@ -349,6 +360,7 @@ Content`,
 
 	describe("HTTPS git URL parsing (old behavior)", () => {
 		it("should parse HTTPS GitHub URLs correctly", async () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const parsed = (packageManager as any).parseSource("https://github.com/user/repo");
 			expect(parsed.type).toBe("git");
 			expect(parsed.host).toBe("github.com");
@@ -357,6 +369,7 @@ Content`,
 		});
 
 		it("should parse HTTPS URLs with git: prefix", async () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const parsed = (packageManager as any).parseSource("git:https://github.com/user/repo");
 			expect(parsed.type).toBe("git");
 			expect(parsed.host).toBe("github.com");
@@ -364,6 +377,7 @@ Content`,
 		});
 
 		it("should parse HTTPS URLs with ref", async () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const parsed = (packageManager as any).parseSource("https://github.com/user/repo@v1.2.3");
 			expect(parsed.type).toBe("git");
 			expect(parsed.host).toBe("github.com");
@@ -373,6 +387,7 @@ Content`,
 		});
 
 		it("should parse host/path shorthand only with git: prefix", async () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const parsed = (packageManager as any).parseSource("git:github.com/user/repo");
 			expect(parsed.type).toBe("git");
 			expect(parsed.host).toBe("github.com");
@@ -380,11 +395,13 @@ Content`,
 		});
 
 		it("should treat host/path shorthand as local without git: prefix", async () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const parsed = (packageManager as any).parseSource("github.com/user/repo");
 			expect(parsed.type).toBe("local");
 		});
 
 		it("should parse HTTPS URLs with .git suffix", async () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const parsed = (packageManager as any).parseSource("https://github.com/user/repo.git");
 			expect(parsed.type).toBe("git");
 			expect(parsed.host).toBe("github.com");
@@ -392,6 +409,7 @@ Content`,
 		});
 
 		it("should parse GitLab HTTPS URLs", async () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const parsed = (packageManager as any).parseSource("https://gitlab.com/user/repo");
 			expect(parsed.type).toBe("git");
 			expect(parsed.host).toBe("gitlab.com");
@@ -399,6 +417,7 @@ Content`,
 		});
 
 		it("should parse Bitbucket HTTPS URLs", async () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const parsed = (packageManager as any).parseSource("https://bitbucket.org/user/repo");
 			expect(parsed.type).toBe("git");
 			expect(parsed.host).toBe("bitbucket.org");
@@ -406,6 +425,7 @@ Content`,
 		});
 
 		it("should parse Codeberg HTTPS URLs", async () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const parsed = (packageManager as any).parseSource("https://codeberg.org/user/repo");
 			expect(parsed.type).toBe("git");
 			expect(parsed.host).toBe("codeberg.org");
@@ -413,9 +433,13 @@ Content`,
 		});
 
 		it("should generate correct package identity for protocol and git:-prefixed URLs", async () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const identity1 = (packageManager as any).getPackageIdentity("https://github.com/user/repo");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const identity2 = (packageManager as any).getPackageIdentity("https://github.com/user/repo@v1.0.0");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const identity3 = (packageManager as any).getPackageIdentity("git:github.com/user/repo");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const identity4 = (packageManager as any).getPackageIdentity("https://github.com/user/repo.git");
 
 			// All should have the same identity (normalized)
@@ -440,8 +464,11 @@ Content`,
 
 			// Since these URLs don't actually exist and we can't clone them,
 			// we verify they produce the same identity
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const id1 = (packageManager as any).getPackageIdentity("https://github.com/user/repo");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const id2 = (packageManager as any).getPackageIdentity("git:github.com/user/repo");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const id3 = (packageManager as any).getPackageIdentity("https://github.com/user/repo.git");
 
 			expect(id1).toBe(id2);
@@ -450,10 +477,12 @@ Content`,
 
 		it("should handle HTTPS URLs with refs in resolve", async () => {
 			// This tests that the ref is properly extracted and stored
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const parsed = (packageManager as any).parseSource("https://github.com/user/repo@main");
 			expect(parsed.ref).toBe("main");
 			expect(parsed.pinned).toBe(true);
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const parsed2 = (packageManager as any).parseSource("https://github.com/user/repo@feature/branch");
 			expect(parsed2.ref).toBe("feature/branch");
 		});
@@ -926,7 +955,9 @@ Content`,
 			const httpsUrl = "https://github.com/user/repo";
 			const sshUrl = "git:git@github.com:user/repo";
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const httpsIdentity = (packageManager as any).getPackageIdentity(httpsUrl);
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const sshIdentity = (packageManager as any).getPackageIdentity(sshUrl);
 
 			// Both should resolve to the same identity
@@ -939,7 +970,9 @@ Content`,
 			const httpsUrl = "https://github.com/user/repo@v1.0.0";
 			const sshUrl = "git:git@github.com:user/repo@v1.0.0";
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const httpsIdentity = (packageManager as any).getPackageIdentity(httpsUrl);
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const sshIdentity = (packageManager as any).getPackageIdentity(sshUrl);
 
 			// Identity should ignore ref (version)
@@ -952,7 +985,9 @@ Content`,
 			const sshProtocol = "ssh://git@github.com/user/repo";
 			const gitAt = "git:git@github.com:user/repo";
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const sshProtocolIdentity = (packageManager as any).getPackageIdentity(sshProtocol);
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const gitAtIdentity = (packageManager as any).getPackageIdentity(gitAt);
 
 			// Both SSH formats should resolve to same identity
@@ -972,6 +1007,7 @@ Content`,
 				"git:git@github.com:user/repo.git",
 			];
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const identities = urls.map((url) => (packageManager as any).getPackageIdentity(url));
 
 			// All should produce the same identity
@@ -984,7 +1020,9 @@ Content`,
 			const repo1Https = "https://github.com/user/repo1";
 			const repo2Ssh = "git:git@github.com:user/repo2";
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const id1 = (packageManager as any).getPackageIdentity(repo1Https);
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const id2 = (packageManager as any).getPackageIdentity(repo2Ssh);
 
 			// Different repos should have different identities

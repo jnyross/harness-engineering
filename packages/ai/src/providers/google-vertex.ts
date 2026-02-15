@@ -191,6 +191,7 @@ export const streamGoogleVertex: StreamFunction<"google-vertex", GoogleVertexOpt
 								type: "toolCall",
 								id: toolCallId,
 								name: part.functionCall.name || "",
+								// biome-ignore lint/suspicious/noExplicitAny: migration
 								arguments: (part.functionCall.args as Record<string, any>) ?? {},
 								...(part.thoughtSignature && { thoughtSignature: part.thoughtSignature }),
 							};

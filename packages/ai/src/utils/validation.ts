@@ -2,17 +2,21 @@ import AjvModule from "ajv";
 import addFormatsModule from "ajv-formats";
 
 // Handle both default and named exports
+// biome-ignore lint/suspicious/noExplicitAny: migration
 const Ajv = (AjvModule as any).default || AjvModule;
+// biome-ignore lint/suspicious/noExplicitAny: migration
 const addFormats = (addFormatsModule as any).default || addFormatsModule;
 
 import type { Tool, ToolCall } from "../types.js";
 
 // Detect if we're in a browser extension environment with strict CSP
 // Chrome extensions with Manifest V3 don't allow eval/Function constructor
+// biome-ignore lint/suspicious/noExplicitAny: migration
 const isBrowserExtension = typeof globalThis !== "undefined" && (globalThis as any).chrome?.runtime?.id !== undefined;
 
 // Create a singleton AJV instance with formats (only if not in browser extension)
 // AJV requires 'unsafe-eval' CSP which is not allowed in Manifest V3
+// biome-ignore lint/suspicious/noExplicitAny: migration
 let ajv: any = null;
 if (!isBrowserExtension) {
 	try {
@@ -35,6 +39,7 @@ if (!isBrowserExtension) {
  * @returns The validated arguments
  * @throws Error if tool is not found or validation fails
  */
+// biome-ignore lint/suspicious/noExplicitAny: migration
 export function validateToolCall(tools: Tool[], toolCall: ToolCall): any {
 	const tool = tools.find((t) => t.name === toolCall.name);
 	if (!tool) {
@@ -50,6 +55,7 @@ export function validateToolCall(tools: Tool[], toolCall: ToolCall): any {
  * @returns The validated (and potentially coerced) arguments
  * @throws Error with formatted message if validation fails
  */
+// biome-ignore lint/suspicious/noExplicitAny: migration
 export function validateToolArguments(tool: Tool, toolCall: ToolCall): any {
 	// Skip validation in browser extension environment (CSP restrictions prevent AJV from working)
 	if (!ajv || isBrowserExtension) {
@@ -72,6 +78,7 @@ export function validateToolArguments(tool: Tool, toolCall: ToolCall): any {
 	// Format validation errors nicely
 	const errors =
 		validate.errors
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			?.map((err: any) => {
 				const path = err.instancePath ? err.instancePath.substring(1) : err.params.missingProperty || "root";
 				return `  - ${path}: ${err.message}`;

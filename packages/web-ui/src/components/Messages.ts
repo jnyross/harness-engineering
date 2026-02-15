@@ -84,6 +84,7 @@ export class UserMessage extends LitElement {
 @customElement("assistant-message")
 export class AssistantMessage extends LitElement {
 	@property({ type: Object }) message!: AssistantMessageType;
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	@property({ type: Array }) tools?: AgentTool<any>[];
 	@property({ type: Object }) pendingToolCalls?: Set<string>;
 	@property({ type: Boolean }) hideToolCalls = false;
@@ -169,6 +170,7 @@ export class AssistantMessage extends LitElement {
 
 @customElement("tool-message-debug")
 export class ToolMessageDebugView extends LitElement {
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	@property({ type: Object }) callArgs: any;
 	@property({ type: Object }) result?: ToolResultMessageType;
 	@property({ type: Boolean }) hasResult: boolean = false;
@@ -198,6 +200,7 @@ export class ToolMessageDebugView extends LitElement {
 		const textOutput =
 			this.result?.content
 				?.filter((c) => c.type === "text")
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				.map((c: any) => c.text)
 				.join("\n") || "";
 		const output = this.pretty(textOutput);
@@ -226,6 +229,7 @@ export class ToolMessageDebugView extends LitElement {
 @customElement("tool-message")
 export class ToolMessage extends LitElement {
 	@property({ type: Object }) toolCall!: ToolCall;
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	@property({ type: Object }) tool?: AgentTool<any>;
 	@property({ type: Object }) result?: ToolResultMessageType;
 	@property({ type: Boolean }) pending: boolean = false;
@@ -245,6 +249,7 @@ export class ToolMessage extends LitElement {
 		const toolName = this.tool?.name || this.toolCall.name;
 
 		// Render tool content (renderer handles errors and styling)
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const result: ToolResultMessageType<any> | undefined = this.aborted
 			? {
 					role: "toolResult",

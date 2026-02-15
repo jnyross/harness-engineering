@@ -10,6 +10,7 @@ export interface MessageRenderer<TMessage extends AgentMessage = AgentMessage> {
 }
 
 // Registry of custom message renderers by role
+// biome-ignore lint/suspicious/noExplicitAny: migration
 const messageRenderers = new Map<MessageRole, MessageRenderer<any>>();
 
 export function registerMessageRenderer<TRole extends MessageRole>(

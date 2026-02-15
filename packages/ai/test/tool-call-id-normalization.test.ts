@@ -81,6 +81,7 @@ describe("Tool Call ID Normalization - Live Handoff", () => {
 			// Create tool result
 			const toolResult: ToolResultMessage = {
 				role: "toolResult",
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				toolCallId: (toolCall as any).id,
 				toolName: "echo",
 				content: [{ type: "text", text: "hello world" }],
@@ -144,6 +145,7 @@ describe("Tool Call ID Normalization - Live Handoff", () => {
 			// Create tool result
 			const toolResult: ToolResultMessage = {
 				role: "toolResult",
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				toolCallId: (toolCall as any).id,
 				toolName: "echo",
 				content: [{ type: "text", text: "test message" }],

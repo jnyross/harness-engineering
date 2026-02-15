@@ -8,6 +8,7 @@ import { createWriteTool } from "./write.js";
 
 export { setUploadFunction } from "./attach.js";
 
+// biome-ignore lint/suspicious/noExplicitAny: migration
 export function createMomTools(executor: Executor): AgentTool<any>[] {
 	return [
 		createReadTool(executor),

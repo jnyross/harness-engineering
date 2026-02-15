@@ -1,5 +1,5 @@
 import type { AgentMessage, ThinkingLevel } from "@mariozechner/pi-agent-core";
-import type { Model } from "@mariozechner/pi-ai";
+import type { Api, Model } from "@mariozechner/pi-ai";
 
 /**
  * Transaction interface for atomic operations across stores.
@@ -152,7 +152,7 @@ export interface SessionData {
 	title: string;
 
 	/** Last selected model */
-	model: Model<any>;
+	model: Model<Api>;
 
 	/** Last selected thinking level */
 	thinkingLevel: ThinkingLevel;

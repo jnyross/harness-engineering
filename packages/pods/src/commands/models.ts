@@ -621,6 +621,7 @@ export const showKnownModels = async () => {
 	const incompatible: Record<string, Array<{ id: string; name: string; minGpu: string; notes?: string }>> = {};
 
 	for (const [modelId, info] of Object.entries(models)) {
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const modelInfo = info as any;
 		const family = modelInfo.name.split("-")[0] || "Other";
 
@@ -631,6 +632,7 @@ export const showKnownModels = async () => {
 
 		if (modelInfo.configs && modelInfo.configs.length > 0) {
 			// Sort configs by GPU count to find minimum
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const sortedConfigs = [...modelInfo.configs].sort((a: any, b: any) => (a.gpuCount || 1) - (b.gpuCount || 1));
 
 			// Find minimum requirements

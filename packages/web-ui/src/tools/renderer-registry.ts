@@ -28,9 +28,11 @@ export function getToolRenderer(toolName: string): ToolRenderer | undefined {
  */
 export function renderHeader(
 	state: "inprogress" | "complete" | "error",
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	toolIcon: any,
 	text: string | TemplateResult,
 ): TemplateResult {
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	const statusIcon = (iconComponent: any, color: string) =>
 		html`<span class="inline-block ${color}">${icon(iconComponent, "sm")}</span>`;
 
@@ -68,12 +70,14 @@ export function renderHeader(
  */
 export function renderCollapsibleHeader(
 	state: "inprogress" | "complete" | "error",
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	toolIcon: any,
 	text: string | TemplateResult,
 	contentRef: Ref<HTMLElement>,
 	chevronRef: Ref<HTMLElement>,
 	defaultExpanded = false,
 ): TemplateResult {
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	const statusIcon = (iconComponent: any, color: string) =>
 		html`<span class="inline-block ${color}">${icon(iconComponent, "sm")}</span>`;
 

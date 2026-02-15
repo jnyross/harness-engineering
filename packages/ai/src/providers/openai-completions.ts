@@ -206,8 +206,11 @@ export const streamOpenAICompletions: StreamFunction<"openai-completions", OpenA
 					let foundReasoningField: string | null = null;
 					for (const field of reasoningFields) {
 						if (
+							// biome-ignore lint/suspicious/noExplicitAny: migration
 							(choice.delta as any)[field] !== null &&
+							// biome-ignore lint/suspicious/noExplicitAny: migration
 							(choice.delta as any)[field] !== undefined &&
+							// biome-ignore lint/suspicious/noExplicitAny: migration
 							(choice.delta as any)[field].length > 0
 						) {
 							if (!foundReasoningField) {
@@ -230,6 +233,7 @@ export const streamOpenAICompletions: StreamFunction<"openai-completions", OpenA
 						}
 
 						if (currentBlock.type === "thinking") {
+							// biome-ignore lint/suspicious/noExplicitAny: migration
 							const delta = (choice.delta as any)[foundReasoningField];
 							currentBlock.thinking += delta;
 							stream.push({
@@ -279,6 +283,7 @@ export const streamOpenAICompletions: StreamFunction<"openai-completions", OpenA
 						}
 					}
 
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					const reasoningDetails = (choice.delta as any).reasoning_details;
 					if (reasoningDetails && Array.isArray(reasoningDetails)) {
 						for (const detail of reasoningDetails) {
@@ -308,10 +313,12 @@ export const streamOpenAICompletions: StreamFunction<"openai-completions", OpenA
 			stream.push({ type: "done", reason: output.stopReason, message: output });
 			stream.end();
 		} catch (error) {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			for (const block of output.content) delete (block as any).index;
 			output.stopReason = options?.signal?.aborted ? "aborted" : "error";
 			output.errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
 			// Some providers via OpenRouter give additional information in this field.
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const rawMetadata = (error as any)?.error?.metadata?.raw;
 			if (rawMetadata) output.errorMessage += `\n${rawMetadata}`;
 			stream.push({ type: "error", reason: output.stopReason, error: output });
@@ -393,6 +400,7 @@ function buildParams(model: Model<"openai-completions">, context: Context, optio
 	};
 
 	if (compat.supportsUsageInStreaming !== false) {
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		(params as any).stream_options = { include_usage: true };
 	}
 
@@ -402,6 +410,7 @@ function buildParams(model: Model<"openai-completions">, context: Context, optio
 
 	if (options?.maxTokens) {
 		if (compat.maxTokensField === "max_tokens") {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			(params as any).max_tokens = options.maxTokens;
 		} else {
 			params.max_completion_tokens = options.maxTokens;
@@ -426,9 +435,11 @@ function buildParams(model: Model<"openai-completions">, context: Context, optio
 	if (compat.thinkingFormat === "zai" && model.reasoning) {
 		// Z.ai uses binary thinking: { type: "enabled" | "disabled" }
 		// Must explicitly disable since z.ai defaults to thinking enabled
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		(params as any).thinking = { type: options?.reasoningEffort ? "enabled" : "disabled" };
 	} else if (compat.thinkingFormat === "qwen" && model.reasoning) {
 		// Qwen uses enable_thinking: boolean
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		(params as any).enable_thinking = !!options?.reasoningEffort;
 	} else if (options?.reasoningEffort && model.reasoning && compat.supportsReasoningEffort) {
 		// OpenAI-style reasoning_effort
@@ -437,6 +448,7 @@ function buildParams(model: Model<"openai-completions">, context: Context, optio
 
 	// OpenRouter provider routing preferences
 	if (model.baseUrl.includes("openrouter.ai") && model.compat?.openRouterRouting) {
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		(params as any).provider = model.compat.openRouterRouting;
 	}
 
@@ -447,6 +459,7 @@ function buildParams(model: Model<"openai-completions">, context: Context, optio
 			const gatewayOptions: Record<string, string[]> = {};
 			if (routing.only) gatewayOptions.only = routing.only;
 			if (routing.order) gatewayOptions.order = routing.order;
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			(params as any).providerOptions = { gateway: gatewayOptions };
 		}
 	}
@@ -603,6 +616,7 @@ export function convertMessages(
 					// Use the signature from the first thinking block if available (for llama.cpp server + gpt-oss)
 					const signature = nonEmptyThinkingBlocks[0].thinkingSignature;
 					if (signature && signature.length > 0) {
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 						(assistantMsg as any)[signature] = nonEmptyThinkingBlocks.map((b) => b.thinking).join("\n");
 					}
 				}
@@ -629,6 +643,7 @@ export function convertMessages(
 					})
 					.filter(Boolean);
 				if (reasoningDetails.length > 0) {
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					(assistantMsg as any).reasoning_details = reasoningDetails;
 				}
 			}
@@ -655,6 +670,7 @@ export function convertMessages(
 				// Extract text and image content
 				const textResult = toolMsg.content
 					.filter((c) => c.type === "text")
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					.map((c) => (c as any).text)
 					.join("\n");
 				const hasImages = toolMsg.content.some((c) => c.type === "image");
@@ -668,6 +684,7 @@ export function convertMessages(
 					tool_call_id: toolMsg.toolCallId,
 				};
 				if (compat.requiresToolResultName && toolMsg.toolName) {
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					(toolResultMsg as any).name = toolMsg.toolName;
 				}
 				params.push(toolResultMsg);
@@ -678,6 +695,7 @@ export function convertMessages(
 							imageBlocks.push({
 								type: "image_url",
 								image_url: {
+									// biome-ignore lint/suspicious/noExplicitAny: migration
 									url: `data:${(block as any).mimeType};base64,${(block as any).data}`,
 								},
 							});
@@ -728,6 +746,7 @@ function convertTools(
 		function: {
 			name: tool.name,
 			description: tool.description,
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			parameters: tool.parameters as any, // TypeBox already generates JSON Schema
 			// Only include strict if provider supports it. Some reject unknown fields.
 			...(compat.supportsStrictMode !== false && { strict: false }),

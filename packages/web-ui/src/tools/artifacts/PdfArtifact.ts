@@ -12,6 +12,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.mi
 export class PdfArtifact extends ArtifactElement {
 	@property({ type: String }) private _content = "";
 	@state() private error: string | null = null;
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	private currentLoadingTask: any = null;
 
 	get content(): string {
@@ -94,6 +95,7 @@ export class PdfArtifact extends ArtifactElement {
 		`;
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	override async updated(changedProperties: Map<string, any>) {
 		super.updated(changedProperties);
 
@@ -106,6 +108,7 @@ export class PdfArtifact extends ArtifactElement {
 		const container = this.querySelector("#pdf-container");
 		if (!container || !this._content) return;
 
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		let pdf: any = null;
 
 		try {
@@ -164,6 +167,7 @@ export class PdfArtifact extends ArtifactElement {
 
 				wrapper.appendChild(pageContainer);
 			}
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 		} catch (error: any) {
 			console.error("Error rendering PDF:", error);
 			this.error = error?.message || i18n("Failed to load PDF");

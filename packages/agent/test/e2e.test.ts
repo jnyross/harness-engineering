@@ -1,11 +1,11 @@
-import type { AssistantMessage, Model, ToolResultMessage, UserMessage } from "@mariozechner/pi-ai";
+import type { Api, AssistantMessage, Model, ToolResultMessage, UserMessage } from "@mariozechner/pi-ai";
 import { getModel } from "@mariozechner/pi-ai";
 import { describe, expect, it } from "vitest";
 import { Agent } from "../src/index.js";
 import { hasBedrockCredentials } from "./bedrock-utils.js";
 import { calculateTool } from "./utils/calculate.js";
 
-async function basicPrompt(model: Model<any>) {
+async function basicPrompt(model: Model<Api>) {
 	const agent = new Agent({
 		initialState: {
 			systemPrompt: "You are a helpful assistant. Keep your responses concise.",
@@ -32,7 +32,7 @@ async function basicPrompt(model: Model<any>) {
 	expect(textContent.text).toContain("4");
 }
 
-async function toolExecution(model: Model<any>) {
+async function toolExecution(model: Model<Api>) {
 	const agent = new Agent({
 		initialState: {
 			systemPrompt: "You are a helpful assistant. Always use the calculator tool for math.",
@@ -53,6 +53,7 @@ async function toolExecution(model: Model<any>) {
 	const textContent =
 		toolResultMsg.content
 			?.filter((c) => c.type === "text")
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			.map((c: any) => c.text)
 			.join("\n") || "";
 	expect(textContent).toBeDefined();
@@ -73,7 +74,7 @@ async function toolExecution(model: Model<any>) {
 	expect(hasNumber).toBe(true);
 }
 
-async function abortExecution(model: Model<any>) {
+async function abortExecution(model: Model<Api>) {
 	const agent = new Agent({
 		initialState: {
 			systemPrompt: "You are a helpful assistant.",
@@ -102,7 +103,7 @@ async function abortExecution(model: Model<any>) {
 	expect(agent.state.error).toBe(lastMessage.errorMessage);
 }
 
-async function stateUpdates(model: Model<any>) {
+async function stateUpdates(model: Model<Api>) {
 	const agent = new Agent({
 		initialState: {
 			systemPrompt: "You are a helpful assistant.",
@@ -134,7 +135,7 @@ async function stateUpdates(model: Model<any>) {
 	expect(agent.state.messages.length).toBe(2); // User message + assistant response
 }
 
-async function multiTurnConversation(model: Model<any>) {
+async function multiTurnConversation(model: Model<Api>) {
 	const agent = new Agent({
 		initialState: {
 			systemPrompt: "You are a helpful assistant.",

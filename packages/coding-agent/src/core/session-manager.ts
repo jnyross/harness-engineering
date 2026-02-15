@@ -447,6 +447,7 @@ export function loadEntriesFromFile(filePath: string): FileEntry[] {
 	// Validate session header
 	if (entries.length === 0) return entries;
 	const header = entries[0];
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	if (header.type !== "session" || typeof (header as any).id !== "string") {
 		return [];
 	}

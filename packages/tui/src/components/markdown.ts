@@ -316,6 +316,7 @@ export class Markdown implements Component {
 			}
 
 			case "list": {
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				const listLines = this.renderList(token as any, 0);
 				lines.push(...listLines);
 				// Don't add spacing after lists if a space token follows
@@ -324,6 +325,7 @@ export class Markdown implements Component {
 			}
 
 			case "table": {
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				const tableLines = this.renderTable(token as any, width);
 				lines.push(...tableLines);
 				break;
@@ -473,6 +475,7 @@ export class Markdown implements Component {
 	/**
 	 * Render a list with proper nesting support
 	 */
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	private renderList(token: Token & { items: any[]; ordered: boolean; start?: number }, depth: number): string[] {
 		const lines: string[] = [];
 		const indent = "  ".repeat(depth);
@@ -532,6 +535,7 @@ export class Markdown implements Component {
 			if (token.type === "list") {
 				// Nested list - render with one additional indent level
 				// These lines will have their own indent, so we just add them as-is
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				const nestedLines = this.renderList(token as any, parentDepth + 1);
 				lines.push(...nestedLines);
 			} else if (token.type === "text") {
@@ -601,6 +605,7 @@ export class Markdown implements Component {
 	 * Cells that don't fit are wrapped to multiple lines.
 	 */
 	private renderTable(
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		token: Token & { header: any[]; rows: any[][]; raw?: string },
 		availableWidth: number,
 	): string[] {

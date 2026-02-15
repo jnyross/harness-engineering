@@ -1,4 +1,5 @@
 import type {
+	Api,
 	AssistantMessageEvent,
 	ImageContent,
 	Message,
@@ -20,7 +21,7 @@ export type StreamFn = (
  * Configuration for the agent loop.
  */
 export interface AgentLoopConfig extends SimpleStreamOptions {
-	model: Model<any>;
+	model: Model<Api>;
 
 	/**
 	 * Converts AgentMessage[] to LLM-compatible Message[] before each LLM call.
@@ -133,8 +134,9 @@ export type AgentMessage = Message | CustomAgentMessages[keyof CustomAgentMessag
  */
 export interface AgentState {
 	systemPrompt: string;
-	model: Model<any>;
+	model: Model<Api>;
 	thinkingLevel: ThinkingLevel;
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	tools: AgentTool<any>[];
 	messages: AgentMessage[]; // Can include attachments + custom message types
 	isStreaming: boolean;
@@ -151,9 +153,11 @@ export interface AgentToolResult<T> {
 }
 
 // Callback for streaming tool execution updates
+// biome-ignore lint/suspicious/noExplicitAny: migration
 export type AgentToolUpdateCallback<T = any> = (partialResult: AgentToolResult<T>) => void;
 
 // AgentTool extends Tool but adds the execute function
+// biome-ignore lint/suspicious/noExplicitAny: migration
 export interface AgentTool<TParameters extends TSchema = TSchema, TDetails = any> extends Tool<TParameters> {
 	// A human-readable label for the tool to be displayed in UI
 	label: string;
@@ -169,6 +173,7 @@ export interface AgentTool<TParameters extends TSchema = TSchema, TDetails = any
 export interface AgentContext {
 	systemPrompt: string;
 	messages: AgentMessage[];
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	tools?: AgentTool<any>[];
 }
 
@@ -189,6 +194,9 @@ export type AgentEvent =
 	| { type: "message_update"; message: AgentMessage; assistantMessageEvent: AssistantMessageEvent }
 	| { type: "message_end"; message: AgentMessage }
 	// Tool execution lifecycle
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	| { type: "tool_execution_start"; toolCallId: string; toolName: string; args: any }
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	| { type: "tool_execution_update"; toolCallId: string; toolName: string; args: any; partialResult: any }
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	| { type: "tool_execution_end"; toolCallId: string; toolName: string; result: any; isError: boolean };

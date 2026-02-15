@@ -10,7 +10,7 @@
 				"useNodejsImportProtocol": "off"
 			},
 			"suspicious": {
-				"noExplicitAny": "off",
+				"noExplicitAny": "error",
 				"noControlCharactersInRegex": "off",
 				"noEmptyInterface": "off"
 			}
@@ -34,8 +34,7 @@
 			"!**/test-sessions.ts",
 			"!**/models.generated.ts",
 			"!packages/web-ui/src/app.css",
-			"!packages/mom/data/**/*",
-			"!!**/node_modules"
+			"!packages/mom/data/**/*"
 		]
 	}
 }

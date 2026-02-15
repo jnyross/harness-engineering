@@ -311,6 +311,7 @@ export class ArtifactsPanel extends LitElement {
 		// 2) Build an ordered list of successful artifact operations
 		const operations: Array<ArtifactsParams> = [];
 		for (const m of messages) {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			if ((m as any).role === "artifact") {
 				const artifactMsg = m as ArtifactMessage;
 				switch (artifactMsg.action) {
@@ -337,7 +338,9 @@ export class ArtifactsPanel extends LitElement {
 				}
 			}
 			// Handle tool result messages (from artifacts tool calls)
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			else if ((m as any).role === "toolResult" && (m as any).toolName === artifactToolName && !(m as any).isError) {
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				const toolCallId = (m as any).toolCallId as string;
 				const call = toolCalls.get(toolCallId);
 				if (!call) continue;
@@ -431,6 +434,7 @@ export class ArtifactsPanel extends LitElement {
 				return this.getLogs(params);
 			default:
 				// Should never happen with TypeBox validation
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				return `Error: Unknown command ${(params as any).command}`;
 		}
 	}

@@ -52,5 +52,6 @@ const editor = {
 	},
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: migration
 tui.setFocus(editor as any);
 tui.start();

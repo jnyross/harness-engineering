@@ -19,6 +19,7 @@ export class CalculateRenderer implements ToolRenderer<CalculateParams, undefine
 			const output =
 				result.content
 					?.filter((c) => c.type === "text")
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					.map((c: any) => c.text)
 					.join("\n") || "";
 

@@ -87,6 +87,7 @@ export function createLsTool(cwd: string, options?: LsToolOptions): AgentTool<ty
 						let entries: string[];
 						try {
 							entries = await ops.readdir(dirPath);
+							// biome-ignore lint/suspicious/noExplicitAny: migration
 						} catch (e: any) {
 							reject(new Error(`Cannot read directory: ${e.message}`));
 							return;
@@ -156,6 +157,7 @@ export function createLsTool(cwd: string, options?: LsToolOptions): AgentTool<ty
 							content: [{ type: "text", text: output }],
 							details: Object.keys(details).length > 0 ? details : undefined,
 						});
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 					} catch (e: any) {
 						signal?.removeEventListener("abort", onAbort);
 						reject(e);

@@ -29,6 +29,7 @@ export class AgentInterface extends LitElement {
 	// Optional callback called before sending a message
 	@property({ attribute: false }) onBeforeSend?: () => void | Promise<void>;
 	// Optional callback called before executing a tool call - return false to prevent execution
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	@property({ attribute: false }) onBeforeToolCall?: (toolName: string, args: any) => boolean | Promise<boolean>;
 	// Optional callback called when cost display is clicked
 	@property({ attribute: false }) onCostClick?: () => void;
@@ -63,6 +64,7 @@ export class AgentInterface extends LitElement {
 		return this;
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	override willUpdate(changedProperties: Map<string, any>) {
 		super.willUpdate(changedProperties);
 
@@ -177,6 +179,7 @@ export class AgentInterface extends LitElement {
 		});
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	private _handleScroll = (_ev: any) => {
 		if (!this._scrollContainer) return;
 
@@ -257,6 +260,7 @@ export class AgentInterface extends LitElement {
 			return html`<div class="p-4 text-center text-muted-foreground">${i18n("No session available")}</div>`;
 		const state = this.session.state;
 		// Build a map of tool results to allow inline rendering in assistant messages
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const toolResultsById = new Map<string, ToolResultMessage<any>>();
 		for (const message of state.messages) {
 			if (message.role === "toolResult") {
@@ -294,6 +298,7 @@ export class AgentInterface extends LitElement {
 		const totals = state.messages
 			.filter((m) => m.role === "assistant")
 			.reduce(
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				(acc, msg: any) => {
 					const usage = msg.usage;
 					if (usage) {

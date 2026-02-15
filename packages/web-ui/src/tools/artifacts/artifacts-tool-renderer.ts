@@ -12,11 +12,13 @@ import { ArtifactPill } from "./ArtifactPill.js";
 import type { ArtifactsPanel, ArtifactsParams } from "./artifacts.js";
 
 // Helper to extract text from content blocks
+// biome-ignore lint/suspicious/noExplicitAny: migration
 function getTextOutput(result: ToolResultMessage<any> | undefined): string {
 	if (!result) return "";
 	return (
 		result.content
 			?.filter((c) => c.type === "text")
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			.map((c: any) => c.text)
 			.join("\n") || ""
 	);

@@ -104,6 +104,7 @@ export class HtmlArtifact extends ArtifactElement {
 
 		// Create consumer for console messages
 		const consumer: MessageConsumer = {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			handleMessage: async (message: any): Promise<void> => {
 				if (message.type === "console") {
 					// Create new array reference for Lit reactivity

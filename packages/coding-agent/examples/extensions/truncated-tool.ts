@@ -68,6 +68,7 @@ export default function (pi: ExtensionAPI) {
 					encoding: "utf-8",
 					maxBuffer: 100 * 1024 * 1024, // 100MB buffer to capture full output
 				});
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 			} catch (err: any) {
 				// ripgrep exits with 1 when no matches found
 				if (err.status === 1) {

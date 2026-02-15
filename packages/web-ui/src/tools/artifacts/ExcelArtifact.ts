@@ -84,6 +84,7 @@ export class ExcelArtifact extends ArtifactElement {
 		`;
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	override async updated(changedProperties: Map<string, any>) {
 		super.updated(changedProperties);
 
@@ -157,12 +158,14 @@ export class ExcelArtifact extends ArtifactElement {
 				const sheetName = workbook.SheetNames[0];
 				wrapper.appendChild(this.renderExcelSheet(workbook.Sheets[sheetName], sheetName));
 			}
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 		} catch (error: any) {
 			console.error("Error rendering Excel:", error);
 			this.error = error?.message || i18n("Failed to load spreadsheet");
 		}
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	private renderExcelSheet(worksheet: any, sheetName: string): HTMLElement {
 		const sheetDiv = document.createElement("div");
 

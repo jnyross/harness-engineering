@@ -238,6 +238,7 @@ export function createGrepTool(cwd: string, options?: GrepToolOptions): AgentToo
 								return;
 							}
 
+							// biome-ignore lint/suspicious/noExplicitAny: migration
 							let event: any;
 							try {
 								event = JSON.parse(line);

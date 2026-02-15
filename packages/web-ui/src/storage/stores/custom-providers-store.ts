@@ -1,4 +1,4 @@
-import type { Model } from "@mariozechner/pi-ai";
+import type { Api, Model } from "@mariozechner/pi-ai";
 import { Store } from "../store.js";
 import type { StoreConfig } from "../types.js";
 
@@ -19,7 +19,7 @@ export interface CustomProvider {
 
 	// For manual types ONLY - models stored directly on provider
 	// Auto-discovery types: models fetched on-demand, never stored
-	models?: Model<any>[];
+	models?: Model<Api>[];
 }
 
 /**

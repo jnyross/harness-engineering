@@ -16,7 +16,7 @@ import { execSync, spawn } from "child_process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { getModel } from "../src/models.js";
 import { complete } from "../src/stream.js";
-import type { AssistantMessage, Context, Model, Usage } from "../src/types.js";
+import type { Api, AssistantMessage, Context, Model, Usage } from "../src/types.js";
 import { isContextOverflow } from "../src/utils/overflow.js";
 import { hasAzureOpenAICredentials } from "./azure-utils.js";
 import { hasBedrockCredentials } from "./bedrock-utils.js";
@@ -54,7 +54,7 @@ interface OverflowResult {
 	response: AssistantMessage;
 }
 
-async function testContextOverflow(model: Model<any>, apiKey: string): Promise<OverflowResult> {
+async function testContextOverflow(model: Model<Api>, apiKey: string): Promise<OverflowResult> {
 	const overflowContent = generateOverflowContent(model.contextWindow);
 
 	const context: Context = {
@@ -168,6 +168,7 @@ describe("Context overflow error handling", () => {
 	describe.skipIf(!process.env.OPENAI_API_KEY)("OpenAI Completions", () => {
 		it("gpt-4o-mini - should detect overflow via isContextOverflow", async () => {
 			const model = { ...getModel("openai", "gpt-4o-mini") };
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			model.api = "openai-completions" as any;
 			const result = await testContextOverflow(model, process.env.OPENAI_API_KEY!);
 			logResult(result);

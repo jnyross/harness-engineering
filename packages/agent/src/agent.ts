@@ -4,6 +4,7 @@
  */
 
 import {
+	type Api,
 	getModel,
 	type ImageContent,
 	type Message,
@@ -209,7 +210,7 @@ export class Agent {
 		this._state.systemPrompt = v;
 	}
 
-	setModel(m: Model<any>) {
+	setModel(m: Model<Api>) {
 		this._state.model = m;
 	}
 
@@ -233,6 +234,7 @@ export class Agent {
 		return this.followUpMode;
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	setTools(t: AgentTool<any>[]) {
 		this._state.tools = t;
 	}
@@ -486,7 +488,9 @@ export class Agent {
 					}
 
 					case "turn_end":
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 						if (event.message.role === "assistant" && (event.message as any).errorMessage) {
+							// biome-ignore lint/suspicious/noExplicitAny: migration
 							this._state.error = (event.message as any).errorMessage;
 						}
 						break;
@@ -517,6 +521,7 @@ export class Agent {
 					}
 				}
 			}
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 		} catch (err: any) {
 			const errorMsg: AgentMessage = {
 				role: "assistant",

@@ -280,6 +280,7 @@ export const streamAnthropic: StreamFunction<"anthropic-messages", AnthropicOpti
 							name: isOAuthToken
 								? fromClaudeCodeName(event.content_block.name, context.tools)
 								: event.content_block.name,
+							// biome-ignore lint/suspicious/noExplicitAny: migration
 							arguments: (event.content_block.input as Record<string, any>) ?? {},
 							partialJson: "",
 							index: event.index,
@@ -337,6 +338,7 @@ export const streamAnthropic: StreamFunction<"anthropic-messages", AnthropicOpti
 					const index = blocks.findIndex((b) => b.index === event.index);
 					const block = blocks[index];
 					if (block) {
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 						delete (block as any).index;
 						if (block.type === "text") {
 							stream.push({
@@ -354,6 +356,7 @@ export const streamAnthropic: StreamFunction<"anthropic-messages", AnthropicOpti
 							});
 						} else if (block.type === "toolCall") {
 							block.arguments = parseStreamingJson(block.partialJson);
+							// biome-ignore lint/suspicious/noExplicitAny: migration
 							delete (block as any).partialJson;
 							stream.push({
 								type: "toolcall_end",
@@ -399,6 +402,7 @@ export const streamAnthropic: StreamFunction<"anthropic-messages", AnthropicOpti
 			stream.push({ type: "done", reason: output.stopReason, message: output });
 			stream.end();
 		} catch (error) {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			for (const block of output.content) delete (block as any).index;
 			output.stopReason = options?.signal?.aborted ? "aborted" : "error";
 			output.errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
@@ -793,6 +797,7 @@ function convertMessages(
 					lastBlock &&
 					(lastBlock.type === "text" || lastBlock.type === "image" || lastBlock.type === "tool_result")
 				) {
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					(lastBlock as any).cache_control = cacheControl;
 				}
 			} else if (typeof lastMessage.content === "string") {
@@ -802,6 +807,7 @@ function convertMessages(
 						text: lastMessage.content,
 						cache_control: cacheControl,
 					},
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 				] as any;
 			}
 		}
@@ -814,6 +820,7 @@ function convertTools(tools: Tool[], isOAuthToken: boolean): Anthropic.Messages.
 	if (!tools) return [];
 
 	return tools.map((tool) => {
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const jsonSchema = tool.parameters as any; // TypeBox already generates JSON Schema
 
 		return {

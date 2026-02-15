@@ -270,7 +270,7 @@ export interface ExtensionContext {
 	/** Model registry for API key resolution */
 	modelRegistry: ModelRegistry;
 	/** Current model (may be undefined) */
-	model: Model<any> | undefined;
+	model: Model<Api> | undefined;
 	/** Whether the agent is idle (not streaming) */
 	isIdle(): boolean;
 	/** Abort the current agent operation */
@@ -543,6 +543,7 @@ export interface ToolExecutionStartEvent {
 	type: "tool_execution_start";
 	toolCallId: string;
 	toolName: string;
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	args: any;
 }
 
@@ -551,7 +552,9 @@ export interface ToolExecutionUpdateEvent {
 	type: "tool_execution_update";
 	toolCallId: string;
 	toolName: string;
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	args: any;
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	partialResult: any;
 }
 
@@ -560,6 +563,7 @@ export interface ToolExecutionEndEvent {
 	type: "tool_execution_end";
 	toolCallId: string;
 	toolName: string;
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	result: any;
 	isError: boolean;
 }
@@ -573,8 +577,8 @@ export type ModelSelectSource = "set" | "cycle" | "restore";
 /** Fired when a new model is selected */
 export interface ModelSelectEvent {
 	type: "model_select";
-	model: Model<any>;
-	previousModel: Model<any> | undefined;
+	model: Model<Api>;
+	previousModel: Model<Api> | undefined;
 	source: ModelSelectSource;
 }
 
@@ -1051,7 +1055,7 @@ export interface ExtensionAPI {
 	// =========================================================================
 
 	/** Set the current model. Returns false if no API key available. */
-	setModel(model: Model<any>): Promise<boolean>;
+	setModel(model: Model<Api>): Promise<boolean>;
 
 	/** Get current thinking level. */
 	getThinkingLevel(): ThinkingLevel;
@@ -1231,7 +1235,7 @@ export type GetCommandsHandler = () => SlashCommandInfo[];
 
 export type SetActiveToolsHandler = (toolNames: string[]) => void;
 
-export type SetModelHandler = (model: Model<any>) => Promise<boolean>;
+export type SetModelHandler = (model: Model<Api>) => Promise<boolean>;
 
 export type GetThinkingLevelHandler = () => ThinkingLevel;
 
@@ -1274,7 +1278,7 @@ export interface ExtensionActions {
  * Required by all modes.
  */
 export interface ExtensionContextActions {
-	getModel: () => Model<any> | undefined;
+	getModel: () => Model<Api> | undefined;
 	isIdle: () => boolean;
 	abort: () => void;
 	hasPendingMessages: () => boolean;

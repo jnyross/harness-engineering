@@ -31,6 +31,7 @@ describe("Package Manager git source parsing", () => {
 
 	describe("protocol URLs without git: prefix", () => {
 		it("should parse https:// URL", () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const parsed = (packageManager as any).parseSource("https://github.com/user/repo");
 			expect(parsed.type).toBe("git");
 			expect(parsed.host).toBe("github.com");
@@ -38,6 +39,7 @@ describe("Package Manager git source parsing", () => {
 		});
 
 		it("should parse ssh:// URL", () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const parsed = (packageManager as any).parseSource("ssh://git@github.com/user/repo");
 			expect(parsed.type).toBe("git");
 			expect(parsed.host).toBe("github.com");
@@ -48,6 +50,7 @@ describe("Package Manager git source parsing", () => {
 
 	describe("shorthand URLs with git: prefix", () => {
 		it("should parse git@host:path format", () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const parsed = (packageManager as any).parseSource("git:git@github.com:user/repo");
 			expect(parsed.type).toBe("git");
 			expect(parsed.host).toBe("github.com");
@@ -57,6 +60,7 @@ describe("Package Manager git source parsing", () => {
 		});
 
 		it("should parse host/path shorthand", () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const parsed = (packageManager as any).parseSource("git:github.com/user/repo");
 			expect(parsed.type).toBe("git");
 			expect(parsed.host).toBe("github.com");
@@ -64,6 +68,7 @@ describe("Package Manager git source parsing", () => {
 		});
 
 		it("should parse shorthand with ref", () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const parsed = (packageManager as any).parseSource("git:git@github.com:user/repo@v1.0.0");
 			expect(parsed.type).toBe("git");
 			expect(parsed.ref).toBe("v1.0.0");
@@ -73,11 +78,13 @@ describe("Package Manager git source parsing", () => {
 
 	describe("unsupported without git: prefix", () => {
 		it("should treat git@host:path as local without git: prefix", () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const parsed = (packageManager as any).parseSource("git@github.com:user/repo");
 			expect(parsed.type).toBe("local");
 		});
 
 		it("should treat host/path shorthand as local without git: prefix", () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const parsed = (packageManager as any).parseSource("github.com/user/repo");
 			expect(parsed.type).toBe("local");
 		});
@@ -85,8 +92,11 @@ describe("Package Manager git source parsing", () => {
 
 	describe("identity normalization", () => {
 		it("should normalize protocol and shorthand-prefixed URLs to same identity", () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const prefixed = (packageManager as any).getPackageIdentity("git:git@github.com:user/repo");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const https = (packageManager as any).getPackageIdentity("https://github.com/user/repo");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const ssh = (packageManager as any).getPackageIdentity("ssh://git@github.com/user/repo");
 
 			expect(prefixed).toBe("git:github.com/user/repo");

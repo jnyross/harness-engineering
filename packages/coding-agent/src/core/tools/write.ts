@@ -97,6 +97,7 @@ export function createWriteTool(cwd: string, options?: WriteToolOptions): AgentT
 								content: [{ type: "text", text: `Successfully wrote ${content.length} bytes to ${path}` }],
 								details: undefined,
 							});
+							// biome-ignore lint/suspicious/noExplicitAny: migration
 						} catch (error: any) {
 							// Clean up abort handler
 							if (signal) {

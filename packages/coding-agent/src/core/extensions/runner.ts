@@ -3,7 +3,7 @@
  */
 
 import type { AgentMessage } from "@mariozechner/pi-agent-core";
-import type { ImageContent, Model } from "@mariozechner/pi-ai";
+import type { Api, ImageContent, Model } from "@mariozechner/pi-ai";
 import type { KeyId } from "@mariozechner/pi-tui";
 import { type Theme, theme } from "../../modes/interactive/theme/theme.js";
 import type { ResourceDiagnostic } from "../diagnostics.js";
@@ -201,7 +201,7 @@ export class ExtensionRunner {
 	private sessionManager: SessionManager;
 	private modelRegistry: ModelRegistry;
 	private errorListeners: Set<ExtensionErrorListener> = new Set();
-	private getModel: () => Model<any> | undefined = () => undefined;
+	private getModel: () => Model<Api> | undefined = () => undefined;
 	private isIdleFn: () => boolean = () => true;
 	private waitForIdleFn: () => Promise<void> = async () => {};
 	private abortFn: () => void = () => {};

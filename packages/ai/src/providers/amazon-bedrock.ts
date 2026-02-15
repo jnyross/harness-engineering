@@ -659,12 +659,14 @@ function mapStopReason(reason: string | undefined): StopReason {
 function buildAdditionalModelRequestFields(
 	model: Model<"bedrock-converse-stream">,
 	options: BedrockOptions,
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 ): Record<string, any> | undefined {
 	if (!options.reasoning || !model.reasoning) {
 		return undefined;
 	}
 
 	if (model.id.includes("anthropic.claude") || model.id.includes("anthropic/claude")) {
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const result: Record<string, any> = supportsAdaptiveThinking(model.id)
 			? {
 					thinking: { type: "adaptive" },

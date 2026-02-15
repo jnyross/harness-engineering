@@ -377,6 +377,7 @@ describe("SessionManager append and tree traversal", () => {
 			const entry2 = session.getEntry(id2);
 			expect(entry2).toBeDefined();
 			if (entry2?.type === "message" && entry2.message.role === "assistant") {
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				expect((entry2.message.content as any)[0].text).toBe("second");
 			}
 		});
@@ -398,8 +399,11 @@ describe("SessionManager append and tree traversal", () => {
 			const ctx = session.buildSessionContext();
 			expect(ctx.messages).toHaveLength(3); // msg1, msg2, msg4-branch (not msg3)
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctx.messages[0] as any).content).toBe("msg1");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctx.messages[1] as any).content[0].text).toBe("msg2");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctx.messages[2] as any).content[0].text).toBe("msg4-branch");
 		});
 	});

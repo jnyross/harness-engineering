@@ -117,6 +117,7 @@ async function downloadFile(url: string, dest: string): Promise<void> {
 	}
 
 	const fileStream = createWriteStream(dest);
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	await finished(Readable.fromWeb(response.body as any).pipe(fileStream));
 }
 

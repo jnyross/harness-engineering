@@ -18,6 +18,7 @@ export class ConsoleRuntimeProvider implements SandboxRuntimeProvider {
 	private completionError: { message: string; stack: string } | null = null;
 	private completed = false;
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	getData(): Record<string, any> {
 		// No data needed
 		return {};
@@ -31,7 +32,9 @@ export class ConsoleRuntimeProvider implements SandboxRuntimeProvider {
 		return (_sandboxId: string) => {
 			// Store truly original console methods on first wrap only
 			// This prevents accumulation of wrapper functions across multiple executions
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			if (!(window as any).__originalConsole) {
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				(window as any).__originalConsole = {
 					log: console.log.bind(console),
 					error: console.error.bind(console),
@@ -41,12 +44,15 @@ export class ConsoleRuntimeProvider implements SandboxRuntimeProvider {
 			}
 
 			// Always use the truly original console, not the current (possibly wrapped) one
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const originalConsole = (window as any).__originalConsole;
 
 			// Track pending send promises to wait for them in onCompleted
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const pendingSends: Promise<any>[] = [];
 
 			["log", "error", "warn", "info"].forEach((method) => {
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				(console as any)[method] = (...args: any[]) => {
 					const text = args
 						.map((arg) => {
@@ -59,10 +65,13 @@ export class ConsoleRuntimeProvider implements SandboxRuntimeProvider {
 						.join(" ");
 
 					// Always log locally too (using truly original console)
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					(originalConsole as any)[method].apply(console, args);
 
 					// Send immediately and track the promise (only in extension context)
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					if ((window as any).sendRuntimeMessage) {
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 						const sendPromise = (window as any)
 							.sendRuntimeMessage({
 								type: "console",
@@ -77,7 +86,9 @@ export class ConsoleRuntimeProvider implements SandboxRuntimeProvider {
 			});
 
 			// Register completion callback to wait for all pending sends
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			if ((window as any).onCompleted) {
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				(window as any).onCompleted(async (_success: boolean) => {
 					// Wait for all pending console sends to complete
 					if (pendingSends.length > 0) {
@@ -111,19 +122,23 @@ export class ConsoleRuntimeProvider implements SandboxRuntimeProvider {
 
 			// Expose complete() method for user code to call
 			let completionSent = false;
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			(window as any).complete = async (error?: { message: string; stack: string }, returnValue?: any) => {
 				if (completionSent) return;
 				completionSent = true;
 
 				const finalError = error || lastError;
 
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				if ((window as any).sendRuntimeMessage) {
 					if (finalError) {
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 						await (window as any).sendRuntimeMessage({
 							type: "execution-error",
 							error: finalError,
 						});
 					} else {
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 						await (window as any).sendRuntimeMessage({
 							type: "execution-complete",
 							returnValue,
@@ -134,6 +149,7 @@ export class ConsoleRuntimeProvider implements SandboxRuntimeProvider {
 		};
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	async handleMessage(message: any, respond: (response: any) => void): Promise<void> {
 		if (message.type === "console") {
 			// Collect console output

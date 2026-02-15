@@ -12,10 +12,13 @@ import { writeTool } from "../src/core/tools/write.js";
 import * as shellModule from "../src/utils/shell.js";
 
 // Helper to extract text from content blocks
+// biome-ignore lint/suspicious/noExplicitAny: migration
 function getTextOutput(result: any): string {
 	return (
 		result.content
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			?.filter((c: any) => c.type === "text")
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			.map((c: any) => c.text)
 			.join("\n") || ""
 	);
@@ -185,6 +188,7 @@ describe("Coding Agent Tools", () => {
 			const output = getTextOutput(result);
 
 			expect(output).toContain("definitely not a png");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect(result.content.some((c: any) => c.type === "image")).toBe(false);
 		});
 	});

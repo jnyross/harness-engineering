@@ -85,6 +85,12 @@ tmux kill-session -t pi-test
 - No fluff or cheerful filler text
 - Technical prose only, be kind but direct (e.g., "Thanks @user" not "Thanks so much @user!")
 
+## Commits
+- Format: `type(scope): description`
+- Types: feat, fix, docs, refactor, test, chore, perf, ci, build, revert
+- Scopes: ai, agent, coding-agent, tui, mom, pods, web-ui, repo
+- Enforced by `.husky/commit-msg` hook
+
 ## Changelog
 Location: `packages/*/CHANGELOG.md` (each package has its own)
 

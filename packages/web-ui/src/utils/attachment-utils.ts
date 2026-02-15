@@ -214,6 +214,7 @@ async function processPdf(
 			const page = await pdf.getPage(i);
 			const textContent = await page.getTextContent();
 			const pageText = textContent.items
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				.map((item: any) => item.str)
 				.filter((str: string) => str.trim())
 				.join(" ");
@@ -298,6 +299,7 @@ async function processDocx(arrayBuffer: ArrayBuffer, fileName: string): Promise<
 	}
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: migration
 function extractTextFromElement(element: any): string {
 	let text = "";
 

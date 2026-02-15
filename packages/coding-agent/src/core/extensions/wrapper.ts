@@ -35,6 +35,7 @@ export function wrapRegisteredTools(registeredTools: RegisteredTool[], runner: E
  * - Emits tool_call event before execution (can block)
  * - Emits tool_result event after execution (can modify result)
  */
+// biome-ignore lint/suspicious/noExplicitAny: migration
 export function wrapToolWithExtensions<T>(tool: AgentTool<any, T>, runner: ExtensionRunner): AgentTool<any, T> {
 	return {
 		...tool,
@@ -113,6 +114,7 @@ export function wrapToolWithExtensions<T>(tool: AgentTool<any, T>, runner: Exten
 /**
  * Wrap all tools with extension callbacks.
  */
+// biome-ignore lint/suspicious/noExplicitAny: migration
 export function wrapToolsWithExtensions<T>(tools: AgentTool<any, T>[], runner: ExtensionRunner): AgentTool<any, T>[] {
 	return tools.map((tool) => wrapToolWithExtensions(tool, runner));
 }

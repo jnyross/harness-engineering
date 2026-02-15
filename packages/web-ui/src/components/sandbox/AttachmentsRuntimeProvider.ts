@@ -12,6 +12,7 @@ import type { SandboxRuntimeProvider } from "./SandboxRuntimeProvider.js";
 export class AttachmentsRuntimeProvider implements SandboxRuntimeProvider {
 	constructor(private attachments: Attachment[]) {}
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	getData(): Record<string, any> {
 		const attachmentsData = this.attachments.map((a) => ({
 			id: a.id,
@@ -30,7 +31,9 @@ export class AttachmentsRuntimeProvider implements SandboxRuntimeProvider {
 		// These functions read directly from window.attachments
 		// Works both online AND offline (no messaging needed!)
 		return (_sandboxId: string) => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			(window as any).listAttachments = () =>
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				((window as any).attachments || []).map((a: any) => ({
 					id: a.id,
 					fileName: a.fileName,
@@ -38,7 +41,9 @@ export class AttachmentsRuntimeProvider implements SandboxRuntimeProvider {
 					size: a.size,
 				}));
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			(window as any).readTextAttachment = (attachmentId: string) => {
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				const a = ((window as any).attachments || []).find((x: any) => x.id === attachmentId);
 				if (!a) throw new Error(`Attachment not found: ${attachmentId}`);
 				if (a.extractedText) return a.extractedText;
@@ -49,7 +54,9 @@ export class AttachmentsRuntimeProvider implements SandboxRuntimeProvider {
 				}
 			};
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			(window as any).readBinaryAttachment = (attachmentId: string) => {
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				const a = ((window as any).attachments || []).find((x: any) => x.id === attachmentId);
 				if (!a) throw new Error(`Attachment not found: ${attachmentId}`);
 				const bin = atob(a.content);

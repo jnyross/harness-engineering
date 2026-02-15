@@ -1,7 +1,7 @@
 import { icon } from "@mariozechner/mini-lit";
 import { Button } from "@mariozechner/mini-lit/dist/Button.js";
 import { Select, type SelectOption } from "@mariozechner/mini-lit/dist/Select.js";
-import type { Model } from "@mariozechner/pi-ai";
+import type { Api, Model } from "@mariozechner/pi-ai";
 import { html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
@@ -28,7 +28,7 @@ export class MessageEditor extends LitElement {
 	}
 
 	@property() isStreaming = false;
-	@property() currentModel?: Model<any>;
+	@property() currentModel?: Model<Api>;
 	@property() thinkingLevel: ThinkingLevel = "off";
 	@property() showAttachmentButton = true;
 	@property() showModelSelector = true;

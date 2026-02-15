@@ -149,6 +149,7 @@ describe.skipIf(!process.env.OPENAI_API_KEY || !process.env.ANTHROPIC_API_KEY)(
 				tools: [testTool],
 			};
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			let capturedPayload: any = null;
 			const response = await complete(modelB, context, {
 				apiKey,
@@ -164,8 +165,11 @@ describe.skipIf(!process.env.OPENAI_API_KEY || !process.env.ANTHROPIC_API_KEY)(
 			expect(response.content.length).toBeGreaterThan(0);
 
 			// Log what was sent for debugging
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const input = capturedPayload?.input as any[];
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const functionCalls = input?.filter((item: any) => item.type === "function_call") || [];
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const reasoningItems = input?.filter((item: any) => item.type === "reasoning") || [];
 
 			console.log("Payload sent to API:");
@@ -176,6 +180,7 @@ describe.skipIf(!process.env.OPENAI_API_KEY || !process.env.ANTHROPIC_API_KEY)(
 			// Verify the model understood the context
 			const responseText = response.content
 				.filter((b) => b.type === "text")
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				.map((b) => (b as any).text)
 				.join("");
 			expect(responseText).toContain("42");
@@ -252,6 +257,7 @@ describe.skipIf(!process.env.OPENAI_API_KEY || !process.env.ANTHROPIC_API_KEY)(
 				tools: [testTool],
 			};
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			let capturedPayload: any = null;
 			const response = await complete(codexModel, context, {
 				apiKey: openaiApiKey,
@@ -262,8 +268,11 @@ describe.skipIf(!process.env.OPENAI_API_KEY || !process.env.ANTHROPIC_API_KEY)(
 			});
 
 			// Log what was sent
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const input = capturedPayload?.input as any[];
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const functionCalls = input?.filter((item: any) => item.type === "function_call") || [];
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const reasoningItems = input?.filter((item: any) => item.type === "reasoning") || [];
 
 			console.log("Payload sent to Codex:");
@@ -272,6 +281,7 @@ describe.skipIf(!process.env.OPENAI_API_KEY || !process.env.ANTHROPIC_API_KEY)(
 			if (functionCalls.length > 0) {
 				console.log(
 					"- function_call IDs:",
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					functionCalls.map((fc: any) => fc.id),
 				);
 			}
@@ -284,6 +294,7 @@ describe.skipIf(!process.env.OPENAI_API_KEY || !process.env.ANTHROPIC_API_KEY)(
 			// Verify the model understood the context
 			const responseText = response.content
 				.filter((b) => b.type === "text")
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				.map((b) => (b as any).text)
 				.join("");
 			expect(responseText).toContain("42");

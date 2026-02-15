@@ -5,6 +5,7 @@
 
 // Internal import for JSON parsing utility
 import {
+	type Api,
 	type AssistantMessage,
 	type AssistantMessageEvent,
 	type Context,
@@ -82,7 +83,7 @@ export interface ProxyStreamOptions extends SimpleStreamOptions {
  * });
  * ```
  */
-export function streamProxy(model: Model<any>, context: Context, options: ProxyStreamOptions): ProxyMessageEventStream {
+export function streamProxy(model: Model<Api>, context: Context, options: ProxyStreamOptions): ProxyMessageEventStream {
 	const stream = new ProxyMessageEventStream();
 
 	(async () => {
@@ -293,7 +294,9 @@ function processProxyEvent(
 		case "toolcall_delta": {
 			const content = partial.content[proxyEvent.contentIndex];
 			if (content?.type === "toolCall") {
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				(content as any).partialJson += proxyEvent.delta;
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				content.arguments = parseStreamingJson((content as any).partialJson) || {};
 				partial.content[proxyEvent.contentIndex] = { ...content }; // Trigger reactivity
 				return {
@@ -309,6 +312,7 @@ function processProxyEvent(
 		case "toolcall_end": {
 			const content = partial.content[proxyEvent.contentIndex];
 			if (content?.type === "toolCall") {
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				delete (content as any).partialJson;
 				return {
 					type: "toolcall_end",
@@ -333,6 +337,7 @@ function processProxyEvent(
 
 		default: {
 			const _exhaustiveCheck: never = proxyEvent;
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			console.warn(`Unhandled proxy event type: ${(proxyEvent as any).type}`);
 			return undefined;
 		}

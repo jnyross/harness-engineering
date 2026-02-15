@@ -115,8 +115,8 @@ console.log();
 
 // 4. Commit and tag
 console.log("Committing and tagging...");
-run("git add .");
-run(`git commit -m "Release v${version}"`);
+run("git add package.json package-lock.json packages/*/package.json packages/*/CHANGELOG.md");
+run(`git commit -m "chore(repo): release v${version}"`);
 run(`git tag v${version}`);
 console.log();
 
@@ -132,8 +132,8 @@ console.log();
 
 // 7. Commit
 console.log("Committing changelog updates...");
-run("git add .");
-run(`git commit -m "Add [Unreleased] section for next cycle"`);
+run("git add packages/*/CHANGELOG.md");
+run(`git commit -m "chore(repo): add [Unreleased] section for next cycle"`);
 console.log();
 
 // 8. Push

@@ -6,6 +6,7 @@ import { renderHeader } from "../renderer-registry.js";
 import type { ToolRenderer, ToolRenderResult } from "../types.js";
 
 export class DefaultRenderer implements ToolRenderer {
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	render(params: any | undefined, result: ToolResultMessage | undefined, isStreaming?: boolean): ToolRenderResult {
 		const state = result ? (result.isError ? "error" : "complete") : isStreaming ? "inprogress" : "complete";
 
@@ -28,6 +29,7 @@ export class DefaultRenderer implements ToolRenderer {
 			let outputJson =
 				result.content
 					?.filter((c) => c.type === "text")
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					.map((c: any) => c.text)
 					.join("\n") || i18n("(no output)");
 			let outputLanguage = "text";

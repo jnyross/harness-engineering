@@ -303,6 +303,7 @@ describe("buildSessionContext", () => {
 		// summary + kept (u2, a2) + after (u3, a3) = 5
 		expect(loaded.messages.length).toBe(5);
 		expect(loaded.messages[0].role).toBe("compactionSummary");
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		expect((loaded.messages[0] as any).summary).toContain("Summary of 1,a,2,b");
 	});
 
@@ -326,6 +327,7 @@ describe("buildSessionContext", () => {
 		const loaded = buildSessionContext(entries);
 		// summary + kept from u3 (u3, c) + after (u4, d) = 5
 		expect(loaded.messages.length).toBe(5);
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		expect((loaded.messages[0] as any).summary).toContain("Second summary");
 	});
 
@@ -441,6 +443,7 @@ describe.skipIf(!process.env.ANTHROPIC_OAUTH_TOKEN)("LLM summarization", () => {
 		// Should have summary + kept messages
 		expect(reloaded.messages.length).toBeLessThan(loaded.messages.length);
 		expect(reloaded.messages[0].role).toBe("compactionSummary");
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		expect((reloaded.messages[0] as any).summary).toContain(compactionResult.summary);
 
 		console.log("Original messages:", loaded.messages.length);

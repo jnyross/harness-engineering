@@ -19,6 +19,7 @@ export class BashRenderer implements ToolRenderer<BashParams, undefined> {
 			const output =
 				result.content
 					?.filter((c) => c.type === "text")
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					.map((c: any) => c.text)
 					.join("\n") || "";
 			const combined = output ? `> ${params.command}\n\n${output}` : `> ${params.command}`;

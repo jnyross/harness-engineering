@@ -18,6 +18,7 @@ export class AttachmentOverlay extends LitElement {
 	@state() private error: string | null = null;
 
 	// Track current loading task to cancel if needed
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	private currentLoadingTask: any = null;
 	private onCloseCallback?: () => void;
 	private boundHandleKeyDown?: (e: KeyboardEvent) => void;
@@ -271,6 +272,7 @@ export class AttachmentOverlay extends LitElement {
 		}
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	override async updated(changedProperties: Map<string, any>) {
 		super.updated(changedProperties);
 
@@ -304,6 +306,7 @@ export class AttachmentOverlay extends LitElement {
 		const container = this.querySelector("#pdf-container");
 		if (!container || !this.attachment) return;
 
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		let pdf: any = null;
 
 		try {
@@ -370,6 +373,7 @@ export class AttachmentOverlay extends LitElement {
 
 				wrapper.appendChild(pageContainer);
 			}
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 		} catch (error: any) {
 			console.error("Error rendering PDF:", error);
 			this.error = error?.message || i18n("Failed to load PDF");
@@ -475,6 +479,7 @@ export class AttachmentOverlay extends LitElement {
 				}
 			`;
 			container.appendChild(style);
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 		} catch (error: any) {
 			console.error("Error rendering DOCX:", error);
 			this.error = error?.message || i18n("Failed to load document");
@@ -550,12 +555,14 @@ export class AttachmentOverlay extends LitElement {
 				const sheetName = workbook.SheetNames[0];
 				wrapper.appendChild(this.renderExcelSheet(workbook.Sheets[sheetName], sheetName));
 			}
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 		} catch (error: any) {
 			console.error("Error rendering Excel:", error);
 			this.error = error?.message || i18n("Failed to load spreadsheet");
 		}
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	private renderExcelSheet(worksheet: any, sheetName: string): HTMLElement {
 		const sheetDiv = document.createElement("div");
 
@@ -623,6 +630,7 @@ export class AttachmentOverlay extends LitElement {
 
 			wrapper.appendChild(pre);
 			container.appendChild(wrapper);
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 		} catch (error: any) {
 			console.error("Error rendering extracted text:", error);
 			this.error = error?.message || i18n("Failed to display text content");

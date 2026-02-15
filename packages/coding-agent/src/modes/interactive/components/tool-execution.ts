@@ -65,6 +65,7 @@ export class ToolExecutionComponent extends Container {
 	private imageComponents: Image[] = [];
 	private imageSpacers: Spacer[] = [];
 	private toolName: string;
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	private args: any;
 	private expanded = false;
 	private showImages: boolean;
@@ -75,6 +76,7 @@ export class ToolExecutionComponent extends Container {
 	private result?: {
 		content: Array<{ type: string; text?: string; data?: string; mimeType?: string }>;
 		isError: boolean;
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		details?: any;
 	};
 	// Cached edit diff preview (computed when args arrive, before tool executes)
@@ -85,6 +87,7 @@ export class ToolExecutionComponent extends Container {
 
 	constructor(
 		toolName: string,
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		args: any,
 		options: ToolExecutionOptions = {},
 		toolDefinition: ToolDefinition | undefined,
@@ -127,6 +130,7 @@ export class ToolExecutionComponent extends Container {
 		return isBuiltInName && !hasCustomRenderers;
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	updateArgs(args: any): void {
 		this.args = args;
 		this.updateDisplay();
@@ -176,6 +180,7 @@ export class ToolExecutionComponent extends Container {
 	updateResult(
 		result: {
 			content: Array<{ type: string; text?: string; data?: string; mimeType?: string }>;
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			details?: any;
 			isError: boolean;
 		},
@@ -198,6 +203,7 @@ export class ToolExecutionComponent extends Container {
 		if (caps.images !== "kitty") return;
 		if (!this.result) return;
 
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const imageBlocks = this.result.content?.filter((c: any) => c.type === "image") || [];
 
 		for (let i = 0; i < imageBlocks.length; i++) {
@@ -279,6 +285,7 @@ export class ToolExecutionComponent extends Container {
 			if (this.result && this.toolDefinition.renderResult) {
 				try {
 					const resultComponent = this.toolDefinition.renderResult(
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 						{ content: this.result.content as any, details: this.result.details },
 						{ expanded: this.expanded, isPartial: this.isPartial },
 						theme,
@@ -313,6 +320,7 @@ export class ToolExecutionComponent extends Container {
 		this.imageSpacers = [];
 
 		if (this.result) {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const imageBlocks = this.result.content?.filter((c: any) => c.type === "image") || [];
 			const caps = getCapabilities();
 
@@ -430,10 +438,13 @@ export class ToolExecutionComponent extends Container {
 	private getTextOutput(): string {
 		if (!this.result) return "";
 
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const textBlocks = this.result.content?.filter((c: any) => c.type === "text") || [];
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const imageBlocks = this.result.content?.filter((c: any) => c.type === "image") || [];
 
 		let output = textBlocks
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			.map((c: any) => {
 				// Use sanitizeBinaryOutput to handle binary data that crashes string-width
 				return sanitizeBinaryOutput(stripAnsi(c.text || "")).replace(/\r/g, "");
@@ -443,6 +454,7 @@ export class ToolExecutionComponent extends Container {
 		const caps = getCapabilities();
 		if (imageBlocks.length > 0 && (!caps.images || !this.showImages)) {
 			const imageIndicators = imageBlocks
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				.map((img: any) => {
 					const dims = img.data ? (getImageDimensions(img.data, img.mimeType) ?? undefined) : undefined;
 					return imageFallback(img.mimeType, dims);

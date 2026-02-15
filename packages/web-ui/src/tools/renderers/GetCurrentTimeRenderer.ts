@@ -22,6 +22,7 @@ export class GetCurrentTimeRenderer implements ToolRenderer<GetCurrentTimeParams
 			const output =
 				result.content
 					?.filter((c) => c.type === "text")
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					.map((c: any) => c.text)
 					.join("\n") || "";
 			const headerText = params.timezone
@@ -50,6 +51,7 @@ export class GetCurrentTimeRenderer implements ToolRenderer<GetCurrentTimeParams
 			const output =
 				result.content
 					?.filter((c) => c.type === "text")
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					.map((c: any) => c.text)
 					.join("\n") || "";
 

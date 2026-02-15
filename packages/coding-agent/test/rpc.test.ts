@@ -173,10 +173,12 @@ describe.skipIf(!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_OAUTH_T
 		const messageEndEvents = events.filter((e) => e.type === "message_end") as AgentEvent[];
 		const assistantMessage = messageEndEvents.find(
 			(e) => e.type === "message_end" && e.message?.role === "assistant",
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 		) as any;
 
 		expect(assistantMessage).toBeDefined();
 
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const textContent = assistantMessage.message.content.find((c: any) => c.type === "text");
 		expect(textContent?.text).toContain(uniqueValue);
 	}, 90000);

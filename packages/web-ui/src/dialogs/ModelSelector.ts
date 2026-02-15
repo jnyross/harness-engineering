@@ -3,7 +3,7 @@ import { Badge } from "@mariozechner/mini-lit/dist/Badge.js";
 import { Button } from "@mariozechner/mini-lit/dist/Button.js";
 import { DialogHeader } from "@mariozechner/mini-lit/dist/Dialog.js";
 import { DialogBase } from "@mariozechner/mini-lit/dist/DialogBase.js";
-import { getModels, getProviders, type Model, modelsAreEqual } from "@mariozechner/pi-ai";
+import { type Api, getModels, getProviders, type Model, modelsAreEqual } from "@mariozechner/pi-ai";
 import { html, type PropertyValues, type TemplateResult } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
@@ -17,23 +17,23 @@ import { discoverModels } from "../utils/model-discovery.js";
 
 @customElement("agent-model-selector")
 export class ModelSelector extends DialogBase {
-	@state() currentModel: Model<any> | null = null;
+	@state() currentModel: Model<Api> | null = null;
 	@state() searchQuery = "";
 	@state() filterThinking = false;
 	@state() filterVision = false;
 	@state() customProvidersLoading = false;
 	@state() selectedIndex = 0;
 	@state() private navigationMode: "mouse" | "keyboard" = "mouse";
-	@state() private customProviderModels: Model<any>[] = [];
+	@state() private customProviderModels: Model<Api>[] = [];
 
-	private onSelectCallback?: (model: Model<any>) => void;
+	private onSelectCallback?: (model: Model<Api>) => void;
 	private scrollContainerRef = createRef<HTMLDivElement>();
 	private searchInputRef = createRef<HTMLInputElement>();
 	private lastMousePosition = { x: 0, y: 0 };
 
 	protected override modalWidth = "min(400px, 90vw)";
 
-	static async open(currentModel: Model<any> | null, onSelect: (model: Model<any>) => void) {
+	static async open(currentModel: Model<Api> | null, onSelect: (model: Model<Api>) => void) {
 		const selector = new ModelSelector();
 		selector.currentModel = currentModel;
 		selector.onSelectCallback = onSelect;
@@ -98,7 +98,7 @@ export class ModelSelector extends DialogBase {
 
 	private async loadCustomProviders() {
 		this.customProvidersLoading = true;
-		const allCustomModels: Model<any>[] = [];
+		const allCustomModels: Model<Api>[] = [];
 
 		try {
 			const storage = getAppStorage();
@@ -149,19 +149,22 @@ export class ModelSelector extends DialogBase {
 		return String(tokens);
 	}
 
-	private handleSelect(model: Model<any>) {
+	private handleSelect(model: Model<Api>) {
 		if (model) {
 			this.onSelectCallback?.(model);
 			this.close();
 		}
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	private getFilteredModels(): Array<{ provider: string; id: string; model: any }> {
 		// Collect all models from known providers
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const allModels: Array<{ provider: string; id: string; model: any }> = [];
 		const knownProviders = getProviders();
 
 		for (const provider of knownProviders) {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const models = getModels(provider as any);
 			for (const model of models) {
 				allModels.push({ provider, id: model.id, model });

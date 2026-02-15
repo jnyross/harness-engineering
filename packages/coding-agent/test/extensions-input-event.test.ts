@@ -17,6 +17,7 @@ describe("Input Event", () => {
 		extensionsDir = path.join(tempDir, "extensions");
 		fs.mkdirSync(extensionsDir);
 		// Clean globalThis test vars
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		delete (globalThis as any).testVar;
 	});
 
@@ -75,12 +76,14 @@ describe("Input Event", () => {
 	});
 
 	it("short-circuits on handled and skips subsequent handlers", async () => {
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		(globalThis as any).testVar = false;
 		const r = await createRunner(
 			`export default p => p.on("input", async () => ({ action: "handled" }));`,
 			`export default p => p.on("input", async () => { globalThis.testVar = true; });`,
 		);
 		expect(await r.emitInput("X", undefined, "interactive")).toEqual({ action: "handled" });
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		expect((globalThis as any).testVar).toBe(false);
 	});
 
@@ -90,6 +93,7 @@ describe("Input Event", () => {
 		);
 		for (const source of ["interactive", "rpc", "extension"] as const) {
 			await r.emitInput("x", undefined, source);
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((globalThis as any).testVar).toBe(source);
 		}
 	});

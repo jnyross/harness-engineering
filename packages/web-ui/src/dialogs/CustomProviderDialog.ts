@@ -4,7 +4,7 @@ import { DialogBase } from "@mariozechner/mini-lit/dist/DialogBase.js";
 import { Input } from "@mariozechner/mini-lit/dist/Input.js";
 import { Label } from "@mariozechner/mini-lit/dist/Label.js";
 import { Select } from "@mariozechner/mini-lit/dist/Select.js";
-import type { Model } from "@mariozechner/pi-ai";
+import type { Api, Model } from "@mariozechner/pi-ai";
 import { html, type TemplateResult } from "lit";
 import { state } from "lit/decorators.js";
 import { getAppStorage } from "../storage/app-storage.js";
@@ -22,7 +22,7 @@ export class CustomProviderDialog extends DialogBase {
 	@state() private apiKey = "";
 	@state() private testing = false;
 	@state() private testError = "";
-	@state() private discoveredModels: Model<any>[] = [];
+	@state() private discoveredModels: Model<Api>[] = [];
 
 	protected modalWidth = "min(800px, 90vw)";
 	protected modalHeight = "min(700px, 90vh)";

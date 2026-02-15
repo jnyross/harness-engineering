@@ -27,6 +27,7 @@ export function setShowJsonMode(enabled: boolean): void {
  */
 export function renderTool(
 	toolName: string,
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	params: any | undefined,
 	result: ToolResultMessage | undefined,
 	isStreaming?: boolean,

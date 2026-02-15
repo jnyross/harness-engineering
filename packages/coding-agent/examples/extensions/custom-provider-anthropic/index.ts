@@ -187,6 +187,7 @@ function sanitizeSurrogates(text: string): string {
 
 function convertContentBlocks(
 	content: (TextContent | ImageContent)[],
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 ): string | Array<{ type: "text"; text: string } | { type: "image"; source: any }> {
 	const hasImages = content.some((c) => c.type === "image");
 	if (!hasImages) {
@@ -214,7 +215,9 @@ function convertContentBlocks(
 	return blocks;
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: migration
 function convertMessages(messages: Message[], isOAuth: boolean, _tools?: Tool[]): any[] {
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	const params: any[] = [];
 
 	for (let i = 0; i < messages.length; i++) {
@@ -231,6 +234,7 @@ function convertMessages(messages: Message[], isOAuth: boolean, _tools?: Tool[])
 						? { type: "text" as const, text: sanitizeSurrogates(item.text) }
 						: {
 								type: "image" as const,
+								// biome-ignore lint/suspicious/noExplicitAny: migration
 								source: { type: "base64" as const, media_type: item.mimeType as any, data: item.data },
 							},
 				);
@@ -246,6 +250,7 @@ function convertMessages(messages: Message[], isOAuth: boolean, _tools?: Tool[])
 				} else if (block.type === "thinking" && block.thinking.trim()) {
 					if ((block as ThinkingContent).thinkingSignature) {
 						blocks.push({
+							// biome-ignore lint/suspicious/noExplicitAny: migration
 							type: "thinking" as any,
 							thinking: sanitizeSurrogates(block.thinking),
 							signature: (block as ThinkingContent).thinkingSignature!,
@@ -266,6 +271,7 @@ function convertMessages(messages: Message[], isOAuth: boolean, _tools?: Tool[])
 				params.push({ role: "assistant", content: blocks });
 			}
 		} else if (msg.role === "toolResult") {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const toolResults: any[] = [];
 			toolResults.push({
 				type: "tool_result",
@@ -304,13 +310,16 @@ function convertMessages(messages: Message[], isOAuth: boolean, _tools?: Tool[])
 	return params;
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: migration
 function convertTools(tools: Tool[], isOAuth: boolean): any[] {
 	return tools.map((tool) => ({
 		name: isOAuth ? toClaudeCodeName(tool.name) : tool.name,
 		description: tool.description,
 		input_schema: {
 			type: "object",
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			properties: (tool.parameters as any).properties || {},
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			required: (tool.parameters as any).required || [],
 		},
 	}));
@@ -363,6 +372,7 @@ function streamCustomAnthropic(
 
 			// Configure client based on auth type
 			const betaFeatures = ["fine-grained-tool-streaming-2025-05-14", "interleaved-thinking-2025-05-14"];
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const clientOptions: any = {
 				baseURL: model.baseUrl,
 				dangerouslyAllowBrowser: true,
@@ -452,13 +462,16 @@ function streamCustomAnthropic(
 				if (event.type === "message_start") {
 					output.usage.input = event.message.usage.input_tokens || 0;
 					output.usage.output = event.message.usage.output_tokens || 0;
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					output.usage.cacheRead = (event.message.usage as any).cache_read_input_tokens || 0;
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					output.usage.cacheWrite = (event.message.usage as any).cache_creation_input_tokens || 0;
 					output.usage.totalTokens =
 						output.usage.input + output.usage.output + output.usage.cacheRead + output.usage.cacheWrite;
 					calculateCost(model, output.usage);
 				} else if (event.type === "content_block_start") {
 					if (event.content_block.type === "text") {
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 						output.content.push({ type: "text", text: "", index: event.index } as any);
 						stream.push({ type: "text_start", contentIndex: output.content.length - 1, partial: output });
 					} else if (event.content_block.type === "thinking") {
@@ -467,6 +480,7 @@ function streamCustomAnthropic(
 							thinking: "",
 							thinkingSignature: "",
 							index: event.index,
+							// biome-ignore lint/suspicious/noExplicitAny: migration
 						} as any);
 						stream.push({ type: "thinking_start", contentIndex: output.content.length - 1, partial: output });
 					} else if (event.content_block.type === "tool_use") {
@@ -479,6 +493,7 @@ function streamCustomAnthropic(
 							arguments: {},
 							partialJson: "",
 							index: event.index,
+							// biome-ignore lint/suspicious/noExplicitAny: migration
 						} as any);
 						stream.push({ type: "toolcall_start", contentIndex: output.content.length - 1, partial: output });
 					}
@@ -499,8 +514,10 @@ function streamCustomAnthropic(
 							partial: output,
 						});
 					} else if (event.delta.type === "input_json_delta" && block.type === "toolCall") {
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 						(block as any).partialJson += event.delta.partial_json;
 						try {
+							// biome-ignore lint/suspicious/noExplicitAny: migration
 							block.arguments = JSON.parse((block as any).partialJson);
 						} catch {}
 						stream.push({
@@ -510,6 +527,7 @@ function streamCustomAnthropic(
 							partial: output,
 						});
 					} else if (event.delta.type === "signature_delta" && block.type === "thinking") {
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 						block.thinkingSignature = (block.thinkingSignature || "") + (event.delta as any).signature;
 					}
 				} else if (event.type === "content_block_stop") {
@@ -517,6 +535,7 @@ function streamCustomAnthropic(
 					const block = blocks[index];
 					if (!block) continue;
 
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					delete (block as any).index;
 					if (block.type === "text") {
 						stream.push({ type: "text_end", contentIndex: index, content: block.text, partial: output });
@@ -524,18 +543,26 @@ function streamCustomAnthropic(
 						stream.push({ type: "thinking_end", contentIndex: index, content: block.thinking, partial: output });
 					} else if (block.type === "toolCall") {
 						try {
+							// biome-ignore lint/suspicious/noExplicitAny: migration
 							block.arguments = JSON.parse((block as any).partialJson);
 						} catch {}
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 						delete (block as any).partialJson;
 						stream.push({ type: "toolcall_end", contentIndex: index, toolCall: block, partial: output });
 					}
 				} else if (event.type === "message_delta") {
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					if ((event.delta as any).stop_reason) {
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 						output.stopReason = mapStopReason((event.delta as any).stop_reason);
 					}
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					output.usage.input = (event.usage as any).input_tokens || 0;
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					output.usage.output = (event.usage as any).output_tokens || 0;
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					output.usage.cacheRead = (event.usage as any).cache_read_input_tokens || 0;
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					output.usage.cacheWrite = (event.usage as any).cache_creation_input_tokens || 0;
 					output.usage.totalTokens =
 						output.usage.input + output.usage.output + output.usage.cacheRead + output.usage.cacheWrite;
@@ -550,6 +577,7 @@ function streamCustomAnthropic(
 			stream.push({ type: "done", reason: output.stopReason as "stop" | "length" | "toolUse", message: output });
 			stream.end();
 		} catch (error) {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			for (const block of output.content) delete (block as any).index;
 			output.stopReason = options?.signal?.aborted ? "aborted" : "error";
 			output.errorMessage = error instanceof Error ? error.message : JSON.stringify(error);

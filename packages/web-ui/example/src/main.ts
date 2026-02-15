@@ -79,7 +79,9 @@ const generateTitle = (messages: AgentMessage[]): string => {
 	if (typeof content === "string") {
 		text = content;
 	} else {
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const textBlocks = content.filter((c: any) => c.type === "text");
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		text = textBlocks.map((c: any) => c.text || "").join(" ");
 	}
 
@@ -94,7 +96,9 @@ const generateTitle = (messages: AgentMessage[]): string => {
 };
 
 const shouldSaveSession = (messages: AgentMessage[]): boolean => {
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	const hasUserMsg = messages.some((m: any) => m.role === "user" || m.role === "user-with-attachments");
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	const hasAssistantMsg = messages.some((m: any) => m.role === "assistant");
 	return hasUserMsg && hasAssistantMsg;
 };
@@ -178,6 +182,7 @@ Feel free to use these tools when needed to provide accurate and helpful respons
 		convertToLlm: customConvertToLlm,
 	});
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	agentUnsubscribe = agent.subscribe((event: any) => {
 		if (event.type === "state-update") {
 			const messages = event.state.messages;

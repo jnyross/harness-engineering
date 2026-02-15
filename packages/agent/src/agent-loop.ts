@@ -292,6 +292,7 @@ async function streamAssistantResponse(
  * Execute tool calls from an assistant message.
  */
 async function executeToolCalls(
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	tools: AgentTool<any>[] | undefined,
 	assistantMessage: AssistantMessage,
 	signal: AbortSignal | undefined,
@@ -313,6 +314,7 @@ async function executeToolCalls(
 			args: toolCall.arguments,
 		});
 
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		let result: AgentToolResult<any>;
 		let isError = false;
 
@@ -381,6 +383,7 @@ function skipToolCall(
 	toolCall: Extract<AssistantMessage["content"][number], { type: "toolCall" }>,
 	stream: EventStream<AgentEvent, AgentMessage[]>,
 ): ToolResultMessage {
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	const result: AgentToolResult<any> = {
 		content: [{ type: "text", text: "Skipped due to queued user message." }],
 		details: {},

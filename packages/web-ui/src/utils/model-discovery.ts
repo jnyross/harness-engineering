@@ -1,5 +1,5 @@
 import { LMStudioClient } from "@lmstudio/sdk";
-import type { Model } from "@mariozechner/pi-ai";
+import type { Api, Model } from "@mariozechner/pi-ai";
 import { Ollama } from "ollama/browser";
 
 /**
@@ -8,7 +8,7 @@ import { Ollama } from "ollama/browser";
  * @param apiKey - Optional API key (currently unused by Ollama)
  * @returns Array of discovered models
  */
-export async function discoverOllamaModels(baseUrl: string, _apiKey?: string): Promise<Model<any>[]> {
+export async function discoverOllamaModels(baseUrl: string, _apiKey?: string): Promise<Model<Api>[]> {
 	try {
 		// Create Ollama client
 		const ollama = new Ollama({ host: baseUrl });
@@ -17,7 +17,8 @@ export async function discoverOllamaModels(baseUrl: string, _apiKey?: string): P
 		const { models } = await ollama.list();
 
 		// Fetch details for each model and convert to Model format
-		const ollamaModelPromises: Promise<Model<any> | null>[] = models.map(async (model: any) => {
+		// biome-ignore lint/suspicious/noExplicitAny: migration
+		const ollamaModelPromises: Promise<Model<Api> | null>[] = models.map(async (model: any) => {
 			try {
 				// Get model details
 				const details = await ollama.show({
@@ -25,6 +26,7 @@ export async function discoverOllamaModels(baseUrl: string, _apiKey?: string): P
 				});
 
 				// Check capabilities - filter out models that don't support tools
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				const capabilities: string[] = (details as any).capabilities || [];
 				if (!capabilities.includes("tools")) {
 					console.debug(`Skipping model ${model.name}: does not support tools`);
@@ -32,6 +34,7 @@ export async function discoverOllamaModels(baseUrl: string, _apiKey?: string): P
 				}
 
 				// Extract model info
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				const modelInfo: any = details.model_info || {};
 
 				// Get context window size - look for architecture-specific keys
@@ -43,9 +46,10 @@ export async function discoverOllamaModels(baseUrl: string, _apiKey?: string): P
 				const maxTokens = contextWindow * 10;
 
 				// Ollama only supports completions API
-				const ollamaModel: Model<any> = {
+				const ollamaModel: Model<Api> = {
 					id: model.name,
 					name: model.name,
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					api: "openai-completions" as any,
 					provider: "", // Will be set by caller
 					baseUrl: `${baseUrl}/v1`,
@@ -69,7 +73,7 @@ export async function discoverOllamaModels(baseUrl: string, _apiKey?: string): P
 		});
 
 		const results = await Promise.all(ollamaModelPromises);
-		return results.filter((m): m is Model<any> => m !== null);
+		return results.filter((m): m is Model<Api> => m !== null);
 	} catch (err) {
 		console.error("Failed to discover Ollama models:", err);
 		throw new Error(`Ollama discovery failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -82,7 +86,7 @@ export async function discoverOllamaModels(baseUrl: string, _apiKey?: string): P
  * @param apiKey - Optional API key
  * @returns Array of discovered models
  */
-export async function discoverLlamaCppModels(baseUrl: string, apiKey?: string): Promise<Model<any>[]> {
+export async function discoverLlamaCppModels(baseUrl: string, apiKey?: string): Promise<Model<Api>[]> {
 	try {
 		const headers: HeadersInit = {
 			"Content-Type": "application/json",
@@ -107,14 +111,16 @@ export async function discoverLlamaCppModels(baseUrl: string, apiKey?: string): 
 			throw new Error("Invalid response format from llama.cpp server");
 		}
 
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		return data.data.map((model: any) => {
 			// llama.cpp doesn't always provide context window info
 			const contextWindow = model.context_length || 8192;
 			const maxTokens = model.max_tokens || 4096;
 
-			const llamaModel: Model<any> = {
+			const llamaModel: Model<Api> = {
 				id: model.id,
 				name: model.id,
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				api: "openai-completions" as any,
 				provider: "", // Will be set by caller
 				baseUrl: `${baseUrl}/v1`,
@@ -144,7 +150,7 @@ export async function discoverLlamaCppModels(baseUrl: string, apiKey?: string): 
  * @param apiKey - Optional API key
  * @returns Array of discovered models
  */
-export async function discoverVLLMModels(baseUrl: string, apiKey?: string): Promise<Model<any>[]> {
+export async function discoverVLLMModels(baseUrl: string, apiKey?: string): Promise<Model<Api>[]> {
 	try {
 		const headers: HeadersInit = {
 			"Content-Type": "application/json",
@@ -169,14 +175,16 @@ export async function discoverVLLMModels(baseUrl: string, apiKey?: string): Prom
 			throw new Error("Invalid response format from vLLM server");
 		}
 
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		return data.data.map((model: any) => {
 			// vLLM provides max_model_len which is the context window
 			const contextWindow = model.max_model_len || 8192;
 			const maxTokens = Math.min(contextWindow, 4096); // Cap max tokens
 
-			const vllmModel: Model<any> = {
+			const vllmModel: Model<Api> = {
 				id: model.id,
 				name: model.id,
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				api: "openai-completions" as any,
 				provider: "", // Will be set by caller
 				baseUrl: `${baseUrl}/v1`,
@@ -206,7 +214,7 @@ export async function discoverVLLMModels(baseUrl: string, apiKey?: string): Prom
  * @param apiKey - Optional API key (unused for LM Studio SDK)
  * @returns Array of discovered models
  */
-export async function discoverLMStudioModels(baseUrl: string, _apiKey?: string): Promise<Model<any>[]> {
+export async function discoverLMStudioModels(baseUrl: string, _apiKey?: string): Promise<Model<Api>[]> {
 	try {
 		// Extract host and port from baseUrl
 		const url = new URL(baseUrl);
@@ -226,9 +234,10 @@ export async function discoverLMStudioModels(baseUrl: string, _apiKey?: string):
 				// Use 10x context length like Ollama does
 				const maxTokens = contextWindow;
 
-				const lmStudioModel: Model<any> = {
+				const lmStudioModel: Model<Api> = {
 					id: model.path,
 					name: model.displayName || model.path,
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					api: "openai-completions" as any,
 					provider: "", // Will be set by caller
 					baseUrl: `${baseUrl}/v1`,
@@ -263,7 +272,7 @@ export async function discoverModels(
 	type: "ollama" | "llama.cpp" | "vllm" | "lmstudio",
 	baseUrl: string,
 	apiKey?: string,
-): Promise<Model<any>[]> {
+): Promise<Model<Api>[]> {
 	switch (type) {
 		case "ollama":
 			return discoverOllamaModels(baseUrl, apiKey);

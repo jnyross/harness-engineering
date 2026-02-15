@@ -46,9 +46,11 @@ describe.skipIf(!API_KEY)("Compaction extensions", () => {
 	});
 
 	function createExtension(
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		onBeforeCompact?: (event: SessionBeforeCompactEvent) => { cancel?: boolean; compaction?: any } | undefined,
 		onCompact?: (event: SessionCompactEvent) => void,
 	): Extension {
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		const handlers = new Map<string, ((event: any, ctx: any) => Promise<any>)[]>();
 
 		handlers.set("session_before_compact", [
@@ -228,6 +230,7 @@ describe.skipIf(!API_KEY)("Compaction extensions", () => {
 		const throwingExtension: Extension = {
 			path: "throwing-extension",
 			resolvedPath: "/test/throwing-extension.ts",
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			handlers: new Map<string, ((event: any, ctx: any) => Promise<any>)[]>([
 				[
 					"session_before_compact",
@@ -276,6 +279,7 @@ describe.skipIf(!API_KEY)("Compaction extensions", () => {
 		const extension1: Extension = {
 			path: "extension1",
 			resolvedPath: "/test/extension1.ts",
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			handlers: new Map<string, ((event: any, ctx: any) => Promise<any>)[]>([
 				[
 					"session_before_compact",
@@ -306,6 +310,7 @@ describe.skipIf(!API_KEY)("Compaction extensions", () => {
 		const extension2: Extension = {
 			path: "extension2",
 			resolvedPath: "/test/extension2.ts",
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			handlers: new Map<string, ((event: any, ctx: any) => Promise<any>)[]>([
 				[
 					"session_before_compact",

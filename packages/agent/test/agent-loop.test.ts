@@ -469,6 +469,7 @@ describe("agentLoopContinue with AgentMessage", () => {
 		// Should NOT have user message events (that's the key difference from agentLoop)
 		const messageEndEvents = events.filter((e) => e.type === "message_end");
 		expect(messageEndEvents.length).toBe(1);
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		expect((messageEndEvents[0] as any).message.role).toBe("assistant");
 	});
 
@@ -498,9 +499,11 @@ describe("agentLoopContinue with AgentMessage", () => {
 				// Convert custom to user message
 				return messages
 					.map((m) => {
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 						if ((m as any).role === "custom") {
 							return {
 								role: "user" as const,
+								// biome-ignore lint/suspicious/noExplicitAny: migration
 								content: (m as any).text,
 								timestamp: m.timestamp,
 							};

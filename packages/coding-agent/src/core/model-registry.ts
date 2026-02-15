@@ -25,6 +25,7 @@ import { getAgentDir } from "../config.js";
 import type { AuthStorage } from "./auth-storage.js";
 import { clearConfigValueCache, resolveConfigValue, resolveHeaders } from "./resolve-config-value.js";
 
+// biome-ignore lint/suspicious/noExplicitAny: migration
 const Ajv = (AjvModule as any).default || AjvModule;
 
 // Schema for OpenRouter routing preferences
@@ -347,6 +348,7 @@ export class ModelRegistry {
 			const validate = ajv.compile(ModelsConfigSchema);
 			if (!validate(config)) {
 				const errors =
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					validate.errors?.map((e: any) => `  - ${e.instancePath || "root"}: ${e.message}`).join("\n") ||
 					"Unknown schema error";
 				return emptyCustomModelsResult(`Invalid models.json schema:\n${errors}\n\nFile: ${modelsJsonPath}`);

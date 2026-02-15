@@ -76,6 +76,7 @@ import { createReadTool, type ReadToolOptions, readTool } from "./read.js";
 import { createWriteTool, writeTool } from "./write.js";
 
 /** Tool type (AgentTool from pi-ai) */
+// biome-ignore lint/suspicious/noExplicitAny: migration
 export type Tool = AgentTool<any>;
 
 // Default tools for full access mode (using process.cwd())

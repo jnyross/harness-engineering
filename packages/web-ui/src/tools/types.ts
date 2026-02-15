@@ -6,6 +6,7 @@ export interface ToolRenderResult {
 	isCustom: boolean; // true = no card wrapper, false = wrap in card
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: migration
 export interface ToolRenderer<TParams = any, TDetails = any> {
 	render(
 		params: TParams | undefined,

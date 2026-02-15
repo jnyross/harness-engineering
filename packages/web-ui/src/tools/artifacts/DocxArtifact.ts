@@ -78,6 +78,7 @@ export class DocxArtifact extends ArtifactElement {
 		`;
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	override async updated(changedProperties: Map<string, any>) {
 		super.updated(changedProperties);
 
@@ -180,6 +181,7 @@ export class DocxArtifact extends ArtifactElement {
 				}
 			`;
 			container.appendChild(style);
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 		} catch (error: any) {
 			console.error("Error rendering DOCX:", error);
 			this.error = error?.message || i18n("Failed to load document");

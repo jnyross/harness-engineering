@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { Agent, type AgentMessage, type ThinkingLevel } from "@mariozechner/pi-agent-core";
-import type { Message, Model } from "@mariozechner/pi-ai";
+import type { Api, Message, Model } from "@mariozechner/pi-ai";
 import { getAgentDir, getDocsPath } from "../config.js";
 import { AgentSession } from "./agent-session.js";
 import { AuthStorage } from "./auth-storage.js";
@@ -50,11 +50,11 @@ export interface CreateAgentSessionOptions {
 	modelRegistry?: ModelRegistry;
 
 	/** Model to use. Default: from settings, else first available */
-	model?: Model<any>;
+	model?: Model<Api>;
 	/** Thinking level. Default: from settings, else 'medium' (clamped to model capabilities) */
 	thinkingLevel?: ThinkingLevel;
 	/** Models available for cycling (Ctrl+P in interactive mode) */
-	scopedModels?: Array<{ model: Model<any>; thinkingLevel: ThinkingLevel }>;
+	scopedModels?: Array<{ model: Model<Api>; thinkingLevel: ThinkingLevel }>;
 
 	/** Built-in tools to use. Default: codingTools [read, bash, edit, write] */
 	tools?: Tool[];

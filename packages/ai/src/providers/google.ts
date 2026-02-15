@@ -179,6 +179,7 @@ export const streamGoogle: StreamFunction<"google-generative-ai", GoogleOptions>
 								type: "toolCall",
 								id: toolCallId,
 								name: part.functionCall.name || "",
+								// biome-ignore lint/suspicious/noExplicitAny: migration
 								arguments: (part.functionCall.args as Record<string, any>) ?? {},
 								...(part.thoughtSignature && { thoughtSignature: part.thoughtSignature }),
 							};
@@ -360,6 +361,7 @@ function buildParams(
 		const thinkingConfig: ThinkingConfig = { includeThoughts: true };
 		if (options.thinking.level !== undefined) {
 			// Cast to any since our GoogleThinkingLevel mirrors Google's ThinkingLevel enum values
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			thinkingConfig.thinkingLevel = options.thinking.level as any;
 		} else if (options.thinking.budgetTokens !== undefined) {
 			thinkingConfig.thinkingBudget = options.thinking.budgetTokens;

@@ -129,8 +129,11 @@ async function handleToolCall<TApi extends Api>(model: Model<TApi>, options?: St
 				expect(toolCall.name).toBe("math_operation");
 				JSON.parse(accumulatedToolArgs);
 				expect(toolCall.arguments).not.toBeUndefined();
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				expect((toolCall.arguments as any).a).toBe(15);
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				expect((toolCall.arguments as any).b).toBe(27);
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				expect((toolCall.arguments as any).operation).oneOf(["add", "subtract", "multiply", "divide"]);
 			}
 		}

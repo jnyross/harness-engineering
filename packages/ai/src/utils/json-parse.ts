@@ -7,6 +7,7 @@ import { parse as partialParse } from "partial-json";
  * @param partialJson The partial JSON string from streaming
  * @returns Parsed object or empty object if parsing fails
  */
+// biome-ignore lint/suspicious/noExplicitAny: migration
 export function parseStreamingJson<T = any>(partialJson: string | undefined): T {
 	if (!partialJson || partialJson.trim() === "") {
 		return {} as T;

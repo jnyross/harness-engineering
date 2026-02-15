@@ -54,6 +54,7 @@ export class ProviderKeyInput extends LitElement {
 			// Returning true here for Ollama and friends. Can' know which model to use for testing
 			if (!modelId) return true;
 
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			let model = getModel(provider as any, modelId);
 			if (!model) return false;
 
@@ -71,6 +72,7 @@ export class ProviderKeyInput extends LitElement {
 			const result = await complete(model, context, {
 				apiKey,
 				maxTokens: 200,
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 			} as any);
 
 			return result.stopReason === "stop";

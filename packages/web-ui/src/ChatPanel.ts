@@ -65,6 +65,7 @@ export class ChatPanel extends LitElement {
 				agentInterface: AgentInterface,
 				artifactsPanel: ArtifactsPanel,
 				runtimeProvidersFactory: () => SandboxRuntimeProvider[],
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 			) => AgentTool<any>[];
 		},
 	) {

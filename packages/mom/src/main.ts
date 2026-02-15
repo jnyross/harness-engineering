@@ -267,6 +267,7 @@ const handler: MomHandler = {
 			// Run the agent
 			await ctx.setTyping(true);
 			await ctx.setWorking(true);
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const result = await state.runner.run(ctx as any, state.store);
 			await ctx.setWorking(false);
 

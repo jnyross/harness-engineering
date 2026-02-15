@@ -201,6 +201,7 @@ export function createReadTool(cwd: string, options?: ReadToolOptions): AgentToo
 							}
 
 							resolve({ content, details });
+							// biome-ignore lint/suspicious/noExplicitAny: migration
 						} catch (error: any) {
 							// Clean up abort handler
 							if (signal) {

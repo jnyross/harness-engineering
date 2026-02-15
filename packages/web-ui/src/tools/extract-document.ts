@@ -103,12 +103,14 @@ export function createExtractDocumentTool(): AgentTool<typeof extractDocumentSch
 			try {
 				// Attempt direct fetch first
 				arrayBuffer = await fetchAndProcess(url);
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 			} catch (directError: any) {
 				// If CORS error and proxy is available, retry with proxy
 				if (isCorsError(directError) && tool.corsProxyUrl) {
 					try {
 						const proxiedUrl = tool.corsProxyUrl + encodeURIComponent(url);
 						arrayBuffer = await fetchAndProcess(proxiedUrl);
+						// biome-ignore lint/suspicious/noExplicitAny: migration
 					} catch (proxyError: any) {
 						// Proxy fetch also failed - throw helpful message
 						throw new Error(
@@ -214,6 +216,7 @@ export const extractDocumentRenderer: ToolRenderer<ExtractDocumentParams, Extrac
 			const output =
 				result.content
 					?.filter((c) => c.type === "text")
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					.map((c: any) => c.text)
 					.join("\n") || "";
 

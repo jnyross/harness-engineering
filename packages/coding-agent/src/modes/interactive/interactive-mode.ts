@@ -9,6 +9,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import type { AgentMessage } from "@mariozechner/pi-agent-core";
 import {
+	type Api,
 	type AssistantMessage,
 	getOAuthProviders,
 	type ImageContent,
@@ -3176,7 +3177,7 @@ export class InteractiveMode {
 		this.showModelSelector(searchTerm);
 	}
 
-	private async findExactModelMatch(searchTerm: string): Promise<Model<any> | undefined> {
+	private async findExactModelMatch(searchTerm: string): Promise<Model<Api> | undefined> {
 		const term = searchTerm.trim();
 		if (!term) return undefined;
 
@@ -3203,7 +3204,7 @@ export class InteractiveMode {
 		return exactMatches.length === 1 ? exactMatches[0] : undefined;
 	}
 
-	private async getModelCandidates(): Promise<Model<any>[]> {
+	private async getModelCandidates(): Promise<Model<Api>[]> {
 		if (this.session.scopedModels.length > 0) {
 			return this.session.scopedModels.map((scoped) => scoped.model);
 		}

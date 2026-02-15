@@ -36,6 +36,7 @@ export async function downloadChannel(channelId: string, botToken: string): Prom
 	let channelName = channelId;
 	try {
 		const info = await client.conversations.info({ channel: channelId });
+		// biome-ignore lint/suspicious/noExplicitAny: migration
 		channelName = (info.channel as any)?.name || channelId;
 	} catch {
 		// DM channels don't have names, that's fine

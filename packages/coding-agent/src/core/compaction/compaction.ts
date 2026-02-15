@@ -6,7 +6,7 @@
  */
 
 import type { AgentMessage } from "@mariozechner/pi-agent-core";
-import type { AssistantMessage, Model, Usage } from "@mariozechner/pi-ai";
+import type { Api, AssistantMessage, Model, Usage } from "@mariozechner/pi-ai";
 import { completeSimple } from "@mariozechner/pi-ai";
 import {
 	convertToLlm,
@@ -519,7 +519,7 @@ Keep each section concise. Preserve exact file paths, function names, and error 
  */
 export async function generateSummary(
 	currentMessages: AgentMessage[],
-	model: Model<any>,
+	model: Model<Api>,
 	reserveTokens: number,
 	apiKey: string,
 	signal?: AbortSignal,
@@ -704,7 +704,7 @@ Be concise. Focus on what's needed to understand the kept suffix.`;
  */
 export async function compact(
 	preparation: CompactionPreparation,
-	model: Model<any>,
+	model: Model<Api>,
 	apiKey: string,
 	customInstructions?: string,
 	signal?: AbortSignal,
@@ -775,7 +775,7 @@ export async function compact(
  */
 async function generateTurnPrefixSummary(
 	messages: AgentMessage[],
-	model: Model<any>,
+	model: Model<Api>,
 	reserveTokens: number,
 	apiKey: string,
 	signal?: AbortSignal,

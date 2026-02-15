@@ -855,6 +855,7 @@ export function buildRequest(
 		// Gemini 3 models use thinkingLevel, older models use thinkingBudget
 		if (options.thinking.level !== undefined) {
 			// Cast to any since our GoogleThinkingLevel mirrors Google's ThinkingLevel enum values
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			generationConfig.thinkingConfig.thinkingLevel = options.thinking.level as any;
 		} else if (options.thinking.budgetTokens !== undefined) {
 			generationConfig.thinkingConfig.thinkingBudget = options.thinking.budgetTokens;

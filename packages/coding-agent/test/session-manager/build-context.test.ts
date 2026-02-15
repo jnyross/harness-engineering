@@ -132,10 +132,15 @@ describe("buildSessionContext", () => {
 
 			// Should have: summary + kept (3,4) + after (6,7) = 5 messages
 			expect(ctx.messages).toHaveLength(5);
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctx.messages[0] as any).summary).toContain("Summary of first two turns");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctx.messages[1] as any).content).toBe("second");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctx.messages[2] as any).content[0].text).toBe("response2");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctx.messages[3] as any).content).toBe("third");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctx.messages[4] as any).content[0].text).toBe("response3");
 		});
 
@@ -150,6 +155,7 @@ describe("buildSessionContext", () => {
 
 			// Summary + all messages (1,2,4)
 			expect(ctx.messages).toHaveLength(4);
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctx.messages[0] as any).summary).toContain("Empty summary");
 		});
 
@@ -167,6 +173,7 @@ describe("buildSessionContext", () => {
 
 			// Should use second summary, keep from 4
 			expect(ctx.messages).toHaveLength(4);
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctx.messages[0] as any).summary).toContain("Second summary");
 		});
 	});
@@ -185,10 +192,12 @@ describe("buildSessionContext", () => {
 
 			const ctxA = buildSessionContext(entries, "3");
 			expect(ctxA.messages).toHaveLength(3);
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctxA.messages[2] as any).content).toBe("branch A");
 
 			const ctxB = buildSessionContext(entries, "4");
 			expect(ctxB.messages).toHaveLength(3);
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctxB.messages[2] as any).content).toBe("branch B");
 		});
 
@@ -203,7 +212,9 @@ describe("buildSessionContext", () => {
 			const ctx = buildSessionContext(entries, "5");
 
 			expect(ctx.messages).toHaveLength(4);
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctx.messages[2] as any).summary).toContain("Summary of abandoned work");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctx.messages[3] as any).content).toBe("new direction");
 		});
 
@@ -231,19 +242,29 @@ describe("buildSessionContext", () => {
 			// Main path to 7: summary + kept(3,4) + after(6,7)
 			const ctxMain = buildSessionContext(entries, "7");
 			expect(ctxMain.messages).toHaveLength(5);
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctxMain.messages[0] as any).summary).toContain("Compacted history");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctxMain.messages[1] as any).content).toBe("q2");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctxMain.messages[2] as any).content[0].text).toBe("r2");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctxMain.messages[3] as any).content).toBe("q3");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctxMain.messages[4] as any).content[0].text).toBe("r3");
 
 			// Branch path to 11: 1,2,3 + branch_summary + 11
 			const ctxBranch = buildSessionContext(entries, "11");
 			expect(ctxBranch.messages).toHaveLength(5);
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctxBranch.messages[0] as any).content).toBe("start");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctxBranch.messages[1] as any).content[0].text).toBe("r1");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctxBranch.messages[2] as any).content).toBe("q2");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctxBranch.messages[3] as any).summary).toContain("Tried wrong approach");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			expect((ctxBranch.messages[4] as any).content).toBe("better approach");
 		});
 	});

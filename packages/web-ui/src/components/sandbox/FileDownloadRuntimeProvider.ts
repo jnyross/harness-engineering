@@ -17,6 +17,7 @@ export interface DownloadableFile {
 export class FileDownloadRuntimeProvider implements SandboxRuntimeProvider {
 	private files: DownloadableFile[] = [];
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	getData(): Record<string, any> {
 		// No data needed
 		return {};
@@ -24,7 +25,9 @@ export class FileDownloadRuntimeProvider implements SandboxRuntimeProvider {
 
 	getRuntime(): (sandboxId: string) => void {
 		return (_sandboxId: string) => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
 			(window as any).returnDownloadableFile = async (fileName: string, content: any, mimeType?: string) => {
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				let finalContent: any, finalMimeType: string;
 
 				if (content instanceof Blob) {
@@ -53,7 +56,9 @@ export class FileDownloadRuntimeProvider implements SandboxRuntimeProvider {
 				}
 
 				// Send to extension if in extension context (online mode)
+				// biome-ignore lint/suspicious/noExplicitAny: migration
 				if ((window as any).sendRuntimeMessage) {
+					// biome-ignore lint/suspicious/noExplicitAny: migration
 					const response = await (window as any).sendRuntimeMessage({
 						type: "file-returned",
 						fileName,
@@ -77,6 +82,7 @@ export class FileDownloadRuntimeProvider implements SandboxRuntimeProvider {
 		};
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: migration
 	async handleMessage(message: any, respond: (response: any) => void): Promise<void> {
 		if (message.type === "file-returned") {
 			// Collect file for caller
