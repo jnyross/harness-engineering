@@ -1068,6 +1068,27 @@ to trim env overrides and fallback to defaults when the configured value is blan
 
 **Result:** Gate command overrides now behave robustly for unset/blank env values and avoid confusing empty-command failures.
 
+---
+
+### 62) GPU-type parsing logic was duplicated across pods flows
+
+**Finding:** GPU type extraction (`"NVIDIA H200" -> "H200"`) was duplicated in both `model-configs` selection and known-model compatibility display, increasing drift risk for vendor prefixes/formatting edge cases.
+
+**Action:** Added:
+
+- `packages/pods/src/gpu-name.ts`
+- `packages/pods/test/gpu-name.test.ts`
+
+and updated:
+
+- `packages/pods/src/model-configs.ts`
+- `packages/pods/src/commands/models.ts`
+- `packages/pods/CHANGELOG.md`
+
+to centralize GPU type derivation through `extractGpuType(...)`.
+
+**Result:** GPU compatibility matching and display now share one tested parsing path.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1178,6 +1199,8 @@ to trim env overrides and fallback to defaults when the configured value is blan
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (covers explicit verdict, clear reject, and unparseable-review failure)
 - blank gate env override behavior:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (covers whitespace `PI_TEST_COMMAND` / `PI_VALIDATE_COMMAND` fallback to defaults)
+- GPU type extraction helper coverage:
+  - `npm --workspace "@mariozechner/pi" test -- test/gpu-name.test.ts`
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
