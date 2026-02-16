@@ -23,6 +23,7 @@
 - `pi agent` now rejects pods with invalid SSH command host syntax instead of falling back to localhost endpoint routing.
 - Added regression tests for `pi agent` validation failures on malformed SSH host config and invalid persisted model ports.
 - Updated package `test` script to `tsx --test` so workspace test runs auto-discover tests while still allowing file-level filtering via `npm test -- <pattern>`.
+- Centralized GPU-name parsing in a shared helper used by model config selection and known-model compatibility display, with regression tests.
 
 ### Fixed
 

@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { extractGpuType } from "./gpu-name.js";
 import type { GPU } from "./types.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -43,7 +44,7 @@ export const getModelConfig = (
 	}
 
 	// Extract GPU type from the first GPU name (e.g., "NVIDIA H200" -> "H200")
-	const gpuType = gpus[0]?.name?.replace("NVIDIA", "")?.trim()?.split(" ")[0] || "";
+	const gpuType = extractGpuType(gpus[0]?.name);
 
 	// Find best matching config
 	let bestConfig: ModelConfig | null = null;

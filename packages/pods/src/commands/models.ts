@@ -5,6 +5,7 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { getCliCommand } from "../cli-command.js";
 import { getActivePod, loadConfig, saveConfig } from "../config.js";
+import { extractGpuType } from "../gpu-name.js";
 import { getModelConfig, getModelName, isKnownModel } from "../model-configs.js";
 import { assertValidModelId } from "../model-id.js";
 import { assertValidModelInstanceName, isValidModelInstanceName } from "../model-name.js";
@@ -714,7 +715,7 @@ export const showKnownModels = async () => {
 	if (activePod) {
 		podGpuCount = activePod.pod.gpus.length;
 		// Extract GPU type from name (e.g., "NVIDIA H200" -> "H200")
-		podGpuType = activePod.pod.gpus[0]?.name?.replace("NVIDIA", "")?.trim()?.split(" ")[0] || "";
+		podGpuType = extractGpuType(activePod.pod.gpus[0]?.name);
 
 		console.log(chalk.bold(`Known Models for ${activePod.name} (${podGpuCount}x ${podGpuType || "GPU"}):\n`));
 	} else {
