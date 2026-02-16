@@ -1153,6 +1153,26 @@ to make command-argument parsing preserve empty quoted args and correctly handle
 
 **Result:** Prompt-template argument expansion now handles realistic command input safely and predictably for quoted/escaped edge cases.
 
+---
+
+### 67) extension external-editor command parsing used naive whitespace splits
+
+**Finding:** Extension editor launch (`$EDITOR` / `$VISUAL`) split command strings by plain spaces, which broke quoted editor binaries/arguments (for example editor paths containing spaces).
+
+**Action:** Added:
+
+- `packages/coding-agent/src/utils/parse-command-args.ts`
+
+and updated:
+
+- `packages/coding-agent/src/core/prompt-templates.ts`
+- `packages/coding-agent/src/modes/interactive/components/extension-editor.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to share one shell-style argument parser and apply it to extension external-editor launch command parsing.
+
+**Result:** Extension editor invocation now correctly handles quoted/escaped editor command arguments instead of splitting them incorrectly.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1269,6 +1289,8 @@ to make command-argument parsing preserve empty quoted args and correctly handle
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/resolve-config-value.test.ts` (covers blank-command short-circuit, cache-key normalization, and empty env-var handling)
 - coding-agent prompt-template argument parsing coverage:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-templates.test.ts` (covers escaped quotes/spaces/backslashes and quoted-empty-arg behavior)
+- coding-agent external-editor parser integration coverage:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-templates.test.ts test/interactive-mode-status.test.ts`
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
