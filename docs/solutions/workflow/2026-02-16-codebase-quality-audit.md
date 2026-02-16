@@ -1236,6 +1236,22 @@ to add `parseCommandInvocation(...)` (safe strict parser wrapper) and route both
 
 **Result:** Malformed `$EDITOR`/`$VISUAL` strings now fail safely (no uncaught strict-parse exceptions), with stable UI behavior.
 
+---
+
+### 72) interactive `/export` command parsing broke quoted output paths
+
+**Finding:** Interactive `/export` command handling split input on generic whitespace, so quoted output paths containing spaces were parsed incorrectly.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/interactive-mode.ts`
+- `packages/coding-agent/test/parse-command-args.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to parse `/export` input using shared strict argument parsing and surface syntax errors for malformed quoted input.
+
+**Result:** `/export "path with spaces.html"` style usage now resolves correctly, and malformed quote syntax is handled with a clear error instead of silent misparsing.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1362,6 +1378,8 @@ to add `parseCommandInvocation(...)` (safe strict parser wrapper) and route both
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/parse-command-args.test.ts test/interactive-mode-status.test.ts` (with strict parser mode used by interactive + extension editor launch paths)
 - coding-agent safe invocation parser coverage:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/parse-command-args.test.ts test/interactive-mode-status.test.ts` (includes `parseCommandInvocation` malformed-input guard behavior)
+- coding-agent quoted export-path parser coverage:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/parse-command-args.test.ts test/interactive-mode-status.test.ts` (includes `/export "path with spaces"` argument parsing case)
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
