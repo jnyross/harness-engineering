@@ -739,6 +739,26 @@ to normalize and validate:
 
 **Result:** Invalid option values now fail fast with actionable error messages before any deployment side effects.
 
+---
+
+### 44) custom `--vllm` args were interpolated as raw shell fragments
+
+**Finding:** In model startup flow, custom `--vllm` args were joined with spaces and injected into script content without per-argument shell quoting, which could mis-handle spaces/metacharacters and increase shell injection surface.
+
+**Action:** Added:
+
+- `packages/pods/src/shell-quote.ts`
+- `packages/pods/test/shell-quote.test.ts`
+
+and updated:
+
+- `packages/pods/src/commands/models.ts`
+- `packages/pods/CHANGELOG.md`
+
+to quote each vLLM arg token with safe single-quote escaping before template insertion.
+
+**Result:** Custom vLLM args are now passed as literal arguments (including values with spaces or shell metacharacters) instead of raw shell fragments.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -813,6 +833,8 @@ to normalize and validate:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts start <model> --name qwen --memory abc` (rejected with validation error)
 - context option validation (start command):
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts start <model> --name qwen --context none` (rejected with validation error)
+- shell-quote helper regression tests:
+  - `npm --workspace "@mariozechner/pi" test` (includes `test/shell-quote.test.ts`)
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
