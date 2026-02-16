@@ -15,6 +15,7 @@ const __dirname = dirname(__filename);
 
 const packageJson = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf-8"));
 const MODEL_COMMANDS_WITH_POD = new Set(["start", "stop", "list", "logs", "agent"]);
+const DIRECT_COMMANDS = new Set(["shell", "ssh", "start", "stop", "list", "logs", "agent"]);
 const invokedCommand = process.argv[1] ? basename(process.argv[1]) : undefined;
 const APP_COMMAND =
 	invokedCommand && invokedCommand !== "cli.ts" && invokedCommand !== "cli.js" ? invokedCommand : "pi";
@@ -198,8 +199,11 @@ try {
 			process.exit(1);
 		}
 	} else {
-		// Parse --pod override for model commands
-		const podParseResult = extractPodOverride(args, MODEL_COMMANDS_WITH_POD.has(command));
+		// Parse --pod override only for known direct commands.
+		// Unknown commands should surface "Unknown command" errors, not pod-flag parsing errors.
+		const podParseResult = DIRECT_COMMANDS.has(command)
+			? extractPodOverride(args, MODEL_COMMANDS_WITH_POD.has(command))
+			: { podOverride: undefined, argsWithoutPod: args };
 		const podOverride = podParseResult.podOverride;
 		const commandArgs = podParseResult.argsWithoutPod;
 
