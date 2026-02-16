@@ -321,6 +321,16 @@ to reject conflicting `--provider` and `--model` arguments with explicit guidanc
 
 **Result:** `pi agent <name>` now consistently targets the selected pod model and cannot be accidentally redirected by conflicting flags.
 
+---
+
+### 20) pods dynamic provider name could collide with user-defined providers
+
+**Finding:** A static provider name (`pods-vllm`) risks collisions with persisted/custom provider registrations across repeated runs or user config.
+
+**Action:** Updated `packages/pods/src/commands/prompt.ts` to generate a unique provider name per invocation (prefixed `pods-vllm-...`) and wire that name through extension registration + CLI arguments.
+
+**Result:** Delegated runs are isolated from existing provider namespaces and avoid accidental provider override collisions.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -349,6 +359,8 @@ to reject conflicting `--provider` and `--model` arguments with explicit guidanc
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --list-models pods-vllm`
 - pods reserved flag validation smoke test:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --provider openai`
+- pods unique provider generation smoke test:
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --list-models` (shows `pods-vllm-<random>` entry)
 
 ## Methodology Fit
 
