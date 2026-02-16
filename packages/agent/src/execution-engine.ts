@@ -66,6 +66,7 @@ export class ExecutionEngine {
 			await this.decisionLogger.logDecision({
 				approved: reviewResult.approved,
 				reason: reviewResult.reason,
+				work_summary: reviewResult.workSummary,
 			});
 
 			this.reviewConfig.onReviewResult?.(reviewResult);
@@ -100,7 +101,7 @@ export class ExecutionEngine {
 		messages: AgentMessage[],
 		config: AgentLoopConfig,
 		signal?: AbortSignal,
-	): Promise<{ approved: boolean; reason?: string }> {
+	): Promise<{ approved: boolean; reason?: string; workSummary: string }> {
 		let planContent = "";
 		try {
 			planContent = await fsReadFile(join(this.cwd, this.reviewConfig.planPath), "utf-8");
@@ -132,13 +133,18 @@ export class ExecutionEngine {
 		const reviewText = this.extractAssistantText(reviewMessages);
 
 		if (!reviewText.trim()) {
-			return { approved: false, reason: "Reviewer returned no output" };
+			return {
+				approved: false,
+				reason: "Reviewer returned no output",
+				workSummary,
+			};
 		}
 
 		const parsed = parseReviewResponse(reviewText);
 		return {
 			approved: parsed.approved,
 			reason: parsed.reason,
+			workSummary,
 		};
 	}
 

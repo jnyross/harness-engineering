@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Message, Model } from "@mariozechner/pi-ai";
@@ -170,5 +170,22 @@ describe("ExecutionEngine review flow", () => {
 
 		expect(result.approved).toBe(false);
 		expect(agentLoopMock).toHaveBeenCalledTimes(2);
+	});
+
+	it("logs work summary in decision log entries", async () => {
+		const engine = new ExecutionEngine({
+			cwd: tempDir,
+			reviewConfig: { enabled: true, maxRetries: 1 },
+		});
+		await engine.initialize();
+
+		mockLoopResult([createAssistantToolCallMessage()]);
+		mockLoopResult([createAssistantTextMessage("VERDICT: approved")]);
+
+		await engine.runWithReview([createUserMessage("do task")], context, config);
+
+		const log = readFileSync(join(tempDir, "DECISION_LOG.md"), "utf-8");
+		expect(log).toContain("Work Summary");
+		expect(log).toContain("Called bash with");
 	});
 });
