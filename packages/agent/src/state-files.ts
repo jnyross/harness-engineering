@@ -76,7 +76,11 @@ export function commitState(
 ): void {
 	for (const f of files) {
 		const p = join(cwd, f);
-		if (existsSync(p)) execFileSync("git", ["add", "--", p], { cwd, encoding: "utf-8" });
+		try {
+			execFileSync("git", ["add", "--", p], { cwd, encoding: "utf-8" });
+		} catch {
+			// Ignore missing/untracked paths. Tracked deletions are still staged by git add.
+		}
 	}
 	try {
 		execFileSync("git", ["commit", "-m", message], { cwd, encoding: "utf-8" });

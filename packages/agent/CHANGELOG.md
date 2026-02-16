@@ -11,6 +11,7 @@
 - Replaced destructive `git checkout .` resets in TDD/project loops with `git restore --worktree --source=HEAD -- .`, and changed project-loop commits to stage discovered changed files explicitly before committing.
 - Hardened git command invocation in project/TDD/state loops to use argument-based execution (`git diff`, `git restore`, `git add -- <path>`, `git commit -m ...`, `git tag ...`) instead of shell-composed strings.
 - Project-loop commit staging now accounts for already-staged files (`git diff --cached`) so retries and partial pre-staging are committed reliably.
+- `commitState()` now stages tracked state-file deletions as well as additions/edits, preventing silent misses when state files are removed.
 - Added local Vitest aliasing for `@mariozechner/pi-ai` so agent package tests run from source without requiring prebuilt internal package artifacts.
 - Implemented actual LLM-backed review execution in `ExecutionEngine` (instead of placeholder rejection), wiring reviewer prompt output through the shared review parser.
 - Decision log entries produced by `ExecutionEngine` now include a concise work summary for each review attempt.

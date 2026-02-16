@@ -46,4 +46,22 @@ describe("commitState", () => {
 		commitState("initial", repoDir, [relativePath]);
 		expect(() => commitState("noop", repoDir, [relativePath])).not.toThrow();
 	});
+
+	it("stages and commits tracked file deletions", () => {
+		const repoDir = createGitRepo();
+		const relativePath = "state files/PROJECT STATUS.md";
+		const absolutePath = join(repoDir, relativePath);
+		mkdirSync(join(repoDir, "state files"), { recursive: true });
+		writeFileSync(absolutePath, "status: green\n", "utf-8");
+		commitState("initial", repoDir, [relativePath]);
+
+		rmSync(absolutePath);
+		commitState("remove state file", repoDir, [relativePath]);
+
+		const statusOutput = execFileSync("git", ["show", "--name-status", "--pretty="], {
+			cwd: repoDir,
+			encoding: "utf-8",
+		});
+		expect(statusOutput).toContain(`D\t${relativePath}`);
+	});
 });
