@@ -125,6 +125,34 @@ function runPhaseWithPrompt(
 	return stream.result();
 }
 
+function getChangedFiles(cwd: string): string[] {
+	const tracked = execSync("git diff --name-only", {
+		cwd,
+		encoding: "utf-8",
+	})
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter((line) => line.length > 0);
+
+	const untracked = execSync("git ls-files --others --exclude-standard", {
+		cwd,
+		encoding: "utf-8",
+	})
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter((line) => line.length > 0);
+
+	return Array.from(new Set([...tracked, ...untracked]));
+}
+
+function stageChangedFiles(cwd: string): boolean {
+	const changedFiles = getChangedFiles(cwd);
+	for (const file of changedFiles) {
+		execSync(`git add ${JSON.stringify(file)}`, { cwd, encoding: "utf-8" });
+	}
+	return changedFiles.length > 0;
+}
+
 /**
  * Run the full project loop for a goal. Returns when done or failed.
  */
@@ -186,8 +214,10 @@ export async function projectLoop(options: ProjectLoopOptions): Promise<void> {
 			}
 			if (tddResult.state === "done") {
 				try {
-					execSync("git add -A", { cwd, encoding: "utf-8" });
-					execSync(`git commit -m ${JSON.stringify(`task: ${task.title}`)}`, { cwd, encoding: "utf-8" });
+					const hasChanges = stageChangedFiles(cwd);
+					if (hasChanges) {
+						execSync(`git commit -m ${JSON.stringify(`task: ${task.title}`)}`, { cwd, encoding: "utf-8" });
+					}
 				} catch {
 					// ignore commit failures
 				}
@@ -224,7 +254,7 @@ export async function projectLoop(options: ProjectLoopOptions): Promise<void> {
 		if (iteration < iterations) {
 			try {
 				execSync(`git tag iteration-${iteration}-complete`, { cwd, encoding: "utf-8" });
-				execSync("git checkout .", { cwd, encoding: "utf-8" });
+				execSync("git restore --worktree --source=HEAD -- .", { cwd, encoding: "utf-8" });
 			} catch {
 				// ignore
 			}

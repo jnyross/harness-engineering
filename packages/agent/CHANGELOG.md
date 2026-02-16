@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Reviewer prompt and parser now support explicit three-outcome verdicts (`approved`, `needs_fixes`, `rejected`) while preserving compatibility with legacy `[APPROVE]`/`[REJECT]` output tags.
+
+### Fixed
+
+- Replaced destructive `git checkout .` resets in TDD/project loops with `git restore --worktree --source=HEAD -- .`, and changed project-loop commits to stage discovered changed files explicitly before committing.
+
 ## [0.52.12] - 2026-02-13
 
 ### Added

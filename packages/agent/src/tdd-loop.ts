@@ -186,7 +186,7 @@ export async function tddLoop(task: TddTask, options: TddLoopOptions): Promise<T
 		// needs_fixes
 		if (redoCount < maxRedoRounds) {
 			try {
-				execSync("git checkout .", { cwd, encoding: "utf-8" });
+				execSync("git restore --worktree --source=HEAD -- .", { cwd, encoding: "utf-8" });
 			} catch {
 				// ignore
 			}
