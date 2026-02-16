@@ -331,6 +331,21 @@ to reject conflicting `--provider` and `--model` arguments with explicit guidanc
 
 **Result:** Delegated runs are isolated from existing provider namespaces and avoid accidental provider override collisions.
 
+---
+
+### 21) pods docs/help text did not reflect reserved flag behavior
+
+**Finding:** After enforcing reserved `--provider`/`--model` behavior for `pi agent`, user-facing help text still implied all coding-agent flags were supported unconditionally.
+
+**Action:** Updated:
+
+- `packages/pods/src/cli.ts` help output
+- `packages/pods/README.md`
+
+to clearly state that `--provider` and `--model` are managed by `pi` in pods agent mode.
+
+**Result:** CLI/docs now match runtime behavior, reducing confusion and support friction.
+
 ## Validation Evidence
 
 - Root quality gate passes:
