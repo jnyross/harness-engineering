@@ -2,7 +2,7 @@
 import chalk from "chalk";
 import { spawn } from "child_process";
 import { readFileSync } from "fs";
-import { dirname, join } from "path";
+import { basename, dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { listModels, showKnownModels, startModel, stopAllModels, stopModel, viewLogs } from "./commands/models.js";
 import { listPods, removePodCommand, setupPod, switchActivePod } from "./commands/pods.js";
@@ -15,33 +15,36 @@ const __dirname = dirname(__filename);
 
 const packageJson = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf-8"));
 const MODEL_COMMANDS_WITH_POD = new Set(["start", "stop", "list", "logs", "agent"]);
+const invokedCommand = process.argv[1] ? basename(process.argv[1]) : undefined;
+const APP_COMMAND =
+	invokedCommand && invokedCommand !== "cli.ts" && invokedCommand !== "cli.js" ? invokedCommand : "pi";
 
 function printHelp() {
-	console.log(`pi v${packageJson.version} - Manage vLLM deployments on GPU pods
+	console.log(`${APP_COMMAND} v${packageJson.version} - Manage vLLM deployments on GPU pods
 
 Pod Management:
-  pi pods setup <name> "<ssh>" --mount "<mount>"    Setup pod with mount command
+  ${APP_COMMAND} pods setup <name> "<ssh>" --mount "<mount>"    Setup pod with mount command
     Options:
       --vllm release    Install latest vLLM release >=0.10.0 (default)
       --vllm nightly    Install vLLM nightly build (latest features)
       --vllm gpt-oss    Install vLLM 0.10.1+gptoss with PyTorch nightly (GPT-OSS only)
-  pi pods                                           List all pods (* = active)
-  pi pods active <name>                             Switch active pod
-  pi pods remove <name>                             Remove pod from local config
-  pi shell [<name>]                                 Open shell on pod (active or specified)
-  pi ssh [<name>] "<command>"                       Run SSH command on pod
+  ${APP_COMMAND} pods                                           List all pods (* = active)
+  ${APP_COMMAND} pods active <name>                             Switch active pod
+  ${APP_COMMAND} pods remove <name>                             Remove pod from local config
+  ${APP_COMMAND} shell [<name>]                                 Open shell on pod (active or specified)
+  ${APP_COMMAND} ssh [<name>] "<command>"                       Run SSH command on pod
 
 Model Management:
-  pi start <model> --name <name> [options]          Start a model
+  ${APP_COMMAND} start <model> --name <name> [options]          Start a model
     --memory <percent>   GPU memory allocation (30%, 50%, 90%)
     --context <size>     Context window (4k, 8k, 16k, 32k, 64k, 128k)
     --gpus <count>       Number of GPUs to use (predefined models only)
     --vllm <args...>     Pass remaining args to vLLM (ignores other options)
-  pi stop [<name>]                                  Stop model (or all if no name)
-  pi list                                           List running models
-  pi logs <name>                                    Stream model logs
-  pi agent <name> ["<message>"...] [options]        Chat with model using agent & tools
-  pi agent <name> [options]                         Interactive chat mode
+  ${APP_COMMAND} stop [<name>]                                  Stop model (or all if no name)
+  ${APP_COMMAND} list                                           List running models
+  ${APP_COMMAND} logs <name>                                    Stream model logs
+  ${APP_COMMAND} agent <name> ["<message>"...] [options]        Chat with model using agent & tools
+  ${APP_COMMAND} agent <name> [options]                         Interactive chat mode
     --continue, -c       Continue previous session
     --json              Output as JSONL
     (Most pi-agent options are supported; --provider/--model are managed by pi pods)
@@ -136,7 +139,7 @@ try {
 
 			if (!name || !sshCmd) {
 				console.error(
-					'Usage: pi pods setup <name> "<ssh>" [--mount "<mount>"] [--models-path <path>] [--vllm release|nightly|gpt-oss]',
+					`Usage: ${APP_COMMAND} pods setup <name> "<ssh>" [--mount "<mount>"] [--models-path <path>] [--vllm release|nightly|gpt-oss]`,
 				);
 				process.exit(1);
 			}
@@ -178,7 +181,7 @@ try {
 			// pi pods active <name>
 			const name = args[2];
 			if (!name) {
-				console.error("Usage: pi pods active <name>");
+				console.error(`Usage: ${APP_COMMAND} pods active <name>`);
 				process.exit(1);
 			}
 			switchActivePod(name);
@@ -186,7 +189,7 @@ try {
 			// pi pods remove <name>
 			const name = args[2];
 			if (!name) {
-				console.error("Usage: pi pods remove <name>");
+				console.error(`Usage: ${APP_COMMAND} pods remove <name>`);
 				process.exit(1);
 			}
 			removePodCommand(name);
@@ -221,7 +224,7 @@ try {
 					if (podName) {
 						console.error(chalk.red(`Pod '${podName}' not found`));
 					} else {
-						console.error(chalk.red("No active pod. Use 'pi pods active <name>' to set one."));
+						console.error(chalk.red(`No active pod. Use '${APP_COMMAND} pods active <name>' to set one.`));
 					}
 					process.exit(1);
 				}
@@ -253,7 +256,7 @@ try {
 					podName = commandArgs[1];
 					sshCommand = commandArgs[2];
 				} else {
-					console.error('Usage: pi ssh [<name>] "<command>"');
+					console.error(`Usage: ${APP_COMMAND} ssh [<name>] "<command>"`);
 					process.exit(1);
 				}
 
@@ -273,7 +276,7 @@ try {
 					if (podName) {
 						console.error(chalk.red(`Pod '${podName}' not found`));
 					} else {
-						console.error(chalk.red("No active pod. Use 'pi pods active <name>' to set one."));
+						console.error(chalk.red(`No active pod. Use '${APP_COMMAND} pods active <name>' to set one.`));
 					}
 					process.exit(1);
 				}
@@ -368,7 +371,7 @@ try {
 				// pi logs <name>
 				const name = commandArgs[1];
 				if (!name) {
-					console.error("Usage: pi logs <name>");
+					console.error(`Usage: ${APP_COMMAND} logs <name>`);
 					process.exit(1);
 				}
 				await viewLogs(name, { pod: podOverride });
@@ -378,7 +381,7 @@ try {
 				// pi agent <name> [messages...] [options]
 				const name = commandArgs[1];
 				if (!name) {
-					console.error("Usage: pi agent <name> [messages...] [options]");
+					console.error(`Usage: ${APP_COMMAND} agent <name> [messages...] [options]`);
 					process.exit(1);
 				}
 
