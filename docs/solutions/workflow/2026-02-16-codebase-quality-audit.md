@@ -796,6 +796,28 @@ by adding `shellExport()`:
 
 **Result:** Runtime env injection now uses validated names and quote-safe value handling, reducing shell interpolation risk in startup flows.
 
+---
+
+### 47) pod names lacked consistent input validation
+
+**Finding:** Pod names supplied to `pods setup/active/remove`, `shell/ssh`, and model-command `--pod` overrides were accepted without normalized constraints, allowing confusing/unportable identifiers and uneven validation behavior.
+
+**Action:** Added:
+
+- `packages/pods/src/pod-name.ts`
+- `packages/pods/test/pod-name.test.ts`
+
+and updated:
+
+- `packages/pods/src/cli.ts`
+- `packages/pods/src/commands/pods.ts`
+- `packages/pods/README.md`
+- `packages/pods/CHANGELOG.md`
+
+to enforce pod-name constraints (`[A-Za-z0-9._-]`, 1-64 chars, leading alphanumeric) across CLI parsing and command handlers.
+
+**Result:** Pod naming is now validated consistently across setup, overrides, and direct pod-targeting commands with clear actionable errors.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -876,6 +898,10 @@ by adding `shellExport()`:
   - `npm --workspace "@mariozechner/pi" test` (includes `test/pods-setup-command.test.ts`)
 - shell export helper regression tests:
   - `npm --workspace "@mariozechner/pi" test` (includes `test/shell-quote.test.ts` `shellExport` cases)
+- pod-name validation (pods active):
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts pods active "bad name"` (rejected with validation error)
+- pod-name validation (`--pod` override):
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts list --pod "bad name"` (rejected with validation error)
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
