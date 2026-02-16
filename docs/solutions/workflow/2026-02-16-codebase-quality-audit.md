@@ -638,6 +638,25 @@ to centralize `findReservedFlag()` and `createProviderName()` behind reusable he
 
 **Result:** Prompt argument parsing and provider-name generation now have explicit regression coverage and are easier to maintain independently from delegation flow code.
 
+---
+
+### 39) pods README advertised removed `pi-agent` command
+
+**Finding:** `packages/pods/README.md` still documented `pi-agent` as a command provided by `@mariozechner/pi`, but the pods package publishes `pi-pods` and standalone agent usage is provided by `@mariozechner/pi-coding-agent`.
+
+**Action:** Updated:
+
+- `packages/pods/README.md`
+- `packages/pods/CHANGELOG.md`
+
+to replace `pi-agent` examples with explicit standalone coding-agent invocation:
+
+- `npx --yes --package @mariozechner/pi-coding-agent pi ...`
+
+and clarified environment variable wording accordingly.
+
+**Result:** Standalone-agent documentation now aligns with actual package boundaries and avoids directing users to a non-existent command.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -698,6 +717,8 @@ to centralize `findReservedFlag()` and `createProviderName()` behind reusable he
   - `npx tsx --test packages/pods/test/cli-args.test.ts`
 - pods CLI command-context regression tests:
   - `npx tsx --test packages/pods/test/cli-command.test.ts packages/pods/test/cli-args.test.ts packages/pods/test/prompt-args.test.ts`
+- standalone coding-agent invocation validation:
+  - `cd /tmp && npx --yes --package @mariozechner/pi-coding-agent pi --help`
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
