@@ -1203,6 +1203,21 @@ to add strict parsing mode for command invocation contexts and enforce strict pa
 
 **Result:** Extension editor command launch now rejects malformed quoted command strings instead of invoking partially parsed arguments.
 
+---
+
+### 70) interactive external-editor command parsing still used naive splitting
+
+**Finding:** While extension editor launch had been moved to shared parser logic, interactive-mode external editor launch still split `$EDITOR`/`$VISUAL` by literal spaces.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/interactive-mode.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to reuse shared parser logic in strict mode for interactive external-editor launch as well, including guard handling for invalid parsed command values.
+
+**Result:** Both interactive and extension editor launch paths now use consistent strict parsing for quoted/escaped editor command arguments.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1325,6 +1340,8 @@ to add strict parsing mode for command invocation contexts and enforce strict pa
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/parse-command-args.test.ts test/prompt-templates.test.ts`
 - coding-agent strict parser behavior coverage:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/parse-command-args.test.ts test/interactive-mode-status.test.ts`
+- coding-agent interactive editor parser integration:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/parse-command-args.test.ts test/interactive-mode-status.test.ts` (with strict parser mode used by interactive + extension editor launch paths)
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
