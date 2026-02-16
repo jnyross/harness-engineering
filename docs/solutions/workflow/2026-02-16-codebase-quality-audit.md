@@ -1005,6 +1005,22 @@ to catch parse errors in `runInCwd(...)` and surface them as structured gate fai
 
 **Result:** Mechanical gates now fail deterministically with structured output even when command configuration is malformed.
 
+---
+
+### 58) red gate treated test-command invocation errors as successful "red" outcomes
+
+**Finding:** Red gate semantics (`exitCode !== 0`) could mistakenly pass when test command invocation itself failed (e.g., malformed command syntax), which is not equivalent to meaningful failing tests.
+
+**Action:** Updated:
+
+- `packages/agent/src/gates.ts`
+- `packages/agent/test/gates.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to track invocation errors explicitly and fail red gate with diagnostics when the test command cannot be executed.
+
+**Result:** Red gate now distinguishes "tests failed as expected" from "test command failed to run," improving loop correctness.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1109,6 +1125,8 @@ to catch parse errors in `runInCwd(...)` and surface them as structured gate fai
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (covers quoted parsing + call-time env command overrides)
 - gate malformed-command behavior:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (includes unmatched-quote command syntax failure case)
+- red gate invocation-error behavior:
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (ensures malformed test command does not count as passing red gate)
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
