@@ -70,3 +70,24 @@ export function parseCommandArgs(argsString: string, options?: { strict?: boolea
 
 	return args;
 }
+
+export interface CommandInvocation {
+	binary: string;
+	args: string[];
+}
+
+/**
+ * Parse a command invocation (binary + args) with strict quote validation.
+ * Returns undefined when the command cannot be parsed safely.
+ */
+export function parseCommandInvocation(command: string): CommandInvocation | undefined {
+	try {
+		const [binary, ...args] = parseCommandArgs(command, { strict: true });
+		if (!binary) {
+			return undefined;
+		}
+		return { binary, args };
+	} catch {
+		return undefined;
+	}
+}

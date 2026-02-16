@@ -72,7 +72,7 @@ import type { TruncationResult } from "../../core/tools/truncate.js";
 import { getChangelogPath, getNewEntries, parseChangelog } from "../../utils/changelog.js";
 import { copyToClipboard } from "../../utils/clipboard.js";
 import { extensionForImageMimeType, readClipboardImage } from "../../utils/clipboard-image.js";
-import { parseCommandArgs } from "../../utils/parse-command-args.js";
+import { parseCommandInvocation } from "../../utils/parse-command-args.js";
 import { ensureTool } from "../../utils/tools-manager.js";
 import { ArminComponent } from "./components/armin.js";
 import { AssistantMessageComponent } from "./components/assistant-message.js";
@@ -2740,6 +2740,11 @@ export class InteractiveMode {
 			this.showWarning("No editor configured. Set $VISUAL or $EDITOR environment variable.");
 			return;
 		}
+		const invocation = parseCommandInvocation(editorCmd);
+		if (!invocation) {
+			this.showWarning("Invalid editor command. Set $VISUAL or $EDITOR to a valid executable.");
+			return;
+		}
 
 		const currentText = this.editor.getExpandedText?.() ?? this.editor.getText();
 		const tmpFile = path.join(os.tmpdir(), `pi-editor-${Date.now()}.pi.md`);
@@ -2751,15 +2756,8 @@ export class InteractiveMode {
 			// Stop TUI to release terminal
 			this.ui.stop();
 
-			// Parse command to support quoted editor args and strict validation
-			const [editor, ...editorArgs] = parseCommandArgs(editorCmd, { strict: true });
-			if (!editor) {
-				this.showWarning("Invalid editor command. Set $VISUAL or $EDITOR to a valid executable.");
-				return;
-			}
-
 			// Spawn editor synchronously with inherited stdio for interactive editing
-			const result = spawnSync(editor, [...editorArgs, tmpFile], {
+			const result = spawnSync(invocation.binary, [...invocation.args, tmpFile], {
 				stdio: "inherit",
 			});
 

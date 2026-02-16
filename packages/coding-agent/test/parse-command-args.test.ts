@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { parseCommandArgs } from "../src/utils/parse-command-args.js";
+import { parseCommandArgs, parseCommandInvocation } from "../src/utils/parse-command-args.js";
 
 describe("parseCommandArgs utility", () => {
 	test("parses plain whitespace-delimited arguments", () => {
@@ -28,5 +28,23 @@ describe("parseCommandArgs utility", () => {
 
 	test("preserves legacy non-strict behavior for unmatched quotes", () => {
 		expect(parseCommandArgs(`"unterminated`)).toEqual(["unterminated"]);
+	});
+});
+
+describe("parseCommandInvocation", () => {
+	test("parses binary and argument list", () => {
+		expect(parseCommandInvocation(`code --wait "file with spaces.md"`)).toEqual({
+			binary: "code",
+			args: ["--wait", "file with spaces.md"],
+		});
+	});
+
+	test("returns undefined for empty invocations", () => {
+		expect(parseCommandInvocation("")).toBeUndefined();
+		expect(parseCommandInvocation("   ")).toBeUndefined();
+	});
+
+	test("returns undefined for malformed quoted invocation", () => {
+		expect(parseCommandInvocation(`"unterminated`)).toBeUndefined();
 	});
 });
