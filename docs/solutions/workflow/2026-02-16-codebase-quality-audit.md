@@ -249,6 +249,23 @@ to reset retry state per invocation and added regression coverage for sequential
 
 **Result:** Retry budgets are now applied independently per run, preventing unintended early exits in reused engine instances.
 
+---
+
+### 15) `pi agent` command in pods package was unimplemented
+
+**Finding:** `packages/pods/src/commands/prompt.ts` terminated with `throw new Error("Not implemented")`, so `pi agent <model> ...` could never run.
+
+**Action:** Implemented agent delegation flow in `prompt.ts`:
+
+- build coding-agent CLI arguments (`--base-url`, `--model`, `--api`, `--api-key`, `--system-prompt`, plus user args),
+- run coding-agent CLI via:
+  - monorepo source fallback (`npx tsx packages/coding-agent/src/cli.ts`) during local development,
+  - installed dist CLI when available,
+  - npm package execution fallback (`npx --package @mariozechner/pi-coding-agent pi ...`) otherwise,
+- return actionable error guidance when delegation fails.
+
+**Result:** `pi agent` now executes the coding-agent CLI instead of hard-failing with a placeholder error.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -269,6 +286,8 @@ to reset retry state per invocation and added regression coverage for sequential
   - `npm --workspace "@mariozechner/pi-agent-core" test -- reviewer.test.ts`
 - web-ui package + example checks pass:
   - `cd packages/web-ui && npm run check`
+- pods `pi agent` delegation smoke test succeeds with temporary config:
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --help`
 
 ## Methodology Fit
 
