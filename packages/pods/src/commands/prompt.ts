@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import { spawn } from "child_process";
+import { randomBytes } from "crypto";
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { createRequire } from "module";
 import { tmpdir } from "os";
@@ -19,7 +20,7 @@ interface PromptOptions {
 const require = createRequire(import.meta.url);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MONOREPO_CODING_AGENT_CLI = join(__dirname, "../../../coding-agent/src/cli.ts");
-const PODS_PROVIDER_NAME = "pods-vllm";
+const PODS_PROVIDER_PREFIX = "pods-vllm";
 const PODS_AGENT_API_KEY_ENV = "PI_PODS_AGENT_API_KEY";
 const RESERVED_AGENT_FLAGS = ["--provider", "--model"];
 
@@ -44,6 +45,10 @@ function findReservedFlag(userArgs: string[]): string | undefined {
 		}
 	}
 	return undefined;
+}
+
+function createProviderName(): string {
+	return `${PODS_PROVIDER_PREFIX}-${randomBytes(4).toString("hex")}`;
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -114,6 +119,7 @@ Current working directory: ${process.cwd()}`;
 	const args: string[] = [];
 	let tempExtensionDir: string | undefined;
 	const resolvedApiKey = opts.apiKey || process.env.PI_API_KEY || "dummy";
+	const providerName = createProviderName();
 
 	// Add base configuration that we control
 	const api = modelConfig.model.toLowerCase().includes("gpt-oss") ? "openai-responses" : "openai-completions";
@@ -139,7 +145,7 @@ Current working directory: ${process.cwd()}`;
 	const extensionPath = join(tempExtensionDir, "pods-provider.mjs");
 	writeFileSync(
 		extensionPath,
-		`export default function (pi) { pi.registerProvider(${JSON.stringify(PODS_PROVIDER_NAME)}, ${JSON.stringify(providerConfig)}); }\n`,
+		`export default function (pi) { pi.registerProvider(${JSON.stringify(providerName)}, ${JSON.stringify(providerConfig)}); }\n`,
 		"utf-8",
 	);
 
@@ -147,7 +153,7 @@ Current working directory: ${process.cwd()}`;
 		"--extension",
 		extensionPath,
 		"--provider",
-		PODS_PROVIDER_NAME,
+		providerName,
 		"--model",
 		modelConfig.model,
 		"--system-prompt",
