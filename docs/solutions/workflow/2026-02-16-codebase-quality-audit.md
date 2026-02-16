@@ -843,6 +843,24 @@ with graceful handling/reporting in list/stop/stopAll flows.
 
 **Result:** Malformed persisted state is now detected and surfaced safely before any shell interpolation/remote process control.
 
+---
+
+### 49) ssh command parsing relied on naive whitespace splitting
+
+**Finding:** SSH command strings from config were split with `string.split(" ")`, which breaks quoted arguments (e.g., identity files with spaces) and could mis-parse option/value pairs used by shell/ssh/scp flows.
+
+**Action:** Updated:
+
+- `packages/pods/src/ssh.ts`
+- `packages/pods/src/cli.ts`
+- `packages/pods/src/commands/models.ts`
+- `packages/pods/test/ssh-parse.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+by introducing shell-aware token parsing (`parseShellCommand`) and host extraction helpers used consistently by SSH execution, SCP handling, interactive shell launch, and model URL/log host resolution.
+
+**Result:** SSH command handling is now robust for quoted/escaped arguments and avoids brittle tokenization behavior.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -929,6 +947,8 @@ with graceful handling/reporting in list/stop/stopAll flows.
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts list --pod "bad name"` (rejected with validation error)
 - malformed persisted pid/port state handling:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts list` with tampered config (reports invalid pid/port, avoids shell interpolation)
+- SSH command parsing regression coverage:
+  - `npm --workspace "@mariozechner/pi" test` (includes `test/ssh-parse.test.ts` quote/escape/host extraction cases)
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
