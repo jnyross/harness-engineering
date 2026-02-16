@@ -809,10 +809,10 @@ describe("Generate E2E Tests", () => {
 				await handleStreaming(llm);
 			});
 
-			it("should handle thinking mode", { retry: 3 }, async () => {
-				// FIXME Skip for now, getting a 422 status code, need to test with official SDK
-				// const llm = getModel("mistral", "magistral-medium-latest");
-				// await handleThinking(llm, { reasoningEffort: "medium" });
+			it.skip("should handle thinking mode", { retry: 3 }, async () => {
+				// Disabled until mistral reasoning-mode requests are validated against official SDK behavior.
+				const thinkingLlm = getModel("mistral", "magistral-medium-latest");
+				await handleThinking(thinkingLlm, { reasoningEffort: "medium" });
 			});
 
 			it("should handle multi-turn with thinking and tools", { retry: 3 }, async () => {
