@@ -2,8 +2,9 @@
 import chalk from "chalk";
 import { spawn } from "child_process";
 import { readFileSync } from "fs";
-import { basename, dirname, join } from "path";
+import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { extractPodOverride, resolveAppCommand } from "./cli-args.js";
 import { listModels, showKnownModels, startModel, stopAllModels, stopModel, viewLogs } from "./commands/models.js";
 import { listPods, removePodCommand, setupPod, switchActivePod } from "./commands/pods.js";
 import { promptModel } from "./commands/prompt.js";
@@ -16,9 +17,7 @@ const __dirname = dirname(__filename);
 const packageJson = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf-8"));
 const MODEL_COMMANDS_WITH_POD = new Set(["start", "stop", "list", "logs", "agent"]);
 const DIRECT_COMMANDS = new Set(["shell", "ssh", "start", "stop", "list", "logs", "agent"]);
-const invokedCommand = process.argv[1] ? basename(process.argv[1]) : undefined;
-const APP_COMMAND =
-	invokedCommand && invokedCommand !== "cli.ts" && invokedCommand !== "cli.js" ? invokedCommand : "pi";
+const APP_COMMAND = resolveAppCommand(process.argv[1]);
 
 function printHelp() {
 	console.log(`${APP_COMMAND} v${packageJson.version} - Manage vLLM deployments on GPU pods
@@ -56,58 +55,6 @@ Environment:
   HF_TOKEN         HuggingFace token for model downloads
   PI_API_KEY     API key for vLLM endpoints
   PI_CONFIG_DIR    Config directory (default: ~/.pi)`);
-}
-
-function extractPodOverride(
-	cliArgs: string[],
-	allowPodOverride: boolean,
-): { podOverride?: string; argsWithoutPod: string[] } {
-	const argsWithoutPod: string[] = [];
-	let podOverride: string | undefined;
-
-	for (let i = 0; i < cliArgs.length; i++) {
-		const arg = cliArgs[i];
-
-		if (arg === "--") {
-			argsWithoutPod.push(...cliArgs.slice(i));
-			break;
-		}
-
-		if (arg === "--pod") {
-			if (!allowPodOverride) {
-				throw new Error("Option --pod is only supported for model commands (start, stop, list, logs, agent).");
-			}
-			const podName = cliArgs[i + 1];
-			if (!podName || podName.startsWith("--")) {
-				throw new Error("Option --pod requires a pod name.");
-			}
-			if (podOverride) {
-				throw new Error("Option --pod may only be provided once.");
-			}
-			podOverride = podName;
-			i++;
-			continue;
-		}
-
-		if (arg.startsWith("--pod=")) {
-			if (!allowPodOverride) {
-				throw new Error("Option --pod is only supported for model commands (start, stop, list, logs, agent).");
-			}
-			const podName = arg.slice("--pod=".length).trim();
-			if (!podName) {
-				throw new Error("Option --pod requires a pod name.");
-			}
-			if (podOverride) {
-				throw new Error("Option --pod may only be provided once.");
-			}
-			podOverride = podName;
-			continue;
-		}
-
-		argsWithoutPod.push(arg);
-	}
-
-	return { podOverride, argsWithoutPod };
 }
 
 // Parse command line arguments
