@@ -1,2 +1,9 @@
 #!/bin/sh
+
+STAGED_LINTABLE_FILES=$(git diff --cached --name-only --diff-filter=ACMR | rg '^packages/.+\.(ts|tsx)$|^packages/coding-agent/examples/.+\.ts$' || true)
+
+if [ -z "$STAGED_LINTABLE_FILES" ]; then
+	exit 0
+fi
+
 npx biome check --staged --error-on-warnings
