@@ -934,6 +934,8 @@ to use argument-based git invocation (`execFileSync("git", ["diff"...])`, `["res
 
 **Result:** Agent loop/state git operations now avoid shell-string command composition and are robust for edge-case paths.
 
+**Test hygiene follow-up:** state-file git fixture setup now uses `git init --quiet --initial-branch=main` to remove noisy branch-name hints and keep agent test output focused on assertions.
+
 ---
 
 ### 54) `pi agent` could silently fallback to localhost for malformed SSH host config
