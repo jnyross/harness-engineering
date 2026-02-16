@@ -8,6 +8,7 @@ import { getActivePod, loadConfig, saveConfig } from "../config.js";
 import { getModelConfig, getModelName, isKnownModel } from "../model-configs.js";
 import { assertValidModelId } from "../model-id.js";
 import { assertValidModelInstanceName, isValidModelInstanceName } from "../model-name.js";
+import { joinShellArgs } from "../shell-quote.js";
 import { sshExec } from "../ssh.js";
 import type { Pod } from "../types.js";
 
@@ -215,13 +216,14 @@ export const startModel = async (
 	// Read and customize model_run.sh script with our values
 	const scriptPath = join(dirname(fileURLToPath(import.meta.url)), "../../scripts/model_run.sh");
 	let scriptContent = readFileSync(scriptPath, "utf-8");
+	const escapedVllmArgs = joinShellArgs(vllmArgs);
 
-	// Replace placeholders - no escaping needed, heredoc with 'EOF' is literal
+	// Replace placeholders in a literal heredoc payload. vLLM args are shell-quoted token-by-token.
 	scriptContent = scriptContent
 		.replace("{{MODEL_ID}}", modelId)
 		.replace("{{NAME}}", name)
 		.replace("{{PORT}}", String(port))
-		.replace("{{VLLM_ARGS}}", vllmArgs.join(" "));
+		.replace("{{VLLM_ARGS}}", escapedVllmArgs);
 
 	// Upload customized script
 	await sshExec(
