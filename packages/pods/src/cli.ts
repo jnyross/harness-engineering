@@ -14,6 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const packageJson = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf-8"));
+const MODEL_COMMANDS_WITH_POD = new Set(["start", "stop", "list", "logs", "agent"]);
 
 function printHelp() {
 	console.log(`pi v${packageJson.version} - Manage vLLM deployments on GPU pods
@@ -53,7 +54,10 @@ Environment:
   PI_CONFIG_DIR    Config directory (default: ~/.pi)`);
 }
 
-function extractPodOverride(cliArgs: string[]): { podOverride?: string; argsWithoutPod: string[] } {
+function extractPodOverride(
+	cliArgs: string[],
+	allowPodOverride: boolean,
+): { podOverride?: string; argsWithoutPod: string[] } {
 	const argsWithoutPod: string[] = [];
 	let podOverride: string | undefined;
 
@@ -66,6 +70,9 @@ function extractPodOverride(cliArgs: string[]): { podOverride?: string; argsWith
 		}
 
 		if (arg === "--pod") {
+			if (!allowPodOverride) {
+				throw new Error("Option --pod is only supported for model commands (start, stop, list, logs, agent).");
+			}
 			const podName = cliArgs[i + 1];
 			if (!podName || podName.startsWith("--")) {
 				throw new Error("Option --pod requires a pod name.");
@@ -79,6 +86,9 @@ function extractPodOverride(cliArgs: string[]): { podOverride?: string; argsWith
 		}
 
 		if (arg.startsWith("--pod=")) {
+			if (!allowPodOverride) {
+				throw new Error("Option --pod is only supported for model commands (start, stop, list, logs, agent).");
+			}
 			const podName = arg.slice("--pod=".length).trim();
 			if (!podName) {
 				throw new Error("Option --pod requires a pod name.");
@@ -186,7 +196,7 @@ try {
 		}
 	} else {
 		// Parse --pod override for model commands
-		const podParseResult = extractPodOverride(args);
+		const podParseResult = extractPodOverride(args, MODEL_COMMANDS_WITH_POD.has(command));
 		const podOverride = podParseResult.podOverride;
 		const commandArgs = podParseResult.argsWithoutPod;
 
