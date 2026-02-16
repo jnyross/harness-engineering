@@ -378,6 +378,31 @@ and let `cli.ts` consistently render and exit non-zero.
 
 **Result:** Error handling remains centralized at the CLI entrypoint, and validation failures now follow the same cleanup and reporting path as other delegation errors.
 
+---
+
+### 24) pods `--pod` override parsing was permissive and format-limited
+
+**Finding:** `packages/pods/src/cli.ts` only parsed `--pod <name>` with `indexOf`, which:
+
+- ignored `--pod=<name>` form,
+- silently allowed `--pod` without a value,
+- allowed duplicate `--pod` flags to pass through ambiguously.
+
+**Action:** Added explicit `extractPodOverride()` parsing in:
+
+- `packages/pods/src/cli.ts`
+
+with behavior to:
+
+- support both `--pod <name>` and `--pod=<name>`,
+- reject missing `--pod` values,
+- reject duplicate `--pod` usage,
+- route command argument parsing through pod-flag-cleaned args.
+
+Also normalized top-level CLI error rendering to print the message directly in red.
+
+**Result:** Pod override parsing is deterministic and user errors are surfaced early with clear messages.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -406,6 +431,12 @@ and let `cli.ts` consistently render and exit non-zero.
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model`
 - pods missing-model validation smoke test:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent missing-model --json`
+- pods missing `--pod` value validation smoke test:
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --pod`
+- pods `--pod=<name>` parsing validation smoke test:
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --pod=missing-pod`
+- pods duplicate `--pod` validation smoke test:
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --pod demo --pod other`
 - pods dynamic provider registration + key handling smoke test:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --list-models pods-vllm`
 - pods reserved flag validation smoke test:
