@@ -431,6 +431,23 @@ to allow pod-override parsing only for model commands (`start`, `stop`, `list`, 
 
 **Result:** CLI behavior now matches documented command semantics and avoids silent/confusing flag acceptance on unrelated commands.
 
+---
+
+### 27) root README package metadata and check guidance drifted from current behavior
+
+**Finding:** Root documentation still listed pods package as `@mariozechner/pi-pods` and stated `npm run check` required a prior build, both of which were stale after audit fixes and package naming updates.
+
+**Action:** Updated:
+
+- `README.md`
+
+to:
+
+- reference the correct package name `@mariozechner/pi` for pods,
+- state that `npm run check` should pass from a fresh install without `npm run build`.
+
+**Result:** Top-level contributor guidance now matches the current repository/package behavior.
+
 ## Validation Evidence
 
 - Root quality gate passes:
