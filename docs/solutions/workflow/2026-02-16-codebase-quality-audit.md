@@ -818,6 +818,31 @@ to enforce pod-name constraints (`[A-Za-z0-9._-]`, 1-64 chars, leading alphanume
 
 **Result:** Pod naming is now validated consistently across setup, overrides, and direct pod-targeting commands with clear actionable errors.
 
+---
+
+### 48) persisted model state was trusted without PID/port sanity checks
+
+**Finding:** `list`, `stop`, and `stopAll` flows interpolated persisted `pid`/`port` values from config into remote shell checks/kill commands without runtime sanity checks, which is risky when local config is stale or manually edited.
+
+**Action:** Added:
+
+- `packages/pods/src/process-identifiers.ts`
+- `packages/pods/test/process-identifiers.test.ts`
+
+and updated:
+
+- `packages/pods/src/commands/models.ts`
+- `packages/pods/CHANGELOG.md`
+
+to enforce integer range validation for:
+
+- PIDs (`1..2147483647`)
+- ports (`1..65535`)
+
+with graceful handling/reporting in list/stop/stopAll flows.
+
+**Result:** Malformed persisted state is now detected and surfaced safely before any shell interpolation/remote process control.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -902,6 +927,8 @@ to enforce pod-name constraints (`[A-Za-z0-9._-]`, 1-64 chars, leading alphanume
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts pods active "bad name"` (rejected with validation error)
 - pod-name validation (`--pod` override):
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts list --pod "bad name"` (rejected with validation error)
+- malformed persisted pid/port state handling:
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts list` with tampered config (reports invalid pid/port, avoids shell interpolation)
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
