@@ -3,7 +3,7 @@
  * Supports Brooks Loop (--iterations N). Emits ProjectLoopEvent and writes NDJSON to eventsPath.
  */
 
-import { execFileSync, execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { agentLoop } from "./agent-loop.js";
 import { greenGate, validateDecomposition } from "./gates.js";
 import { createProjectEvent, type ProjectLoopPhase, writeProjectEvent } from "./project-events.js";
@@ -128,18 +128,12 @@ function runPhaseWithPrompt(
 function getChangedFiles(cwd: string): string[] {
 	// Gather both tracked modifications and untracked files to avoid broad staging
 	// commands such as "git add -A" inside automated loops.
-	const tracked = execSync("git diff --name-only", {
-		cwd,
-		encoding: "utf-8",
-	})
+	const tracked = execFileSync("git", ["diff", "--name-only"], { cwd, encoding: "utf-8" })
 		.split(/\r?\n/)
 		.map((line) => line.trim())
 		.filter((line) => line.length > 0);
 
-	const untracked = execSync("git ls-files --others --exclude-standard", {
-		cwd,
-		encoding: "utf-8",
-	})
+	const untracked = execFileSync("git", ["ls-files", "--others", "--exclude-standard"], { cwd, encoding: "utf-8" })
 		.split(/\r?\n/)
 		.map((line) => line.trim())
 		.filter((line) => line.length > 0);
@@ -256,7 +250,7 @@ export async function projectLoop(options: ProjectLoopOptions): Promise<void> {
 		if (iteration < iterations) {
 			try {
 				execFileSync("git", ["tag", `iteration-${iteration}-complete`], { cwd, encoding: "utf-8" });
-				execSync("git restore --worktree --source=HEAD -- .", { cwd, encoding: "utf-8" });
+				execFileSync("git", ["restore", "--worktree", "--source=HEAD", "--", "."], { cwd, encoding: "utf-8" });
 			} catch {
 				// ignore
 			}

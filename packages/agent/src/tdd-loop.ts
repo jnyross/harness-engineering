@@ -3,7 +3,7 @@
  * Mechanical gates (red, green, review) are deterministic; LLM states use agentLoop with phase prompts.
  */
 
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { agentLoop } from "./agent-loop.js";
 import type { GateResult, ReviewOutcome } from "./gates.js";
 import { greenGate, redTestGate, validateReview } from "./gates.js";
@@ -151,7 +151,7 @@ export async function tddLoop(task: TddTask, options: TddLoopOptions): Promise<T
 		emit(onEvent, state);
 		let diff = "";
 		try {
-			diff = execSync("git diff", { cwd, encoding: "utf-8", maxBuffer: 2 * 1024 * 1024 });
+			diff = execFileSync("git", ["diff"], { cwd, encoding: "utf-8", maxBuffer: 2 * 1024 * 1024 });
 		} catch {
 			// not a git repo or no diff
 		}
@@ -186,7 +186,7 @@ export async function tddLoop(task: TddTask, options: TddLoopOptions): Promise<T
 		// needs_fixes
 		if (redoCount < maxRedoRounds) {
 			try {
-				execSync("git restore --worktree --source=HEAD -- .", { cwd, encoding: "utf-8" });
+				execFileSync("git", ["restore", "--worktree", "--source=HEAD", "--", "."], { cwd, encoding: "utf-8" });
 			} catch {
 				// ignore
 			}
