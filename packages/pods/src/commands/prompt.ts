@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import { spawn } from "child_process";
 import { randomBytes } from "crypto";
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from "fs";
@@ -78,19 +77,16 @@ export async function promptModel(modelName: string, userArgs: string[], opts: P
 
 	if (!activePod) {
 		if (opts.pod) {
-			console.error(chalk.red(`Pod '${opts.pod}' not found.`));
-		} else {
-			console.error(chalk.red("No active pod. Use 'pi pods active <name>' to set one."));
+			throw new Error(`Pod '${opts.pod}' not found.`);
 		}
-		process.exit(1);
+		throw new Error("No active pod. Use 'pi pods active <name>' to set one.");
 	}
 
 	const { name: podName, pod } = activePod;
 	const modelConfig = pod.models[modelName];
 
 	if (!modelConfig) {
-		console.error(chalk.red(`Model '${modelName}' not found on pod '${podName}'`));
-		process.exit(1);
+		throw new Error(`Model '${modelName}' not found on pod '${podName}'`);
 	}
 
 	// Extract host from SSH string
