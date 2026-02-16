@@ -3,16 +3,21 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { commitState } from "../src/state-files.js";
+import { commitState, readState, writeState } from "../src/state-files.js";
 
 const createdDirs: string[] = [];
 
 function createGitRepo(): string {
-	const dir = mkdtempSync(join(tmpdir(), "pi-agent-state-files-"));
-	createdDirs.push(dir);
+	const dir = createTempDir("pi-agent-state-files-");
 	execFileSync("git", ["init", "--quiet", "--initial-branch=main"], { cwd: dir, encoding: "utf-8" });
 	execFileSync("git", ["config", "user.name", "State Files Test"], { cwd: dir, encoding: "utf-8" });
 	execFileSync("git", ["config", "user.email", "state-files-test@example.com"], { cwd: dir, encoding: "utf-8" });
+	return dir;
+}
+
+function createTempDir(prefix: string): string {
+	const dir = mkdtempSync(join(tmpdir(), prefix));
+	createdDirs.push(dir);
 	return dir;
 }
 
@@ -63,5 +68,14 @@ describe("commitState", () => {
 			encoding: "utf-8",
 		});
 		expect(statusOutput).toContain(`D\t${relativePath}`);
+	});
+});
+
+describe("writeState", () => {
+	it("creates nested parent directories", () => {
+		const dir = createTempDir("pi-agent-state-write-");
+		const relativePath = "nested space/PROJECT_STATUS.md";
+		writeState(relativePath, "ok\n", dir);
+		expect(readState(relativePath, dir)).toBe("ok\n");
 	});
 });

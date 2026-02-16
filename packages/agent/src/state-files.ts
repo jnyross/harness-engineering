@@ -5,7 +5,7 @@
 
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 export const STATE_FILES = {
 	PROJECT_STATUS: "PROJECT_STATUS.md",
@@ -36,7 +36,7 @@ export function writeState(
 	cwd: string = process.cwd(),
 ): void {
 	const path = join(cwd, typeof fileName === "string" ? fileName : STATE_FILES[fileName]);
-	mkdirSync(join(path, ".."), { recursive: true });
+	mkdirSync(dirname(path), { recursive: true });
 	writeFileSync(path, content, "utf-8");
 }
 
