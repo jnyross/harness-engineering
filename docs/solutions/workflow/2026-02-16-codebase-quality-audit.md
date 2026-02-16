@@ -257,12 +257,13 @@ to reset retry state per invocation and added regression coverage for sequential
 
 **Action:** Implemented agent delegation flow in `prompt.ts`:
 
-- build coding-agent CLI arguments (`--base-url`, `--model`, `--api`, `--api-key`, `--system-prompt`, plus user args),
+- create a temporary extension that registers a dynamic `pods-vllm` provider pointing at the selected pod/model endpoint,
+- invoke coding-agent with that provider/model plus the pod-specific system prompt and user arguments,
 - run coding-agent CLI via:
   - monorepo source fallback (`npx tsx packages/coding-agent/src/cli.ts`) during local development,
   - installed dist CLI when available,
   - npm package execution fallback (`npx --package @mariozechner/pi-coding-agent pi ...`) otherwise,
-- return actionable error guidance when delegation fails.
+- return actionable error guidance when delegation fails and clean up temporary provider artifacts after execution.
 
 **Result:** `pi agent` now executes the coding-agent CLI instead of hard-failing with a placeholder error.
 
@@ -300,8 +301,8 @@ with clear error messaging for unknown pod names.
   - `npm --workspace "@mariozechner/pi-agent-core" test -- reviewer.test.ts`
 - web-ui package + example checks pass:
   - `cd packages/web-ui && npm run check`
-- pods `pi agent` delegation smoke test succeeds with temporary config:
-  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --help`
+- pods dynamic provider registration smoke test succeeds with temporary config:
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --list-models pods-vllm`
 - pods missing override validation smoke test:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --pod missing-pod`
 
