@@ -1,5 +1,4 @@
 import { spawn } from "child_process";
-import { randomBytes } from "crypto";
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { createRequire } from "module";
 import { tmpdir } from "os";
@@ -7,6 +6,7 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { getCliCommand } from "../cli-command.js";
 import { getActivePod, loadConfig } from "../config.js";
+import { createProviderName, findReservedFlag } from "./prompt-args.js";
 
 // ────────────────────────────────────────────────────────────────────────────────
 // Types
@@ -20,9 +20,7 @@ interface PromptOptions {
 const require = createRequire(import.meta.url);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MONOREPO_CODING_AGENT_CLI = join(__dirname, "../../../coding-agent/src/cli.ts");
-const PODS_PROVIDER_PREFIX = "pods-vllm";
 const PODS_AGENT_API_KEY_ENV = "PI_PODS_AGENT_API_KEY";
-const RESERVED_AGENT_FLAGS = ["--provider", "--model"];
 
 function resolveLocalCodingAgentCli(): string | undefined {
 	if (existsSync(MONOREPO_CODING_AGENT_CLI)) {
@@ -34,24 +32,6 @@ function resolveLocalCodingAgentCli(): string | undefined {
 	} catch {
 		return undefined;
 	}
-}
-
-function findReservedFlag(userArgs: string[]): string | undefined {
-	for (const arg of userArgs) {
-		if (arg === "--") {
-			break;
-		}
-		for (const flag of RESERVED_AGENT_FLAGS) {
-			if (arg === flag || arg.startsWith(`${flag}=`)) {
-				return flag;
-			}
-		}
-	}
-	return undefined;
-}
-
-function createProviderName(): string {
-	return `${PODS_PROVIDER_PREFIX}-${randomBytes(4).toString("hex")}`;
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
