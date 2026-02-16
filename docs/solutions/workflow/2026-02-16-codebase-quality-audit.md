@@ -600,6 +600,24 @@ Runtime guidance now reads the active command label from shared command context 
 
 **Result:** Help text, errors, and follow-up command hints now consistently reference the command users actually executed.
 
+---
+
+### 37) shared command-context helper needed explicit regression coverage
+
+**Finding:** After introducing dynamic command-context propagation via `cli-command.ts`, there was no direct automated test protecting default/fallback command behavior.
+
+**Action:** Added:
+
+- `packages/pods/test/cli-command.test.ts`
+- `packages/pods/CHANGELOG.md` update
+
+with assertions for:
+
+- default fallback (`pi`) when command context is unset,
+- explicit command propagation via `setCliCommand()` for wrapper/binary flows.
+
+**Result:** Dynamic command-name state now has targeted regression coverage, reducing risk of future message/help drift.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -658,6 +676,8 @@ Runtime guidance now reads the active command label from shared command context 
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts shell --pod demo` (still rejects `--pod`)
 - pods CLI parser regression tests:
   - `npx tsx --test packages/pods/test/cli-args.test.ts`
+- pods CLI command-context regression tests:
+  - `npx tsx --test packages/pods/test/cli-command.test.ts packages/pods/test/cli-args.test.ts`
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
