@@ -346,6 +346,19 @@ to clearly state that `--provider` and `--model` are managed by `pi` in pods age
 
 **Result:** CLI/docs now match runtime behavior, reducing confusion and support friction.
 
+---
+
+### 22) pods package lacked changelog coverage for shipped fixes
+
+**Finding:** `packages/pods` had no `CHANGELOG.md`, so recent pods command fixes were not captured in package release notes.
+
+**Action:** Added:
+
+- `packages/pods/CHANGELOG.md` with `## [Unreleased]` fixed entries for pods agent delegation hardening,
+- `packages/pods/package.json` update to include `CHANGELOG.md` in published package files.
+
+**Result:** pods package now has standard changelog tracking and ships the changelog alongside published artifacts.
+
 ## Validation Evidence
 
 - Root quality gate passes:
