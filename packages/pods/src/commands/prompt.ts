@@ -37,10 +37,24 @@ function resolveLocalCodingAgentCli(): string | undefined {
 
 export async function promptModel(modelName: string, userArgs: string[], opts: PromptOptions = {}) {
 	// Get pod and model configuration
-	const activePod = opts.pod ? { name: opts.pod, pod: loadConfig().pods[opts.pod] } : getActivePod();
+	const activePod = (() => {
+		if (opts.pod) {
+			const config = loadConfig();
+			const pod = config.pods[opts.pod];
+			if (!pod) {
+				return null;
+			}
+			return { name: opts.pod, pod };
+		}
+		return getActivePod();
+	})();
 
 	if (!activePod) {
-		console.error(chalk.red("No active pod. Use 'pi pods active <name>' to set one."));
+		if (opts.pod) {
+			console.error(chalk.red(`Pod '${opts.pod}' not found.`));
+		} else {
+			console.error(chalk.red("No active pod. Use 'pi pods active <name>' to set one."));
+		}
 		process.exit(1);
 	}
 
