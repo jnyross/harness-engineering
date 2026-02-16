@@ -120,6 +120,8 @@ pi list                   # List running models with status
 pi logs <name>            # Stream model logs (tail -f)
 ```
 
+Model instance names (`--name`) must be 1-64 characters and use only `A-Z`, `a-z`, `0-9`, `.`, `_`, or `-`.
+
 ### Agent & Chat Interface
 
 ```bash

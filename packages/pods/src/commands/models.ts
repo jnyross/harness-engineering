@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import { getCliCommand } from "../cli-command.js";
 import { getActivePod, loadConfig, saveConfig } from "../config.js";
 import { getModelConfig, getModelName, isKnownModel } from "../model-configs.js";
+import { assertValidModelInstanceName, isValidModelInstanceName } from "../model-name.js";
 import { sshExec } from "../ssh.js";
 import type { Pod } from "../types.js";
 
@@ -89,6 +90,12 @@ export const startModel = async (
 	},
 ) => {
 	const cliCommand = getCliCommand();
+	try {
+		assertValidModelInstanceName(name);
+	} catch (error) {
+		console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+		process.exit(1);
+	}
 	const { name: podName, pod } = getPod(options.pod);
 
 	// Validation
@@ -419,6 +426,12 @@ WRAPPER
  * Stop a model
  */
 export const stopModel = async (name: string, options: { pod?: string }) => {
+	try {
+		assertValidModelInstanceName(name);
+	} catch (error) {
+		console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+		process.exit(1);
+	}
 	const { name: podName, pod } = getPod(options.pod);
 
 	const model = pod.models[name];
@@ -514,6 +527,11 @@ export const listModels = async (options: { pod?: string }) => {
 	console.log("Verifying processes...");
 	let anyDead = false;
 	for (const name of modelNames) {
+		if (!isValidModelInstanceName(name)) {
+			console.log(chalk.red(`  ${name}: Invalid model name in config (allowed: [A-Za-z0-9._-], 1-64 chars)`));
+			anyDead = true;
+			continue;
+		}
 		const model = pod.models[name];
 		// Check both the wrapper process and if vLLM is responding
 		const checkCmd = `
@@ -560,6 +578,12 @@ export const listModels = async (options: { pod?: string }) => {
  * View model logs
  */
 export const viewLogs = async (name: string, options: { pod?: string }) => {
+	try {
+		assertValidModelInstanceName(name);
+	} catch (error) {
+		console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+		process.exit(1);
+	}
 	const { name: podName, pod } = getPod(options.pod);
 
 	const model = pod.models[name];
