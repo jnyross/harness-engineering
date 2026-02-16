@@ -26,6 +26,10 @@ const SSH_FLAGS_WITH_VALUE = new Set([
 	"-W",
 ]);
 
+function isSshBinary(binary: string): boolean {
+	return /(?:^|[\\/])ssh(?:\.exe)?$/i.test(binary);
+}
+
 function hasAttachedShortFlagValue(arg: string): boolean {
 	if (!arg.startsWith("-") || arg.startsWith("--") || arg.length <= 2) {
 		return false;
@@ -116,7 +120,7 @@ function parseSshInvocation(sshCmd: string): { sshBinary: string; sshArgs: strin
 		throw new Error("Invalid SSH command: command is empty.");
 	}
 	const sshBinary = sshParts[0];
-	if (sshBinary !== "ssh" && !sshBinary.endsWith("/ssh")) {
+	if (!isSshBinary(sshBinary)) {
 		throw new Error(`Invalid SSH command: expected ssh binary, got "${sshBinary}".`);
 	}
 

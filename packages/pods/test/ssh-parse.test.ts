@@ -33,6 +33,10 @@ describe("extractHostFromSshCommand", () => {
 		assert.equal(extractHostFromSshCommand(`ssh -p 2222 -i "~/.ssh/key file" ubuntu@demo.host`), "demo.host");
 		assert.equal(extractHostFromSshCommand("ssh -p2222 ubuntu@demo.host"), "demo.host");
 		assert.equal(extractHostFromSshCommand("/usr/bin/ssh -p 22 ubuntu@demo.host"), "demo.host");
+		assert.equal(
+			extractHostFromSshCommand("C:/Windows/System32/OpenSSH/ssh.exe -p 22 ubuntu@demo.host"),
+			"demo.host",
+		);
 		assert.equal(extractHostFromSshCommand("ssh -o StrictHostKeyChecking=no demo.host"), "demo.host");
 	});
 
