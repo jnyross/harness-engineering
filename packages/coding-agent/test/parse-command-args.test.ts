@@ -21,4 +21,12 @@ describe("parseCommandArgs utility", () => {
 	test("handles escaped backslashes in unquoted args", () => {
 		expect(parseCommandArgs(String.raw`path\\to\\file other`)).toEqual([String.raw`path\to\file`, "other"]);
 	});
+
+	test("throws on unmatched quotes in strict mode", () => {
+		expect(() => parseCommandArgs(`"unterminated`, { strict: true })).toThrow(/Unmatched quote/);
+	});
+
+	test("preserves legacy non-strict behavior for unmatched quotes", () => {
+		expect(parseCommandArgs(`"unterminated`)).toEqual(["unterminated"]);
+	});
 });

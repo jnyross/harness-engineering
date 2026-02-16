@@ -1,7 +1,7 @@
 /**
  * Parse command arguments respecting quoted strings and shell-style escapes.
  */
-export function parseCommandArgs(argsString: string): string[] {
+export function parseCommandArgs(argsString: string, options?: { strict?: boolean }): string[] {
 	const args: string[] = [];
 	let current = "";
 	let inQuote: "'" | '"' | null = null;
@@ -58,6 +58,10 @@ export function parseCommandArgs(argsString: string): string[] {
 
 	if (escaping) {
 		current += "\\";
+	}
+
+	if (inQuote && options?.strict) {
+		throw new Error(`Unmatched quote in command: ${argsString}`);
 	}
 
 	if (tokenStarted) {

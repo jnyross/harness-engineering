@@ -114,7 +114,7 @@ export class ExtensionEditorComponent extends Container {
 			fs.writeFileSync(tmpFile, currentText, "utf-8");
 			this.tui.stop();
 
-			const [editor, ...editorArgs] = parseCommandArgs(editorCmd);
+			const [editor, ...editorArgs] = parseCommandArgs(editorCmd, { strict: true });
 			if (!editor) {
 				return;
 			}
