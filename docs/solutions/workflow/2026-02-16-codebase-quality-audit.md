@@ -930,7 +930,7 @@ to enforce SSH binary validation (`ssh` or `*/ssh`) before SSH/SCP execution pat
 - `packages/agent/test/state-files.test.ts`
 - `packages/agent/CHANGELOG.md`
 
-to use argument-based git invocation (`execFileSync("git", ["diff"...])`, `["restore"...]`, `["add", "--", path]`, `["commit", "-m", message]`, `["tag", ...]`), include cached (`--cached`) file detection in project-loop staging, and added regression tests proving `commitState()` handles file paths with spaces.
+to use argument-based git invocation (`execFileSync("git", ["diff"...])`, `["restore"...]`, `["add", "--", path]`, `["commit", "-m", message]`, `["tag", ...]`), include cached (`--cached`) file detection in project-loop staging, and added regression tests proving `commitState()` handles both path-with-spaces commits and tracked state-file deletions.
 
 **Result:** Agent loop/state git operations now avoid shell-string command composition and are robust for edge-case paths.
 
@@ -1046,7 +1046,7 @@ to require successful host extraction and throw a clear configuration error if t
 - non-ssh binary guard in SSH helpers:
   - `npm --workspace "@mariozechner/pi" test` (includes `test/ssh-parse.test.ts` case validating `sshExec("bash ...")` returns error)
 - agent state-file git invocation regression:
-  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (covers path-with-spaces commit behavior)
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (covers path-with-spaces commits and tracked deletion staging)
 - full agent suite after git-invocation refactor:
   - `npm --workspace "@mariozechner/pi-agent-core" test`
 - `pi agent` malformed SSH host guard:
