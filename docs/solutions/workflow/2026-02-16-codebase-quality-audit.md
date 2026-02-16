@@ -307,6 +307,20 @@ with clear error messaging for unknown pod names.
 
 **Result:** Temporary extension artifacts no longer contain raw API key values.
 
+---
+
+### 19) pods agent command allowed conflicting provider/model overrides
+
+**Finding:** Because user arguments are forwarded to coding-agent, callers could pass `--provider`/`--model` and bypass pod-selected routing.
+
+**Action:** Added reserved-flag validation in:
+
+- `packages/pods/src/commands/prompt.ts`
+
+to reject conflicting `--provider` and `--model` arguments with explicit guidance.
+
+**Result:** `pi agent <name>` now consistently targets the selected pod model and cannot be accidentally redirected by conflicting flags.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -333,6 +347,8 @@ with clear error messaging for unknown pod names.
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --pod missing-pod`
 - pods dynamic provider registration + key handling smoke test:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --list-models pods-vllm`
+- pods reserved flag validation smoke test:
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --provider openai`
 
 ## Methodology Fit
 
