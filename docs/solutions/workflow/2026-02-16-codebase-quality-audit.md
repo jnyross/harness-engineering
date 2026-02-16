@@ -930,7 +930,7 @@ to enforce SSH binary validation (`ssh` or `*/ssh`) before SSH/SCP execution pat
 - `packages/agent/test/state-files.test.ts`
 - `packages/agent/CHANGELOG.md`
 
-to use argument-based git invocation (`execFileSync("git", ["diff"...])`, `["restore"...]`, `["add", "--", path]`, `["commit", "-m", message]`, `["tag", ...]`) and added regression tests proving `commitState()` handles file paths with spaces.
+to use argument-based git invocation (`execFileSync("git", ["diff"...])`, `["restore"...]`, `["add", "--", path]`, `["commit", "-m", message]`, `["tag", ...]`), include cached (`--cached`) file detection in project-loop staging, and added regression tests proving `commitState()` handles file paths with spaces.
 
 **Result:** Agent loop/state git operations now avoid shell-string command composition and are robust for edge-case paths.
 
