@@ -40,4 +40,11 @@ describe("mechanical gates commands", () => {
 		process.env.PI_VALIDATE_COMMAND = `node -e "process.exit(1)"`;
 		expect(greenGate(process.cwd()).passed).toBe(false);
 	});
+
+	it("returns structured failure for invalid command syntax", () => {
+		process.env.PI_VALIDATE_COMMAND = `node -e "unterminated`;
+		const result = greenGate(process.cwd());
+		expect(result.passed).toBe(false);
+		expect(result.output).toMatch(/unmatched quote/i);
+	});
 });

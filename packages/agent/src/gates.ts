@@ -97,7 +97,16 @@ export function parseCommand(command: string): string[] {
 }
 
 function runInCwd(cwd: string, command: string | string[]): { stdout: string; stderr: string; exitCode: number } {
-	const parsedCommand = Array.isArray(command) ? command : parseCommand(command);
+	let parsedCommand: string[];
+	try {
+		parsedCommand = Array.isArray(command) ? command : parseCommand(command);
+	} catch (error) {
+		return {
+			stdout: "",
+			stderr: error instanceof Error ? error.message : String(error),
+			exitCode: 1,
+		};
+	}
 	if (parsedCommand.length === 0) {
 		return { stdout: "", stderr: "Invalid command: command is empty.", exitCode: 1 };
 	}
