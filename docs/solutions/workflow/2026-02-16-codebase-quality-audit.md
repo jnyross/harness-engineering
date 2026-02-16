@@ -989,6 +989,22 @@ to use `dirname(path)` for parent directory creation and added regression covera
 
 **Result:** State-file writing now uses explicit parent-directory derivation with verified nested-path behavior.
 
+---
+
+### 57) invalid gate command syntax could throw instead of returning a gate result
+
+**Finding:** After moving gate execution to parsed argv handling, parse failures (e.g., unmatched quotes in `PI_VALIDATE_COMMAND`) could throw before returning `GateResult`.
+
+**Action:** Updated:
+
+- `packages/agent/src/gates.ts`
+- `packages/agent/test/gates.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to catch parse errors in `runInCwd(...)` and surface them as structured gate failures (`passed: false`, diagnostic output), with regression coverage for invalid command syntax.
+
+**Result:** Mechanical gates now fail deterministically with structured output even when command configuration is malformed.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1091,6 +1107,8 @@ to use `dirname(path)` for parent directory creation and added regression covera
   - `npm --workspace "@mariozechner/pi-agent-core" test`
 - gate command parsing/runtime override coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (covers quoted parsing + call-time env command overrides)
+- gate malformed-command behavior:
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (includes unmatched-quote command syntax failure case)
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
