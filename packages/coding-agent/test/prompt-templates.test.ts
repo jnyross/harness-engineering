@@ -319,8 +319,7 @@ describe("parseCommandArgs", () => {
 	});
 
 	test("should handle quoted empty string", () => {
-		// Note: Empty quotes are skipped by current implementation
-		expect(parseCommandArgs('"" " "')).toEqual([" "]);
+		expect(parseCommandArgs('"" " "')).toEqual(["", " "]);
 	});
 
 	test("should handle arguments with special characters", () => {
@@ -336,8 +335,15 @@ describe("parseCommandArgs", () => {
 	});
 
 	test("should handle escaped quotes inside quoted strings", () => {
-		// Note: This implementation doesn't handle escaped quotes - backslash is literal
-		expect(parseCommandArgs('"quoted \\"text\\""')).toEqual(["quoted \\text\\"]);
+		expect(parseCommandArgs('"quoted \\"text\\""')).toEqual(['quoted "text"']);
+	});
+
+	test("should handle escaped spaces in unquoted arguments", () => {
+		expect(parseCommandArgs(String.raw`first\ arg second`)).toEqual(["first arg", "second"]);
+	});
+
+	test("should handle escaped backslashes", () => {
+		expect(parseCommandArgs(String.raw`path\\to\\file other`)).toEqual([String.raw`path\to\file`, "other"]);
 	});
 
 	test("should handle trailing spaces", () => {
