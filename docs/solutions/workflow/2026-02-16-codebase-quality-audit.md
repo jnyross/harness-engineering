@@ -971,6 +971,22 @@ to:
 
 **Result:** Gate command execution is now argument-safe, deterministic, and supports runtime env overrides consistently.
 
+---
+
+### 56) `writeState()` used path-join parent derivation instead of `dirname`
+
+**Finding:** `packages/agent/src/state-files.ts` created parent directories using `join(path, "..")`, which is less clear and can be brittle compared to direct dirname derivation for nested state-file paths.
+
+**Action:** Updated:
+
+- `packages/agent/src/state-files.ts`
+- `packages/agent/test/state-files.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to use `dirname(path)` for parent directory creation and added regression coverage that nested relative state-file writes succeed.
+
+**Result:** State-file writing now uses explicit parent-directory derivation with verified nested-path behavior.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1073,6 +1089,8 @@ to:
   - `npm --workspace "@mariozechner/pi-agent-core" test`
 - gate command parsing/runtime override coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (covers quoted parsing + call-time env command overrides)
+- nested state-file write coverage:
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
   - `PI_CONFIG_DIR=<tmp> PI_API_KEY=test-key npx tsx packages/pods/src/cli.ts agent demo-model --list-models` with SSH `ssh -o StrictHostKeyChecking=no` (rejected with invalid SSH command error)
 - pods invoked-command guidance in pod listing:
