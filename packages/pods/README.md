@@ -127,6 +127,8 @@ pi-agent --json "What is 2+2?"            # Output event stream as JSONL
 pi-agent -i                                # Interactive mode
 ```
 
+`pi agent` forwards most coding-agent CLI flags. The target provider/model are managed by `pi` from pod configuration, so `--provider` and `--model` are reserved in this mode.
+
 The agent includes tools for file operations (read, list, bash, glob, rg) to test agentic capabilities, particularly useful for code navigation and analysis tasks.
 
 ## Predefined Model Configurations
