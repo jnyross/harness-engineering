@@ -294,6 +294,19 @@ with clear error messaging for unknown pod names.
 
 **Result:** Delegation failures now propagate consistently and do not report false-success exit codes.
 
+---
+
+### 18) pods temporary provider extension wrote resolved API key to disk
+
+**Finding:** The initial dynamic-provider implementation serialized the resolved API key value into the temporary extension file.
+
+**Action:** Hardened `packages/pods/src/commands/prompt.ts` to:
+
+- register provider config with an environment-variable key reference (`PI_PODS_AGENT_API_KEY`),
+- pass the resolved key only via child-process environment.
+
+**Result:** Temporary extension artifacts no longer contain raw API key values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -318,6 +331,8 @@ with clear error messaging for unknown pod names.
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --list-models pods-vllm`
 - pods missing override validation smoke test:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --pod missing-pod`
+- pods dynamic provider registration + key handling smoke test:
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --list-models pods-vllm`
 
 ## Methodology Fit
 
