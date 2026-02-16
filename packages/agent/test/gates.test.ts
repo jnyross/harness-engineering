@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { greenGate, parseCommand, redTestGate } from "../src/gates.js";
+import { greenGate, parseCommand, redTestGate, validateReview } from "../src/gates.js";
 
 const originalTestCommand = process.env.PI_TEST_COMMAND;
 const originalValidateCommand = process.env.PI_VALIDATE_COMMAND;
@@ -54,5 +54,25 @@ describe("mechanical gates commands", () => {
 		const result = greenGate(process.cwd());
 		expect(result.passed).toBe(false);
 		expect(result.output).toMatch(/unmatched quote/i);
+	});
+});
+
+describe("validateReview", () => {
+	it("maps explicit reviewer verdicts to outcomes", () => {
+		const result = validateReview("VERDICT: approved");
+		expect(result.passed).toBe(true);
+		expect(result.outcome).toBe("approved");
+	});
+
+	it("keeps clear reject outcomes parseable", () => {
+		const result = validateReview("[REJECT] Reason: plan drift");
+		expect(result.passed).toBe(true);
+		expect(result.outcome).toBe("rejected");
+	});
+
+	it("fails gate when reviewer output is unparseable", () => {
+		const result = validateReview("this seems mostly fine");
+		expect(result.passed).toBe(false);
+		expect(result.diagnostics?.[0]).toMatch(/could not be parsed/i);
 	});
 });

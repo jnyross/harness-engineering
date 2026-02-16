@@ -6,6 +6,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { parseReviewResponse } from "./reviewer.js";
 
 export interface GateResult {
 	passed: boolean;
@@ -224,40 +225,24 @@ export function validateArchitecture(cwd: string): GateResult {
 	};
 }
 
-export type ReviewOutcome = "approved" | "needs_fixes" | "rejected";
+export type ReviewOutcome = ReturnType<typeof parseReviewResponse>["outcome"];
 
 /**
  * Parse review output into exactly one of: approved | needs_fixes | rejected.
  * Looks for explicit markers (e.g. "VERDICT: approved") or keywords.
  */
 export function validateReview(reviewOutput: string): GateResult & { outcome?: ReviewOutcome } {
-	const lower = reviewOutput.toLowerCase().trim();
-	// Explicit verdict block
-	const verdictMatch = lower.match(/(?:verdict|outcome|result)\s*:\s*(approved|needs_fixes|rejected)/);
-	if (verdictMatch) {
-		const outcome = verdictMatch[1] as ReviewOutcome;
-		return { passed: true, output: reviewOutput, outcome };
+	const parsed = parseReviewResponse(reviewOutput);
+	if (parsed.outcome === "rejected" && parsed.reason === "No clear approval or rejection found in response") {
+		return {
+			passed: false,
+			output: reviewOutput,
+			diagnostics: ["Review output could not be parsed to approved | needs_fixes | rejected."],
+		};
 	}
-	// Line that is only one of the three
-	if (/^\s*(approved|needs_fixes|rejected)\s*$/m.test(lower)) {
-		const m = lower.match(/^\s*(approved|needs_fixes|rejected)\s*$/m);
-		const outcome = (m ? m[1] : "rejected") as ReviewOutcome;
-		return { passed: true, output: reviewOutput, outcome };
-	}
-	// Keyword fallback: reject if "reject", else "needs fixes" if "fix" or "change", else approved
-	if (/\breject\b/.test(lower) || /\bnot\s+approved\b/.test(lower)) {
-		return { passed: true, output: reviewOutput, outcome: "rejected" };
-	}
-	if (/\bneeds?\s*fix(es)?\b/.test(lower) || /\b(fix|change|address)\s+(the\s+)?/i.test(lower)) {
-		return { passed: true, output: reviewOutput, outcome: "needs_fixes" };
-	}
-	if (/\bapprov(e|ed)\b/.test(lower) || /\blgtm\b/.test(lower) || /\blooks\s+good\b/.test(lower)) {
-		return { passed: true, output: reviewOutput, outcome: "approved" };
-	}
-	// Unparseable
 	return {
-		passed: false,
+		passed: true,
 		output: reviewOutput,
-		diagnostics: ["Review output could not be parsed to approved | needs_fixes | rejected."],
+		outcome: parsed.outcome,
 	};
 }
