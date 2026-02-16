@@ -618,6 +618,26 @@ with assertions for:
 
 **Result:** Dynamic command-name state now has targeted regression coverage, reducing risk of future message/help drift.
 
+---
+
+### 38) prompt argument helper logic was embedded and untested
+
+**Finding:** `packages/pods/src/commands/prompt.ts` still embedded reserved-flag parsing and provider-name generation logic directly, with no focused unit tests guarding terminator semantics and naming format.
+
+**Action:** Added:
+
+- `packages/pods/src/commands/prompt-args.ts`
+- `packages/pods/test/prompt-args.test.ts`
+
+and updated:
+
+- `packages/pods/src/commands/prompt.ts`
+- `packages/pods/CHANGELOG.md`
+
+to centralize `findReservedFlag()` and `createProviderName()` behind reusable helpers with dedicated tests.
+
+**Result:** Prompt argument parsing and provider-name generation now have explicit regression coverage and are easier to maintain independently from delegation flow code.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -677,7 +697,7 @@ with assertions for:
 - pods CLI parser regression tests:
   - `npx tsx --test packages/pods/test/cli-args.test.ts`
 - pods CLI command-context regression tests:
-  - `npx tsx --test packages/pods/test/cli-command.test.ts packages/pods/test/cli-args.test.ts`
+  - `npx tsx --test packages/pods/test/cli-command.test.ts packages/pods/test/cli-args.test.ts packages/pods/test/prompt-args.test.ts`
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
