@@ -21,6 +21,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const MONOREPO_CODING_AGENT_CLI = join(__dirname, "../../../coding-agent/src/cli.ts");
 const PODS_PROVIDER_NAME = "pods-vllm";
 const PODS_AGENT_API_KEY_ENV = "PI_PODS_AGENT_API_KEY";
+const RESERVED_AGENT_FLAGS = ["--provider", "--model"];
 
 function resolveLocalCodingAgentCli(): string | undefined {
 	if (existsSync(MONOREPO_CODING_AGENT_CLI)) {
@@ -34,11 +35,29 @@ function resolveLocalCodingAgentCli(): string | undefined {
 	}
 }
 
+function findReservedFlag(userArgs: string[]): string | undefined {
+	for (const arg of userArgs) {
+		for (const flag of RESERVED_AGENT_FLAGS) {
+			if (arg === flag || arg.startsWith(`${flag}=`)) {
+				return flag;
+			}
+		}
+	}
+	return undefined;
+}
+
 // ────────────────────────────────────────────────────────────────────────────────
 // Main prompt function
 // ────────────────────────────────────────────────────────────────────────────────
 
 export async function promptModel(modelName: string, userArgs: string[], opts: PromptOptions = {}) {
+	const reservedFlag = findReservedFlag(userArgs);
+	if (reservedFlag) {
+		throw new Error(
+			`The ${reservedFlag} option is managed by "pi agent". Select the target model with "pi agent <name>" and pod with "--pod <name>".`,
+		);
+	}
+
 	// Get pod and model configuration
 	const activePod = (() => {
 		if (opts.pod) {
