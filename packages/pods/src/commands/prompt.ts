@@ -1,7 +1,8 @@
 import chalk from "chalk";
 import { spawn } from "child_process";
-import { existsSync } from "fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { createRequire } from "module";
+import { tmpdir } from "os";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { getActivePod, loadConfig } from "../config.js";
@@ -18,6 +19,7 @@ interface PromptOptions {
 const require = createRequire(import.meta.url);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MONOREPO_CODING_AGENT_CLI = join(__dirname, "../../../coding-agent/src/cli.ts");
+const PODS_PROVIDER_NAME = "pods-vllm";
 
 function resolveLocalCodingAgentCli(): string | undefined {
 	if (existsSync(MONOREPO_CODING_AGENT_CLI)) {
@@ -90,17 +92,43 @@ Current working directory: ${process.cwd()}`;
 
 	// Build arguments for agent main function
 	const args: string[] = [];
+	let tempExtensionDir: string | undefined;
 
 	// Add base configuration that we control
+	const api = modelConfig.model.toLowerCase().includes("gpt-oss") ? "openai-responses" : "openai-completions";
+	const providerConfig = {
+		baseUrl: `http://${host}:${modelConfig.port}/v1`,
+		apiKey: opts.apiKey || process.env.PI_API_KEY || "dummy",
+		api,
+		models: [
+			{
+				id: modelConfig.model,
+				name: modelConfig.model,
+				api,
+				reasoning: false,
+				input: ["text"],
+				cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+				contextWindow: 131072,
+				maxTokens: 16384,
+			},
+		],
+	};
+
+	tempExtensionDir = mkdtempSync(join(tmpdir(), "pi-pods-provider-"));
+	const extensionPath = join(tempExtensionDir, "pods-provider.mjs");
+	writeFileSync(
+		extensionPath,
+		`export default function (pi) { pi.registerProvider(${JSON.stringify(PODS_PROVIDER_NAME)}, ${JSON.stringify(providerConfig)}); }\n`,
+		"utf-8",
+	);
+
 	args.push(
-		"--base-url",
-		`http://${host}:${modelConfig.port}/v1`,
+		"--extension",
+		extensionPath,
+		"--provider",
+		PODS_PROVIDER_NAME,
 		"--model",
 		modelConfig.model,
-		"--api-key",
-		opts.apiKey || process.env.PI_API_KEY || "dummy",
-		"--api",
-		modelConfig.model.toLowerCase().includes("gpt-oss") ? "responses" : "completions",
 		"--system-prompt",
 		systemPrompt,
 	);
@@ -117,25 +145,27 @@ Current working directory: ${process.cwd()}`;
 		: localCli
 			? [localCli, ...args]
 			: ["--yes", "--package", "@mariozechner/pi-coding-agent", "pi", ...args];
-	await new Promise<void>((resolve, reject) => {
-		const child = spawn(command, commandArgs, {
-			stdio: "inherit",
-			env: process.env,
-		});
+	try {
+		await new Promise<void>((resolve, reject) => {
+			const child = spawn(command, commandArgs, {
+				stdio: "inherit",
+				env: process.env,
+			});
 
-		child.on("error", (error) => reject(error));
-		child.on("exit", (code, signal) => {
-			if (signal) {
-				reject(new Error(`Agent process exited due to signal ${signal}`));
-				return;
-			}
-			if (code === 0) {
-				resolve();
-				return;
-			}
-			reject(new Error(`Agent process exited with code ${code}`));
+			child.on("error", (error) => reject(error));
+			child.on("exit", (code, signal) => {
+				if (signal) {
+					reject(new Error(`Agent process exited due to signal ${signal}`));
+					return;
+				}
+				if (code === 0) {
+					resolve();
+					return;
+				}
+				reject(new Error(`Agent process exited with code ${code}`));
+			});
 		});
-	}).catch((err: unknown) => {
+	} catch (err: unknown) {
 		const message = err instanceof Error ? err.message : String(err);
 		console.error(chalk.red(`Agent error: ${message}`));
 		console.error(
@@ -144,5 +174,9 @@ Current working directory: ${process.cwd()}`;
 			),
 		);
 		process.exit(1);
-	});
+	} finally {
+		if (tempExtensionDir) {
+			rmSync(tempExtensionDir, { recursive: true, force: true });
+		}
+	}
 }
