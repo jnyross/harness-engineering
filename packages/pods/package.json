@@ -9,6 +9,7 @@
 	"scripts": {
 		"clean": "rm -rf dist",
 		"build": "tsgo -p tsconfig.build.json && chmod +x dist/cli.js && cp src/models.json dist/ && cp -r scripts dist/",
+		"test": "tsx --test test/**/*.test.ts",
 		"prepublishOnly": "npm run clean && npm run build"
 	},
 	"files": [

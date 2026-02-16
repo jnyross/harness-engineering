@@ -8,6 +8,7 @@
 - Documented that the published binary name is `pi-pods` and provided an alias pattern for `pi`.
 - Made CLI help/usage text render the invoked command name dynamically (`pi`, `pi-pods`, etc.) to avoid command-name confusion.
 - Updated standalone agent docs to reference the separate `@mariozechner/pi-coding-agent` CLI invocation instead of the removed `pi-agent` command.
+- Added a package-level `npm test` script for pods to run the new CLI/prompt helper regression tests via Node's test runner.
 
 ### Fixed
 
