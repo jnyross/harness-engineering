@@ -255,7 +255,7 @@ export async function projectLoop(options: ProjectLoopOptions): Promise<void> {
 
 		if (iteration < iterations) {
 			try {
-				execSync(`git tag iteration-${iteration}-complete`, { cwd, encoding: "utf-8" });
+				execFileSync("git", ["tag", `iteration-${iteration}-complete`], { cwd, encoding: "utf-8" });
 				execSync("git restore --worktree --source=HEAD -- .", { cwd, encoding: "utf-8" });
 			} catch {
 				// ignore
