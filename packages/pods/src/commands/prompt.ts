@@ -117,7 +117,10 @@ Current working directory: ${process.cwd()}`;
 	// Build arguments for agent main function
 	const args: string[] = [];
 	let tempExtensionDir: string | undefined;
-	const resolvedApiKey = opts.apiKey || process.env.PI_API_KEY || "dummy";
+	const resolvedApiKey = opts.apiKey || process.env.PI_API_KEY;
+	if (!resolvedApiKey) {
+		throw new Error('Missing API key. Set PI_API_KEY before running "pi agent ...".');
+	}
 	const providerName = createProviderName();
 
 	// Add base configuration that we control

@@ -17,4 +17,5 @@
 - Replaced deep `process.exit` paths in `pi agent` prompt delegation with thrown errors for consistent top-level CLI error handling and cleanup behavior.
 - Hardened `--pod` argument parsing for model commands by supporting `--pod=<name>`, rejecting missing/duplicate `--pod` flags with clear errors, respecting `--` passthrough boundaries, and rejecting `--pod` on non-model commands.
 - Updated reserved `--provider`/`--model` validation to stop at `--`, preserving option-terminator semantics for literal passthrough arguments.
+- Replaced implicit `"dummy"` API key fallback in `pi agent` with an explicit `PI_API_KEY` requirement and actionable error message.
 
