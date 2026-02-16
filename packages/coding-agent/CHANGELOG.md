@@ -8,6 +8,7 @@
 - Updated git update tests to use explicit `git:` source prefixes, matching strict git source parsing rules.
 - Corrected README "See Also" package link from deprecated `@mariozechner/pi-agent` to `@mariozechner/pi-agent-core`.
 - Shell-command value resolution now treats blank `!` commands as empty values (without command execution), normalizes command cache keys by trimmed command text, and has regression coverage in `resolve-config-value` tests.
+- Environment-variable value resolution now treats explicitly empty env vars as empty/unset values (instead of falling back to literal variable names), with regression coverage.
 
 ## [0.52.12] - 2026-02-13
 

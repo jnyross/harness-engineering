@@ -21,8 +21,11 @@ export function resolveConfigValue(config: string): string | undefined {
 	if (config.startsWith("!")) {
 		return executeCommand(config);
 	}
-	const envValue = process.env[config];
-	return envValue || config;
+	if (Object.hasOwn(process.env, config)) {
+		const envValue = process.env[config];
+		return envValue && envValue.length > 0 ? envValue : undefined;
+	}
+	return config;
 }
 
 function executeCommand(commandConfig: string): string | undefined {
