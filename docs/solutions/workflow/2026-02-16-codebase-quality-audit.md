@@ -1052,6 +1052,22 @@ to use `tsx --test` so tests are auto-discovered by default while still supporti
 
 **Result:** Pods tests now support fast targeted execution (`npm --workspace "@mariozechner/pi" test -- test/ssh-parse.test.ts`) without sacrificing default full-suite runs.
 
+---
+
+### 61) blank gate env command values caused avoidable empty-command failures
+
+**Finding:** `PI_TEST_COMMAND` / `PI_VALIDATE_COMMAND` values containing only whitespace were treated as configured commands, producing empty-command parse failures instead of falling back to default gate commands.
+
+**Action:** Updated:
+
+- `packages/agent/src/gates.ts`
+- `packages/agent/test/gates.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to trim env overrides and fallback to defaults when the configured value is blank/whitespace.
+
+**Result:** Gate command overrides now behave robustly for unset/blank env values and avoid confusing empty-command failures.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1160,6 +1176,8 @@ to use `tsx --test` so tests are auto-discovered by default while still supporti
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (ensures malformed test command does not count as passing red gate)
 - review-gate parser alignment behavior:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (covers explicit verdict, clear reject, and unparseable-review failure)
+- blank gate env override behavior:
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (covers whitespace `PI_TEST_COMMAND` / `PI_VALIDATE_COMMAND` fallback to defaults)
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
