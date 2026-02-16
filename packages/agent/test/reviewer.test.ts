@@ -22,6 +22,13 @@ describe("parseReviewResponse", () => {
 		expect(result.approved).toBe(true);
 	});
 
+	it("handles legacy reject tag without reason", () => {
+		const result = parseReviewResponse("[REJECT]");
+		expect(result.outcome).toBe("rejected");
+		expect(result.approved).toBe(false);
+		expect(result.reason).toBe("Reviewer rejected the change");
+	});
+
 	it("falls back to rejected when response is unparseable", () => {
 		const result = parseReviewResponse("looks mostly okay");
 		expect(result.outcome).toBe("rejected");

@@ -83,12 +83,12 @@ export function parseReviewResponse(response: string): ReviewResult {
 		return { outcome: "approved", approved: true };
 	}
 
-	const rejectMatch = response.match(/\[REJECT\]\s*Reason:\s*(.+)/i);
+	const rejectMatch = response.match(/\[REJECT\](?:\s*Reason:\s*(.+))?/i);
 	if (rejectMatch) {
 		return {
 			outcome: "rejected",
 			approved: false,
-			reason: rejectMatch[1].trim(),
+			reason: rejectMatch[1]?.trim() || "Reviewer rejected the change",
 		};
 	}
 
