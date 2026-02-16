@@ -17,6 +17,7 @@ import {
 	type TUI,
 } from "@mariozechner/pi-tui";
 import type { KeybindingsManager } from "../../../core/keybindings.js";
+import { parseCommandArgs } from "../../../utils/parse-command-args.js";
 import { getEditorTheme, theme } from "../theme/theme.js";
 import { DynamicBorder } from "./dynamic-border.js";
 import { appKeyHint, keyHint } from "./keybinding-hints.js";
@@ -113,7 +114,10 @@ export class ExtensionEditorComponent extends Container {
 			fs.writeFileSync(tmpFile, currentText, "utf-8");
 			this.tui.stop();
 
-			const [editor, ...editorArgs] = editorCmd.split(" ");
+			const [editor, ...editorArgs] = parseCommandArgs(editorCmd);
+			if (!editor) {
+				return;
+			}
 			const result = spawnSync(editor, [...editorArgs, tmpFile], {
 				stdio: "inherit",
 			});
