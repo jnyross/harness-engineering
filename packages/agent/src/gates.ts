@@ -3,7 +3,7 @@
  * Each gate returns a structured GateResult.
  */
 
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
@@ -19,12 +19,90 @@ export interface DecompositionTask {
 	acceptanceCriteria?: string | string[];
 }
 
-const TEST_COMMAND = process.env.PI_TEST_COMMAND ?? "npm test";
-const VALIDATE_COMMAND = process.env.PI_VALIDATE_COMMAND ?? "npm run check";
+const DEFAULT_TEST_COMMAND = "npm test";
+const DEFAULT_VALIDATE_COMMAND = "npm run check";
 
-function runInCwd(cwd: string, command: string): { stdout: string; stderr: string; exitCode: number } {
+export function parseCommand(command: string): string[] {
+	const tokens: string[] = [];
+	let current = "";
+	let quote: "'" | '"' | null = null;
+	let escaping = false;
+	let tokenStarted = false;
+
+	for (const char of command) {
+		if (escaping) {
+			current += char;
+			escaping = false;
+			tokenStarted = true;
+			continue;
+		}
+
+		if (quote === "'") {
+			if (char === "'") {
+				quote = null;
+			} else {
+				current += char;
+			}
+			tokenStarted = true;
+			continue;
+		}
+
+		if (quote === '"') {
+			if (char === '"') {
+				quote = null;
+			} else if (char === "\\") {
+				escaping = true;
+			} else {
+				current += char;
+			}
+			tokenStarted = true;
+			continue;
+		}
+
+		if (char === "'" || char === '"') {
+			quote = char;
+			tokenStarted = true;
+			continue;
+		}
+
+		if (char === "\\") {
+			escaping = true;
+			tokenStarted = true;
+			continue;
+		}
+
+		if (/\s/.test(char)) {
+			if (tokenStarted) {
+				tokens.push(current);
+				current = "";
+				tokenStarted = false;
+			}
+			continue;
+		}
+
+		current += char;
+		tokenStarted = true;
+	}
+
+	if (escaping) {
+		throw new Error("Invalid command: trailing escape character.");
+	}
+	if (quote) {
+		throw new Error("Invalid command: unmatched quote.");
+	}
+	if (tokenStarted) {
+		tokens.push(current);
+	}
+	return tokens;
+}
+
+function runInCwd(cwd: string, command: string | string[]): { stdout: string; stderr: string; exitCode: number } {
+	const parsedCommand = Array.isArray(command) ? command : parseCommand(command);
+	if (parsedCommand.length === 0) {
+		return { stdout: "", stderr: "Invalid command: command is empty.", exitCode: 1 };
+	}
 	try {
-		const result = execSync(command, {
+		const result = execFileSync(parsedCommand[0], parsedCommand.slice(1), {
 			cwd,
 			encoding: "utf-8",
 			stdio: ["pipe", "pipe", "pipe"],
@@ -32,13 +110,22 @@ function runInCwd(cwd: string, command: string): { stdout: string; stderr: strin
 		});
 		return { stdout: result.toString(), stderr: "", exitCode: 0 };
 	} catch (err: unknown) {
-		const e = err as { status?: number; stdout?: Buffer; stderr?: Buffer };
+		const e = err as { status?: number; stdout?: Buffer; stderr?: Buffer; message?: string };
+		const stderr = e.stderr?.toString() ?? e.message ?? "";
 		return {
 			stdout: e.stdout?.toString() ?? "",
-			stderr: e.stderr?.toString() ?? "",
+			stderr,
 			exitCode: e.status ?? 1,
 		};
 	}
+}
+
+function getTestCommand(): string {
+	return process.env.PI_TEST_COMMAND ?? DEFAULT_TEST_COMMAND;
+}
+
+function getValidateCommand(): string {
+	return process.env.PI_VALIDATE_COMMAND ?? DEFAULT_VALIDATE_COMMAND;
 }
 
 /**
@@ -76,7 +163,7 @@ export function validateDecomposition(tasks: DecompositionTask[]): GateResult {
  * Pass if exit code !== 0.
  */
 export function redTestGate(cwd: string): GateResult {
-	const { stdout, stderr, exitCode } = runInCwd(cwd, TEST_COMMAND);
+	const { stdout, stderr, exitCode } = runInCwd(cwd, getTestCommand());
 	const output = [stdout, stderr].filter(Boolean).join("\n");
 	const passed = exitCode !== 0;
 	return {
@@ -92,7 +179,7 @@ export function redTestGate(cwd: string): GateResult {
  * Green gate: run full validate (tests + lint + arch check). Must pass (exit 0).
  */
 export function greenGate(cwd: string): GateResult {
-	const { stdout, stderr, exitCode } = runInCwd(cwd, VALIDATE_COMMAND);
+	const { stdout, stderr, exitCode } = runInCwd(cwd, getValidateCommand());
 	const output = [stdout, stderr].filter(Boolean).join("\n");
 	return {
 		passed: exitCode === 0,
@@ -109,7 +196,7 @@ export function validateArchitecture(cwd: string): GateResult {
 	if (!existsSync(scriptPath)) {
 		return { passed: true, output: "No architecture script; skip." };
 	}
-	const { stdout, stderr, exitCode } = runInCwd(cwd, `npx tsx ${scriptPath}`);
+	const { stdout, stderr, exitCode } = runInCwd(cwd, ["npx", "tsx", scriptPath]);
 	const output = [stdout, stderr].filter(Boolean).join("\n");
 	return {
 		passed: exitCode === 0,
