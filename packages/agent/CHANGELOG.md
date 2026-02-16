@@ -9,6 +9,7 @@
 ### Fixed
 
 - Replaced destructive `git checkout .` resets in TDD/project loops with `git restore --worktree --source=HEAD -- .`, and changed project-loop commits to stage discovered changed files explicitly before committing.
+- Added local Vitest aliasing for `@mariozechner/pi-ai` so agent package tests run from source without requiring prebuilt internal package artifacts.
 
 ## [0.52.12] - 2026-02-13
 
