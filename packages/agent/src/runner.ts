@@ -10,8 +10,8 @@ import { getModel } from "@mariozechner/pi-ai";
 import { tddLoop } from "./tdd-loop.js";
 import type { AgentLoopConfig, AgentMessage } from "./types.js";
 
-const provider = process.env.PI_PROVIDER ?? "anthropic";
-const modelId = process.env.PI_MODEL ?? "claude-sonnet-4-5";
+const provider = process.env.PI_PROVIDER ?? "minimax";
+const modelId = process.env.PI_MODEL ?? "MiniMax-M2.5";
 const maxRedoRounds = parseInt(process.env.PI_MAX_REDO_ROUNDS ?? "1", 10);
 
 function identityConvert(messages: AgentMessage[]): Message[] {

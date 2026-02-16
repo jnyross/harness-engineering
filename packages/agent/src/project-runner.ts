@@ -2,7 +2,7 @@
 /**
  * Project runner with Brooks Loop. Usage:
  *   npx tsx packages/agent/src/project-runner.ts [--iterations N] [--max-tasks N] [--provider <name>] "<goal>"
- * Env: PI_PROVIDER, PI_MODEL (optional). Default provider: anthropic.
+ * Env: PI_PROVIDER, PI_MODEL (optional). Default provider: minimax.
  */
 
 import type { Message } from "@mariozechner/pi-ai";
@@ -10,8 +10,8 @@ import { getModel } from "@mariozechner/pi-ai";
 import { projectLoop } from "./project-loop.js";
 import type { AgentLoopConfig, AgentMessage } from "./types.js";
 
-const provider = process.env.PI_PROVIDER ?? "anthropic";
-const modelId = process.env.PI_MODEL ?? "claude-sonnet-4-5";
+const provider = process.env.PI_PROVIDER ?? "minimax";
+const modelId = process.env.PI_MODEL ?? "MiniMax-M2.5";
 
 function identityConvert(messages: AgentMessage[]): Message[] {
 	return messages.filter((m): m is Message => m.role === "user" || m.role === "assistant" || m.role === "toolResult");
