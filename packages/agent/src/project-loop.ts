@@ -133,12 +133,17 @@ function getChangedFiles(cwd: string): string[] {
 		.map((line) => line.trim())
 		.filter((line) => line.length > 0);
 
+	const staged = execFileSync("git", ["diff", "--name-only", "--cached"], { cwd, encoding: "utf-8" })
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter((line) => line.length > 0);
+
 	const untracked = execFileSync("git", ["ls-files", "--others", "--exclude-standard"], { cwd, encoding: "utf-8" })
 		.split(/\r?\n/)
 		.map((line) => line.trim())
 		.filter((line) => line.length > 0);
 
-	return Array.from(new Set([...tracked, ...untracked]));
+	return Array.from(new Set([...tracked, ...staged, ...untracked]));
 }
 
 function stageChangedFiles(cwd: string): boolean {
