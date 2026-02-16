@@ -524,6 +524,21 @@ to detect the invoked command basename and render help/usage output accordingly,
 
 **Result:** Help and usage text now accurately match the command users actually invoked, reducing naming confusion across install modes.
 
+---
+
+### 33) unknown command diagnostics were masked by `--pod` parsing
+
+**Finding:** For unknown direct commands, parsing `--pod` early could raise pod-flag validation errors before the CLI reached its intended `Unknown command` handler.
+
+**Action:** Updated:
+
+- `packages/pods/src/cli.ts`
+- `packages/pods/CHANGELOG.md`
+
+to run pod-override parsing only for known direct commands and let unknown commands flow to the canonical default handler.
+
+**Result:** Users now get deterministic, authoritative unknown-command errors instead of misleading pod-flag parsing failures.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -576,6 +591,10 @@ to detect the invoked command basename and render help/usage output accordingly,
   - `npx tsx packages/pods/src/cli.ts --help` (renders `pi ...`)
 - pods invoked-command help rendering:
   - `ln -s packages/pods/src/cli.ts /tmp/<name> && npx tsx /tmp/<name> --help` (renders `<name> ...`)
+- pods unknown-command precedence validation:
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts mystery --pod demo` (reports `Unknown command: mystery`)
+- pods non-model `--pod` enforcement validation:
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts shell --pod demo` (still rejects `--pod`)
 - pods unique provider generation smoke test:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --list-models` (shows `pods-vllm-<random>` entry)
 
