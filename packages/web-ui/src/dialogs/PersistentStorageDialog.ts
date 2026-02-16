@@ -9,7 +9,7 @@ import { i18n } from "../utils/i18n.js";
 export class PersistentStorageDialog extends DialogBase {
 	@state() private requesting = false;
 
-	private resolvePromise?: (userApproved: boolean) => void;
+	private resolvePromise?: (persistGranted: boolean) => void;
 
 	protected modalWidth = "min(500px, 90vw)";
 	protected modalHeight = "auto";
@@ -28,24 +28,22 @@ export class PersistentStorageDialog extends DialogBase {
 			}
 		}
 
-		// Show dialog and wait for user response
-		const dialog = new PersistentStorageDialog();
-		dialog.open();
-
-		const userApproved = await new Promise<boolean>((resolve) => {
-			dialog.resolvePromise = resolve;
-		});
-
-		if (!userApproved) {
-			console.warn("⚠ User declined persistent storage - sessions may be lost");
-			return false;
-		}
-
-		// User approved, request from browser
 		if (!navigator.storage?.persist) {
 			console.warn("⚠ Persistent storage API not available");
 			return false;
 		}
+
+		// Show dialog and wait for user response
+		const dialog = new PersistentStorageDialog();
+		dialog.open();
+
+		return await new Promise<boolean>((resolve) => {
+			dialog.resolvePromise = resolve;
+		});
+	}
+
+	private async handleGrant() {
+		this.requesting = true;
 
 		try {
 			const granted = await navigator.storage.persist();
@@ -54,19 +52,20 @@ export class PersistentStorageDialog extends DialogBase {
 			} else {
 				console.warn("⚠ Browser denied persistent storage - sessions may be lost under storage pressure");
 			}
-			return granted;
+			if (this.resolvePromise) {
+				this.resolvePromise(granted);
+				this.resolvePromise = undefined;
+			}
 		} catch (error) {
 			console.error("Failed to request persistent storage:", error);
-			return false;
+			if (this.resolvePromise) {
+				this.resolvePromise(false);
+				this.resolvePromise = undefined;
+			}
+		} finally {
+			this.requesting = false;
+			this.close();
 		}
-	}
-
-	private handleGrant() {
-		if (this.resolvePromise) {
-			this.resolvePromise(true);
-			this.resolvePromise = undefined;
-		}
-		this.close();
 	}
 
 	private handleDeny() {
@@ -74,6 +73,7 @@ export class PersistentStorageDialog extends DialogBase {
 			this.resolvePromise(false);
 			this.resolvePromise = undefined;
 		}
+		console.warn("⚠ User declined persistent storage - sessions may be lost");
 		this.close();
 	}
 

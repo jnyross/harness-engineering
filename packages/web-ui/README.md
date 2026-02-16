@@ -592,10 +592,6 @@ console.log(i18n('Loading...')); // "Laden..."
 - [example/](./example) - Complete web app with sessions, artifacts, custom messages
 - [sitegeist](https://sitegeist.ai) - Browser extension using pi-web-ui
 
-## Known Issues
-
-- **PersistentStorageDialog**: Currently broken
-
 ## License
 
 MIT
