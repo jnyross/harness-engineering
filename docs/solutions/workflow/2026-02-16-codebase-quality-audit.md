@@ -912,7 +912,7 @@ to parse mount commands with shell-aware tokenization and only infer absolute ta
 - `packages/pods/test/ssh-parse.test.ts`
 - `packages/pods/CHANGELOG.md`
 
-to enforce SSH binary validation (`ssh` or `*/ssh`) before SSH/SCP execution paths proceed.
+to enforce SSH binary validation (`ssh`, `*/ssh`, and `ssh.exe` forms) before SSH/SCP execution paths proceed.
 
 **Result:** Pod command execution now rejects non-SSH command binaries early, with explicit errors and regression coverage.
 
@@ -1232,7 +1232,7 @@ to treat explicitly empty env-var values as unresolved (`undefined`) while keepi
 - mount command parsing helper behavior:
   - `npx tsx -e "<extractModelsPathFromMountCommand demo>"` returns `/mnt/model cache` for quoted target and `undefined` for malformed command
 - non-ssh binary guard in SSH helpers:
-  - `npm --workspace "@mariozechner/pi" test` (includes `test/ssh-parse.test.ts` cases for rejecting `sshExec("bash ...")` and accepting `/usr/bin/ssh ...` host extraction)
+  - `npm --workspace "@mariozechner/pi" test` (includes `test/ssh-parse.test.ts` cases for rejecting `sshExec("bash ...")` and accepting `/usr/bin/ssh ...` / `.../ssh.exe ...` host extraction)
 - agent state-file git invocation regression:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (covers path-with-spaces commits and tracked deletion staging)
 - full agent suite after git-invocation refactor:
