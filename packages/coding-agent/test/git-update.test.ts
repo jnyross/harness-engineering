@@ -53,8 +53,9 @@ describe("DefaultPackageManager git update", () => {
 	let settingsManager: SettingsManager;
 	let packageManager: DefaultPackageManager;
 
-	// Git source that maps to our installed directory structure
-	const gitSource = "github.com/test/extension";
+	// Git source that maps to our installed directory structure.
+	// NOTE: shorthand host/path sources now require explicit git: prefix.
+	const gitSource = "git:github.com/test/extension";
 
 	beforeEach(() => {
 		tempDir = join(tmpdir(), `git-update-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);

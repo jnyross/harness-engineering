@@ -57,16 +57,42 @@ function getAliases(): Record<string, string> {
 	if (_aliases) return _aliases;
 
 	const __dirname = path.dirname(fileURLToPath(import.meta.url));
-	const packageIndex = path.resolve(__dirname, "../..", "index.js");
+	const packageRoot = path.resolve(__dirname, "../../..");
+	const packageIndex =
+		[path.resolve(packageRoot, "dist/index.js"), path.resolve(packageRoot, "src/index.ts")].find((candidate) =>
+			fs.existsSync(candidate),
+		) ?? path.resolve(packageRoot, "src/index.ts");
 
-	const typeboxEntry = require.resolve("@sinclair/typebox");
+	const resolvePackageEntry = (packageName: string, fallbackCandidates: string[]): string => {
+		try {
+			return require.resolve(packageName);
+		} catch (error) {
+			for (const candidate of fallbackCandidates) {
+				if (fs.existsSync(candidate)) {
+					return candidate;
+				}
+			}
+			throw error;
+		}
+	};
+
+	const typeboxEntry = resolvePackageEntry("@sinclair/typebox", []);
 	const typeboxRoot = typeboxEntry.replace(/\/build\/cjs\/index\.js$/, "");
 
 	_aliases = {
 		"@mariozechner/pi-coding-agent": packageIndex,
-		"@mariozechner/pi-agent-core": require.resolve("@mariozechner/pi-agent-core"),
-		"@mariozechner/pi-tui": require.resolve("@mariozechner/pi-tui"),
-		"@mariozechner/pi-ai": require.resolve("@mariozechner/pi-ai"),
+		"@mariozechner/pi-agent-core": resolvePackageEntry("@mariozechner/pi-agent-core", [
+			path.resolve(packageRoot, "../agent/dist/index.js"),
+			path.resolve(packageRoot, "../agent/src/index.ts"),
+		]),
+		"@mariozechner/pi-tui": resolvePackageEntry("@mariozechner/pi-tui", [
+			path.resolve(packageRoot, "../tui/dist/index.js"),
+			path.resolve(packageRoot, "../tui/src/index.ts"),
+		]),
+		"@mariozechner/pi-ai": resolvePackageEntry("@mariozechner/pi-ai", [
+			path.resolve(packageRoot, "../ai/dist/index.js"),
+			path.resolve(packageRoot, "../ai/src/index.ts"),
+		]),
 		"@sinclair/typebox": typeboxRoot,
 	};
 

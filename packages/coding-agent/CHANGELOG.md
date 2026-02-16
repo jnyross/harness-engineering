@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Coding-agent Vitest now resolves internal `@mariozechner/pi-*` packages from source paths, allowing package tests to run from a fresh checkout without prebuilt internal artifacts.
+- Updated git update tests to use explicit `git:` source prefixes, matching strict git source parsing rules.
+
 ## [0.52.12] - 2026-02-13
 
 ### Added
