@@ -14,12 +14,13 @@ Given an execution plan and the work that was completed, determine if the work a
 
 ## Output Format
 
-You MUST output one of:
-- \`[APPROVE]\` - Work aligns with plan
-- \`[REJECT]\` - Work does NOT align with plan
+You MUST output exactly one verdict:
+- \`VERDICT: approved\` - Work aligns with plan
+- \`VERDICT: needs_fixes\` - Work is close but requires fixes before approval
+- \`VERDICT: rejected\` - Work does NOT align with plan
 
-If REJECT, you MUST provide a reason in the format:
-\`[REJECT] Reason: <explanation>\`
+If verdict is \`needs_fixes\` or \`rejected\`, provide a reason in the format:
+\`Reason: <explanation>\`
 
 ## Guidelines
 
@@ -27,6 +28,7 @@ If REJECT, you MUST provide a reason in the format:
 - If the agent made reasonable progress on planned items, approve it
 - If the agent worked on items not in the plan, reject it
 - If the agent didn't complete any planned items, reject it
+- Use \`needs_fixes\` when the direction is correct but concrete issues remain
 `;
 
 const reviewSchema = Type.Object({
@@ -36,7 +38,10 @@ const reviewSchema = Type.Object({
 
 export type ReviewInput = Static<typeof reviewSchema>;
 
+export type ReviewOutcome = "approved" | "needs_fixes" | "rejected";
+
 export interface ReviewResult {
+	outcome: ReviewOutcome;
 	approved: boolean;
 	reason?: string;
 }
@@ -60,21 +65,44 @@ Output your review decision now:`;
 }
 
 export function parseReviewResponse(response: string): ReviewResult {
-	const approveMatch = response.match(/\[APPROVE\]/i);
-	const rejectMatch = response.match(/\[REJECT\]\s*Reason:\s*(.+)/i);
-
-	if (approveMatch) {
-		return { approved: true };
+	const verdictMatch = response.match(
+		/(?:^|\n)\s*(?:VERDICT|OUTCOME|RESULT)\s*:\s*(approved|needs_fixes|rejected)\b/i,
+	);
+	if (verdictMatch) {
+		const outcome = verdictMatch[1].toLowerCase() as ReviewOutcome;
+		const reasonMatch = response.match(/(?:^|\n)\s*Reason\s*:\s*(.+)$/im);
+		return {
+			outcome,
+			approved: outcome === "approved",
+			reason: reasonMatch?.[1]?.trim(),
+		};
 	}
 
+	const approveMatch = response.match(/\[APPROVE\]/i);
+	if (approveMatch) {
+		return { outcome: "approved", approved: true };
+	}
+
+	const rejectMatch = response.match(/\[REJECT\]\s*Reason:\s*(.+)/i);
 	if (rejectMatch) {
 		return {
+			outcome: "rejected",
 			approved: false,
 			reason: rejectMatch[1].trim(),
 		};
 	}
 
+	if (/\bneeds?\s*fix(es)?\b/i.test(response)) {
+		const reasonMatch = response.match(/(?:^|\n)\s*Reason\s*:\s*(.+)$/im);
+		return {
+			outcome: "needs_fixes",
+			approved: false,
+			reason: reasonMatch?.[1]?.trim() ?? "Reviewer requested fixes",
+		};
+	}
+
 	return {
+		outcome: "rejected",
 		approved: false,
 		reason: "No clear approval or rejection found in response",
 	};
