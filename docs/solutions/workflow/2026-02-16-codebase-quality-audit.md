@@ -1173,6 +1173,20 @@ to share one shell-style argument parser and apply it to extension external-edit
 
 **Result:** Extension editor invocation now correctly handles quoted/escaped editor command arguments instead of splitting them incorrectly.
 
+---
+
+### 68) shared command-arg parser lacked direct regression coverage
+
+**Finding:** After extracting a shared shell-style command-argument parser for prompt templates and extension-editor command launch, coverage existed only indirectly through prompt-template tests.
+
+**Action:** Added:
+
+- `packages/coding-agent/test/parse-command-args.test.ts`
+
+to directly validate parser behavior for quoted-empty args and escaped quotes/spaces/backslashes.
+
+**Result:** Shared command parser behavior is now protected by focused regression tests independent of prompt-template substitution logic.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1291,6 +1305,8 @@ to share one shell-style argument parser and apply it to extension external-edit
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-templates.test.ts` (covers escaped quotes/spaces/backslashes and quoted-empty-arg behavior)
 - coding-agent external-editor parser integration coverage:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-templates.test.ts test/interactive-mode-status.test.ts`
+- coding-agent shared parser unit coverage:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/parse-command-args.test.ts test/prompt-templates.test.ts`
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
