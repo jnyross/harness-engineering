@@ -920,16 +920,17 @@ to enforce SSH binary validation (`ssh` or `*/ssh`) before SSH/SCP execution pat
 
 ### 53) agent git staging/commit paths still used shell-composed commands
 
-**Finding:** `packages/agent/src/project-loop.ts` and `packages/agent/src/state-files.ts` still executed some `git add`/`git commit`/`git tag` operations via shell-composed strings, which is brittle for unusual paths and unnecessary given argument-safe process APIs.
+**Finding:** `packages/agent/src/project-loop.ts`, `packages/agent/src/tdd-loop.ts`, and `packages/agent/src/state-files.ts` still executed some git operations via shell-composed strings, which is brittle for unusual paths and unnecessary given argument-safe process APIs.
 
 **Action:** Updated:
 
 - `packages/agent/src/project-loop.ts`
+- `packages/agent/src/tdd-loop.ts`
 - `packages/agent/src/state-files.ts`
 - `packages/agent/test/state-files.test.ts`
 - `packages/agent/CHANGELOG.md`
 
-to use argument-based git invocation (`execFileSync("git", ["add", "--", path])`, `["commit", "-m", message]`, `["tag", ...]`) and added regression tests proving `commitState()` handles file paths with spaces.
+to use argument-based git invocation (`execFileSync("git", ["diff"...])`, `["restore"...]`, `["add", "--", path]`, `["commit", "-m", message]`, `["tag", ...]`) and added regression tests proving `commitState()` handles file paths with spaces.
 
 **Result:** Agent loop/state git operations now avoid shell-string command composition and are robust for edge-case paths.
 
@@ -1046,6 +1047,8 @@ to require successful host extraction and throw a clear configuration error if t
   - `npm --workspace "@mariozechner/pi" test` (includes `test/ssh-parse.test.ts` case validating `sshExec("bash ...")` returns error)
 - agent state-file git invocation regression:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (covers path-with-spaces commit behavior)
+- full agent suite after git-invocation refactor:
+  - `npm --workspace "@mariozechner/pi-agent-core" test`
 - `pi agent` malformed SSH host guard:
   - `PI_CONFIG_DIR=<tmp> PI_API_KEY=test-key npx tsx packages/pods/src/cli.ts agent demo-model --list-models` with SSH `ssh -o StrictHostKeyChecking=no` (rejected with invalid SSH command error)
 - pods invoked-command guidance in pod listing:
