@@ -10,7 +10,7 @@ const createdDirs: string[] = [];
 function createGitRepo(): string {
 	const dir = mkdtempSync(join(tmpdir(), "pi-agent-state-files-"));
 	createdDirs.push(dir);
-	execFileSync("git", ["init"], { cwd: dir, encoding: "utf-8" });
+	execFileSync("git", ["init", "--quiet", "--initial-branch=main"], { cwd: dir, encoding: "utf-8" });
 	execFileSync("git", ["config", "user.name", "State Files Test"], { cwd: dir, encoding: "utf-8" });
 	execFileSync("git", ["config", "user.email", "state-files-test@example.com"], { cwd: dir, encoding: "utf-8" });
 	return dir;
