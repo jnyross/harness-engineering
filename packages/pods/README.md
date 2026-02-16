@@ -44,7 +44,7 @@ export OPENAI_API_KEY=$PI_API_KEY
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - HuggingFace token (for model downloads)
 - GPU pod with:
   - Ubuntu 22.04 or 24.04

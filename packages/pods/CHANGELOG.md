@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Clarified pods README prerequisite to match package engines (`Node.js 20+`).
+
 ### Fixed
 
 - Implemented `pi agent` delegation by wiring pods model endpoints into coding-agent via a temporary runtime provider extension.
