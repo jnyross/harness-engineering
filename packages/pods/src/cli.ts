@@ -53,6 +53,44 @@ Environment:
   PI_CONFIG_DIR    Config directory (default: ~/.pi)`);
 }
 
+function extractPodOverride(cliArgs: string[]): { podOverride?: string; argsWithoutPod: string[] } {
+	const argsWithoutPod: string[] = [];
+	let podOverride: string | undefined;
+
+	for (let i = 0; i < cliArgs.length; i++) {
+		const arg = cliArgs[i];
+
+		if (arg === "--pod") {
+			const podName = cliArgs[i + 1];
+			if (!podName || podName.startsWith("--")) {
+				throw new Error("Option --pod requires a pod name.");
+			}
+			if (podOverride) {
+				throw new Error("Option --pod may only be provided once.");
+			}
+			podOverride = podName;
+			i++;
+			continue;
+		}
+
+		if (arg.startsWith("--pod=")) {
+			const podName = arg.slice("--pod=".length).trim();
+			if (!podName) {
+				throw new Error("Option --pod requires a pod name.");
+			}
+			if (podOverride) {
+				throw new Error("Option --pod may only be provided once.");
+			}
+			podOverride = podName;
+			continue;
+		}
+
+		argsWithoutPod.push(arg);
+	}
+
+	return { podOverride, argsWithoutPod };
+}
+
 // Parse command line arguments
 const args = process.argv.slice(2);
 
@@ -143,19 +181,15 @@ try {
 		}
 	} else {
 		// Parse --pod override for model commands
-		let podOverride: string | undefined;
-		const podIndex = args.indexOf("--pod");
-		if (podIndex !== -1 && podIndex + 1 < args.length) {
-			podOverride = args[podIndex + 1];
-			// Remove --pod and its value from args
-			args.splice(podIndex, 2);
-		}
+		const podParseResult = extractPodOverride(args);
+		const podOverride = podParseResult.podOverride;
+		const commandArgs = podParseResult.argsWithoutPod;
 
 		// Handle SSH/shell commands and model commands
 		switch (command) {
 			case "shell": {
 				// pi shell [<name>] - open interactive shell
-				const podName = args[1];
+				const podName = commandArgs[1];
 				let podInfo: { name: string; pod: import("./types.js").Pod } | null = null;
 
 				if (podName) {
@@ -196,13 +230,13 @@ try {
 				let podName: string | undefined;
 				let sshCommand: string;
 
-				if (args.length === 2) {
+				if (commandArgs.length === 2) {
 					// pi ssh "<command>" - use active pod
-					sshCommand = args[1];
-				} else if (args.length === 3) {
+					sshCommand = commandArgs[1];
+				} else if (commandArgs.length === 3) {
 					// pi ssh <name> "<command>"
-					podName = args[1];
-					sshCommand = args[2];
+					podName = commandArgs[1];
+					sshCommand = commandArgs[2];
 				} else {
 					console.error('Usage: pi ssh [<name>] "<command>"');
 					process.exit(1);
@@ -238,7 +272,7 @@ try {
 			}
 			case "start": {
 				// pi start <model> --name <name> [options]
-				const modelId = args[1];
+				const modelId = commandArgs[1];
 				if (!modelId) {
 					// Show available models
 					await showKnownModels();
@@ -253,26 +287,26 @@ try {
 				const vllmArgs: string[] = [];
 				let inVllmArgs = false;
 
-				for (let i = 2; i < args.length; i++) {
+				for (let i = 2; i < commandArgs.length; i++) {
 					if (inVllmArgs) {
-						vllmArgs.push(args[i]);
-					} else if (args[i] === "--name" && i + 1 < args.length) {
-						name = args[i + 1];
+						vllmArgs.push(commandArgs[i]);
+					} else if (commandArgs[i] === "--name" && i + 1 < commandArgs.length) {
+						name = commandArgs[i + 1];
 						i++;
-					} else if (args[i] === "--memory" && i + 1 < args.length) {
-						memory = args[i + 1];
+					} else if (commandArgs[i] === "--memory" && i + 1 < commandArgs.length) {
+						memory = commandArgs[i + 1];
 						i++;
-					} else if (args[i] === "--context" && i + 1 < args.length) {
-						context = args[i + 1];
+					} else if (commandArgs[i] === "--context" && i + 1 < commandArgs.length) {
+						context = commandArgs[i + 1];
 						i++;
-					} else if (args[i] === "--gpus" && i + 1 < args.length) {
-						gpus = parseInt(args[i + 1], 10);
+					} else if (commandArgs[i] === "--gpus" && i + 1 < commandArgs.length) {
+						gpus = parseInt(commandArgs[i + 1], 10);
 						if (Number.isNaN(gpus) || gpus < 1) {
 							console.error(chalk.red("--gpus must be a positive number"));
 							process.exit(1);
 						}
 						i++;
-					} else if (args[i] === "--vllm") {
+					} else if (commandArgs[i] === "--vllm") {
 						inVllmArgs = true;
 					}
 				}
@@ -302,7 +336,7 @@ try {
 			}
 			case "stop": {
 				// pi stop [name] - stop specific model or all models
-				const name = args[1];
+				const name = commandArgs[1];
 				if (!name) {
 					// Stop all models on the active pod
 					await stopAllModels({ pod: podOverride });
@@ -317,7 +351,7 @@ try {
 				break;
 			case "logs": {
 				// pi logs <name>
-				const name = args[1];
+				const name = commandArgs[1];
 				if (!name) {
 					console.error("Usage: pi logs <name>");
 					process.exit(1);
@@ -327,7 +361,7 @@ try {
 			}
 			case "agent": {
 				// pi agent <name> [messages...] [options]
-				const name = args[1];
+				const name = commandArgs[1];
 				if (!name) {
 					console.error("Usage: pi agent <name> [messages...] [options]");
 					process.exit(1);
@@ -336,7 +370,7 @@ try {
 				const apiKey = process.env.PI_API_KEY;
 
 				// Pass all args after the model name
-				const agentArgs = args.slice(2);
+				const agentArgs = commandArgs.slice(2);
 
 				// If no messages provided, it's interactive mode
 				try {
@@ -358,6 +392,7 @@ try {
 		}
 	}
 } catch (error) {
-	console.error("Error:", error);
+	const message = error instanceof Error ? error.message : String(error);
+	console.error(chalk.red(message));
 	process.exit(1);
 }
