@@ -1105,6 +1105,22 @@ to short-circuit blank `!` commands to `undefined` without attempting shell exec
 
 **Result:** Config command resolution now handles malformed/blank shell directives safely and predictably.
 
+---
+
+### 64) shell-command cache keys were sensitive to leading/trailing whitespace
+
+**Finding:** Config shell-command caching in coding-agent keyed on raw config strings, so semantically identical commands like `"!echo key"` and `"!   echo key   "` could bypass cache reuse and execute multiple times.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/resolve-config-value.ts`
+- `packages/coding-agent/test/resolve-config-value.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to normalize cache keys by trimmed command text and added regression coverage proving equivalent whitespace variants hit the same cache entry.
+
+**Result:** Shell-command-backed config resolution now caches consistently across whitespace-equivalent command forms.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1218,7 +1234,7 @@ to short-circuit blank `!` commands to `undefined` without attempting shell exec
 - GPU type extraction helper coverage:
   - `npm --workspace "@mariozechner/pi" test -- test/gpu-name.test.ts`
 - coding-agent blank shell-config command coverage:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/resolve-config-value.test.ts`
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/resolve-config-value.test.ts` (covers blank-command short-circuit + cache-key normalization)
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
