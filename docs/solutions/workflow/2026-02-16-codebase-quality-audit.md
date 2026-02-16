@@ -191,6 +191,21 @@ covering:
 
 **Result:** The reviewer execution path now has explicit regression coverage for core control flow.
 
+---
+
+### 11) ExecutionEngine decision logs omitted work summaries
+
+**Finding:** `DecisionLogger` supports `work_summary`, but `ExecutionEngine` was not populating it when persisting review attempts.
+
+**Action:** Updated:
+
+- `packages/agent/src/execution-engine.ts`
+- `packages/agent/test/execution-engine.test.ts`
+
+to include summarized tool/work context in each logged review decision and to verify this behavior via unit tests.
+
+**Result:** Decision logs now capture why a review failed/succeeded plus what work was attempted, improving auditability of retry cycles.
+
 ## Validation Evidence
 
 - Root quality gate passes:
