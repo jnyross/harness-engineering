@@ -83,7 +83,12 @@ export async function promptModel(modelName: string, userArgs: string[], opts: P
 	}
 
 	// Extract host from SSH string using shell-aware parsing.
-	const host = extractHostFromSshCommand(pod.ssh) || "localhost";
+	const host = extractHostFromSshCommand(pod.ssh);
+	if (!host) {
+		throw new Error(
+			`Pod '${podName}' has invalid SSH command '${pod.ssh}'. Expected format like: ssh [options] user@host`,
+		);
+	}
 
 	// Build the system prompt for code navigation
 	const systemPrompt = `You help the user understand and navigate the codebase in the current working directory.
