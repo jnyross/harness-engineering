@@ -3,7 +3,7 @@
  * Supports Brooks Loop (--iterations N). Emits ProjectLoopEvent and writes NDJSON to eventsPath.
  */
 
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import { agentLoop } from "./agent-loop.js";
 import { greenGate, validateDecomposition } from "./gates.js";
 import { createProjectEvent, type ProjectLoopPhase, writeProjectEvent } from "./project-events.js";
@@ -150,7 +150,7 @@ function getChangedFiles(cwd: string): string[] {
 function stageChangedFiles(cwd: string): boolean {
 	const changedFiles = getChangedFiles(cwd);
 	for (const file of changedFiles) {
-		execSync(`git add ${JSON.stringify(file)}`, { cwd, encoding: "utf-8" });
+		execFileSync("git", ["add", "--", file], { cwd, encoding: "utf-8" });
 	}
 	return changedFiles.length > 0;
 }
@@ -218,7 +218,7 @@ export async function projectLoop(options: ProjectLoopOptions): Promise<void> {
 				try {
 					const hasChanges = stageChangedFiles(cwd);
 					if (hasChanges) {
-						execSync(`git commit -m ${JSON.stringify(`task: ${task.title}`)}`, { cwd, encoding: "utf-8" });
+						execFileSync("git", ["commit", "-m", `task: ${task.title}`], { cwd, encoding: "utf-8" });
 					}
 				} catch {
 					// ignore commit failures

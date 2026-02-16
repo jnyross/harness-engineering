@@ -3,7 +3,7 @@
  * ITERATION_N_LEARNINGS.md, ARCHITECTURE.md, EXECUTION_PLAN.md.
  */
 
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -76,10 +76,10 @@ export function commitState(
 ): void {
 	for (const f of files) {
 		const p = join(cwd, f);
-		if (existsSync(p)) execSync(`git add ${JSON.stringify(p)}`, { cwd, encoding: "utf-8" });
+		if (existsSync(p)) execFileSync("git", ["add", "--", p], { cwd, encoding: "utf-8" });
 	}
 	try {
-		execSync(`git commit -m ${JSON.stringify(message)}`, { cwd, encoding: "utf-8" });
+		execFileSync("git", ["commit", "-m", message], { cwd, encoding: "utf-8" });
 	} catch {
 		// nothing to commit
 	}
