@@ -949,6 +949,26 @@ to require successful host extraction and throw a clear configuration error if t
 
 **Result:** Agent endpoint routing now fails safe on malformed SSH host config instead of silently targeting localhost.
 
+---
+
+### 55) agent mechanical gates used shell-composed command execution
+
+**Finding:** `packages/agent/src/gates.ts` executed `PI_TEST_COMMAND` / `PI_VALIDATE_COMMAND` through shell-composed command strings, which is brittle for quoting and unnecessary for deterministic gate execution.
+
+**Action:** Updated:
+
+- `packages/agent/src/gates.ts`
+- `packages/agent/test/gates.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to:
+
+- parse gate command strings into argv (`parseCommand`) with quote/escape handling,
+- execute via `execFileSync(binary, args)` (no shell string composition),
+- evaluate `PI_TEST_COMMAND` / `PI_VALIDATE_COMMAND` at call-time (not module-load time).
+
+**Result:** Gate command execution is now argument-safe, deterministic, and supports runtime env overrides consistently.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1049,6 +1069,8 @@ to require successful host extraction and throw a clear configuration error if t
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (covers path-with-spaces commits and tracked deletion staging)
 - full agent suite after git-invocation refactor:
   - `npm --workspace "@mariozechner/pi-agent-core" test`
+- gate command parsing/runtime override coverage:
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (covers quoted parsing + call-time env command overrides)
 - `pi agent` malformed SSH host guard:
   - `PI_CONFIG_DIR=<tmp> PI_API_KEY=test-key npx tsx packages/pods/src/cli.ts agent demo-model --list-models` with SSH `ssh -o StrictHostKeyChecking=no` (rejected with invalid SSH command error)
 - pods invoked-command guidance in pod listing:
