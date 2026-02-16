@@ -10,6 +10,7 @@
 - Shell-command value resolution now treats blank `!` commands as empty values (without command execution), normalizes command cache keys by trimmed command text, and has regression coverage in `resolve-config-value` tests.
 - Environment-variable value resolution now treats explicitly empty env vars as empty/unset values (instead of falling back to literal variable names), with regression coverage.
 - Prompt-template argument parsing now preserves quoted empty args and supports escaped quotes/spaces for shell-style command arguments; both interactive and extension editor external command parsing now use shared safe command-invocation parsing for `$EDITOR`/`$VISUAL`, preventing malformed command strings from crashing editor launch paths.
+- Interactive `/export` command parsing now respects quoted output paths (including spaces) and reports malformed quoted syntax clearly.
 
 ## [0.52.12] - 2026-02-13
 

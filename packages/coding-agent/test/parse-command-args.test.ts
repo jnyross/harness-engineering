@@ -22,6 +22,10 @@ describe("parseCommandArgs utility", () => {
 		expect(parseCommandArgs(String.raw`path\\to\\file other`)).toEqual([String.raw`path\to\file`, "other"]);
 	});
 
+	test("supports quoted slash-command arguments with spaces", () => {
+		expect(parseCommandArgs(`/export "session export.html"`)).toEqual(["/export", "session export.html"]);
+	});
+
 	test("throws on unmatched quotes in strict mode", () => {
 		expect(() => parseCommandArgs(`"unterminated`, { strict: true })).toThrow(/Unmatched quote/);
 	});
