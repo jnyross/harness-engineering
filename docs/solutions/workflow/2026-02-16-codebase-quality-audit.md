@@ -1137,6 +1137,22 @@ to treat explicitly empty env-var values as unresolved (`undefined`) while keepi
 
 **Result:** Env-based value resolution now cleanly distinguishes unset vs empty values, avoiding accidental literal-key fallback.
 
+---
+
+### 66) prompt-template argument parsing dropped shell-style escaped content
+
+**Finding:** `parseCommandArgs(...)` in prompt-template expansion handled only basic quotes and whitespace splitting, which caused shell-style escaped arguments (escaped quotes/spaces) to parse incorrectly and dropped explicit empty quoted arguments.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/prompt-templates.ts`
+- `packages/coding-agent/test/prompt-templates.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to make command-argument parsing preserve empty quoted args and correctly handle escaped quotes/spaces/backslashes in shell-style input forms.
+
+**Result:** Prompt-template argument expansion now handles realistic command input safely and predictably for quoted/escaped edge cases.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1251,6 +1267,8 @@ to treat explicitly empty env-var values as unresolved (`undefined`) while keepi
   - `npm --workspace "@mariozechner/pi" test -- test/gpu-name.test.ts`
 - coding-agent blank shell-config command coverage:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/resolve-config-value.test.ts` (covers blank-command short-circuit, cache-key normalization, and empty env-var handling)
+- coding-agent prompt-template argument parsing coverage:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-templates.test.ts` (covers escaped quotes/spaces/backslashes and quoted-empty-arg behavior)
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
