@@ -359,6 +359,25 @@ to clearly state that `--provider` and `--model` are managed by `pi` in pods age
 
 **Result:** pods package now has standard changelog tracking and ships the changelog alongside published artifacts.
 
+---
+
+### 23) pods prompt helper still used deep process exits for validation failures
+
+**Finding:** `packages/pods/src/commands/prompt.ts` still called `process.exit(1)` for missing pod / missing model validations, bypassing the top-level `cli.ts` error handling pattern used by other `pi agent` failures.
+
+**Action:** Updated `promptModel()` in:
+
+- `packages/pods/src/commands/prompt.ts`
+
+to throw explicit errors for:
+
+- missing active pod / unknown `--pod` override
+- unknown model on selected pod
+
+and let `cli.ts` consistently render and exit non-zero.
+
+**Result:** Error handling remains centralized at the CLI entrypoint, and validation failures now follow the same cleanup and reporting path as other delegation errors.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -383,6 +402,10 @@ to clearly state that `--provider` and `--model` are managed by `pi` in pods age
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --list-models pods-vllm`
 - pods missing override validation smoke test:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --pod missing-pod`
+- pods no-active-pod validation smoke test:
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model`
+- pods missing-model validation smoke test:
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent missing-model --json`
 - pods dynamic provider registration + key handling smoke test:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --list-models pods-vllm`
 - pods reserved flag validation smoke test:
