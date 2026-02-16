@@ -23,4 +23,5 @@
 - Kept unknown-command errors authoritative even when `--pod` is present, avoiding misleading pod-flag validation failures for unsupported commands.
 - Extracted CLI pod-override parsing into reusable helpers and added targeted Node test coverage for command-name and pod-flag parsing behavior.
 - Standardized pods command guidance/error text to use the actually invoked binary name (`pi`, `pi-pods`, wrappers), including delegated command hints in models/prompt/pods flows.
+- Added targeted tests for shared CLI command context helpers to guard dynamic command-name rendering behavior.
 
