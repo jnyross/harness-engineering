@@ -1021,6 +1021,22 @@ to track invocation errors explicitly and fail red gate with diagnostics when th
 
 **Result:** Red gate now distinguishes "tests failed as expected" from "test command failed to run," improving loop correctness.
 
+---
+
+### 59) review-gate parsing drifted from shared reviewer contract parser
+
+**Finding:** `validateReview()` in gates used independent heuristic parsing logic, which risked drift from the canonical reviewer parsing behavior in `parseReviewResponse()`.
+
+**Action:** Updated:
+
+- `packages/agent/src/gates.ts`
+- `packages/agent/test/gates.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to route review gate parsing through `parseReviewResponse()`, while still failing the gate when output is truly unparseable.
+
+**Result:** Review gate verdict handling is now consistent with reviewer prompt parsing semantics across agent flows.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1127,6 +1143,8 @@ to track invocation errors explicitly and fail red gate with diagnostics when th
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (includes unmatched-quote command syntax failure case)
 - red gate invocation-error behavior:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (ensures malformed test command does not count as passing red gate)
+- review-gate parser alignment behavior:
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (covers explicit verdict, clear reject, and unparseable-review failure)
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
