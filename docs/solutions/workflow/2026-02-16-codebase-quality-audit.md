@@ -1044,7 +1044,7 @@ to require successful host extraction and throw a clear configuration error if t
 - mount command parsing helper behavior:
   - `npx tsx -e "<extractModelsPathFromMountCommand demo>"` returns `/mnt/model cache` for quoted target and `undefined` for malformed command
 - non-ssh binary guard in SSH helpers:
-  - `npm --workspace "@mariozechner/pi" test` (includes `test/ssh-parse.test.ts` case validating `sshExec("bash ...")` returns error)
+  - `npm --workspace "@mariozechner/pi" test` (includes `test/ssh-parse.test.ts` cases for rejecting `sshExec("bash ...")` and accepting `/usr/bin/ssh ...` host extraction)
 - agent state-file git invocation regression:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (covers path-with-spaces commits and tracked deletion staging)
 - full agent suite after git-invocation refactor:
