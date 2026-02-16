@@ -216,6 +216,24 @@ to include summarized tool/work context in each logged review decision and to ve
 
 **Result:** Test intent is now transparent; the suite no longer reports a misleading pass for a disabled scenario.
 
+---
+
+### 13) web-ui example still carried stale disabled persistence flow
+
+**Finding:** The example app still had `PersistentStorageDialog` imports/calls commented out with “currently broken” TODO notes, despite the dialog fix.
+
+**Action:** Re-enabled persistent storage prompt usage in:
+
+- `packages/web-ui/example/src/main.ts`
+
+and updated:
+
+- `packages/web-ui/CHANGELOG.md`
+
+to record the example app behavior alignment.
+
+**Result:** Example behavior now matches the fixed dialog implementation and no longer advertises stale broken-state comments.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -234,6 +252,8 @@ to include summarized tool/work context in each logged review decision and to ve
   - `npm --workspace "@mariozechner/pi-tui" test`
 - Targeted reviewer parser tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- reviewer.test.ts`
+- web-ui package + example checks pass:
+  - `cd packages/web-ui && npm run check`
 
 ## Methodology Fit
 
