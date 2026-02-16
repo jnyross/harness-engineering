@@ -920,7 +920,7 @@ to enforce SSH binary validation (`ssh` or `*/ssh`) before SSH/SCP execution pat
 
 ### 53) agent git staging/commit paths still used shell-composed commands
 
-**Finding:** `packages/agent/src/project-loop.ts` and `packages/agent/src/state-files.ts` still executed `git add`/`git commit` via shell-composed strings, which is brittle for unusual paths and unnecessary given argument-safe process APIs.
+**Finding:** `packages/agent/src/project-loop.ts` and `packages/agent/src/state-files.ts` still executed some `git add`/`git commit`/`git tag` operations via shell-composed strings, which is brittle for unusual paths and unnecessary given argument-safe process APIs.
 
 **Action:** Updated:
 
@@ -929,7 +929,7 @@ to enforce SSH binary validation (`ssh` or `*/ssh`) before SSH/SCP execution pat
 - `packages/agent/test/state-files.test.ts`
 - `packages/agent/CHANGELOG.md`
 
-to use argument-based git invocation (`execFileSync("git", ["add", "--", path])`, `["commit", "-m", message]`) and added regression tests proving `commitState()` handles file paths with spaces.
+to use argument-based git invocation (`execFileSync("git", ["add", "--", path])`, `["commit", "-m", message]`, `["tag", ...]`) and added regression tests proving `commitState()` handles file paths with spaces.
 
 **Result:** Agent loop/state git operations now avoid shell-string command composition and are robust for edge-case paths.
 
