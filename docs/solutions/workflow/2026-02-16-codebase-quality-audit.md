@@ -281,6 +281,19 @@ with clear error messaging for unknown pod names.
 
 **Result:** `pi agent ... --pod <name>` now fails gracefully with actionable feedback when the pod does not exist.
 
+---
+
+### 17) pods agent delegation failure handling exited inconsistently
+
+**Finding:** `packages/pods/src/cli.ts` swallowed delegation errors with `process.exit(0)`, and `prompt.ts` forced process exits from deep helper code, making cleanup/error propagation brittle.
+
+**Action:** Updated:
+
+- `packages/pods/src/commands/prompt.ts` to throw structured errors after delegation failures (while still cleaning temporary artifacts in `finally`),
+- `packages/pods/src/cli.ts` to surface agent delegation failures clearly and exit with non-zero status.
+
+**Result:** Delegation failures now propagate consistently and do not report false-success exit codes.
+
 ## Validation Evidence
 
 - Root quality gate passes:
