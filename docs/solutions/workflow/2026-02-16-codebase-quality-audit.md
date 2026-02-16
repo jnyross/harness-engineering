@@ -478,6 +478,21 @@ so reserved-flag scanning stops once `--` is encountered.
 
 **Result:** Reserved flag protection remains intact for real options while preserving standard CLI terminator semantics for literal argument payloads.
 
+---
+
+### 30) pods agent used implicit API key fallback
+
+**Finding:** `packages/pods/src/commands/prompt.ts` silently defaulted missing API keys to `"dummy"`, which led to unclear downstream auth failures.
+
+**Action:** Updated:
+
+- `packages/pods/src/commands/prompt.ts`
+- `packages/pods/CHANGELOG.md`
+
+to require `PI_API_KEY` (or explicit option-provided key) and fail early with a clear actionable error when missing.
+
+**Result:** Authentication prerequisites are validated up front, making failures deterministic and easier to diagnose.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -522,6 +537,10 @@ so reserved-flag scanning stops once `--` is encountered.
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --provider openai`
 - pods reserved flag terminator passthrough validation:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model -- --provider`
+- pods missing API key validation smoke test:
+  - `PI_CONFIG_DIR=<tmp> env -u PI_API_KEY npx tsx packages/pods/src/cli.ts agent known-model --list-models`
+- pods delegated list-models success with explicit key:
+  - `PI_CONFIG_DIR=<tmp> PI_API_KEY=test-key npx tsx packages/pods/src/cli.ts agent known-model --list-models`
 - pods unique provider generation smoke test:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --list-models` (shows `pods-vllm-<random>` entry)
 
