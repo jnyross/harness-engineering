@@ -8,7 +8,7 @@ import { getActivePod, loadConfig, saveConfig } from "../config.js";
 import { getModelConfig, getModelName, isKnownModel } from "../model-configs.js";
 import { assertValidModelId } from "../model-id.js";
 import { assertValidModelInstanceName, isValidModelInstanceName } from "../model-name.js";
-import { joinShellArgs } from "../shell-quote.js";
+import { joinShellArgs, shellExport } from "../shell-quote.js";
 import { sshExec } from "../ssh.js";
 import type { Pod } from "../types.js";
 
@@ -235,19 +235,24 @@ chmod +x /tmp/model_run_${name}.sh`,
 	);
 
 	// Prepare environment
-	const env = [
-		`HF_TOKEN='${process.env.HF_TOKEN}'`,
-		`PI_API_KEY='${process.env.PI_API_KEY}'`,
-		`HF_HUB_ENABLE_HF_TRANSFER=1`,
-		`VLLM_NO_USAGE_STATS=1`,
-		`PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`,
-		`FORCE_COLOR=1`,
-		`TERM=xterm-256color`,
-		...(gpus.length === 1 ? [`CUDA_VISIBLE_DEVICES=${gpus[0]}`] : []),
-		...Object.entries(modelConfig?.env || {}).map(([k, v]) => `${k}='${v}'`),
-	]
-		.map((e) => `export ${e}`)
-		.join("\n");
+	let env: string;
+	try {
+		const envExports = [
+			shellExport("HF_TOKEN", process.env.HF_TOKEN || ""),
+			shellExport("PI_API_KEY", process.env.PI_API_KEY || ""),
+			shellExport("HF_HUB_ENABLE_HF_TRANSFER", "1"),
+			shellExport("VLLM_NO_USAGE_STATS", "1"),
+			shellExport("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True"),
+			shellExport("FORCE_COLOR", "1"),
+			shellExport("TERM", "xterm-256color"),
+			...(gpus.length === 1 ? [shellExport("CUDA_VISIBLE_DEVICES", String(gpus[0]))] : []),
+			...Object.entries(modelConfig?.env || {}).map(([k, v]) => shellExport(k, v)),
+		];
+		env = envExports.join("\n");
+	} catch (error) {
+		console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+		process.exit(1);
+	}
 
 	// Start the model runner with script command for pseudo-TTY (preserves colors)
 	// Note: We use script to preserve colors and create a log file

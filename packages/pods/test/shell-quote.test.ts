@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { joinShellArgs, shellQuote } from "../src/shell-quote.js";
+import { joinShellArgs, shellExport, shellQuote } from "../src/shell-quote.js";
 
 describe("shellQuote", () => {
 	it("wraps values in single quotes", () => {
@@ -22,5 +22,16 @@ describe("joinShellArgs", () => {
 	it("preserves spaces and metacharacters as literal argument content", () => {
 		const joined = joinShellArgs(["--flag", "semi;colon && rm -rf /", "quoted'value"]);
 		assert.equal(joined, "'--flag' 'semi;colon && rm -rf /' 'quoted'\"'\"'value'");
+	});
+});
+
+describe("shellExport", () => {
+	it("creates safe export statements", () => {
+		assert.equal(shellExport("HF_TOKEN", "hf_value"), "export HF_TOKEN='hf_value'");
+		assert.equal(shellExport("TOKEN", "o'hare"), "export TOKEN='o'\"'\"'hare'");
+	});
+
+	it("rejects invalid environment variable names", () => {
+		assert.throws(() => shellExport("bad-name", "x"), /Invalid shell environment variable name/);
 	});
 });

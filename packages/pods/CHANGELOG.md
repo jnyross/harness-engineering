@@ -12,7 +12,7 @@
 - Added validated model-instance name handling (`[A-Za-z0-9._-]`, 1-64 chars) in model start/stop/log flows to prevent unsafe shell interpolation.
 - Added model-id validation in `pi start` (`[A-Za-z0-9._/-]`, 1-128 chars) to reject unsafe shell-interpolated model identifiers before remote command execution.
 - Added strict `--memory` and `--context` option normalization/validation to reject invalid values before launching model runs.
-- Shell-quoted custom vLLM arguments before script upload so values with spaces/metacharacters are passed as literal args instead of raw shell fragments.
+- Shell-quoted custom vLLM arguments and exported runtime environment values before script upload so values with spaces/quotes/metacharacters are passed as literal data instead of raw shell fragments.
 - Shell-quoted pod setup command arguments (`--models-path`, `--hf-token`, `--vllm-api-key`, `--mount`) to avoid unsafe SSH command interpolation and improve handling of spaces/quotes.
 
 ### Fixed
