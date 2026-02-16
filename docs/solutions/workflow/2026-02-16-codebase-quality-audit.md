@@ -657,6 +657,23 @@ and clarified environment variable wording accordingly.
 
 **Result:** Standalone-agent documentation now aligns with actual package boundaries and avoids directing users to a non-existent command.
 
+---
+
+### 40) pods regression tests lacked package-level runner integration
+
+**Finding:** Newly added pods regression tests were executable via direct `tsx --test` commands but not wired to a package-level `npm test` script.
+
+**Action:** Updated:
+
+- `packages/pods/package.json`
+- `packages/pods/CHANGELOG.md`
+
+to add:
+
+- `"test": "tsx --test test/**/*.test.ts"`
+
+**Result:** pods helper regressions are now runnable through standard workspace test workflows (`npm --workspace "@mariozechner/pi" test`), improving discoverability and CI friendliness.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -719,6 +736,8 @@ and clarified environment variable wording accordingly.
   - `npx tsx --test packages/pods/test/cli-command.test.ts packages/pods/test/cli-args.test.ts packages/pods/test/prompt-args.test.ts`
 - standalone coding-agent invocation validation:
   - `cd /tmp && npx --yes --package @mariozechner/pi-coding-agent pi --help`
+- pods package test script validation:
+  - `npm --workspace "@mariozechner/pi" test`
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
