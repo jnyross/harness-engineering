@@ -463,6 +463,21 @@ to align the documented prerequisite to `Node.js 20+`.
 
 **Result:** Installation guidance now matches the package’s enforced runtime requirement.
 
+---
+
+### 29) reserved flag validation ignored `--` option terminator
+
+**Finding:** `packages/pods/src/commands/prompt.ts` scanned all forwarded args for reserved `--provider`/`--model` flags, including arguments after `--`, which should be treated as literal passthrough payload.
+
+**Action:** Updated:
+
+- `packages/pods/src/commands/prompt.ts`
+- `packages/pods/CHANGELOG.md`
+
+so reserved-flag scanning stops once `--` is encountered.
+
+**Result:** Reserved flag protection remains intact for real options while preserving standard CLI terminator semantics for literal argument payloads.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -505,6 +520,8 @@ to align the documented prerequisite to `Node.js 20+`.
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --list-models pods-vllm`
 - pods reserved flag validation smoke test:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --provider openai`
+- pods reserved flag terminator passthrough validation:
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model -- --provider`
 - pods unique provider generation smoke test:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --list-models` (shows `pods-vllm-<random>` entry)
 
