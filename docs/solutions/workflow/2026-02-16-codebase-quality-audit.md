@@ -861,6 +861,24 @@ by introducing shell-aware token parsing (`parseShellCommand`) and host extracti
 
 **Result:** SSH command handling is now robust for quoted/escaped arguments and avoids brittle tokenization behavior.
 
+---
+
+### 50) `pi agent` still used brittle host extraction and unvalidated persisted ports
+
+**Finding:** While SSH helper flows were hardened, `packages/pods/src/commands/prompt.ts` still extracted pod hostnames by naive `split(" ")` + `@` scanning and accepted persisted model ports without validation when building provider base URLs.
+
+**Action:** Updated:
+
+- `packages/pods/src/commands/prompt.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- resolve host via `extractHostFromSshCommand(...)` (shell-aware parsing),
+- validate `modelConfig.port` with `isValidPort(...)` before provider registration.
+
+**Result:** Agent delegation now uses robust host resolution and rejects malformed persisted port values before constructing endpoint URLs.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -949,6 +967,10 @@ by introducing shell-aware token parsing (`parseShellCommand`) and host extracti
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts list` with tampered config (reports invalid pid/port, avoids shell interpolation)
 - SSH command parsing regression coverage:
   - `npm --workspace "@mariozechner/pi" test` (includes `test/ssh-parse.test.ts` quote/escape/host extraction cases, including `-p2222`)
+- `pi agent` with quoted SSH options:
+  - `PI_CONFIG_DIR=<tmp> PI_API_KEY=test-key npx tsx packages/pods/src/cli.ts agent demo-model --list-models` with SSH config `ssh -i "~/.ssh/my key" -p2222 ubuntu@demo.host` (works; provider/model listed)
+- `pi agent` invalid persisted port guard:
+  - `PI_CONFIG_DIR=<tmp> PI_API_KEY=test-key npx tsx packages/pods/src/cli.ts agent demo-model --list-models` with tampered model port `bad-port` (rejected before delegation)
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
