@@ -46,6 +46,8 @@ export class ExecutionEngine {
 		config: AgentLoopConfig,
 		signal?: AbortSignal,
 	): Promise<{ messages: AgentMessage[]; approved: boolean }> {
+		this.retryCount = 0;
+
 		if (!this.reviewConfig.enabled) {
 			const stream = agentLoop(prompts, context, config, signal);
 			const messages = await stream.result();

@@ -188,4 +188,28 @@ describe("ExecutionEngine review flow", () => {
 		expect(log).toContain("Work Summary");
 		expect(log).toContain("Called bash with");
 	});
+
+	it("resets retry counter for each new runWithReview invocation", async () => {
+		const engine = new ExecutionEngine({
+			cwd: tempDir,
+			reviewConfig: { enabled: true, maxRetries: 2 },
+		});
+		await engine.initialize();
+
+		// First run takes two attempts.
+		mockLoopResult([createAssistantToolCallMessage()]);
+		mockLoopResult([createAssistantTextMessage("VERDICT: needs_fixes\nReason: first pass")]);
+		mockLoopResult([createAssistantTextMessage("updated implementation")]);
+		mockLoopResult([createAssistantTextMessage("VERDICT: approved")]);
+		const firstRun = await engine.runWithReview([createUserMessage("run one")], context, config);
+		expect(firstRun.approved).toBe(true);
+		expect(engine.getRetryCount()).toBe(2);
+
+		// Second run should still be allowed to execute (counter reset), not short-circuit to zero attempts.
+		mockLoopResult([createAssistantToolCallMessage()]);
+		mockLoopResult([createAssistantTextMessage("VERDICT: approved")]);
+		const secondRun = await engine.runWithReview([createUserMessage("run two")], context, config);
+		expect(secondRun.approved).toBe(true);
+		expect(engine.getRetryCount()).toBe(1);
+	});
 });

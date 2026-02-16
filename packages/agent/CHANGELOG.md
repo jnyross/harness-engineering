@@ -12,6 +12,7 @@
 - Added local Vitest aliasing for `@mariozechner/pi-ai` so agent package tests run from source without requiring prebuilt internal package artifacts.
 - Implemented actual LLM-backed review execution in `ExecutionEngine` (instead of placeholder rejection), wiring reviewer prompt output through the shared review parser.
 - Decision log entries produced by `ExecutionEngine` now include a concise work summary for each review attempt.
+- Reset `ExecutionEngine` retry counters per invocation so repeated `runWithReview()` calls don't inherit retry exhaustion from earlier runs.
 
 ## [0.52.12] - 2026-02-13
 
