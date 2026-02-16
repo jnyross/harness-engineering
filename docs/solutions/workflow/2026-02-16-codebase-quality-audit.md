@@ -1089,6 +1089,22 @@ to centralize GPU type derivation through `extractGpuType(...)`.
 
 **Result:** GPU compatibility matching and display now share one tested parsing path.
 
+---
+
+### 63) blank `!` config commands still spawned shell execution attempts
+
+**Finding:** In coding-agent config value resolution, a value like `"!"` or `"!   "` was treated as a shell command invocation, causing unnecessary execution attempts for effectively empty command strings.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/resolve-config-value.ts`
+- `packages/coding-agent/test/resolve-config-value.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to short-circuit blank `!` commands to `undefined` without attempting shell execution, with regression tests for blank command behavior and header-value filtering.
+
+**Result:** Config command resolution now handles malformed/blank shell directives safely and predictably.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1201,6 +1217,8 @@ to centralize GPU type derivation through `extractGpuType(...)`.
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (covers whitespace `PI_TEST_COMMAND` / `PI_VALIDATE_COMMAND` fallback to defaults)
 - GPU type extraction helper coverage:
   - `npm --workspace "@mariozechner/pi" test -- test/gpu-name.test.ts`
+- coding-agent blank shell-config command coverage:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/resolve-config-value.test.ts`
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
