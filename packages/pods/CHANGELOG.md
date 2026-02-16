@@ -11,6 +11,7 @@
 - Added a package-level `npm test` script for pods to run the new CLI/prompt helper regression tests via Node's test runner.
 - Added validated model-instance name handling (`[A-Za-z0-9._-]`, 1-64 chars) in model start/stop/log flows to prevent unsafe shell interpolation.
 - Added model-id validation in `pi start` (`[A-Za-z0-9._/-]`, 1-128 chars) to reject unsafe shell-interpolated model identifiers before remote command execution.
+- Added strict `--memory` and `--context` option normalization/validation to reject invalid values before launching model runs.
 
 ### Fixed
 

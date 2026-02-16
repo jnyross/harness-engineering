@@ -10,6 +10,7 @@ import { listModels, showKnownModels, startModel, stopAllModels, stopModel, view
 import { listPods, removePodCommand, setupPod, switchActivePod } from "./commands/pods.js";
 import { promptModel } from "./commands/prompt.js";
 import { getActivePod, loadConfig } from "./config.js";
+import { normalizeContextOption, normalizeMemoryOption } from "./model-options.js";
 import { sshExecStream } from "./ssh.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -265,10 +266,20 @@ try {
 						name = commandArgs[i + 1];
 						i++;
 					} else if (commandArgs[i] === "--memory" && i + 1 < commandArgs.length) {
-						memory = commandArgs[i + 1];
+						try {
+							memory = normalizeMemoryOption(commandArgs[i + 1]);
+						} catch (error) {
+							console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+							process.exit(1);
+						}
 						i++;
 					} else if (commandArgs[i] === "--context" && i + 1 < commandArgs.length) {
-						context = commandArgs[i + 1];
+						try {
+							context = normalizeContextOption(commandArgs[i + 1]);
+						} catch (error) {
+							console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+							process.exit(1);
+						}
 						i++;
 					} else if (commandArgs[i] === "--gpus" && i + 1 < commandArgs.length) {
 						gpus = parseInt(commandArgs[i + 1], 10);
