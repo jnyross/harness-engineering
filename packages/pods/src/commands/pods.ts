@@ -3,6 +3,7 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { getCliCommand } from "../cli-command.js";
 import { addPod, loadConfig, removePod, setActivePod } from "../config.js";
+import { extractModelsPathFromMountCommand } from "../mount-command.js";
 import { assertValidPodName } from "../pod-name.js";
 import { shellQuote } from "../shell-quote.js";
 import { scpFile, sshExec, sshExecStream } from "../ssh.js";
@@ -78,10 +79,9 @@ export const setupPod = async (
 	// Determine models path
 	let modelsPath = options.modelsPath;
 	if (!modelsPath && options.mount) {
-		// Extract path from mount command if not explicitly provided
+		// Extract path from mount command if not explicitly provided.
 		// e.g., "mount -t nfs ... /mnt/sfs" -> "/mnt/sfs"
-		const parts = options.mount.split(" ");
-		modelsPath = parts[parts.length - 1];
+		modelsPath = extractModelsPathFromMountCommand(options.mount);
 	}
 
 	if (!modelsPath) {

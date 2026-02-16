@@ -11,6 +11,7 @@ import { listPods, removePodCommand, setupPod, switchActivePod } from "./command
 import { promptModel } from "./commands/prompt.js";
 import { getActivePod, loadConfig } from "./config.js";
 import { normalizeContextOption, normalizeMemoryOption } from "./model-options.js";
+import { extractModelsPathFromMountCommand } from "./mount-command.js";
 import { assertValidPodName } from "./pod-name.js";
 import { parseShellCommand, sshExecStream } from "./ssh.js";
 
@@ -130,12 +131,7 @@ try {
 
 			// If --mount provided but no --models-path, try to extract path from mount command
 			if (options.mount && !options.modelsPath) {
-				// Extract last part of mount command as models path
-				const parts = options.mount.trim().split(" ");
-				const lastPart = parts[parts.length - 1];
-				if (lastPart?.startsWith("/")) {
-					options.modelsPath = lastPart;
-				}
+				options.modelsPath = extractModelsPathFromMountCommand(options.mount);
 			}
 
 			await setupPod(name, sshCmd, options);
