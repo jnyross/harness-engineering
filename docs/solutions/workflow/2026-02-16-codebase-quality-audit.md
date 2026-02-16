@@ -206,6 +206,16 @@ to include summarized tool/work context in each logged review decision and to ve
 
 **Result:** Decision logs now capture why a review failed/succeeded plus what work was attempted, improving auditability of retry cycles.
 
+---
+
+### 12) AI E2E test contained a silent no-op placeholder
+
+**Finding:** In `packages/ai/test/stream.test.ts`, the Mistral “thinking mode” test body was fully commented out, causing a false-positive pass instead of an explicit skip.
+
+**Action:** Converted that case to an explicit `it.skip(...)` with a clear rationale and preserved the intended test body for future re-enable.
+
+**Result:** Test intent is now transparent; the suite no longer reports a misleading pass for a disabled scenario.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -216,6 +226,8 @@ to include summarized tool/work context in each logged review decision and to ve
   - `npm --workspace "@mariozechner/pi-agent-core" test`
 - Targeted ExecutionEngine review tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/execution-engine.test.ts`
+- Targeted AI stream mistral block run (all skipped as expected without creds):
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/stream.test.ts -t "Mistral Provider (devstral-medium-latest via OpenAI Completions)"`
 - coding-agent package tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test`
 - TUI package tests pass:
