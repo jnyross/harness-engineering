@@ -716,6 +716,29 @@ to enforce model-id constraints (`[A-Za-z0-9._/-]`, 1-128 chars, leading alphanu
 
 **Result:** Unsafe model-id inputs are rejected early, reducing shell interpolation risk while preserving common HuggingFace-style model id formats.
 
+---
+
+### 43) `--memory` / `--context` options accepted invalid values
+
+**Finding:** CLI parsing accepted arbitrary `--memory` and `--context` values, allowing invalid values (e.g., `--memory abc`, `--context none`) to flow into vLLM args and fail later with unclear runtime errors.
+
+**Action:** Added:
+
+- `packages/pods/src/model-options.ts`
+- `packages/pods/test/model-options.test.ts`
+
+and updated:
+
+- `packages/pods/src/cli.ts`
+- `packages/pods/CHANGELOG.md`
+
+to normalize and validate:
+
+- `--memory`: percentage in `(0, 100]` (supports `50` or `50%`),
+- `--context`: one of `4k|8k|16k|32k|64k|128k` or a positive token count.
+
+**Result:** Invalid option values now fail fast with actionable error messages before any deployment side effects.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -786,6 +809,10 @@ to enforce model-id constraints (`[A-Za-z0-9._/-]`, 1-128 chars, leading alphanu
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts logs "bad name"` (rejected with validation error)
 - model-id validation (start command):
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts start "bad model" --name goodname` (rejected with validation error)
+- memory option validation (start command):
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts start <model> --name qwen --memory abc` (rejected with validation error)
+- context option validation (start command):
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts start <model> --name qwen --context none` (rejected with validation error)
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
