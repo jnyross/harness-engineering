@@ -3,7 +3,7 @@ import { readFile as fsReadFile } from "fs/promises";
 import { join } from "path";
 import { agentLoop } from "./agent-loop.js";
 import { DecisionLogger } from "./decision-log.js";
-import { createReviewerPrompt, type ReviewInput } from "./reviewer.js";
+import { createReviewerPrompt, parseReviewResponse, type ReviewInput } from "./reviewer.js";
 import type { AgentContext, AgentLoopConfig, AgentMessage } from "./types.js";
 
 export interface ReviewConfig {
@@ -61,7 +61,7 @@ export class ExecutionEngine {
 			const stream = agentLoop(prompts, context, config, signal);
 			lastMessages = await stream.result();
 
-			const reviewResult = await this.runReview(lastMessages);
+			const reviewResult = await this.runReview(lastMessages, config, signal);
 
 			await this.decisionLogger.logDecision({
 				approved: reviewResult.approved,
@@ -96,7 +96,11 @@ export class ExecutionEngine {
 		return { messages: lastMessages, approved };
 	}
 
-	private async runReview(messages: AgentMessage[]): Promise<{ approved: boolean; reason?: string }> {
+	private async runReview(
+		messages: AgentMessage[],
+		config: AgentLoopConfig,
+		signal?: AbortSignal,
+	): Promise<{ approved: boolean; reason?: string }> {
 		let planContent = "";
 		try {
 			planContent = await fsReadFile(join(this.cwd, this.reviewConfig.planPath), "utf-8");
@@ -112,10 +116,29 @@ export class ExecutionEngine {
 		};
 
 		const prompt = createReviewerPrompt(reviewInput);
+		const reviewContext: AgentContext = {
+			systemPrompt: "",
+			messages: [],
+			tools: [],
+		};
+		const reviewPrompt: AgentMessage = {
+			role: "user",
+			content: [{ type: "text", text: prompt }],
+			timestamp: Date.now(),
+		};
 
+		const stream = agentLoop([reviewPrompt], reviewContext, config, signal);
+		const reviewMessages = await stream.result();
+		const reviewText = this.extractAssistantText(reviewMessages);
+
+		if (!reviewText.trim()) {
+			return { approved: false, reason: "Reviewer returned no output" };
+		}
+
+		const parsed = parseReviewResponse(reviewText);
 		return {
-			approved: false,
-			reason: `Review not implemented - would call LLM with prompt:\n\n${prompt}`,
+			approved: parsed.approved,
+			reason: parsed.reason,
 		};
 	}
 
@@ -147,6 +170,22 @@ export class ExecutionEngine {
 		}
 
 		return summaries.join("\n") || "No tool calls made.";
+	}
+
+	private extractAssistantText(messages: AgentMessage[]): string {
+		for (let i = messages.length - 1; i >= 0; i--) {
+			const message = messages[i];
+			if (message.role !== "assistant") continue;
+			const text = message.content
+				.filter((content): content is { type: "text"; text: string } => content.type === "text")
+				.map((content) => content.text)
+				.join("\n")
+				.trim();
+			if (text.length > 0) {
+				return text;
+			}
+		}
+		return "";
 	}
 
 	getRetryCount(): number {
