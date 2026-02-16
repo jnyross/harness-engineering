@@ -31,6 +31,7 @@ describe("extractHostFromSshCommand", () => {
 	it("extracts host for common ssh variants", () => {
 		assert.equal(extractHostFromSshCommand("ssh root@1.2.3.4"), "1.2.3.4");
 		assert.equal(extractHostFromSshCommand(`ssh -p 2222 -i "~/.ssh/key file" ubuntu@demo.host`), "demo.host");
+		assert.equal(extractHostFromSshCommand("ssh -p2222 ubuntu@demo.host"), "demo.host");
 		assert.equal(extractHostFromSshCommand("ssh -o StrictHostKeyChecking=no demo.host"), "demo.host");
 	});
 });

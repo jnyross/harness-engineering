@@ -26,6 +26,13 @@ const SSH_FLAGS_WITH_VALUE = new Set([
 	"-W",
 ]);
 
+function hasAttachedShortFlagValue(arg: string): boolean {
+	if (!arg.startsWith("-") || arg.startsWith("--") || arg.length <= 2) {
+		return false;
+	}
+	return SSH_FLAGS_WITH_VALUE.has(arg.slice(0, 2));
+}
+
 export function parseShellCommand(command: string): string[] {
 	const tokens: string[] = [];
 	let current = "";
@@ -123,6 +130,9 @@ export function extractHostFromSshCommand(sshCmd: string): string | undefined {
 			return sshArgs[i + 1]?.split("@").pop();
 		}
 		if (arg.startsWith("-")) {
+			if (hasAttachedShortFlagValue(arg)) {
+				continue;
+			}
 			if (SSH_FLAGS_WITH_VALUE.has(arg)) {
 				i++;
 			}
@@ -265,12 +275,19 @@ export const scpFile = async (sshCmd: string, localPath: string, remotePath: str
 
 	for (let i = 0; i < sshArgs.length; i++) {
 		const arg = sshArgs[i];
+		if (arg.startsWith("-p") && arg.length > 2 && !arg.startsWith("--")) {
+			port = arg.slice(2);
+			continue;
+		}
 		if (arg === "-p" && i + 1 < sshArgs.length) {
 			port = sshArgs[i + 1];
 			i++;
 			continue;
 		}
 		if (arg.startsWith("-")) {
+			if (hasAttachedShortFlagValue(arg)) {
+				continue;
+			}
 			if (SSH_FLAGS_WITH_VALUE.has(arg)) {
 				i++;
 			}
