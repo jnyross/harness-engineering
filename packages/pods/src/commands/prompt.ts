@@ -37,6 +37,9 @@ function resolveLocalCodingAgentCli(): string | undefined {
 
 function findReservedFlag(userArgs: string[]): string | undefined {
 	for (const arg of userArgs) {
+		if (arg === "--") {
+			break;
+		}
 		for (const flag of RESERVED_AGENT_FLAGS) {
 			if (arg === flag || arg.startsWith(`${flag}=`)) {
 				return flag;
