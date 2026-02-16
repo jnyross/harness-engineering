@@ -26,7 +26,12 @@ function executeCommand(commandConfig: string): string | undefined {
 		return commandResultCache.get(commandConfig);
 	}
 
-	const command = commandConfig.slice(1);
+	const command = commandConfig.slice(1).trim();
+	if (!command) {
+		commandResultCache.set(commandConfig, undefined);
+		return undefined;
+	}
+
 	let result: string | undefined;
 	try {
 		const output = execSync(command, {
