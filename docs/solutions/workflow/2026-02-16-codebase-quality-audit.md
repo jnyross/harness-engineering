@@ -554,6 +554,30 @@ to point to `@mariozechner/pi-agent-core`.
 
 **Result:** Package cross-reference docs now match the current package naming and reduce install confusion.
 
+---
+
+### 35) pods CLI argument parsing logic lacked direct regression tests
+
+**Finding:** Repeated hardening changes to pods command parsing (`--pod` behavior and invoked-command naming) lived only in `cli.ts` without targeted automated regression coverage.
+
+**Action:** Added:
+
+- `packages/pods/src/cli-args.ts` (extracted reusable parser helpers),
+- `packages/pods/test/cli-args.test.ts` (Node test coverage),
+- `packages/pods/src/cli.ts` wiring to use shared helpers,
+- `packages/pods/CHANGELOG.md` update.
+
+Covered scenarios include:
+
+- `resolveAppCommand()` fallback behavior for source entrypoints,
+- invoked-command basename handling for wrappers/binaries,
+- `--pod <name>` and `--pod=<name>` extraction,
+- missing/duplicate `--pod` validation,
+- non-model command rejection,
+- `--` terminator passthrough behavior.
+
+**Result:** pods CLI parsing behavior now has focused, repeatable regression coverage to guard against future argument-handling drift.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -610,6 +634,8 @@ to point to `@mariozechner/pi-agent-core`.
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts mystery --pod demo` (reports `Unknown command: mystery`)
 - pods non-model `--pod` enforcement validation:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts shell --pod demo` (still rejects `--pod`)
+- pods CLI parser regression tests:
+  - `npx tsx --test packages/pods/test/cli-args.test.ts`
 - pods unique provider generation smoke test:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --list-models` (shows `pods-vllm-<random>` entry)
 
