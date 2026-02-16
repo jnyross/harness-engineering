@@ -20,6 +20,7 @@ const require = createRequire(import.meta.url);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MONOREPO_CODING_AGENT_CLI = join(__dirname, "../../../coding-agent/src/cli.ts");
 const PODS_PROVIDER_NAME = "pods-vllm";
+const PODS_AGENT_API_KEY_ENV = "PI_PODS_AGENT_API_KEY";
 
 function resolveLocalCodingAgentCli(): string | undefined {
 	if (existsSync(MONOREPO_CODING_AGENT_CLI)) {
@@ -93,12 +94,13 @@ Current working directory: ${process.cwd()}`;
 	// Build arguments for agent main function
 	const args: string[] = [];
 	let tempExtensionDir: string | undefined;
+	const resolvedApiKey = opts.apiKey || process.env.PI_API_KEY || "dummy";
 
 	// Add base configuration that we control
 	const api = modelConfig.model.toLowerCase().includes("gpt-oss") ? "openai-responses" : "openai-completions";
 	const providerConfig = {
 		baseUrl: `http://${host}:${modelConfig.port}/v1`,
-		apiKey: opts.apiKey || process.env.PI_API_KEY || "dummy",
+		apiKey: PODS_AGENT_API_KEY_ENV,
 		api,
 		models: [
 			{
@@ -145,11 +147,12 @@ Current working directory: ${process.cwd()}`;
 		: localCli
 			? [localCli, ...args]
 			: ["--yes", "--package", "@mariozechner/pi-coding-agent", "pi", ...args];
+	const childEnv = { ...process.env, [PODS_AGENT_API_KEY_ENV]: resolvedApiKey };
 	try {
 		await new Promise<void>((resolve, reject) => {
 			const child = spawn(command, commandArgs, {
 				stdio: "inherit",
-				env: process.env,
+				env: childEnv,
 			});
 
 			child.on("error", (error) => reject(error));
