@@ -141,18 +141,50 @@ Also expanded biome include scope to lint package vitest configs and normalized 
 
 **Result:** Agent package tests now run from source checkout without requiring prebuild artifacts.
 
+---
+
+### 8) ExecutionEngine review step was a hardcoded placeholder
+
+**Finding:** `ExecutionEngine` review mode always returned a placeholder rejection (`approved: false`) instead of performing a real review pass.
+
+**Action:** Implemented real reviewer execution in:
+
+- `packages/agent/src/execution-engine.ts`
+
+using the existing reviewer prompt + parser contract and an LLM-backed review loop.
+
+**Result:** Review mode now produces actual `approved/needs_fixes/rejected` outcomes rather than guaranteed retries/failures.
+
+---
+
+### 9) coding-agent test/runtime resolution gaps from source checkout
+
+**Finding:** coding-agent tests and extension loading still had source-checkout friction:
+
+- Vitest import resolution for internal monorepo packages required prebuilt dist entries.
+- Extension loader alias resolution used `require.resolve(...)` only, which failed when sibling packages were not built.
+- Git update tests used shorthand git sources instead of explicit `git:` prefixes required by strict parsing.
+
+**Action:** Updated:
+
+- `packages/coding-agent/vitest.config.ts` to resolve internal `@mariozechner/pi-*` packages from source.
+- `packages/coding-agent/src/core/extensions/loader.ts` to fall back to sibling source entries when dist package entries are unavailable.
+- `packages/coding-agent/test/git-update.test.ts` to use explicit `git:` source prefixes.
+
+**Result:** coding-agent tests run successfully from source checkout, including extension-loading suites and git-update scenarios.
+
 ## Validation Evidence
 
 - Root quality gate passes:
   - `npm run check`
+- AI package tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test`
 - Agent package tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test`
+- coding-agent package tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test`
 - Targeted reviewer parser tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- reviewer.test.ts`
-
-## Remaining Notes
-
-- `packages/agent/src/execution-engine.ts` appears legacy/unwired and still contains placeholder review behavior. This was intentionally left unchanged because it is not part of the active exported/used runtime path.
 
 ## Methodology Fit
 
