@@ -17,6 +17,7 @@
 - Added pod-name validation (`[A-Za-z0-9._-]`, 1-64 chars) across setup/active/remove and `--pod` override parsing with dedicated tests.
 - Added PID/port validation for stop/list verification flows to prevent unsafe shell interpolation from malformed persisted model state.
 - Replaced naive whitespace splitting of SSH command strings with shell-aware parsing in SSH helpers/interactive shell flow, including attached short-option forms like `-p2222`.
+- Updated `pi agent` host resolution to use shell-aware SSH parsing and validate persisted model ports before provider registration.
 
 ### Fixed
 

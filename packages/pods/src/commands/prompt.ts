@@ -6,6 +6,8 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { getCliCommand } from "../cli-command.js";
 import { getActivePod, loadConfig } from "../config.js";
+import { isValidPort } from "../process-identifiers.js";
+import { extractHostFromSshCommand } from "../ssh.js";
 import { createProviderName, findReservedFlag } from "./prompt-args.js";
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -74,12 +76,14 @@ export async function promptModel(modelName: string, userArgs: string[], opts: P
 		throw new Error(`Model '${modelName}' not found on pod '${podName}'`);
 	}
 
-	// Extract host from SSH string
-	const host =
-		pod.ssh
-			.split(" ")
-			.find((p) => p.includes("@"))
-			?.split("@")[1] ?? "localhost";
+	if (!isValidPort(modelConfig.port)) {
+		throw new Error(
+			`Model '${modelName}' on pod '${podName}' has invalid port '${modelConfig.port}' in config. Expected integer 1-65535.`,
+		);
+	}
+
+	// Extract host from SSH string using shell-aware parsing.
+	const host = extractHostFromSshCommand(pod.ssh) || "localhost";
 
 	// Build the system prompt for code navigation
 	const systemPrompt = `You help the user understand and navigate the codebase in the current working directory.
