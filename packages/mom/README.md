@@ -96,6 +96,8 @@ Options:
 | `MOM_SLACK_APP_TOKEN` | Slack app-level token (xapp-...) |
 | `MOM_SLACK_BOT_TOKEN` | Slack bot token (xoxb-...) |
 | `ANTHROPIC_API_KEY` | (Optional) Anthropic API key |
+| `PI_MOM_PROVIDER` / `MOM_MODEL_PROVIDER` | (Optional) Model provider (default: `anthropic`) |
+| `PI_MOM_MODEL` / `MOM_MODEL_ID` | (Optional) Model ID (default: `claude-sonnet-4-5`) |
 
 ## Authentication
 

@@ -1,5 +1,5 @@
 import { Agent, type AgentEvent } from "@mariozechner/pi-agent-core";
-import { getModel, type ImageContent } from "@mariozechner/pi-ai";
+import { type Api, getModels, getProviders, type ImageContent, type Model } from "@mariozechner/pi-ai";
 import {
 	AgentSession,
 	AuthStorage,
@@ -23,8 +23,33 @@ import type { ChannelInfo, SlackContext, UserInfo } from "./slack.js";
 import type { ChannelStore } from "./store.js";
 import { createMomTools, setUploadFunction } from "./tools/index.js";
 
-// Hardcoded model for now - TODO: make configurable (issue #63)
-const model = getModel("anthropic", "claude-sonnet-4-5");
+const DEFAULT_MODEL_PROVIDER = "anthropic";
+const DEFAULT_MODEL_ID = "claude-sonnet-4-5";
+
+function resolveMomModel(): Model<Api> {
+	const provider = process.env.PI_MOM_PROVIDER ?? process.env.MOM_MODEL_PROVIDER ?? DEFAULT_MODEL_PROVIDER;
+	const modelId = process.env.PI_MOM_MODEL ?? process.env.MOM_MODEL_ID ?? DEFAULT_MODEL_ID;
+	const providers = getProviders();
+	const selectedProvider = providers.find((p) => p === provider);
+
+	if (!selectedProvider) {
+		throw new Error(`Unknown model provider "${provider}". Set PI_MOM_PROVIDER to one of: ${providers.join(", ")}.`);
+	}
+
+	const model = getModels(selectedProvider).find((candidate) => candidate.id === modelId);
+	if (!model) {
+		const availableModels = getModels(selectedProvider)
+			.map((candidate) => candidate.id)
+			.join(", ");
+		throw new Error(
+			`Unknown model "${modelId}" for provider "${selectedProvider}". Set PI_MOM_MODEL to one of: ${availableModels}.`,
+		);
+	}
+
+	return model;
+}
+
+const model = resolveMomModel();
 
 export interface PendingMessage {
 	userName: string;
