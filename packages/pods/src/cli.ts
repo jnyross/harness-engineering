@@ -5,6 +5,7 @@ import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { extractPodOverride, resolveAppCommand } from "./cli-args.js";
+import { setCliCommand } from "./cli-command.js";
 import { listModels, showKnownModels, startModel, stopAllModels, stopModel, viewLogs } from "./commands/models.js";
 import { listPods, removePodCommand, setupPod, switchActivePod } from "./commands/pods.js";
 import { promptModel } from "./commands/prompt.js";
@@ -18,6 +19,7 @@ const packageJson = JSON.parse(readFileSync(join(__dirname, "../package.json"), 
 const MODEL_COMMANDS_WITH_POD = new Set(["start", "stop", "list", "logs", "agent"]);
 const DIRECT_COMMANDS = new Set(["shell", "ssh", "start", "stop", "list", "logs", "agent"]);
 const APP_COMMAND = resolveAppCommand(process.argv[1]);
+setCliCommand(APP_COMMAND);
 
 function printHelp() {
 	console.log(`${APP_COMMAND} v${packageJson.version} - Manage vLLM deployments on GPU pods

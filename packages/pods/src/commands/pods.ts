@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { getCliCommand } from "../cli-command.js";
 import { addPod, loadConfig, removePod, setActivePod } from "../config.js";
 import { scpFile, sshExec, sshExecStream } from "../ssh.js";
 import type { GPU, Pod } from "../types.js";
@@ -12,11 +13,12 @@ const __dirname = dirname(__filename);
  * List all pods
  */
 export const listPods = () => {
+	const cliCommand = getCliCommand();
 	const config = loadConfig();
 	const podNames = Object.keys(config.pods);
 
 	if (podNames.length === 0) {
-		console.log("No pods configured. Use 'pi pods setup' to add a pod.");
+		console.log(`No pods configured. Use '${cliCommand} pods setup' to add a pod.`);
 		return;
 	}
 
@@ -46,6 +48,7 @@ export const setupPod = async (
 	sshCmd: string,
 	options: { mount?: string; modelsPath?: string; vllm?: "release" | "nightly" | "gpt-oss" },
 ) => {
+	const cliCommand = getCliCommand();
 	// Validate environment variables
 	const hfToken = process.env.HF_TOKEN;
 	const vllmApiKey = process.env.PI_API_KEY;
@@ -168,7 +171,7 @@ export const setupPod = async (
 	console.log(chalk.green(`✓ Pod '${name}' setup complete and set as active pod`));
 	console.log("");
 	console.log("You can now deploy models with:");
-	console.log(chalk.cyan(`  pi start <model> --name <name>`));
+	console.log(chalk.cyan(`  ${cliCommand} start <model> --name <name>`));
 };
 
 /**

@@ -5,6 +5,7 @@ import { createRequire } from "module";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { getCliCommand } from "../cli-command.js";
 import { getActivePod, loadConfig } from "../config.js";
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -58,10 +59,11 @@ function createProviderName(): string {
 // ────────────────────────────────────────────────────────────────────────────────
 
 export async function promptModel(modelName: string, userArgs: string[], opts: PromptOptions = {}) {
+	const cliCommand = getCliCommand();
 	const reservedFlag = findReservedFlag(userArgs);
 	if (reservedFlag) {
 		throw new Error(
-			`The ${reservedFlag} option is managed by "pi agent". Select the target model with "pi agent <name>" and pod with "--pod <name>".`,
+			`The ${reservedFlag} option is managed by "${cliCommand} agent". Select the target model with "${cliCommand} agent <name>" and pod with "--pod <name>".`,
 		);
 	}
 
@@ -82,7 +84,7 @@ export async function promptModel(modelName: string, userArgs: string[], opts: P
 		if (opts.pod) {
 			throw new Error(`Pod '${opts.pod}' not found.`);
 		}
-		throw new Error("No active pod. Use 'pi pods active <name>' to set one.");
+		throw new Error(`No active pod. Use '${cliCommand} pods active <name>' to set one.`);
 	}
 
 	const { name: podName, pod } = activePod;
@@ -119,7 +121,7 @@ Current working directory: ${process.cwd()}`;
 	let tempExtensionDir: string | undefined;
 	const resolvedApiKey = opts.apiKey || process.env.PI_API_KEY;
 	if (!resolvedApiKey) {
-		throw new Error('Missing API key. Set PI_API_KEY before running "pi agent ...".');
+		throw new Error(`Missing API key. Set PI_API_KEY before running "${cliCommand} agent ...".`);
 	}
 	const providerName = createProviderName();
 
