@@ -21,6 +21,7 @@
 - Updated mount-command models-path extraction to use shell-aware parsing (handles quoted mount targets with spaces, rejects malformed commands).
 - Enforced SSH command binary validation (`ssh` / `*/ssh`) before SSH/SCP execution to prevent accidental local non-SSH command execution from malformed config.
 - `pi agent` now rejects pods with invalid SSH command host syntax instead of falling back to localhost endpoint routing.
+- Added regression tests for `pi agent` validation failures on malformed SSH host config and invalid persisted model ports.
 
 ### Fixed
 
