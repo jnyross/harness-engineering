@@ -3,6 +3,7 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { getCliCommand } from "../cli-command.js";
 import { addPod, loadConfig, removePod, setActivePod } from "../config.js";
+import { assertValidPodName } from "../pod-name.js";
 import { shellQuote } from "../shell-quote.js";
 import { scpFile, sshExec, sshExecStream } from "../ssh.js";
 import type { GPU, Pod } from "../types.js";
@@ -49,6 +50,13 @@ export const setupPod = async (
 	sshCmd: string,
 	options: { mount?: string; modelsPath?: string; vllm?: "release" | "nightly" | "gpt-oss" },
 ) => {
+	try {
+		assertValidPodName(name);
+	} catch (error) {
+		console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+		process.exit(1);
+	}
+
 	const cliCommand = getCliCommand();
 	// Validate environment variables
 	const hfToken = process.env.HF_TOKEN;
@@ -205,6 +213,13 @@ export function buildPodSetupCommand(params: {
  * Switch active pod
  */
 export const switchActivePod = (name: string) => {
+	try {
+		assertValidPodName(name);
+	} catch (error) {
+		console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+		process.exit(1);
+	}
+
 	const config = loadConfig();
 	if (!config.pods[name]) {
 		console.error(chalk.red(`Pod '${name}' not found`));
@@ -223,6 +238,13 @@ export const switchActivePod = (name: string) => {
  * Remove a pod from config
  */
 export const removePodCommand = (name: string) => {
+	try {
+		assertValidPodName(name);
+	} catch (error) {
+		console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+		process.exit(1);
+	}
+
 	const config = loadConfig();
 	if (!config.pods[name]) {
 		console.error(chalk.red(`Pod '${name}' not found`));

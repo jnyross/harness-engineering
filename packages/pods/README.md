@@ -97,6 +97,8 @@ pi shell [<name>]                             # SSH into pod
 pi ssh [<name>] "<command>"                   # Run command on pod
 ```
 
+Pod names must be 1-64 characters and use only `A-Z`, `a-z`, `0-9`, `.`, `_`, or `-`.
+
 **Note**: When using `--mount`, the models path is automatically extracted from the mount command's target directory. You only need `--models-path` if not using `--mount` or to override the extracted path.
 
 #### vLLM Version Options

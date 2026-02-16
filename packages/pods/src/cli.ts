@@ -11,6 +11,7 @@ import { listPods, removePodCommand, setupPod, switchActivePod } from "./command
 import { promptModel } from "./commands/prompt.js";
 import { getActivePod, loadConfig } from "./config.js";
 import { normalizeContextOption, normalizeMemoryOption } from "./model-options.js";
+import { assertValidPodName } from "./pod-name.js";
 import { sshExecStream } from "./ssh.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -60,6 +61,15 @@ Environment:
   PI_CONFIG_DIR    Config directory (default: ~/.pi)`);
 }
 
+function validatePodNameOrExit(name: string): void {
+	try {
+		assertValidPodName(name);
+	} catch (error) {
+		console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+		process.exit(1);
+	}
+}
+
 // Parse command line arguments
 const args = process.argv.slice(2);
 
@@ -94,6 +104,7 @@ try {
 				);
 				process.exit(1);
 			}
+			validatePodNameOrExit(name);
 
 			// Parse options
 			const options: { mount?: string; modelsPath?: string; vllm?: "release" | "nightly" | "gpt-oss" } = {};
@@ -135,6 +146,7 @@ try {
 				console.error(`Usage: ${APP_COMMAND} pods active <name>`);
 				process.exit(1);
 			}
+			validatePodNameOrExit(name);
 			switchActivePod(name);
 		} else if (subcommand === "remove") {
 			// pi pods remove <name>
@@ -143,6 +155,7 @@ try {
 				console.error(`Usage: ${APP_COMMAND} pods remove <name>`);
 				process.exit(1);
 			}
+			validatePodNameOrExit(name);
 			removePodCommand(name);
 		} else {
 			console.error(`Unknown pods subcommand: ${subcommand}`);
@@ -155,6 +168,9 @@ try {
 			? extractPodOverride(args, MODEL_COMMANDS_WITH_POD.has(command))
 			: { podOverride: undefined, argsWithoutPod: args };
 		const podOverride = podParseResult.podOverride;
+		if (podOverride) {
+			validatePodNameOrExit(podOverride);
+		}
 		const commandArgs = podParseResult.argsWithoutPod;
 
 		// Handle SSH/shell commands and model commands
@@ -165,6 +181,7 @@ try {
 				let podInfo: { name: string; pod: import("./types.js").Pod } | null = null;
 
 				if (podName) {
+					validatePodNameOrExit(podName);
 					const config = loadConfig();
 					const pod = config.pods[podName];
 					if (pod) {
@@ -208,6 +225,7 @@ try {
 				} else if (commandArgs.length === 3) {
 					// pi ssh <name> "<command>"
 					podName = commandArgs[1];
+					validatePodNameOrExit(podName);
 					sshCommand = commandArgs[2];
 				} else {
 					console.error(`Usage: ${APP_COMMAND} ssh [<name>] "<command>"`);

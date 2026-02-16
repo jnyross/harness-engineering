@@ -14,6 +14,7 @@
 - Added strict `--memory` and `--context` option normalization/validation to reject invalid values before launching model runs.
 - Shell-quoted custom vLLM arguments and exported runtime environment values before script upload so values with spaces/quotes/metacharacters are passed as literal data instead of raw shell fragments.
 - Shell-quoted pod setup command arguments (`--models-path`, `--hf-token`, `--vllm-api-key`, `--mount`) to avoid unsafe SSH command interpolation and improve handling of spaces/quotes.
+- Added pod-name validation (`[A-Za-z0-9._-]`, 1-64 chars) across setup/active/remove and `--pod` override parsing with dedicated tests.
 
 ### Fixed
 
