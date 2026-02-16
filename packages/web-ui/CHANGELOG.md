@@ -6,6 +6,7 @@
 
 - `PersistentStorageDialog` now requests `navigator.storage.persist()` directly from the user click handler and returns the actual browser grant result, improving reliability for persistent storage permission flows.
 - Updated local TypeScript path mapping for package and example checks so web-ui typechecks reliably against source packages without requiring prebuilt declaration outputs.
+- Re-enabled persistent storage permission requests in the example app now that `PersistentStorageDialog` is fixed, removing stale disabled code paths.
 
 ## [0.52.12] - 2026-02-13
 
