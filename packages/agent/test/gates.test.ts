@@ -1,12 +1,25 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { greenGate, parseCommand, redTestGate, validateReview } from "../src/gates.js";
 
 const originalTestCommand = process.env.PI_TEST_COMMAND;
 const originalValidateCommand = process.env.PI_VALIDATE_COMMAND;
+const tempDirs: string[] = [];
+
+function createTempDir(): string {
+	const dir = mkdtempSync(join(tmpdir(), "pi-agent-gates-test-"));
+	tempDirs.push(dir);
+	return dir;
+}
 
 afterEach(() => {
 	process.env.PI_TEST_COMMAND = originalTestCommand;
 	process.env.PI_VALIDATE_COMMAND = originalValidateCommand;
+	for (const dir of tempDirs.splice(0, tempDirs.length)) {
+		rmSync(dir, { recursive: true, force: true });
+	}
 });
 
 describe("parseCommand", () => {
@@ -54,6 +67,20 @@ describe("mechanical gates commands", () => {
 		const result = greenGate(process.cwd());
 		expect(result.passed).toBe(false);
 		expect(result.output).toMatch(/unmatched quote/i);
+	});
+
+	it("falls back to default test command when PI_TEST_COMMAND is blank", () => {
+		process.env.PI_TEST_COMMAND = "   ";
+		const result = redTestGate(createTempDir());
+		expect(result.passed).toBe(true);
+		expect(result.output).not.toMatch(/command is empty/i);
+	});
+
+	it("falls back to default validate command when PI_VALIDATE_COMMAND is blank", () => {
+		process.env.PI_VALIDATE_COMMAND = "   ";
+		const result = greenGate(createTempDir());
+		expect(result.passed).toBe(false);
+		expect(result.output).not.toMatch(/command is empty/i);
 	});
 });
 

@@ -140,11 +140,13 @@ function runInCwd(cwd: string, command: string | string[]): CommandExecutionResu
 }
 
 function getTestCommand(): string {
-	return process.env.PI_TEST_COMMAND ?? DEFAULT_TEST_COMMAND;
+	const configured = process.env.PI_TEST_COMMAND?.trim();
+	return configured && configured.length > 0 ? configured : DEFAULT_TEST_COMMAND;
 }
 
 function getValidateCommand(): string {
-	return process.env.PI_VALIDATE_COMMAND ?? DEFAULT_VALIDATE_COMMAND;
+	const configured = process.env.PI_VALIDATE_COMMAND?.trim();
+	return configured && configured.length > 0 ? configured : DEFAULT_VALIDATE_COMMAND;
 }
 
 /**
