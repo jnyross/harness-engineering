@@ -8,6 +8,10 @@ import { execSync } from "child_process";
 // Cache for shell command results (persists for process lifetime)
 const commandResultCache = new Map<string, string | undefined>();
 
+function normalizeCommandConfig(commandConfig: string): string {
+	return `!${commandConfig.slice(1).trim()}`;
+}
+
 /**
  * Resolve a config value (API key, header value, etc.) to an actual value.
  * - If starts with "!", executes the rest as a shell command and uses stdout (cached)
@@ -22,13 +26,14 @@ export function resolveConfigValue(config: string): string | undefined {
 }
 
 function executeCommand(commandConfig: string): string | undefined {
-	if (commandResultCache.has(commandConfig)) {
-		return commandResultCache.get(commandConfig);
+	const normalizedCommandConfig = normalizeCommandConfig(commandConfig);
+	if (commandResultCache.has(normalizedCommandConfig)) {
+		return commandResultCache.get(normalizedCommandConfig);
 	}
 
-	const command = commandConfig.slice(1).trim();
+	const command = normalizedCommandConfig.slice(1);
 	if (!command) {
-		commandResultCache.set(commandConfig, undefined);
+		commandResultCache.set(normalizedCommandConfig, undefined);
 		return undefined;
 	}
 
@@ -44,7 +49,7 @@ function executeCommand(commandConfig: string): string | undefined {
 		result = undefined;
 	}
 
-	commandResultCache.set(commandConfig, result);
+	commandResultCache.set(normalizedCommandConfig, result);
 	return result;
 }
 
