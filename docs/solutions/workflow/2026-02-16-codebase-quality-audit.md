@@ -1187,6 +1187,22 @@ to directly validate parser behavior for quoted-empty args and escaped quotes/sp
 
 **Result:** Shared command parser behavior is now protected by focused regression tests independent of prompt-template substitution logic.
 
+---
+
+### 69) malformed external-editor commands were accepted silently
+
+**Finding:** Extension external-editor launch reused shared parser output directly, so malformed quoted command strings could be tolerated and produce unintended editor invocation arguments.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/utils/parse-command-args.ts`
+- `packages/coding-agent/src/modes/interactive/components/extension-editor.ts`
+- `packages/coding-agent/test/parse-command-args.test.ts`
+
+to add strict parsing mode for command invocation contexts and enforce strict parsing for extension-editor `$EDITOR`/`$VISUAL` command launch.
+
+**Result:** Extension editor command launch now rejects malformed quoted command strings instead of invoking partially parsed arguments.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1307,6 +1323,8 @@ to directly validate parser behavior for quoted-empty args and escaped quotes/sp
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-templates.test.ts test/interactive-mode-status.test.ts`
 - coding-agent shared parser unit coverage:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/parse-command-args.test.ts test/prompt-templates.test.ts`
+- coding-agent strict parser behavior coverage:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/parse-command-args.test.ts test/interactive-mode-status.test.ts`
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
