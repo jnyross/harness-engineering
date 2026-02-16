@@ -857,7 +857,7 @@ with graceful handling/reporting in list/stop/stopAll flows.
 - `packages/pods/test/ssh-parse.test.ts`
 - `packages/pods/CHANGELOG.md`
 
-by introducing shell-aware token parsing (`parseShellCommand`) and host extraction helpers used consistently by SSH execution, SCP handling, interactive shell launch, and model URL/log host resolution.
+by introducing shell-aware token parsing (`parseShellCommand`) and host extraction helpers used consistently by SSH execution, SCP handling, interactive shell launch, and model URL/log host resolution (including attached short options like `-p2222`).
 
 **Result:** SSH command handling is now robust for quoted/escaped arguments and avoids brittle tokenization behavior.
 
@@ -948,7 +948,7 @@ by introducing shell-aware token parsing (`parseShellCommand`) and host extracti
 - malformed persisted pid/port state handling:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts list` with tampered config (reports invalid pid/port, avoids shell interpolation)
 - SSH command parsing regression coverage:
-  - `npm --workspace "@mariozechner/pi" test` (includes `test/ssh-parse.test.ts` quote/escape/host extraction cases)
+  - `npm --workspace "@mariozechner/pi" test` (includes `test/ssh-parse.test.ts` quote/escape/host extraction cases, including `-p2222`)
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
