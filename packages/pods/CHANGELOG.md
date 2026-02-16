@@ -5,6 +5,7 @@
 ### Changed
 
 - Clarified pods README prerequisite to match package engines (`Node.js 20+`).
+- Documented that the published binary name is `pi-pods` and provided an alias pattern for `pi`.
 
 ### Fixed
 

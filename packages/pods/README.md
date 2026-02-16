@@ -8,6 +8,14 @@ Deploy and manage LLMs on GPU pods with automatic vLLM configuration for agentic
 npm install -g @mariozechner/pi
 ```
 
+The published CLI binary is `pi-pods`.
+
+If you prefer using `pi` in your shell examples, add an alias:
+
+```bash
+alias pi='pi-pods'
+```
+
 ## What is pi?
 
 `pi` simplifies running large language models on remote GPU pods. It automatically:
