@@ -1121,6 +1121,22 @@ to normalize cache keys by trimmed command text and added regression coverage pr
 
 **Result:** Shell-command-backed config resolution now caches consistently across whitespace-equivalent command forms.
 
+---
+
+### 65) empty environment variables fell back to literal config keys
+
+**Finding:** In coding-agent value resolution, when a configured environment variable existed but was empty (`""`), resolution could fall back to the literal config key name, which is confusing and incorrect for auth/header semantics.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/resolve-config-value.ts`
+- `packages/coding-agent/test/resolve-config-value.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to treat explicitly empty env-var values as unresolved (`undefined`) while keeping literal fallback behavior only for truly undefined env vars.
+
+**Result:** Env-based value resolution now cleanly distinguishes unset vs empty values, avoiding accidental literal-key fallback.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1234,7 +1250,7 @@ to normalize cache keys by trimmed command text and added regression coverage pr
 - GPU type extraction helper coverage:
   - `npm --workspace "@mariozechner/pi" test -- test/gpu-name.test.ts`
 - coding-agent blank shell-config command coverage:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/resolve-config-value.test.ts` (covers blank-command short-circuit + cache-key normalization)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/resolve-config-value.test.ts` (covers blank-command short-circuit, cache-key normalization, and empty env-var handling)
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
