@@ -3,6 +3,7 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { getCliCommand } from "../cli-command.js";
 import { addPod, loadConfig, removePod, setActivePod } from "../config.js";
+import { shellQuote } from "../shell-quote.js";
 import { scpFile, sshExec, sshExecStream } from "../ssh.js";
 import type { GPU, Pod } from "../types.js";
 
@@ -112,13 +113,13 @@ export const setupPod = async (
 	console.log(chalk.green("✓ Setup script copied"));
 
 	// Build setup command
-	let setupCmd = `bash /tmp/pod_setup.sh --models-path '${modelsPath}' --hf-token '${hfToken}' --vllm-api-key '${vllmApiKey}'`;
-	if (options.mount) {
-		setupCmd += ` --mount '${options.mount}'`;
-	}
-	// Add vLLM version flag
-	const vllmVersion = options.vllm || "release";
-	setupCmd += ` --vllm '${vllmVersion}'`;
+	const setupCmd = buildPodSetupCommand({
+		modelsPath,
+		hfToken,
+		vllmApiKey,
+		mount: options.mount,
+		vllmVersion: options.vllm || "release",
+	});
 
 	// Run setup script
 	console.log("");
@@ -173,6 +174,32 @@ export const setupPod = async (
 	console.log("You can now deploy models with:");
 	console.log(chalk.cyan(`  ${cliCommand} start <model> --name <name>`));
 };
+
+export function buildPodSetupCommand(params: {
+	modelsPath: string;
+	hfToken: string;
+	vllmApiKey: string;
+	mount?: string;
+	vllmVersion: "release" | "nightly" | "gpt-oss";
+}): string {
+	const args = [
+		"bash",
+		"/tmp/pod_setup.sh",
+		"--models-path",
+		params.modelsPath,
+		"--hf-token",
+		params.hfToken,
+		"--vllm-api-key",
+		params.vllmApiKey,
+	];
+
+	if (params.mount) {
+		args.push("--mount", params.mount);
+	}
+
+	args.push("--vllm", params.vllmVersion);
+	return args.map((arg) => shellQuote(arg)).join(" ");
+}
 
 /**
  * Switch active pod
