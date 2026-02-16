@@ -578,6 +578,28 @@ Covered scenarios include:
 
 **Result:** pods CLI parsing behavior now has focused, repeatable regression coverage to guard against future argument-handling drift.
 
+---
+
+### 36) pods runtime guidance still hardcoded `pi` in command modules
+
+**Finding:** Even after dynamic help/usage rendering in `cli.ts`, multiple runtime messages in `commands/models.ts`, `commands/pods.ts`, and `commands/prompt.ts` still hardcoded `pi`, causing inconsistent guidance when invoked as `pi-pods` or wrapper command names.
+
+**Action:** Added:
+
+- `packages/pods/src/cli-command.ts`
+
+and updated:
+
+- `packages/pods/src/cli.ts` (sets invoked command for downstream modules),
+- `packages/pods/src/commands/models.ts`,
+- `packages/pods/src/commands/pods.ts`,
+- `packages/pods/src/commands/prompt.ts`,
+- `packages/pods/CHANGELOG.md`.
+
+Runtime guidance now reads the active command label from shared command context and renders actionable messages with the invoked name.
+
+**Result:** Help text, errors, and follow-up command hints now consistently reference the command users actually executed.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -636,6 +658,12 @@ Covered scenarios include:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts shell --pod demo` (still rejects `--pod`)
 - pods CLI parser regression tests:
   - `npx tsx --test packages/pods/test/cli-args.test.ts`
+- pods invoked-command guidance in pod listing:
+  - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
+- pods invoked-command guidance in model/list flow:
+  - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> list` (message includes `<symlink> pods active`)
+- pods invoked-command guidance in agent/no-pod flow:
+  - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> agent demo-model` (message includes `<symlink> pods active`)
 - pods unique provider generation smoke test:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --list-models` (shows `pods-vllm-<random>` entry)
 
