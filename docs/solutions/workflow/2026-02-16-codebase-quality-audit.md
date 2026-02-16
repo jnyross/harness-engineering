@@ -266,6 +266,20 @@ to reset retry state per invocation and added regression coverage for sequential
 
 **Result:** `pi agent` now executes the coding-agent CLI instead of hard-failing with a placeholder error.
 
+---
+
+### 16) pods `--pod` override could crash in `pi agent` flow
+
+**Finding:** `promptModel()` assumed an override pod existed and directly dereferenced `loadConfig().pods[opts.pod]`, which could cause undefined access crashes for invalid pod names.
+
+**Action:** Added explicit override pod validation in:
+
+- `packages/pods/src/commands/prompt.ts`
+
+with clear error messaging for unknown pod names.
+
+**Result:** `pi agent ... --pod <name>` now fails gracefully with actionable feedback when the pod does not exist.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -288,6 +302,8 @@ to reset retry state per invocation and added regression coverage for sequential
   - `cd packages/web-ui && npm run check`
 - pods `pi agent` delegation smoke test succeeds with temporary config:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --help`
+- pods missing override validation smoke test:
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --pod missing-pod`
 
 ## Methodology Fit
 
