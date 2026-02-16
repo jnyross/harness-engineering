@@ -448,6 +448,21 @@ to:
 
 **Result:** Top-level contributor guidance now matches the current repository/package behavior.
 
+---
+
+### 28) pods README Node.js prerequisite lagged behind enforced engine
+
+**Finding:** `packages/pods/README.md` still listed `Node.js 18+` even though `packages/pods/package.json` enforces `node >=20.0.0`.
+
+**Action:** Updated:
+
+- `packages/pods/README.md`
+- `packages/pods/CHANGELOG.md`
+
+to align the documented prerequisite to `Node.js 20+`.
+
+**Result:** Installation guidance now matches the package’s enforced runtime requirement.
+
 ## Validation Evidence
 
 - Root quality gate passes:
