@@ -759,6 +759,22 @@ to quote each vLLM arg token with safe single-quote escaping before template ins
 
 **Result:** Custom vLLM args are now passed as literal arguments (including values with spaces or shell metacharacters) instead of raw shell fragments.
 
+---
+
+### 45) pod setup command arguments were interpolated without robust quoting
+
+**Finding:** `setupPod()` built the SSH setup command by wrapping user/environment-derived values in simple single quotes. Inputs containing quotes/spaces could break argument boundaries and were not robustly escaped.
+
+**Action:** Added/updated:
+
+- `packages/pods/src/commands/pods.ts`
+- `packages/pods/test/pods-setup-command.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+by extracting a `buildPodSetupCommand()` helper that shell-quotes each argument token (`--models-path`, `--hf-token`, `--vllm-api-key`, optional `--mount`, `--vllm`) using shared shell-quoting utilities, with dedicated regression coverage.
+
+**Result:** Pod setup command construction is now resilient to spaces/single quotes and preserves literal argument semantics across SSH execution.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -835,6 +851,8 @@ to quote each vLLM arg token with safe single-quote escaping before template ins
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts start <model> --name qwen --context none` (rejected with validation error)
 - shell-quote helper regression tests:
   - `npm --workspace "@mariozechner/pi" test` (includes `test/shell-quote.test.ts`)
+- pod setup command quoting regression tests:
+  - `npm --workspace "@mariozechner/pi" test` (includes `test/pods-setup-command.test.ts`)
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
