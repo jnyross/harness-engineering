@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import { getCliCommand } from "../cli-command.js";
 import { getActivePod, loadConfig, saveConfig } from "../config.js";
 import { getModelConfig, getModelName, isKnownModel } from "../model-configs.js";
+import { assertValidModelId } from "../model-id.js";
 import { assertValidModelInstanceName, isValidModelInstanceName } from "../model-name.js";
 import { sshExec } from "../ssh.js";
 import type { Pod } from "../types.js";
@@ -90,6 +91,12 @@ export const startModel = async (
 	},
 ) => {
 	const cliCommand = getCliCommand();
+	try {
+		assertValidModelId(modelId);
+	} catch (error) {
+		console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+		process.exit(1);
+	}
 	try {
 		assertValidModelInstanceName(name);
 	} catch (error) {
