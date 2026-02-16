@@ -8,6 +8,7 @@ import { getActivePod, loadConfig, saveConfig } from "../config.js";
 import { getModelConfig, getModelName, isKnownModel } from "../model-configs.js";
 import { assertValidModelId } from "../model-id.js";
 import { assertValidModelInstanceName, isValidModelInstanceName } from "../model-name.js";
+import { assertValidPid, isValidPid, isValidPort } from "../process-identifiers.js";
 import { joinShellArgs, shellExport } from "../shell-quote.js";
 import { sshExec } from "../ssh.js";
 import type { Pod } from "../types.js";
@@ -453,6 +454,12 @@ export const stopModel = async (name: string, options: { pod?: string }) => {
 		console.error(chalk.red(`Model '${name}' not found on pod '${podName}'`));
 		process.exit(1);
 	}
+	try {
+		assertValidPid(model.pid, `model '${name}'`);
+	} catch (error) {
+		console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+		process.exit(1);
+	}
 
 	console.log(chalk.yellow(`Stopping model '${name}' on pod '${podName}'...`));
 
@@ -488,7 +495,24 @@ export const stopAllModels = async (options: { pod?: string }) => {
 	console.log(chalk.yellow(`Stopping ${modelNames.length} model(s) on pod '${podName}'...`));
 
 	// Kill all script processes and their children
-	const pids = Object.values(pod.models).map((m) => m.pid);
+	const pids = Object.entries(pod.models)
+		.map(([modelName, model]) => {
+			try {
+				assertValidPid(model.pid, `model '${modelName}'`);
+				return model.pid;
+			} catch (error) {
+				console.log(chalk.red(error instanceof Error ? error.message : String(error)));
+				return undefined;
+			}
+		})
+		.filter((pid): pid is number => pid !== undefined);
+	if (pids.length === 0) {
+		console.log(chalk.yellow("No valid model process IDs found. Cleaning local model state only."));
+		const config = loadConfig();
+		config.pods[podName].models = {};
+		saveConfig(config);
+		return;
+	}
 	const killCmd = `
 		for PID in ${pids.join(" ")}; do
 			pkill -TERM -P $PID 2>/dev/null || true
@@ -525,6 +549,18 @@ export const listModels = async (options: { pod?: string }) => {
 	console.log(`Models on pod '${chalk.bold(podName)}':`);
 	for (const name of modelNames) {
 		const model = pod.models[name];
+		const invalidReasons: string[] = [];
+		if (!isValidPort(model.port)) {
+			invalidReasons.push(`invalid port ${model.port}`);
+		}
+		if (!isValidPid(model.pid)) {
+			invalidReasons.push(`invalid pid ${model.pid}`);
+		}
+		if (invalidReasons.length > 0) {
+			console.log(chalk.red(`  ${name} - ${invalidReasons.join(", ")}`));
+			console.log(chalk.gray(`    Model: ${model.model}`));
+			continue;
+		}
 		const gpuStr =
 			model.gpu.length > 1
 				? `GPUs ${model.gpu.join(",")}`
@@ -547,6 +583,16 @@ export const listModels = async (options: { pod?: string }) => {
 			continue;
 		}
 		const model = pod.models[name];
+		if (!isValidPid(model.pid)) {
+			console.log(chalk.red(`  ${name}: Invalid pid in config (${model.pid})`));
+			anyDead = true;
+			continue;
+		}
+		if (!isValidPort(model.port)) {
+			console.log(chalk.red(`  ${name}: Invalid port in config (${model.port})`));
+			anyDead = true;
+			continue;
+		}
 		// Check both the wrapper process and if vLLM is responding
 		const checkCmd = `
 			# Check if wrapper process exists
