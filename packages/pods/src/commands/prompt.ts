@@ -167,13 +167,12 @@ Current working directory: ${process.cwd()}`;
 		});
 	} catch (err: unknown) {
 		const message = err instanceof Error ? err.message : String(err);
-		console.error(chalk.red(`Agent error: ${message}`));
-		console.error(
-			chalk.yellow(
+		throw new Error(
+			[
+				`Agent error: ${message}`,
 				"Ensure npm can execute @mariozechner/pi-coding-agent (try: npx --yes --package @mariozechner/pi-coding-agent pi --help).",
-			),
+			].join("\n"),
 		);
-		process.exit(1);
 	} finally {
 		if (tempExtensionDir) {
 			rmSync(tempExtensionDir, { recursive: true, force: true });

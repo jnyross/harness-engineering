@@ -339,13 +339,16 @@ try {
 				const agentArgs = args.slice(2);
 
 				// If no messages provided, it's interactive mode
-				await promptModel(name, agentArgs, {
-					pod: podOverride,
-					apiKey,
-				}).catch(() => {
-					// Error already handled in promptModel, just exit cleanly
-					process.exit(0);
-				});
+				try {
+					await promptModel(name, agentArgs, {
+						pod: podOverride,
+						apiKey,
+					});
+				} catch (error) {
+					const message = error instanceof Error ? error.message : String(error);
+					console.error(chalk.red(message));
+					process.exit(1);
+				}
 				break;
 			}
 			default:
