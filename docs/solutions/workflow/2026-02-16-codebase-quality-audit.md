@@ -916,6 +916,23 @@ to enforce SSH binary validation (`ssh` or `*/ssh`) before SSH/SCP execution pat
 
 **Result:** Pod command execution now rejects non-SSH command binaries early, with explicit errors and regression coverage.
 
+---
+
+### 53) agent git staging/commit paths still used shell-composed commands
+
+**Finding:** `packages/agent/src/project-loop.ts` and `packages/agent/src/state-files.ts` still executed `git add`/`git commit` via shell-composed strings, which is brittle for unusual paths and unnecessary given argument-safe process APIs.
+
+**Action:** Updated:
+
+- `packages/agent/src/project-loop.ts`
+- `packages/agent/src/state-files.ts`
+- `packages/agent/test/state-files.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to use argument-based git invocation (`execFileSync("git", ["add", "--", path])`, `["commit", "-m", message]`) and added regression tests proving `commitState()` handles file paths with spaces.
+
+**Result:** Agent loop/state git operations now avoid shell-string command composition and are robust for edge-case paths.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1012,6 +1029,8 @@ to enforce SSH binary validation (`ssh` or `*/ssh`) before SSH/SCP execution pat
   - `npx tsx -e "<extractModelsPathFromMountCommand demo>"` returns `/mnt/model cache` for quoted target and `undefined` for malformed command
 - non-ssh binary guard in SSH helpers:
   - `npm --workspace "@mariozechner/pi" test` (includes `test/ssh-parse.test.ts` case validating `sshExec("bash ...")` returns error)
+- agent state-file git invocation regression:
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (covers path-with-spaces commit behavior)
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
