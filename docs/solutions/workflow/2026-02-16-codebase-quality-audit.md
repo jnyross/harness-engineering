@@ -1218,6 +1218,24 @@ to reuse shared parser logic in strict mode for interactive external-editor laun
 
 **Result:** Both interactive and extension editor launch paths now use consistent strict parsing for quoted/escaped editor command arguments.
 
+---
+
+### 71) strict editor command parsing could still bubble exceptions to UI handlers
+
+**Finding:** Strict parsing was introduced for external editor command invocations, but strict-parse failures could still throw through UI action handlers instead of being handled as invalid invocation state.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/utils/parse-command-args.ts`
+- `packages/coding-agent/src/modes/interactive/interactive-mode.ts`
+- `packages/coding-agent/src/modes/interactive/components/extension-editor.ts`
+- `packages/coding-agent/test/parse-command-args.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to add `parseCommandInvocation(...)` (safe strict parser wrapper) and route both interactive and extension editor launch paths through it.
+
+**Result:** Malformed `$EDITOR`/`$VISUAL` strings now fail safely (no uncaught strict-parse exceptions), with stable UI behavior.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1342,6 +1360,8 @@ to reuse shared parser logic in strict mode for interactive external-editor laun
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/parse-command-args.test.ts test/interactive-mode-status.test.ts`
 - coding-agent interactive editor parser integration:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/parse-command-args.test.ts test/interactive-mode-status.test.ts` (with strict parser mode used by interactive + extension editor launch paths)
+- coding-agent safe invocation parser coverage:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/parse-command-args.test.ts test/interactive-mode-status.test.ts` (includes `parseCommandInvocation` malformed-input guard behavior)
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
