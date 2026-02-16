@@ -933,6 +933,21 @@ to use argument-based git invocation (`execFileSync("git", ["add", "--", path])`
 
 **Result:** Agent loop/state git operations now avoid shell-string command composition and are robust for edge-case paths.
 
+---
+
+### 54) `pi agent` could silently fallback to localhost for malformed SSH host config
+
+**Finding:** `packages/pods/src/commands/prompt.ts` previously defaulted host resolution to `localhost` when host extraction failed, which could misroute agent requests if pod SSH config was malformed/tampered.
+
+**Action:** Updated:
+
+- `packages/pods/src/commands/prompt.ts`
+- `packages/pods/CHANGELOG.md`
+
+to require successful host extraction and throw a clear configuration error if the SSH command does not contain a resolvable host target.
+
+**Result:** Agent endpoint routing now fails safe on malformed SSH host config instead of silently targeting localhost.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1031,6 +1046,8 @@ to use argument-based git invocation (`execFileSync("git", ["add", "--", path])`
   - `npm --workspace "@mariozechner/pi" test` (includes `test/ssh-parse.test.ts` case validating `sshExec("bash ...")` returns error)
 - agent state-file git invocation regression:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (covers path-with-spaces commit behavior)
+- `pi agent` malformed SSH host guard:
+  - `PI_CONFIG_DIR=<tmp> PI_API_KEY=test-key npx tsx packages/pods/src/cli.ts agent demo-model --list-models` with SSH `ssh -o StrictHostKeyChecking=no` (rejected with invalid SSH command error)
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
