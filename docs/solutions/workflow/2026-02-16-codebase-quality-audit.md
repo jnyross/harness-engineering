@@ -493,6 +493,22 @@ to require `PI_API_KEY` (or explicit option-provided key) and fail early with a 
 
 **Result:** Authentication prerequisites are validated up front, making failures deterministic and easier to diagnose.
 
+---
+
+### 31) pods docs did not surface published binary name
+
+**Finding:** `packages/pods/README.md` examples use `pi`, but the published package exposes the `pi-pods` binary. This mismatch can cause first-run confusion after global install.
+
+**Action:** Updated:
+
+- `packages/pods/README.md`
+- `packages/pods/CHANGELOG.md`
+- `README.md` (root package table description)
+
+to explicitly document the `pi-pods` command name and include an alias pattern for users who prefer `pi`.
+
+**Result:** Command naming expectations are now explicit in both package-level and repo-level documentation.
+
 ## Validation Evidence
 
 - Root quality gate passes:
