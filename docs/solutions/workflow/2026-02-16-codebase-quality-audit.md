@@ -234,6 +234,21 @@ to record the example app behavior alignment.
 
 **Result:** Example behavior now matches the fixed dialog implementation and no longer advertises stale broken-state comments.
 
+---
+
+### 14) ExecutionEngine retry counters persisted across separate runs
+
+**Finding:** `ExecutionEngine` stored retries in an instance field without resetting at the start of `runWithReview()`, so a previous run could exhaust retries for subsequent runs on the same instance.
+
+**Action:** Updated:
+
+- `packages/agent/src/execution-engine.ts`
+- `packages/agent/test/execution-engine.test.ts`
+
+to reset retry state per invocation and added regression coverage for sequential runs.
+
+**Result:** Retry budgets are now applied independently per run, preventing unintended early exits in reused engine instances.
+
 ## Validation Evidence
 
 - Root quality gate passes:
