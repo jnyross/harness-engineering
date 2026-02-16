@@ -6,6 +6,133 @@ export interface SSHResult {
 	exitCode: number;
 }
 
+const SSH_FLAGS_WITH_VALUE = new Set([
+	"-b",
+	"-c",
+	"-D",
+	"-E",
+	"-F",
+	"-I",
+	"-i",
+	"-J",
+	"-L",
+	"-l",
+	"-m",
+	"-o",
+	"-p",
+	"-Q",
+	"-R",
+	"-S",
+	"-W",
+]);
+
+export function parseShellCommand(command: string): string[] {
+	const tokens: string[] = [];
+	let current = "";
+	let quote: "'" | '"' | null = null;
+	let escaping = false;
+	let tokenStarted = false;
+
+	for (const char of command) {
+		if (escaping) {
+			current += char;
+			escaping = false;
+			tokenStarted = true;
+			continue;
+		}
+
+		if (quote === "'") {
+			if (char === "'") {
+				quote = null;
+			} else {
+				current += char;
+			}
+			tokenStarted = true;
+			continue;
+		}
+
+		if (quote === '"') {
+			if (char === '"') {
+				quote = null;
+			} else if (char === "\\") {
+				escaping = true;
+			} else {
+				current += char;
+			}
+			tokenStarted = true;
+			continue;
+		}
+
+		if (char === "'" || char === '"') {
+			quote = char;
+			tokenStarted = true;
+			continue;
+		}
+
+		if (char === "\\") {
+			escaping = true;
+			tokenStarted = true;
+			continue;
+		}
+
+		if (/\s/.test(char)) {
+			if (tokenStarted) {
+				tokens.push(current);
+				current = "";
+				tokenStarted = false;
+			}
+			continue;
+		}
+
+		current += char;
+		tokenStarted = true;
+	}
+
+	if (escaping) {
+		throw new Error("Invalid SSH command: trailing escape character.");
+	}
+
+	if (quote) {
+		throw new Error("Invalid SSH command: unmatched quote.");
+	}
+
+	if (tokenStarted) {
+		tokens.push(current);
+	}
+
+	return tokens;
+}
+
+function parseSshInvocation(sshCmd: string): { sshBinary: string; sshArgs: string[] } {
+	const sshParts = parseShellCommand(sshCmd);
+	if (sshParts.length === 0) {
+		throw new Error("Invalid SSH command: command is empty.");
+	}
+
+	return {
+		sshBinary: sshParts[0],
+		sshArgs: sshParts.slice(1),
+	};
+}
+
+export function extractHostFromSshCommand(sshCmd: string): string | undefined {
+	const { sshArgs } = parseSshInvocation(sshCmd);
+	for (let i = 0; i < sshArgs.length; i++) {
+		const arg = sshArgs[i];
+		if (arg === "--") {
+			return sshArgs[i + 1]?.split("@").pop();
+		}
+		if (arg.startsWith("-")) {
+			if (SSH_FLAGS_WITH_VALUE.has(arg)) {
+				i++;
+			}
+			continue;
+		}
+		return arg.split("@").pop();
+	}
+	return undefined;
+}
+
 /**
  * Execute an SSH command and return the result
  */
@@ -15,10 +142,20 @@ export const sshExec = async (
 	options?: { keepAlive?: boolean },
 ): Promise<SSHResult> => {
 	return new Promise((resolve) => {
-		// Parse SSH command (e.g., "ssh root@1.2.3.4" or "ssh -p 22 root@1.2.3.4")
-		const sshParts = sshCmd.split(" ").filter((p) => p);
-		const sshBinary = sshParts[0];
-		let sshArgs = [...sshParts.slice(1)];
+		let sshBinary: string;
+		let sshArgs: string[];
+		try {
+			const parsed = parseSshInvocation(sshCmd);
+			sshBinary = parsed.sshBinary;
+			sshArgs = [...parsed.sshArgs];
+		} catch (error) {
+			resolve({
+				stdout: "",
+				stderr: error instanceof Error ? error.message : String(error),
+				exitCode: 1,
+			});
+			return;
+		}
 
 		// Add SSH keepalive options for long-running commands
 		if (options?.keepAlive) {
@@ -71,14 +208,19 @@ export const sshExecStream = async (
 	options?: { silent?: boolean; forceTTY?: boolean; keepAlive?: boolean },
 ): Promise<number> => {
 	return new Promise((resolve) => {
-		const sshParts = sshCmd.split(" ").filter((p) => p);
-		const sshBinary = sshParts[0];
-
-		// Build SSH args
-		let sshArgs = [...sshParts.slice(1)];
+		let sshBinary: string;
+		let sshArgs: string[];
+		try {
+			const parsed = parseSshInvocation(sshCmd);
+			sshBinary = parsed.sshBinary;
+			sshArgs = [...parsed.sshArgs];
+		} catch {
+			resolve(1);
+			return;
+		}
 
 		// Add -t flag if requested and not already present
-		if (options?.forceTTY && !sshParts.includes("-t")) {
+		if (options?.forceTTY && !sshArgs.includes("-t")) {
 			sshArgs = ["-t", ...sshArgs];
 		}
 
@@ -111,22 +253,31 @@ export const sshExecStream = async (
  * Copy a file to remote via SCP
  */
 export const scpFile = async (sshCmd: string, localPath: string, remotePath: string): Promise<boolean> => {
-	// Extract host from SSH command
-	const sshParts = sshCmd.split(" ").filter((p) => p);
 	let host = "";
 	let port = "22";
-	let i = 1; // Skip 'ssh'
+	let sshArgs: string[];
+	try {
+		const parsed = parseSshInvocation(sshCmd);
+		sshArgs = parsed.sshArgs;
+	} catch {
+		return false;
+	}
 
-	while (i < sshParts.length) {
-		if (sshParts[i] === "-p" && i + 1 < sshParts.length) {
-			port = sshParts[i + 1];
-			i += 2;
-		} else if (!sshParts[i].startsWith("-")) {
-			host = sshParts[i];
-			break;
-		} else {
+	for (let i = 0; i < sshArgs.length; i++) {
+		const arg = sshArgs[i];
+		if (arg === "-p" && i + 1 < sshArgs.length) {
+			port = sshArgs[i + 1];
 			i++;
+			continue;
 		}
+		if (arg.startsWith("-")) {
+			if (SSH_FLAGS_WITH_VALUE.has(arg)) {
+				i++;
+			}
+			continue;
+		}
+		host = arg;
+		break;
 	}
 
 	if (!host) {

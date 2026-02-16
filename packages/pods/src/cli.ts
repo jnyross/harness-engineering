@@ -12,7 +12,7 @@ import { promptModel } from "./commands/prompt.js";
 import { getActivePod, loadConfig } from "./config.js";
 import { normalizeContextOption, normalizeMemoryOption } from "./model-options.js";
 import { assertValidPodName } from "./pod-name.js";
-import { sshExecStream } from "./ssh.js";
+import { parseShellCommand, sshExecStream } from "./ssh.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -203,15 +203,26 @@ try {
 				console.log(chalk.green(`Connecting to pod '${podInfo.name}'...`));
 
 				// Execute SSH in interactive mode
-				const sshArgs = podInfo.pod.ssh.split(" ").slice(1); // Remove 'ssh' from command
-				const sshProcess = spawn("ssh", sshArgs, {
-					stdio: "inherit",
-					env: process.env,
-				});
+				try {
+					const sshParts = parseShellCommand(podInfo.pod.ssh);
+					if (sshParts.length === 0) {
+						throw new Error("Invalid SSH command: command is empty.");
+					}
+					const sshBinary = sshParts[0];
+					const sshArgs = sshParts.slice(1);
+					const sshProcess = spawn(sshBinary, sshArgs, {
+						stdio: "inherit",
+						env: process.env,
+					});
 
-				sshProcess.on("exit", (code) => {
-					process.exit(code || 0);
-				});
+					sshProcess.on("exit", (code) => {
+						process.exit(code || 0);
+					});
+				} catch (error) {
+					const message = error instanceof Error ? error.message : String(error);
+					console.error(chalk.red(message));
+					process.exit(1);
+				}
 				break;
 			}
 			case "ssh": {

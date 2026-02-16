@@ -10,7 +10,7 @@ import { assertValidModelId } from "../model-id.js";
 import { assertValidModelInstanceName, isValidModelInstanceName } from "../model-name.js";
 import { assertValidPid, isValidPid, isValidPort } from "../process-identifiers.js";
 import { joinShellArgs, shellExport } from "../shell-quote.js";
-import { sshExec } from "../ssh.js";
+import { extractHostFromSshCommand, parseShellCommand, sshExec } from "../ssh.js";
 import type { Pod } from "../types.js";
 
 /**
@@ -294,10 +294,20 @@ WRAPPER
 	await new Promise((resolve) => setTimeout(resolve, 500));
 
 	// Stream logs with color support, watching for startup complete
-	const sshParts = pod.ssh.split(" ");
-	const sshCommand = sshParts[0]; // "ssh"
-	const sshArgs = sshParts.slice(1); // ["root@86.38.238.55"]
-	const host = sshArgs[0].split("@")[1] || "localhost";
+	let sshCommand: string;
+	let sshArgs: string[];
+	try {
+		const parsedSshCommand = parseShellCommand(pod.ssh);
+		if (parsedSshCommand.length === 0) {
+			throw new Error("Invalid SSH command: command is empty.");
+		}
+		sshCommand = parsedSshCommand[0];
+		sshArgs = parsedSshCommand.slice(1);
+	} catch (error) {
+		console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+		process.exit(1);
+	}
+	const host = extractHostFromSshCommand(pod.ssh) || "localhost";
 	const tailCmd = `tail -f ~/.vllm_logs/${name}.log`;
 
 	// Build the full args array for spawn
@@ -543,8 +553,7 @@ export const listModels = async (options: { pod?: string }) => {
 	}
 
 	// Get pod SSH host for URL display
-	const sshParts = pod.ssh.split(" ");
-	const host = sshParts.find((p) => p.includes("@"))?.split("@")[1] || "unknown";
+	const host = extractHostFromSshCommand(pod.ssh) || "unknown";
 
 	console.log(`Models on pod '${chalk.bold(podName)}':`);
 	for (const name of modelNames) {
@@ -657,9 +666,19 @@ export const viewLogs = async (name: string, options: { pod?: string }) => {
 	console.log("");
 
 	// Stream logs with color preservation
-	const sshParts = pod.ssh.split(" ");
-	const sshCommand = sshParts[0]; // "ssh"
-	const sshArgs = sshParts.slice(1); // ["root@86.38.238.55"]
+	let sshCommand: string;
+	let sshArgs: string[];
+	try {
+		const parsedSshCommand = parseShellCommand(pod.ssh);
+		if (parsedSshCommand.length === 0) {
+			throw new Error("Invalid SSH command: command is empty.");
+		}
+		sshCommand = parsedSshCommand[0];
+		sshArgs = parsedSshCommand.slice(1);
+	} catch (error) {
+		console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+		process.exit(1);
+	}
 	const tailCmd = `tail -f ~/.vllm_logs/${name}.log`;
 
 	const logProcess = spawn(sshCommand, [...sshArgs, tailCmd], {
