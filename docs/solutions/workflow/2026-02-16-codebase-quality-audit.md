@@ -417,6 +417,20 @@ to stop parsing and preserve remaining arguments verbatim once `--` is encounter
 
 **Result:** `pi agent` now supports standard CLI option-terminator behavior, allowing literal message payloads that begin with `--` without false pod-flag parsing.
 
+---
+
+### 26) pods `--pod` flag was accepted on non-model commands
+
+**Finding:** `--pod` parsing occurred for all non-`pods` commands, so non-model commands like `pi shell` could accept `--pod` even though docs scope override behavior to model commands only.
+
+**Action:** Updated:
+
+- `packages/pods/src/cli.ts`
+
+to allow pod-override parsing only for model commands (`start`, `stop`, `list`, `logs`, `agent`) and reject `--pod` usage on other commands with a clear error.
+
+**Result:** CLI behavior now matches documented command semantics and avoids silent/confusing flag acceptance on unrelated commands.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -453,6 +467,8 @@ to stop parsing and preserve remaining arguments verbatim once `--` is encounter
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --pod demo --pod other`
 - pods `--` option terminator passthrough validation:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model -- --pod`
+- pods non-model `--pod` rejection validation:
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts shell --pod demo`
 - pods dynamic provider registration + key handling smoke test:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --list-models pods-vllm`
 - pods reserved flag validation smoke test:
