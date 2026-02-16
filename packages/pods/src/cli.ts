@@ -60,6 +60,11 @@ function extractPodOverride(cliArgs: string[]): { podOverride?: string; argsWith
 	for (let i = 0; i < cliArgs.length; i++) {
 		const arg = cliArgs[i];
 
+		if (arg === "--") {
+			argsWithoutPod.push(...cliArgs.slice(i));
+			break;
+		}
+
 		if (arg === "--pod") {
 			const podName = cliArgs[i + 1];
 			if (!podName || podName.startsWith("--")) {
