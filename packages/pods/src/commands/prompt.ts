@@ -1,4 +1,9 @@
 import chalk from "chalk";
+import { spawn } from "child_process";
+import { existsSync } from "fs";
+import { createRequire } from "module";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 import { getActivePod, loadConfig } from "../config.js";
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -8,6 +13,22 @@ import { getActivePod, loadConfig } from "../config.js";
 interface PromptOptions {
 	pod?: string;
 	apiKey?: string;
+}
+
+const require = createRequire(import.meta.url);
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const MONOREPO_CODING_AGENT_CLI = join(__dirname, "../../../coding-agent/src/cli.ts");
+
+function resolveLocalCodingAgentCli(): string | undefined {
+	if (existsSync(MONOREPO_CODING_AGENT_CLI)) {
+		return MONOREPO_CODING_AGENT_CLI;
+	}
+
+	try {
+		return require.resolve("@mariozechner/pi-coding-agent/dist/cli.js");
+	} catch {
+		return undefined;
+	}
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -75,11 +96,39 @@ Current working directory: ${process.cwd()}`;
 	args.push(...userArgs);
 
 	// Call agent main function directly
-	try {
-		throw new Error("Not implemented");
-		// biome-ignore lint/suspicious/noExplicitAny: migration
-	} catch (err: any) {
-		console.error(chalk.red(`Agent error: ${err.message}`));
+	const localCli = resolveLocalCodingAgentCli();
+	const command = localCli?.endsWith(".ts") ? "npx" : localCli ? process.execPath : "npx";
+	const commandArgs = localCli?.endsWith(".ts")
+		? ["tsx", localCli, ...args]
+		: localCli
+			? [localCli, ...args]
+			: ["--yes", "--package", "@mariozechner/pi-coding-agent", "pi", ...args];
+	await new Promise<void>((resolve, reject) => {
+		const child = spawn(command, commandArgs, {
+			stdio: "inherit",
+			env: process.env,
+		});
+
+		child.on("error", (error) => reject(error));
+		child.on("exit", (code, signal) => {
+			if (signal) {
+				reject(new Error(`Agent process exited due to signal ${signal}`));
+				return;
+			}
+			if (code === 0) {
+				resolve();
+				return;
+			}
+			reject(new Error(`Agent process exited with code ${code}`));
+		});
+	}).catch((err: unknown) => {
+		const message = err instanceof Error ? err.message : String(err);
+		console.error(chalk.red(`Agent error: ${message}`));
+		console.error(
+			chalk.yellow(
+				"Ensure npm can execute @mariozechner/pi-coding-agent (try: npx --yes --package @mariozechner/pi-coding-agent pi --help).",
+			),
+		);
 		process.exit(1);
-	}
+	});
 }
