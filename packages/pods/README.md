@@ -129,10 +129,10 @@ pi agent <name> -i                        # Interactive chat mode
 pi agent <name> -i -c                     # Continue previous session
 
 # Standalone OpenAI-compatible agent (works with any API)
-pi-agent --base-url http://localhost:8000/v1 --model llama-3.1 "Hello"
-pi-agent --api-key sk-... "What is 2+2?"  # Uses OpenAI by default
-pi-agent --json "What is 2+2?"            # Output event stream as JSONL
-pi-agent -i                                # Interactive mode
+npx --yes --package @mariozechner/pi-coding-agent pi --base-url http://localhost:8000/v1 --model llama-3.1 "Hello"
+npx --yes --package @mariozechner/pi-coding-agent pi --api-key sk-... "What is 2+2?"  # Uses OpenAI by default
+npx --yes --package @mariozechner/pi-coding-agent pi --json "What is 2+2?"             # Output event stream as JSONL
+npx --yes --package @mariozechner/pi-coding-agent pi -i                                  # Interactive mode
 ```
 
 `pi agent` forwards most coding-agent CLI flags. The target provider/model are managed by `pi` from pod configuration, so `--provider` and `--model` are reserved in this mode.
@@ -316,34 +316,32 @@ response = client.chat.completions.create(
 )
 ```
 
-## Standalone Agent CLI
+## Standalone Agent CLI (separate package)
 
-`pi` includes a standalone OpenAI-compatible agent that can work with any API:
+For a standalone OpenAI-compatible coding agent (outside pods orchestration), use `@mariozechner/pi-coding-agent`:
 
 ```bash
-# Install globally to get pi-agent command
-npm install -g @mariozechner/pi
-
 # Use with OpenAI
-pi-agent --api-key sk-... "What is machine learning?"
+npx --yes --package @mariozechner/pi-coding-agent pi --api-key sk-... "What is machine learning?"
 
 # Use with local vLLM
-pi-agent --base-url http://localhost:8000/v1 \
-         --model meta-llama/Llama-3.1-8B-Instruct \
-         --api-key dummy \
-         "Explain quantum computing"
+npx --yes --package @mariozechner/pi-coding-agent pi \
+  --base-url http://localhost:8000/v1 \
+  --model meta-llama/Llama-3.1-8B-Instruct \
+  --api-key dummy \
+  "Explain quantum computing"
 
 # Interactive mode
-pi-agent -i
+npx --yes --package @mariozechner/pi-coding-agent pi -i
 
 # Continue previous session
-pi-agent --continue "Follow up question"
+npx --yes --package @mariozechner/pi-coding-agent pi --continue "Follow up question"
 
 # Custom system prompt
-pi-agent --system-prompt "You are a Python expert" "Write a web scraper"
+npx --yes --package @mariozechner/pi-coding-agent pi --system-prompt "You are a Python expert" "Write a web scraper"
 
 # Use responses API (for GPT-OSS models)
-pi-agent --api responses --model openai/gpt-oss-20b "Hello"
+npx --yes --package @mariozechner/pi-coding-agent pi --api responses --model openai/gpt-oss-20b "Hello"
 ```
 
 The agent supports:
@@ -421,7 +419,7 @@ Events are automatically converted to the appropriate API format (Chat Completio
 
 Use `--json` flag to output the event stream as JSONL (JSON Lines) for programmatic consumption:
 ```bash
-pi-agent --api-key sk-... --json "What is 2+2?"
+npx --yes --package @mariozechner/pi-coding-agent pi --api-key sk-... --json "What is 2+2?"
 ```
 
 Each line is a complete JSON object representing an event:
@@ -514,7 +512,7 @@ ls -la ~/.pi/sessions/
 - `HF_TOKEN` - HuggingFace token for model downloads
 - `PI_API_KEY` - API key for vLLM endpoints
 - `PI_CONFIG_DIR` - Config directory (default: `~/.pi`)
-- `OPENAI_API_KEY` - Used by `pi-agent` when no `--api-key` provided
+- `OPENAI_API_KEY` - Used by standalone `@mariozechner/pi-coding-agent` when no `--api-key` is provided
 
 ## License
 
