@@ -173,6 +173,24 @@ using the existing reviewer prompt + parser contract and an LLM-backed review lo
 
 **Result:** coding-agent tests run successfully from source checkout, including extension-loading suites and git-update scenarios.
 
+---
+
+### 10) ExecutionEngine reviewer path lacked direct unit coverage
+
+**Finding:** After implementing real reviewer execution in `ExecutionEngine`, there was no dedicated unit test coverage for retry/approval behavior.
+
+**Action:** Added focused tests in:
+
+- `packages/agent/test/execution-engine.test.ts`
+
+covering:
+
+- immediate approval (`VERDICT: approved`),
+- retry when reviewer returns `needs_fixes`,
+- rejection behavior when reviewer emits no assistant text.
+
+**Result:** The reviewer execution path now has explicit regression coverage for core control flow.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -181,8 +199,12 @@ using the existing reviewer prompt + parser contract and an LLM-backed review lo
   - `npm --workspace "@mariozechner/pi-ai" test`
 - Agent package tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test`
+- Targeted ExecutionEngine review tests pass:
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/execution-engine.test.ts`
 - coding-agent package tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test`
+- TUI package tests pass:
+  - `npm --workspace "@mariozechner/pi-tui" test`
 - Targeted reviewer parser tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- reviewer.test.ts`
 
