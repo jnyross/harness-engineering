@@ -1037,6 +1037,21 @@ to route review gate parsing through `parseReviewResponse()`, while still failin
 
 **Result:** Review gate verdict handling is now consistent with reviewer prompt parsing semantics across agent flows.
 
+---
+
+### 60) pods package test script prevented efficient file-filtered runs
+
+**Finding:** `packages/pods/package.json` used `tsx --test test/**/*.test.ts`, which always ran the full suite even when users passed specific files via `npm test -- <file>`.
+
+**Action:** Updated:
+
+- `packages/pods/package.json`
+- `packages/pods/CHANGELOG.md`
+
+to use `tsx --test` so tests are auto-discovered by default while still supporting file-level filtering arguments.
+
+**Result:** Pods tests now support fast targeted execution (`npm --workspace "@mariozechner/pi" test -- test/ssh-parse.test.ts`) without sacrificing default full-suite runs.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1151,6 +1166,8 @@ to route review gate parsing through `parseReviewResponse()`, while still failin
   - `PI_CONFIG_DIR=<tmp> PI_API_KEY=test-key npx tsx packages/pods/src/cli.ts agent demo-model --list-models` with SSH `ssh -o StrictHostKeyChecking=no` (rejected with invalid SSH command error)
 - prompt validation unit coverage:
   - `npm --workspace "@mariozechner/pi" test -- test/prompt-model-validation.test.ts`
+- pods targeted test filtering behavior:
+  - `npm --workspace "@mariozechner/pi" test -- test/ssh-parse.test.ts` (runs only SSH parser tests)
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
