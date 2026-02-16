@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added configurable default model selection via environment variables:
+  - `PI_MOM_PROVIDER` / `MOM_MODEL_PROVIDER`
+  - `PI_MOM_MODEL` / `MOM_MODEL_ID`
+  with validation and clear startup errors for unknown providers/models.
+
 ## [0.52.12] - 2026-02-13
 
 ## [0.52.11] - 2026-02-13

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Updated Codex WebSocket header conversion to iterate with `Headers.forEach()`, avoiding type incompatibilities in consumer check flows that use non-DOM `Headers` typings.
+
 ## [0.52.12] - 2026-02-13
 
 ### Added

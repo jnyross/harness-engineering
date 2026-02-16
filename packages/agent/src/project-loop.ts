@@ -126,6 +126,8 @@ function runPhaseWithPrompt(
 }
 
 function getChangedFiles(cwd: string): string[] {
+	// Gather both tracked modifications and untracked files to avoid broad staging
+	// commands such as "git add -A" inside automated loops.
 	const tracked = execSync("git diff --name-only", {
 		cwd,
 		encoding: "utf-8",
