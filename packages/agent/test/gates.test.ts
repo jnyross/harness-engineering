@@ -33,6 +33,14 @@ describe("mechanical gates commands", () => {
 		expect(redTestGate(process.cwd()).passed).toBe(false);
 	});
 
+	it("redTestGate fails when command cannot be parsed", () => {
+		process.env.PI_TEST_COMMAND = `node -e "unterminated`;
+		const result = redTestGate(process.cwd());
+		expect(result.passed).toBe(false);
+		expect(result.output).toMatch(/unmatched quote/i);
+		expect(result.diagnostics?.[0]).toMatch(/failed to execute/i);
+	});
+
 	it("greenGate reads PI_VALIDATE_COMMAND at call-time", () => {
 		process.env.PI_VALIDATE_COMMAND = `node -e "process.exit(0)"`;
 		expect(greenGate(process.cwd()).passed).toBe(true);

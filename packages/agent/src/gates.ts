@@ -96,7 +96,14 @@ export function parseCommand(command: string): string[] {
 	return tokens;
 }
 
-function runInCwd(cwd: string, command: string | string[]): { stdout: string; stderr: string; exitCode: number } {
+interface CommandExecutionResult {
+	stdout: string;
+	stderr: string;
+	exitCode: number;
+	invocationError: boolean;
+}
+
+function runInCwd(cwd: string, command: string | string[]): CommandExecutionResult {
 	let parsedCommand: string[];
 	try {
 		parsedCommand = Array.isArray(command) ? command : parseCommand(command);
@@ -105,10 +112,11 @@ function runInCwd(cwd: string, command: string | string[]): { stdout: string; st
 			stdout: "",
 			stderr: error instanceof Error ? error.message : String(error),
 			exitCode: 1,
+			invocationError: true,
 		};
 	}
 	if (parsedCommand.length === 0) {
-		return { stdout: "", stderr: "Invalid command: command is empty.", exitCode: 1 };
+		return { stdout: "", stderr: "Invalid command: command is empty.", exitCode: 1, invocationError: true };
 	}
 	try {
 		const result = execFileSync(parsedCommand[0], parsedCommand.slice(1), {
@@ -117,7 +125,7 @@ function runInCwd(cwd: string, command: string | string[]): { stdout: string; st
 			stdio: ["pipe", "pipe", "pipe"],
 			maxBuffer: 4 * 1024 * 1024,
 		});
-		return { stdout: result.toString(), stderr: "", exitCode: 0 };
+		return { stdout: result.toString(), stderr: "", exitCode: 0, invocationError: false };
 	} catch (err: unknown) {
 		const e = err as { status?: number; stdout?: Buffer; stderr?: Buffer; message?: string };
 		const stderr = e.stderr?.toString() ?? e.message ?? "";
@@ -125,6 +133,7 @@ function runInCwd(cwd: string, command: string | string[]): { stdout: string; st
 			stdout: e.stdout?.toString() ?? "",
 			stderr,
 			exitCode: e.status ?? 1,
+			invocationError: e.status === undefined,
 		};
 	}
 }
@@ -172,15 +181,17 @@ export function validateDecomposition(tasks: DecompositionTask[]): GateResult {
  * Pass if exit code !== 0.
  */
 export function redTestGate(cwd: string): GateResult {
-	const { stdout, stderr, exitCode } = runInCwd(cwd, getTestCommand());
+	const { stdout, stderr, exitCode, invocationError } = runInCwd(cwd, getTestCommand());
 	const output = [stdout, stderr].filter(Boolean).join("\n");
-	const passed = exitCode !== 0;
+	const passed = !invocationError && exitCode !== 0;
 	return {
 		passed,
 		output,
 		diagnostics: passed
 			? undefined
-			: ["Tests passed but must fail at red gate. Write tests that target unimplemented behavior."],
+			: invocationError
+				? ["Test command failed to execute. Ensure PI_TEST_COMMAND is valid and runnable."]
+				: ["Tests passed but must fail at red gate. Write tests that target unimplemented behavior."],
 	};
 }
 
