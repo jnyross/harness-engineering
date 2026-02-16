@@ -695,6 +695,27 @@ to enforce model-name constraints (`[A-Za-z0-9._-]`, length 1-64, starting with 
 
 **Result:** Model-name handling is now explicitly validated before shell interpolation, reducing injection surface and making naming rules clear to users.
 
+---
+
+### 42) model ids were accepted without shell-safety validation
+
+**Finding:** `pi start <model>` accepted arbitrary model-id strings which are later interpolated into remote shell script content (`model_run.sh`) without upfront validation.
+
+**Action:** Added:
+
+- `packages/pods/src/model-id.ts`
+- `packages/pods/test/model-id.test.ts`
+
+and updated:
+
+- `packages/pods/src/commands/models.ts`
+- `packages/pods/README.md`
+- `packages/pods/CHANGELOG.md`
+
+to enforce model-id constraints (`[A-Za-z0-9._/-]`, 1-128 chars, leading alphanumeric) before deployment.
+
+**Result:** Unsafe model-id inputs are rejected early, reducing shell interpolation risk while preserving common HuggingFace-style model id formats.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -763,6 +784,8 @@ to enforce model-name constraints (`[A-Za-z0-9._-]`, length 1-64, starting with 
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts start <model> --name "bad name"` (rejected with validation error)
 - model-name validation (logs command):
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts logs "bad name"` (rejected with validation error)
+- model-id validation (start command):
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts start "bad model" --name goodname` (rejected with validation error)
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
