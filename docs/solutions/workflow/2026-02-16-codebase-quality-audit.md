@@ -539,6 +539,21 @@ to run pod-override parsing only for known direct commands and let unknown comma
 
 **Result:** Users now get deterministic, authoritative unknown-command errors instead of misleading pod-flag parsing failures.
 
+---
+
+### 34) coding-agent README referenced deprecated agent package name
+
+**Finding:** `packages/coding-agent/README.md` "See Also" still linked to `@mariozechner/pi-agent`, while the package is now published as `@mariozechner/pi-agent-core`.
+
+**Action:** Updated:
+
+- `packages/coding-agent/README.md`
+- `packages/coding-agent/CHANGELOG.md`
+
+to point to `@mariozechner/pi-agent-core`.
+
+**Result:** Package cross-reference docs now match the current package naming and reduce install confusion.
+
 ## Validation Evidence
 
 - Root quality gate passes:
