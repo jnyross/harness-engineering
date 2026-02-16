@@ -879,6 +879,27 @@ to:
 
 **Result:** Agent delegation now uses robust host resolution and rejects malformed persisted port values before constructing endpoint URLs.
 
+---
+
+### 51) models-path extraction from `--mount` was whitespace-fragile
+
+**Finding:** `pods setup` inferred `modelsPath` from `--mount` using plain `split(" ")`, which fails for quoted mount targets containing spaces and for malformed commands.
+
+**Action:** Added:
+
+- `packages/pods/src/mount-command.ts`
+- `packages/pods/test/mount-command.test.ts`
+
+and updated:
+
+- `packages/pods/src/cli.ts`
+- `packages/pods/src/commands/pods.ts`
+- `packages/pods/CHANGELOG.md`
+
+to parse mount commands with shell-aware tokenization and only infer absolute target paths.
+
+**Result:** `--mount` models-path inference now handles quoted paths safely and rejects malformed/relative targets instead of extracting brittle tokens.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -971,6 +992,8 @@ to:
   - `PI_CONFIG_DIR=<tmp> PI_API_KEY=test-key npx tsx packages/pods/src/cli.ts agent demo-model --list-models` with SSH config `ssh -i "~/.ssh/my key" -p2222 ubuntu@demo.host` (works; provider/model listed)
 - `pi agent` invalid persisted port guard:
   - `PI_CONFIG_DIR=<tmp> PI_API_KEY=test-key npx tsx packages/pods/src/cli.ts agent demo-model --list-models` with tampered model port `bad-port` (rejected before delegation)
+- mount command parsing helper behavior:
+  - `npx tsx -e "<extractModelsPathFromMountCommand demo>"` returns `/mnt/model cache` for quoted target and `undefined` for malformed command
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
