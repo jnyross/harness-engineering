@@ -674,6 +674,27 @@ to add:
 
 **Result:** pods helper regressions are now runnable through standard workspace test workflows (`npm --workspace "@mariozechner/pi" test`), improving discoverability and CI friendliness.
 
+---
+
+### 41) model instance names were unsafely interpolated into shell commands
+
+**Finding:** pods model lifecycle commands interpolated model instance names into remote shell command strings and log paths without explicit validation, creating avoidable command/path injection risk from malformed names.
+
+**Action:** Added:
+
+- `packages/pods/src/model-name.ts`
+- `packages/pods/test/model-name.test.ts`
+
+and updated:
+
+- `packages/pods/src/commands/models.ts`
+- `packages/pods/README.md`
+- `packages/pods/CHANGELOG.md`
+
+to enforce model-name constraints (`[A-Za-z0-9._-]`, length 1-64, starting with alphanumeric) for start/stop/log flows, and to skip unsafe config entries during status verification.
+
+**Result:** Model-name handling is now explicitly validated before shell interpolation, reducing injection surface and making naming rules clear to users.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -738,6 +759,10 @@ to add:
   - `cd /tmp && npx --yes --package @mariozechner/pi-coding-agent pi --help`
 - pods package test script validation:
   - `npm --workspace "@mariozechner/pi" test`
+- model-name validation (start command):
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts start <model> --name "bad name"` (rejected with validation error)
+- model-name validation (logs command):
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts logs "bad name"` (rejected with validation error)
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
