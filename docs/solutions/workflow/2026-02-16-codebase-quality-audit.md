@@ -900,6 +900,22 @@ to parse mount commands with shell-aware tokenization and only infer absolute ta
 
 **Result:** `--mount` models-path inference now handles quoted paths safely and rejects malformed/relative targets instead of extracting brittle tokens.
 
+---
+
+### 52) ssh command fields allowed non-ssh binaries
+
+**Finding:** Parsed SSH command fields accepted any binary token as command entrypoint, which could trigger accidental local non-SSH execution when config values are malformed or tampered.
+
+**Action:** Updated:
+
+- `packages/pods/src/ssh.ts`
+- `packages/pods/test/ssh-parse.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to enforce SSH binary validation (`ssh` or `*/ssh`) before SSH/SCP execution paths proceed.
+
+**Result:** Pod command execution now rejects non-SSH command binaries early, with explicit errors and regression coverage.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -994,6 +1010,8 @@ to parse mount commands with shell-aware tokenization and only infer absolute ta
   - `PI_CONFIG_DIR=<tmp> PI_API_KEY=test-key npx tsx packages/pods/src/cli.ts agent demo-model --list-models` with tampered model port `bad-port` (rejected before delegation)
 - mount command parsing helper behavior:
   - `npx tsx -e "<extractModelsPathFromMountCommand demo>"` returns `/mnt/model cache` for quoted target and `undefined` for malformed command
+- non-ssh binary guard in SSH helpers:
+  - `npm --workspace "@mariozechner/pi" test` (includes `test/ssh-parse.test.ts` case validating `sshExec("bash ...")` returns error)
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
