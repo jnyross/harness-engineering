@@ -775,6 +775,27 @@ by extracting a `buildPodSetupCommand()` helper that shell-quotes each argument 
 
 **Result:** Pod setup command construction is now resilient to spaces/single quotes and preserves literal argument semantics across SSH execution.
 
+---
+
+### 46) runtime environment exports still used raw string interpolation
+
+**Finding:** Model startup environment exports in `packages/pods/src/commands/models.ts` built `export KEY='value'` lines with direct string interpolation, which could mishandle quote-heavy values and did not validate env var names from model configs.
+
+**Action:** Updated:
+
+- `packages/pods/src/shell-quote.ts`
+- `packages/pods/src/commands/models.ts`
+- `packages/pods/test/shell-quote.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+by adding `shellExport()`:
+
+- validates env var names (`[A-Za-z_][A-Za-z0-9_]*`),
+- shell-quotes values consistently,
+- used for standard runtime exports and model-specific env overrides.
+
+**Result:** Runtime env injection now uses validated names and quote-safe value handling, reducing shell interpolation risk in startup flows.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -853,6 +874,8 @@ by extracting a `buildPodSetupCommand()` helper that shell-quotes each argument 
   - `npm --workspace "@mariozechner/pi" test` (includes `test/shell-quote.test.ts`)
 - pod setup command quoting regression tests:
   - `npm --workspace "@mariozechner/pi" test` (includes `test/pods-setup-command.test.ts`)
+- shell export helper regression tests:
+  - `npm --workspace "@mariozechner/pi" test` (includes `test/shell-quote.test.ts` `shellExport` cases)
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
