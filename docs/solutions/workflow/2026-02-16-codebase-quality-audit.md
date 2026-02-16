@@ -509,6 +509,21 @@ to explicitly document the `pi-pods` command name and include an alias pattern f
 
 **Result:** Command naming expectations are now explicit in both package-level and repo-level documentation.
 
+---
+
+### 32) pods CLI help text was hardcoded to `pi`
+
+**Finding:** `packages/pods/src/cli.ts` rendered help/usage strings with a hardcoded `pi` command name, even when invoked via a differently named binary (e.g., `pi-pods`).
+
+**Action:** Updated:
+
+- `packages/pods/src/cli.ts`
+- `packages/pods/CHANGELOG.md`
+
+to detect the invoked command basename and render help/usage output accordingly, with a fallback to `pi` for source-run entrypoints (`cli.ts`/`cli.js`).
+
+**Result:** Help and usage text now accurately match the command users actually invoked, reducing naming confusion across install modes.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -557,6 +572,10 @@ to explicitly document the `pi-pods` command name and include an alias pattern f
   - `PI_CONFIG_DIR=<tmp> env -u PI_API_KEY npx tsx packages/pods/src/cli.ts agent known-model --list-models`
 - pods delegated list-models success with explicit key:
   - `PI_CONFIG_DIR=<tmp> PI_API_KEY=test-key npx tsx packages/pods/src/cli.ts agent known-model --list-models`
+- pods default source-entrypoint help rendering:
+  - `npx tsx packages/pods/src/cli.ts --help` (renders `pi ...`)
+- pods invoked-command help rendering:
+  - `ln -s packages/pods/src/cli.ts /tmp/<name> && npx tsx /tmp/<name> --help` (renders `<name> ...`)
 - pods unique provider generation smoke test:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --list-models` (shows `pods-vllm-<random>` entry)
 
