@@ -115,15 +115,24 @@ function parseSshInvocation(sshCmd: string): { sshBinary: string; sshArgs: strin
 	if (sshParts.length === 0) {
 		throw new Error("Invalid SSH command: command is empty.");
 	}
+	const sshBinary = sshParts[0];
+	if (sshBinary !== "ssh" && !sshBinary.endsWith("/ssh")) {
+		throw new Error(`Invalid SSH command: expected ssh binary, got "${sshBinary}".`);
+	}
 
 	return {
-		sshBinary: sshParts[0],
+		sshBinary,
 		sshArgs: sshParts.slice(1),
 	};
 }
 
 export function extractHostFromSshCommand(sshCmd: string): string | undefined {
-	const { sshArgs } = parseSshInvocation(sshCmd);
+	let sshArgs: string[];
+	try {
+		({ sshArgs } = parseSshInvocation(sshCmd));
+	} catch {
+		return undefined;
+	}
 	for (let i = 0; i < sshArgs.length; i++) {
 		const arg = sshArgs[i];
 		if (arg === "--") {

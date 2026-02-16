@@ -19,6 +19,7 @@
 - Replaced naive whitespace splitting of SSH command strings with shell-aware parsing in SSH helpers/interactive shell flow, including attached short-option forms like `-p2222`.
 - Updated `pi agent` host resolution to use shell-aware SSH parsing and validate persisted model ports before provider registration.
 - Updated mount-command models-path extraction to use shell-aware parsing (handles quoted mount targets with spaces, rejects malformed commands).
+- Enforced SSH command binary validation (`ssh` / `*/ssh`) before SSH/SCP execution to prevent accidental local non-SSH command execution from malformed config.
 
 ### Fixed
 
