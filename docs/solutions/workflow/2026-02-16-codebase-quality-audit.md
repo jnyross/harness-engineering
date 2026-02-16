@@ -951,6 +951,8 @@ to require successful host extraction and throw a clear configuration error if t
 
 **Result:** Agent endpoint routing now fails safe on malformed SSH host config instead of silently targeting localhost.
 
+**Regression coverage follow-up:** Added dedicated unit tests for `promptModel` validation paths (invalid SSH host config, invalid persisted model port) to keep these early-fail safeguards from regressing.
+
 ---
 
 ### 55) agent mechanical gates used shell-composed command execution
@@ -1093,6 +1095,8 @@ to use `dirname(path)` for parent directory creation and added regression covera
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
   - `PI_CONFIG_DIR=<tmp> PI_API_KEY=test-key npx tsx packages/pods/src/cli.ts agent demo-model --list-models` with SSH `ssh -o StrictHostKeyChecking=no` (rejected with invalid SSH command error)
+- prompt validation unit coverage:
+  - `npm --workspace "@mariozechner/pi" test -- test/prompt-model-validation.test.ts`
 - pods invoked-command guidance in pod listing:
   - `PI_CONFIG_DIR=<tmp> npx tsx /tmp/<symlink-to-cli.ts> pods` (message includes `<symlink> pods setup`)
 - pods invoked-command guidance in model/list flow:
