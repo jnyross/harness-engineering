@@ -403,6 +403,20 @@ Also normalized top-level CLI error rendering to print the message directly in r
 
 **Result:** Pod override parsing is deterministic and user errors are surfaced early with clear messages.
 
+---
+
+### 25) pods pod-override parsing did not honor `--` option terminator
+
+**Finding:** After introducing stricter `--pod` parsing, argument scanning still continued through all tokens and could interpret post-terminator payload (`--`) as pod flags.
+
+**Action:** Updated `extractPodOverride()` in:
+
+- `packages/pods/src/cli.ts`
+
+to stop parsing and preserve remaining arguments verbatim once `--` is encountered.
+
+**Result:** `pi agent` now supports standard CLI option-terminator behavior, allowing literal message payloads that begin with `--` without false pod-flag parsing.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -437,6 +451,8 @@ Also normalized top-level CLI error rendering to print the message directly in r
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --pod=missing-pod`
 - pods duplicate `--pod` validation smoke test:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --pod demo --pod other`
+- pods `--` option terminator passthrough validation:
+  - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model -- --pod`
 - pods dynamic provider registration + key handling smoke test:
   - `PI_CONFIG_DIR=<tmp> npx tsx packages/pods/src/cli.ts agent demo-model --list-models pods-vllm`
 - pods reserved flag validation smoke test:
