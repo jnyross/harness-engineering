@@ -1014,13 +1014,21 @@ export class TreeSelectorComponent extends Container implements Focusable {
 			if (this.disposed) {
 				return;
 			}
-			onSelect(entryId);
+			try {
+				onSelect(entryId);
+			} catch (error) {
+				console.error("Tree selector onSelect callback failed:", error);
+			}
 		};
 		this.treeList.onCancel = () => {
 			if (this.disposed) {
 				return;
 			}
-			onCancel();
+			try {
+				onCancel();
+			} catch (error) {
+				console.error("Tree selector onCancel callback failed:", error);
+			}
 		};
 		this.treeList.onLabelEdit = (entryId, currentLabel) => this.showLabelInput(entryId, currentLabel);
 
@@ -1053,7 +1061,11 @@ export class TreeSelectorComponent extends Container implements Focusable {
 				if (this.disposed) {
 					return;
 				}
-				onCancel();
+				try {
+					onCancel();
+				} catch (error) {
+					console.error("Tree selector auto-cancel callback failed:", error);
+				}
 			}, 100);
 		}
 	}

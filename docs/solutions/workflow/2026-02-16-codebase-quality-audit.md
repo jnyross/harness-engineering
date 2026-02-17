@@ -3967,9 +3967,9 @@ to:
 
 ---
 
-### 221) tree/user-message selector empty-state auto-cancel timers could fire after teardown
+### 221) tree/user-message selector auto-cancel/callback paths could fire unsafely after teardown
 
-**Finding:** Tree/user-message selectors schedule delayed auto-cancel on empty data; without disposal-aware timer cleanup/guards, stale timers could trigger cancel callbacks after selector teardown.
+**Finding:** Tree/user-message selectors schedule delayed auto-cancel on empty data and invoke external callbacks directly; without disposal-aware guards and callback isolation, stale timers/callback exceptions could disrupt teardown.
 
 **Action:** Updated:
 
@@ -3982,9 +3982,10 @@ to:
 
 - add disposal-aware timer cleanup for empty-state auto-cancel timeouts,
 - suppress selector callback invocation after disposal,
-- add regression coverage proving auto-cancel timers are ignored after dispose.
+- isolate selector callback exceptions during interactive key handling,
+- add regression coverage proving auto-cancel timers are ignored after dispose and callback exceptions are contained.
 
-**Result:** Tree/user-message selectors no longer emit stale auto-cancel callbacks after teardown races.
+**Result:** Tree/user-message selectors no longer emit stale callbacks after teardown and no longer propagate callback exceptions through interactive key handling.
 
 ---
 
@@ -4053,7 +4054,7 @@ to:
 - coding-agent session selector disposal regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/session-selector-path-delete.test.ts test/extension-dialog-callbacks.test.ts` (includes stale-load suppression after selector dispose)
 - coding-agent selector auto-cancel disposal regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/selector-autocancel-dispose.test.ts test/tree-selector.test.ts` (includes tree/user-message empty-state auto-cancel suppression after dispose)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/selector-autocancel-dispose.test.ts test/tree-selector.test.ts` (includes tree/user-message empty-state auto-cancel suppression after dispose and callback-exception isolation)
 - coding-agent interactive container-disposal regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/interactive-mode-container-dispose.test.ts` (verifies disposable children are disposed before container clear)
 - coding-agent antigravity image SSE parsing regression tests pass:

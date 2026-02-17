@@ -32,6 +32,7 @@
 - Interactive selector replacement now disposes previous disposable selector components before teardown, and session selector now cancels pending status timers/load updates on dispose, preventing stale async updates after selector close/switch.
 - Interactive chat/pending container clears now dispose disposable child components before removal, preventing leaked background timers/listeners from detached transient message components.
 - Tree/user-message selectors now clear scheduled empty-state auto-cancel timers on dispose and ignore callbacks post-disposal, preventing stale cancel callbacks after selector teardown.
+- Tree/user-message selectors now also isolate callback exceptions, preventing selector callback failures from bubbling through interactive key handling.
 - CLI session/config selector TUI flows now use single-settlement close/exit handling, preventing duplicate teardown races between selection/cancel/exit callbacks.
 - Interactive OAuth login dialog now launches browser URLs via argument-safe spawn invocations (instead of shell command strings), reducing command-injection risk from malformed auth URLs.
 - Interactive OAuth login dialog now settles cancellation callbacks once and rejects superseded prompt/input promises, preventing duplicate completion callbacks and dangling manual-input waits.

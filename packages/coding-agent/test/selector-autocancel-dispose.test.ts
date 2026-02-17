@@ -38,4 +38,46 @@ describe("selector auto-cancel disposal", () => {
 			vi.useRealTimers();
 		}
 	});
+
+	it("tree selector isolates callback exceptions", () => {
+		const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+		const tree: SessionTreeNode[] = [
+			{
+				entry: {
+					type: "message",
+					id: "m1",
+					parentId: null,
+					timestamp: new Date().toISOString(),
+					message: { role: "user", content: "hello", timestamp: Date.now() },
+				},
+				children: [],
+			},
+		];
+		const selector = new TreeSelectorComponent(
+			tree,
+			"m1",
+			24,
+			() => {
+				throw new Error("select failed");
+			},
+			() => {},
+		);
+
+		expect(() => selector.handleInput("\r")).not.toThrow();
+		expect(consoleError).toHaveBeenCalled();
+	});
+
+	it("user message selector isolates callback exceptions", () => {
+		const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+		const selector = new UserMessageSelectorComponent(
+			[{ id: "u1", text: "hello" }],
+			() => {
+				throw new Error("select failed");
+			},
+			() => {},
+		);
+
+		expect(() => selector.getMessageList().handleInput("\r")).not.toThrow();
+		expect(consoleError).toHaveBeenCalled();
+	});
 });

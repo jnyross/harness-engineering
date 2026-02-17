@@ -128,13 +128,21 @@ export class UserMessageSelectorComponent extends Container {
 			if (this.disposed) {
 				return;
 			}
-			onSelect(entryId);
+			try {
+				onSelect(entryId);
+			} catch (error) {
+				console.error("User message selector onSelect callback failed:", error);
+			}
 		};
 		this.messageList.onCancel = () => {
 			if (this.disposed) {
 				return;
 			}
-			onCancel();
+			try {
+				onCancel();
+			} catch (error) {
+				console.error("User message selector onCancel callback failed:", error);
+			}
 		};
 
 		this.addChild(this.messageList);
@@ -149,7 +157,11 @@ export class UserMessageSelectorComponent extends Container {
 				if (this.disposed) {
 					return;
 				}
-				onCancel();
+				try {
+					onCancel();
+				} catch (error) {
+					console.error("User message selector auto-cancel callback failed:", error);
+				}
 			}, 100);
 		}
 	}
