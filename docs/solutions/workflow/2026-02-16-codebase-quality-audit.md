@@ -2895,6 +2895,28 @@ to:
 
 **Result:** Login dialog now settles cancel completion exactly once and no longer leaves stale manual-input promises unresolved when prompt handlers are replaced.
 
+---
+
+### 164) piped-stdin reading in CLI main lacked stream-error handling and deterministic listener cleanup
+
+**Finding:** CLI piped-stdin ingestion attached `data/end` listeners inline in `main.ts` without handling `error` events or centralizing listener cleanup, risking unresolved reads on stdin stream failures.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/cli/read-piped-stdin.ts` (new)
+- `packages/coding-agent/src/main.ts`
+- `packages/coding-agent/test/read-piped-stdin.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- extract piped-stdin reading into a dedicated helper,
+- add single-settlement resolve/reject behavior with explicit `error` handling,
+- ensure listeners are always removed once settled,
+- add regression tests for TTY short-circuit, trimmed pipe reads, and error-path rejection.
+
+**Result:** CLI stdin ingestion now settles deterministically across normal and error paths without dangling event listeners.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2909,6 +2931,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/login-dialog-url-open.test.ts` (includes macOS/Windows/Linux command invocation mapping)
 - coding-agent login dialog lifecycle regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/login-dialog.test.ts test/login-dialog-url-open.test.ts` (includes single-settlement cancel behavior and prompt-replacement rejection coverage)
+- coding-agent piped-stdin helper regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/read-piped-stdin.test.ts` (includes TTY short-circuit, trimmed piped content, and stdin error rejection coverage)
 - coding-agent antigravity image SSE parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/antigravity-image-gen.test.ts` (includes terminal `data:` chunk without trailing newline and text+image ordering coverage)
 - coding-agent sleep helper regression tests pass:

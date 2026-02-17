@@ -28,6 +28,7 @@
 - CLI session/config selector TUI flows now use single-settlement close/exit handling, preventing duplicate teardown races between selection/cancel/exit callbacks.
 - Interactive OAuth login dialog now launches browser URLs via argument-safe spawn invocations (instead of shell command strings), reducing command-injection risk from malformed auth URLs.
 - Interactive OAuth login dialog now settles cancellation callbacks once and rejects superseded prompt/input promises, preventing duplicate completion callbacks and dangling manual-input waits.
+- CLI piped-stdin ingestion now uses a dedicated helper with one-time listener cleanup and explicit stream-error handling, preventing unresolved stdin reads on pipe failures.
 - Linux clipboard copy fallback now attaches a `wl-copy` spawn-error handler, preventing uncaught child-process errors from bubbling during best-effort clipboard writes.
 - Windows process-tree cleanup now attaches async spawn-error handling for `taskkill`, avoiding uncaught child-process errors in best-effort kill paths.
 - Sandbox extension example now uses single-settlement `error`/`close` handling with abort-listener cleanup and signal-exit normalization, avoiding racey duplicate settles in sandboxed bash execution.
