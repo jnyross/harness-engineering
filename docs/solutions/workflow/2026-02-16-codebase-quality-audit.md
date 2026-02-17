@@ -5510,6 +5510,27 @@ to:
 
 **Result:** RPC wait helpers now avoid accidental immediate timeout failures from invalid timeout inputs while preserving max-range timeout clamping.
 
+---
+
+### 297) tui terminal drain-input timing accepted invalid/oversized timeout inputs
+
+**Finding:** `packages/tui/src/terminal.ts` used raw `drainInput(maxMs, idleMs)` values directly in timer arithmetic and sleep scheduling; invalid/non-positive/oversized values could produce immediate loop exits or rely on implicit timer clamping behavior.
+
+**Action:** Updated:
+
+- `packages/tui/src/terminal.ts`
+- `packages/tui/test/terminal-timeouts.test.ts` (new)
+- `packages/tui/CHANGELOG.md`
+
+to:
+
+- normalize `drainInput(...)` timing inputs to positive finite defaults,
+- clamp oversized values to Node timer bounds,
+- bound idle drain duration to the normalized max drain window,
+- add focused regression coverage for invalid, in-range, and oversized timing normalization.
+
+**Result:** terminal input drain timing now behaves deterministically for malformed/oversized timeout arguments without relying on runtime timer coercion/clamping.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5535,6 +5556,8 @@ to:
   - `cd packages/tui && node --test --import tsx test/tui-cell-size-response.test.ts`
 - tui stdin-buffer timeout normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/stdin-buffer.test.ts`
+- tui terminal drain-input timeout normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi-tui" test -- test/terminal-timeouts.test.ts`
 - coding-agent changelog/export-color parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/changelog-utils.test.ts test/export-html-color-parsing.test.ts`
 - coding-agent tool numeric-parameter safety regression tests pass:
