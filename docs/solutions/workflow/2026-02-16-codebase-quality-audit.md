@@ -4056,7 +4056,7 @@ to:
 - coding-agent selector auto-cancel disposal regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/selector-autocancel-dispose.test.ts test/tree-selector.test.ts` (includes tree/user-message empty-state auto-cancel suppression after dispose and callback-exception isolation)
 - coding-agent interactive container-disposal regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/interactive-mode-container-dispose.test.ts` (verifies disposable children are disposed before container clear)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/interactive-mode-container-dispose.test.ts` (verifies disposable children are disposed before container clear and during selector swaps)
 - coding-agent antigravity image SSE parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/antigravity-image-gen.test.ts` (includes terminal `data:` chunk without trailing newline and text+image ordering coverage)
 - coding-agent sleep helper regression tests pass:
