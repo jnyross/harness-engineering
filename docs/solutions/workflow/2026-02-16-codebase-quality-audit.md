@@ -2049,6 +2049,28 @@ to:
 
 **Result:** Google OAuth manual-input parsing now supports hash-fragment callback variants while preserving the original redirect-URL-only manual input contract with clearer invalid-input diagnostics.
 
+---
+
+### 120) OAuth input parsing logic drifted across provider implementations
+
+**Finding:** OAuth input parsing had diverged into multiple provider-local helpers (`anthropic`, `openai-codex`, `google-gemini-cli`, `google-antigravity`), increasing maintenance overhead and behavior-drift risk when adding new formats/fixes.
+
+**Action:** Added:
+
+- `packages/ai/src/utils/oauth/authorization-input.ts`
+- `packages/ai/test/oauth-authorization-input.test.ts`
+
+and updated provider OAuth modules to use shared parsing helpers.
+
+Shared helper behavior now covers:
+
+- redirect URL query parsing (`?code=...&state=...`),
+- redirect URL hash-fragment parsing (`#code=...&state=...`),
+- flexible fallback parsing for providers that allow non-URL manual input,
+- strict manual redirect validation helper for URL-only providers.
+
+**Result:** OAuth parsing behavior is now centralized and regression-tested at the utility level, reducing parser drift while preserving provider-specific contracts.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2071,6 +2093,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-oauth-abort.test.ts test/google-antigravity-oauth-abort.test.ts`
 - ai google oauth url-only manual-input contract regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-oauth-abort.test.ts test/google-antigravity-oauth-abort.test.ts`
+- ai shared oauth authorization-input utility regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/oauth-authorization-input.test.ts`
 - ai anthropic oauth parsing/state-validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts`
 - ai openai-codex oauth startup/manual-flow/cancellation/base64url-decoding/hash-fragment parsing regression tests pass:
