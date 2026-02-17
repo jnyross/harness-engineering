@@ -3617,6 +3617,25 @@ to:
 
 **Result:** Agent interface send flows now abort safely when superseded or detached, avoiding stale async message-send side effects.
 
+---
+
+### 203) model selector deferred keyboard scroll callbacks could run after close
+
+**Finding:** Model selector keyboard navigation scheduled `requestAnimationFrame` scroll callbacks without cancellation/coalescing, allowing stale post-close scroll work and redundant frame scheduling.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/dialogs/ModelSelector.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- coalesce pending selection-scroll frames,
+- cancel pending frame on disconnect,
+- guard callback execution with connectivity checks.
+
+**Result:** Model selector no longer runs stale deferred scroll callbacks after close/disconnect races.
+
 ## Validation Evidence
 
 - Root quality gate passes:

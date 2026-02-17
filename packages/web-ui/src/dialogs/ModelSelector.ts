@@ -31,6 +31,7 @@ export class ModelSelector extends DialogBase {
 	private searchInputRef = createRef<HTMLInputElement>();
 	private lastMousePosition = { x: 0, y: 0 };
 	private customProviderLoadSeq = 0;
+	private scrollFrameId: number | undefined;
 
 	protected override modalWidth = "min(400px, 90vw)";
 
@@ -103,6 +104,10 @@ export class ModelSelector extends DialogBase {
 	override disconnectedCallback(): void {
 		super.disconnectedCallback();
 		this.customProviderLoadSeq++;
+		if (this.scrollFrameId !== undefined) {
+			cancelAnimationFrame(this.scrollFrameId);
+			this.scrollFrameId = undefined;
+		}
 	}
 
 	private async loadCustomProviders() {
@@ -224,7 +229,14 @@ export class ModelSelector extends DialogBase {
 	}
 
 	private scrollToSelected() {
-		requestAnimationFrame(() => {
+		if (this.scrollFrameId !== undefined) {
+			cancelAnimationFrame(this.scrollFrameId);
+		}
+		this.scrollFrameId = requestAnimationFrame(() => {
+			this.scrollFrameId = undefined;
+			if (!this.isConnected) {
+				return;
+			}
 			const scrollContainer = this.scrollContainerRef.value;
 			const selectedElement = scrollContainer?.querySelectorAll("[data-model-item]")[
 				this.selectedIndex
