@@ -323,7 +323,7 @@ describe("Coding Agent Tools", () => {
 
 		it("should report signal-terminated commands as failures", async () => {
 			await expect(bashTool.execute("test-call-9b", { command: "kill -TERM $$" })).rejects.toThrow(
-				/Command exited with code 1/,
+				/Command terminated by signal SIGTERM|Command exited with code 1/,
 			);
 		});
 
@@ -336,6 +336,16 @@ describe("Coding Agent Tools", () => {
 
 			await expect(bashWithNullExit.execute("test-call-9c", { command: "echo ignored" })).rejects.toThrow(
 				/Command exited with code 1/,
+			);
+		});
+
+		it("should surface signal failure reasons from local shell closes", async () => {
+			if (process.platform === "win32") {
+				return;
+			}
+
+			await expect(bashTool.execute("test-call-signal-close", { command: "kill -TERM $$" })).rejects.toThrow(
+				/Command terminated by signal SIGTERM/,
 			);
 		});
 

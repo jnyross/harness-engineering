@@ -50,7 +50,7 @@ export interface BashOperations {
 			timeout?: number;
 			env?: NodeJS.ProcessEnv;
 		},
-	) => Promise<{ exitCode: number | null }>;
+	) => Promise<{ exitCode: number | null; failureReason?: string }>;
 }
 
 /**
@@ -92,7 +92,7 @@ const defaultBashOperations: BashOperations = {
 				}
 			};
 
-			const resolveOnce = (result: { exitCode: number | null }) => {
+			const resolveOnce = (result: { exitCode: number | null; failureReason?: string }) => {
 				if (settled) {
 					return;
 				}
@@ -159,7 +159,16 @@ const defaultBashOperations: BashOperations = {
 					return;
 				}
 
-				resolveOnce({ exitCode: normalizeProcessExitCode(code, closeSignal) });
+				const exitCode = normalizeProcessExitCode(code, closeSignal);
+				const failureReason =
+					exitCode === 0
+						? undefined
+						: closeSignal
+							? `Command terminated by signal ${closeSignal}`
+							: code === null
+								? "Command exited with unknown status"
+								: `Command exited with code ${code}`;
+				resolveOnce({ exitCode, failureReason });
 			});
 		});
 	},
@@ -273,7 +282,7 @@ export function createBashTool(cwd: string, options?: BashToolOptions): AgentToo
 					timeout,
 					env: spawnContext.env,
 				})
-					.then(({ exitCode }) => {
+					.then(({ exitCode, failureReason }) => {
 						// Close temp file stream
 						if (tempFileStream) {
 							tempFileStream.end();
@@ -314,7 +323,7 @@ export function createBashTool(cwd: string, options?: BashToolOptions): AgentToo
 						const normalizedExitCode = exitCode ?? 1;
 
 						if (normalizedExitCode !== 0) {
-							outputText += `\n\nCommand exited with code ${normalizedExitCode}`;
+							outputText += `\n\n${failureReason ?? `Command exited with code ${normalizedExitCode}`}`;
 							reject(new Error(outputText));
 						} else {
 							resolve({ content: [{ type: "text", text: outputText }], details });
