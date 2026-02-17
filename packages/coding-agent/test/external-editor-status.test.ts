@@ -28,6 +28,13 @@ describe("getExternalEditorError", () => {
 		);
 	});
 
+	it("preserves command casing in startup diagnostics", () => {
+		const result = createResult({ status: null, error: new Error("spawn ENOENT") });
+		expect(getExternalEditorError(result, { invokedCommand: "Code --wait /tmp/Editor.md" })).toBe(
+			"Failed to start external editor command 'Code --wait /tmp/Editor.md': spawn ENOENT",
+		);
+	});
+
 	it("reports signal exits", () => {
 		const result = createResult({ status: null, signal: "SIGTERM" });
 		expect(getExternalEditorError(result)).toBe("External editor terminated by signal SIGTERM");
