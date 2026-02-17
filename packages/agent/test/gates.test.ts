@@ -32,6 +32,14 @@ describe("parseCommand", () => {
 		]);
 	});
 
+	it("preserves windows-style backslashes for command binaries", () => {
+		expect(parseCommand(String.raw`C:\Tools\node.exe -e "console.log('ok')"`)).toEqual([
+			String.raw`C:\Tools\node.exe`,
+			"-e",
+			"console.log('ok')",
+		]);
+	});
+
 	it("throws on unmatched quotes", () => {
 		expect(() => parseCommand(`node -e "console.log('oops)`)).toThrow(/unmatched quote/i);
 	});

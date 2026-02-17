@@ -27,16 +27,10 @@ export function parseCommand(command: string): string[] {
 	const tokens: string[] = [];
 	let current = "";
 	let quote: "'" | '"' | null = null;
-	let escaping = false;
 	let tokenStarted = false;
 
-	for (const char of command) {
-		if (escaping) {
-			current += char;
-			escaping = false;
-			tokenStarted = true;
-			continue;
-		}
+	for (let i = 0; i < command.length; i++) {
+		const char = command[i];
 
 		if (quote === "'") {
 			if (char === "'") {
@@ -52,7 +46,13 @@ export function parseCommand(command: string): string[] {
 			if (char === '"') {
 				quote = null;
 			} else if (char === "\\") {
-				escaping = true;
+				const nextChar = command[i + 1];
+				if (nextChar === '"' || nextChar === "\\") {
+					current += nextChar;
+					i++;
+				} else {
+					current += "\\";
+				}
 			} else {
 				current += char;
 			}
@@ -67,7 +67,13 @@ export function parseCommand(command: string): string[] {
 		}
 
 		if (char === "\\") {
-			escaping = true;
+			const nextChar = command[i + 1];
+			if (nextChar === " " || nextChar === "\t" || nextChar === '"' || nextChar === "'" || nextChar === "\\") {
+				current += nextChar;
+				i++;
+			} else {
+				current += "\\";
+			}
 			tokenStarted = true;
 			continue;
 		}
@@ -85,9 +91,6 @@ export function parseCommand(command: string): string[] {
 		tokenStarted = true;
 	}
 
-	if (escaping) {
-		throw new Error("Invalid command: trailing escape character.");
-	}
 	if (quote) {
 		throw new Error("Invalid command: unmatched quote.");
 	}
