@@ -3256,6 +3256,23 @@ to:
 
 **Result:** Model selector custom-provider discovery now ignores stale async completions after teardown/reopen cycles.
 
+---
+
+### 183) ConsoleRuntimeProvider listener cleanup depended on successful runtime message delivery
+
+**Finding:** Console runtime completion cleanup removed execution listeners after awaiting runtime message delivery; delivery failures could skip cleanup and leave listeners active until next execution.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/sandbox/ConsoleRuntimeProvider.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- move runtime listener cleanup into a `finally` block in `complete()` so teardown always runs regardless of runtime message delivery outcome.
+
+**Result:** Sandbox console runtime listener teardown now remains deterministic even when completion-message delivery fails.
+
 ## Validation Evidence
 
 - Root quality gate passes:

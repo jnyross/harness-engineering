@@ -154,23 +154,26 @@ export class ConsoleRuntimeProvider implements SandboxRuntimeProvider {
 
 				const finalError = error || lastError;
 
-				// biome-ignore lint/suspicious/noExplicitAny: migration
-				if ((window as any).sendRuntimeMessage) {
-					if (finalError) {
-						// biome-ignore lint/suspicious/noExplicitAny: migration
-						await (window as any).sendRuntimeMessage({
-							type: "execution-error",
-							error: finalError,
-						});
-					} else {
-						// biome-ignore lint/suspicious/noExplicitAny: migration
-						await (window as any).sendRuntimeMessage({
-							type: "execution-complete",
-							returnValue,
-						});
+				try {
+					// biome-ignore lint/suspicious/noExplicitAny: migration
+					if ((window as any).sendRuntimeMessage) {
+						if (finalError) {
+							// biome-ignore lint/suspicious/noExplicitAny: migration
+							await (window as any).sendRuntimeMessage({
+								type: "execution-error",
+								error: finalError,
+							});
+						} else {
+							// biome-ignore lint/suspicious/noExplicitAny: migration
+							await (window as any).sendRuntimeMessage({
+								type: "execution-complete",
+								returnValue,
+							});
+						}
 					}
+				} finally {
+					cleanupRuntimeErrorListeners();
 				}
-				cleanupRuntimeErrorListeners();
 			};
 		};
 	}
