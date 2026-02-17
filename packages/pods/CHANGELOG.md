@@ -47,4 +47,5 @@
 - `pi shell` now handles SSH spawn startup failures via explicit process `error` handling, surfacing clear errors instead of unhandled child-process failures.
 - Reused validated SSH command parsing for `pi shell` and model-log streaming (`start`/`logs`) so non-SSH binaries are rejected consistently before command execution.
 - SSH execution helpers and `pi shell` now treat signal-terminated SSH child processes as non-zero exits, avoiding false success reporting on interrupted SSH sessions.
+- Shared `waitForProcessExit()` now treats signal-terminated child exits as non-zero results, avoiding false success semantics in process-monitoring flows.
 

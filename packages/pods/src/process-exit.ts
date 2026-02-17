@@ -29,7 +29,7 @@ export function waitForProcessExit(process: ChildProcess): Promise<ProcessExitRe
 		};
 
 		const onExit = (code: number | null, signal: NodeJS.Signals | null) => {
-			resolveOnce({ code: code ?? 0, signal });
+			resolveOnce({ code: code ?? (signal ? 1 : 0), signal });
 		};
 
 		process.on("error", onError);

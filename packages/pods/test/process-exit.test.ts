@@ -25,6 +25,7 @@ describe("waitForProcessExit", () => {
 		child.kill("SIGTERM");
 
 		const result = await waitForProcessExit(child);
+		assert.equal(result.code, 1);
 		assert.equal(result.signal, "SIGTERM");
 	});
 });
