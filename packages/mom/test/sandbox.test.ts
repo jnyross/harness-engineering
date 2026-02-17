@@ -1,13 +1,15 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
-import { buildDockerExecArgs, parseSandboxArg } from "../src/sandbox.js";
+import { buildDockerExecArgs, parseSandboxArg, validateSandbox } from "../src/sandbox.js";
 
 const originalExit = process.exit;
 const originalError = console.error;
+const originalPath = process.env.PATH;
 
 afterEach(() => {
 	process.exit = originalExit;
 	console.error = originalError;
+	process.env.PATH = originalPath;
 });
 
 describe("parseSandboxArg", () => {
@@ -41,5 +43,17 @@ describe("buildDockerExecArgs", () => {
 			"-c",
 			"echo 'hello'; ls /workspace",
 		]);
+	});
+});
+
+describe("validateSandbox", () => {
+	it("exits gracefully when docker binary is unavailable", async () => {
+		process.exit = ((code?: number) => {
+			throw new Error(`EXIT:${code ?? 0}`);
+		}) as typeof process.exit;
+		console.error = () => {};
+		process.env.PATH = "";
+
+		await assert.rejects(() => validateSandbox({ type: "docker", container: "mom-sandbox" }), /EXIT:1/);
 	});
 });

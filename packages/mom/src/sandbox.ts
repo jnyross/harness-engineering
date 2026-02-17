@@ -61,15 +61,39 @@ function execSimple(cmd: string, args: string[]): Promise<string> {
 		const child = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"] });
 		let stdout = "";
 		let stderr = "";
+		let settled = false;
+
+		const rejectOnce = (error: Error) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			reject(error);
+		};
+
+		const resolveOnce = (value: string) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			resolve(value);
+		};
+
 		child.stdout?.on("data", (d) => {
 			stdout += d;
 		});
 		child.stderr?.on("data", (d) => {
 			stderr += d;
 		});
+		child.on("error", (error) => {
+			rejectOnce(error instanceof Error ? error : new Error(String(error)));
+		});
 		child.on("close", (code) => {
-			if (code === 0) resolve(stdout);
-			else reject(new Error(stderr || `Exit code ${code}`));
+			if (code === 0) {
+				resolveOnce(stdout);
+				return;
+			}
+			rejectOnce(new Error(stderr || `Exit code ${code}`));
 		});
 	});
 }
@@ -123,6 +147,7 @@ function execWithSpawn(command: string, args: string[], options?: ExecOptions): 
 		let stdout = "";
 		let stderr = "";
 		let timedOut = false;
+		let settled = false;
 
 		const timeoutHandle =
 			options?.timeout && options.timeout > 0
@@ -131,6 +156,30 @@ function execWithSpawn(command: string, args: string[], options?: ExecOptions): 
 						killProcessTree(child.pid!);
 					}, options.timeout * 1000)
 				: undefined;
+
+		const rejectOnce = (error: Error) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			if (timeoutHandle) clearTimeout(timeoutHandle);
+			if (options?.signal) {
+				options.signal.removeEventListener("abort", onAbort);
+			}
+			reject(error);
+		};
+
+		const resolveOnce = (result: ExecResult) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			if (timeoutHandle) clearTimeout(timeoutHandle);
+			if (options?.signal) {
+				options.signal.removeEventListener("abort", onAbort);
+			}
+			resolve(result);
+		};
 
 		const onAbort = () => {
 			if (child.pid) killProcessTree(child.pid);
@@ -158,23 +207,22 @@ function execWithSpawn(command: string, args: string[], options?: ExecOptions): 
 			}
 		});
 
-		child.on("close", (code) => {
-			if (timeoutHandle) clearTimeout(timeoutHandle);
-			if (options?.signal) {
-				options.signal.removeEventListener("abort", onAbort);
-			}
+		child.on("error", (error) => {
+			rejectOnce(error instanceof Error ? error : new Error(String(error)));
+		});
 
+		child.on("close", (code) => {
 			if (options?.signal?.aborted) {
-				reject(new Error(`${stdout}\n${stderr}\nCommand aborted`.trim()));
+				rejectOnce(new Error(`${stdout}\n${stderr}\nCommand aborted`.trim()));
 				return;
 			}
 
 			if (timedOut) {
-				reject(new Error(`${stdout}\n${stderr}\nCommand timed out after ${options?.timeout} seconds`.trim()));
+				rejectOnce(new Error(`${stdout}\n${stderr}\nCommand timed out after ${options?.timeout} seconds`.trim()));
 				return;
 			}
 
-			resolve({ stdout, stderr, code: code ?? 0 });
+			resolveOnce({ stdout, stderr, code: code ?? 0 });
 		});
 	});
 }
