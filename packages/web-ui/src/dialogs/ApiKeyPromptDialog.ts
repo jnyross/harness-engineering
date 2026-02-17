@@ -32,7 +32,13 @@ export class ApiKeyPromptDialog extends DialogBase {
 
 		// Poll for key existence - when key is added, resolve and close
 		const checkInterval = setInterval(async () => {
+			if (!this.isConnected || this.settled) {
+				return;
+			}
 			const hasKey = !!(await getAppStorage().providerKeys.get(this.provider));
+			if (!this.isConnected || this.settled) {
+				return;
+			}
 			if (hasKey) {
 				clearInterval(checkInterval);
 				this.settle(true);
@@ -49,6 +55,7 @@ export class ApiKeyPromptDialog extends DialogBase {
 			this.unsubscribe();
 			this.unsubscribe = undefined;
 		}
+		this.settle(false);
 	}
 
 	private settle(success: boolean): void {

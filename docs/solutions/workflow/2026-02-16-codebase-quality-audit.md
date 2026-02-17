@@ -3526,6 +3526,24 @@ to:
 
 **Result:** Provider key input now avoids stale async state mutations across disconnect races and overlapping key operations.
 
+---
+
+### 198) API key prompt polling could resolve from stale in-flight callbacks after detach
+
+**Finding:** API key prompt dialog cleaned polling intervals on disconnect but still allowed already-running async poll callbacks to settle after detach, and did not explicitly settle pending prompt promises when removed externally.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/dialogs/ApiKeyPromptDialog.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- gate async polling callback completion on connection/settled state checks,
+- settle pending prompt promises with `false` during disconnect teardown.
+
+**Result:** API key prompt dialogs now avoid stale poll-driven resolution after detach and no longer leave dangling prompt promises when removed externally.
+
 ## Validation Evidence
 
 - Root quality gate passes:
