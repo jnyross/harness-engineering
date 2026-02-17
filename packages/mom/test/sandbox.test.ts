@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
-import { parseSandboxArg } from "../src/sandbox.js";
+import { buildDockerExecArgs, parseSandboxArg } from "../src/sandbox.js";
 
 const originalExit = process.exit;
 const originalError = console.error;
@@ -29,5 +29,17 @@ describe("parseSandboxArg", () => {
 		assert.throws(() => parseSandboxArg("docker:mom sandbox"), /EXIT:1/);
 		assert.throws(() => parseSandboxArg("docker:mom;sandbox"), /EXIT:1/);
 		assert.throws(() => parseSandboxArg("docker:-sandbox"), /EXIT:1/);
+	});
+});
+
+describe("buildDockerExecArgs", () => {
+	it("builds argv docker exec invocation without shell interpolation", () => {
+		assert.deepEqual(buildDockerExecArgs("mom-sandbox", "echo 'hello'; ls /workspace"), [
+			"exec",
+			"mom-sandbox",
+			"sh",
+			"-c",
+			"echo 'hello'; ls /workspace",
+		]);
 	});
 });
