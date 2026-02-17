@@ -1453,9 +1453,19 @@ export class InteractiveMode {
 				return;
 			}
 
-			const onAbort = () => {
+			let settled = false;
+			const settle = (value: string | undefined) => {
+				if (settled) {
+					return;
+				}
+				settled = true;
+				opts?.signal?.removeEventListener("abort", onAbort);
 				this.hideExtensionSelector();
-				resolve(undefined);
+				resolve(value);
+			};
+
+			const onAbort = () => {
+				settle(undefined);
 			};
 			opts?.signal?.addEventListener("abort", onAbort, { once: true });
 
@@ -1463,14 +1473,10 @@ export class InteractiveMode {
 				title,
 				options,
 				(option) => {
-					opts?.signal?.removeEventListener("abort", onAbort);
-					this.hideExtensionSelector();
-					resolve(option);
+					settle(option);
 				},
 				() => {
-					opts?.signal?.removeEventListener("abort", onAbort);
-					this.hideExtensionSelector();
-					resolve(undefined);
+					settle(undefined);
 				},
 				{ tui: this.ui, timeout: opts?.timeout },
 			);
@@ -1520,9 +1526,19 @@ export class InteractiveMode {
 				return;
 			}
 
-			const onAbort = () => {
+			let settled = false;
+			const settle = (value: string | undefined) => {
+				if (settled) {
+					return;
+				}
+				settled = true;
+				opts?.signal?.removeEventListener("abort", onAbort);
 				this.hideExtensionInput();
-				resolve(undefined);
+				resolve(value);
+			};
+
+			const onAbort = () => {
+				settle(undefined);
 			};
 			opts?.signal?.addEventListener("abort", onAbort, { once: true });
 
@@ -1530,14 +1546,10 @@ export class InteractiveMode {
 				title,
 				placeholder,
 				(value) => {
-					opts?.signal?.removeEventListener("abort", onAbort);
-					this.hideExtensionInput();
-					resolve(value);
+					settle(value);
 				},
 				() => {
-					opts?.signal?.removeEventListener("abort", onAbort);
-					this.hideExtensionInput();
-					resolve(undefined);
+					settle(undefined);
 				},
 				{ tui: this.ui, timeout: opts?.timeout },
 			);

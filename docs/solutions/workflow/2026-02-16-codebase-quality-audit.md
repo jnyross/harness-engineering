@@ -2431,6 +2431,25 @@ to:
 
 **Result:** Shared command execution now reliably terminates timeout/abort-resistant subprocesses instead of leaving lingering children.
 
+---
+
+### 139) interactive extension dialogs could double-finalize under abort/UI race conditions
+
+**Finding:** Extension selector/input dialog helpers resolved promises and performed hide/cleanup in multiple independent callbacks. Concurrent abort and UI completion paths could trigger duplicate finalization attempts.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/interactive-mode.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- add single-settlement guards for extension selector/input dialog completion,
+- centralize resolve + cleanup through shared settle closures per dialog invocation,
+- ensure abort listeners are removed exactly once on completion.
+
+**Result:** Interactive extension dialogs now finalize deterministically across abort/complete races, reducing duplicate hide/render churn and listener cleanup ambiguity.
+
 ## Validation Evidence
 
 - Root quality gate passes:
