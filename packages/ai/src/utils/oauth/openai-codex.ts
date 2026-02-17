@@ -5,9 +5,9 @@
  * It is only intended for CLI use, not browser environments.
  */
 
-// NEVER convert to top-level imports - breaks browser/Vite builds (web-ui)
-let _randomBytes: typeof import("node:crypto").randomBytes | null = null;
-let _http: typeof import("node:http") | null = null;
+// NEVER convert to top-level runtime imports - breaks browser/Vite builds (web-ui)
+let _randomBytes: typeof NodeRandomBytes | null = null;
+let _http: typeof NodeHttp | null = null;
 let _cryptoImportPromise: Promise<void> | null = null;
 let _httpImportPromise: Promise<void> | null = null;
 if (typeof process !== "undefined" && (process.versions?.node || process.versions?.bun)) {
@@ -19,6 +19,8 @@ if (typeof process !== "undefined" && (process.versions?.node || process.version
 	});
 }
 
+import type { randomBytes as NodeRandomBytes } from "node:crypto";
+import type * as NodeHttp from "node:http";
 import { parseFlexibleAuthorizationInput } from "./authorization-input.js";
 import { generatePKCE } from "./pkce.js";
 import type { OAuthCredentials, OAuthLoginCallbacks, OAuthPrompt, OAuthProviderInterface } from "./types.js";
@@ -59,7 +61,7 @@ function assertNotAborted(signal?: AbortSignal): void {
 	}
 }
 
-async function getNodeRandomBytes(): Promise<typeof import("node:crypto").randomBytes> {
+async function getNodeRandomBytes(): Promise<typeof NodeRandomBytes> {
 	if (_randomBytes) {
 		return _randomBytes;
 	}
@@ -72,7 +74,7 @@ async function getNodeRandomBytes(): Promise<typeof import("node:crypto").random
 	throw new Error("OpenAI Codex OAuth is only available in Node.js environments");
 }
 
-async function getNodeHttp(): Promise<typeof import("node:http")> {
+async function getNodeHttp(): Promise<typeof NodeHttp> {
 	if (_http) {
 		return _http;
 	}
