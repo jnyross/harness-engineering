@@ -1427,12 +1427,30 @@ to add explicit spawn `error` listeners with single-settlement guards in both sa
 
 **Result:** Sandbox command execution now handles spawn startup failures predictably and reports them through existing error handling instead of relying on uncaught process-level errors.
 
+---
+
+### 84) agent `spawnScript()` had abort/timeout settlement races
+
+**Finding:** `spawnScript()` rejected on timeout/abort but did not guard single settlement or remove abort listeners consistently, allowing abort/timeout/error/close races to compete and making pre-aborted signals start subprocesses unnecessarily.
+
+**Action:** Updated:
+
+- `packages/agent/src/sub-agent.ts`
+- `packages/agent/test/sub-agent.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to reject immediately for pre-aborted signals, enforce single-settlement cleanup across abort/timeout/error/close paths, and add regression tests for success, pre-abort, in-flight abort, and timeout behavior.
+
+**Result:** Subprocess spawning in agent helpers now has deterministic cancellation/timeout semantics with clean listener teardown and race-safe promise settlement.
+
 ## Validation Evidence
 
 - Root quality gate passes:
   - `npm run check`
 - AI package tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test`
+- agent spawnScript regression tests pass:
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes docker-missing spawn-error handling case)
 - Agent package tests pass:
