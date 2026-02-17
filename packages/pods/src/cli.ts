@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import { normalizeChildExitCode } from "./child-exit-status.js";
 import { extractPodOverride, resolveAppCommand } from "./cli-args.js";
 import { setCliCommand } from "./cli-command.js";
+import { readRequiredOptionValue } from "./cli-options.js";
 import { listModels, showKnownModels, startModel, stopAllModels, stopModel, viewLogs } from "./commands/models.js";
 import { listPods, removePodCommand, setupPod, switchActivePod } from "./commands/pods.js";
 import { promptModel } from "./commands/prompt.js";
@@ -112,14 +113,14 @@ try {
 			// Parse options
 			const options: { mount?: string; modelsPath?: string; vllm?: "release" | "nightly" | "gpt-oss" } = {};
 			for (let i = 4; i < args.length; i++) {
-				if (args[i] === "--mount" && i + 1 < args.length) {
-					options.mount = args[i + 1];
+				if (args[i] === "--mount") {
+					options.mount = readRequiredOptionValue(args, i, "--mount");
 					i++;
-				} else if (args[i] === "--models-path" && i + 1 < args.length) {
-					options.modelsPath = args[i + 1];
+				} else if (args[i] === "--models-path") {
+					options.modelsPath = readRequiredOptionValue(args, i, "--models-path");
 					i++;
-				} else if (args[i] === "--vllm" && i + 1 < args.length) {
-					const vllmType = args[i + 1];
+				} else if (args[i] === "--vllm") {
+					const vllmType = readRequiredOptionValue(args, i, "--vllm");
 					if (vllmType === "release" || vllmType === "nightly" || vllmType === "gpt-oss") {
 						options.vllm = vllmType;
 					} else {
@@ -306,28 +307,28 @@ try {
 				for (let i = 2; i < commandArgs.length; i++) {
 					if (inVllmArgs) {
 						vllmArgs.push(commandArgs[i]);
-					} else if (commandArgs[i] === "--name" && i + 1 < commandArgs.length) {
-						name = commandArgs[i + 1];
+					} else if (commandArgs[i] === "--name") {
+						name = readRequiredOptionValue(commandArgs, i, "--name");
 						i++;
-					} else if (commandArgs[i] === "--memory" && i + 1 < commandArgs.length) {
+					} else if (commandArgs[i] === "--memory") {
 						try {
-							memory = normalizeMemoryOption(commandArgs[i + 1]);
+							memory = normalizeMemoryOption(readRequiredOptionValue(commandArgs, i, "--memory"));
 						} catch (error) {
 							console.error(chalk.red(error instanceof Error ? error.message : String(error)));
 							process.exit(1);
 						}
 						i++;
-					} else if (commandArgs[i] === "--context" && i + 1 < commandArgs.length) {
+					} else if (commandArgs[i] === "--context") {
 						try {
-							context = normalizeContextOption(commandArgs[i + 1]);
+							context = normalizeContextOption(readRequiredOptionValue(commandArgs, i, "--context"));
 						} catch (error) {
 							console.error(chalk.red(error instanceof Error ? error.message : String(error)));
 							process.exit(1);
 						}
 						i++;
-					} else if (commandArgs[i] === "--gpus" && i + 1 < commandArgs.length) {
+					} else if (commandArgs[i] === "--gpus") {
 						try {
-							gpus = normalizeGpuCountOption(commandArgs[i + 1]);
+							gpus = normalizeGpuCountOption(readRequiredOptionValue(commandArgs, i, "--gpus"));
 						} catch (error) {
 							console.error(chalk.red(error instanceof Error ? error.message : String(error)));
 							process.exit(1);
