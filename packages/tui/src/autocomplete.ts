@@ -1,4 +1,4 @@
-import { spawnSync } from "child_process";
+import { type SpawnSyncReturns, spawnSync } from "child_process";
 import { readdirSync, statSync } from "fs";
 import { homedir } from "os";
 import { basename, dirname, join } from "path";
@@ -85,11 +85,21 @@ function buildCompletionValue(
 }
 
 // Use fd to walk directory tree (fast, respects .gitignore)
+type FdSpawn = (fdPath: string, args: string[]) => SpawnSyncReturns<string>;
+
+const defaultFdSpawn: FdSpawn = (fdPath, args) =>
+	spawnSync(fdPath, args, {
+		encoding: "utf-8",
+		stdio: ["pipe", "pipe", "pipe"],
+		maxBuffer: 10 * 1024 * 1024,
+	});
+
 function walkDirectoryWithFd(
 	baseDir: string,
 	fdPath: string,
 	query: string,
 	maxResults: number,
+	runFd: FdSpawn = defaultFdSpawn,
 ): Array<{ path: string; isDirectory: boolean }> {
 	const args = [
 		"--base-directory",
@@ -115,11 +125,10 @@ function walkDirectoryWithFd(
 		args.push(query);
 	}
 
-	const result = spawnSync(fdPath, args, {
-		encoding: "utf-8",
-		stdio: ["pipe", "pipe", "pipe"],
-		maxBuffer: 10 * 1024 * 1024,
-	});
+	const result = runFd(fdPath, args);
+	if (result.error || result.signal || result.status === null) {
+		return [];
+	}
 
 	if (result.status !== 0 || !result.stdout) {
 		return [];
@@ -191,15 +200,18 @@ export class CombinedAutocompleteProvider implements AutocompleteProvider {
 	private commands: (SlashCommand | AutocompleteItem)[];
 	private basePath: string;
 	private fdPath: string | null;
+	private runFd: FdSpawn;
 
 	constructor(
 		commands: (SlashCommand | AutocompleteItem)[] = [],
 		basePath: string = process.cwd(),
 		fdPath: string | null = null,
+		runFd: FdSpawn = defaultFdSpawn,
 	) {
 		this.commands = commands;
 		this.basePath = basePath;
 		this.fdPath = fdPath;
+		this.runFd = runFd;
 	}
 
 	getSuggestions(
@@ -649,7 +661,7 @@ export class CombinedAutocompleteProvider implements AutocompleteProvider {
 			const scopedQuery = this.resolveScopedFuzzyQuery(query);
 			const fdBaseDir = scopedQuery?.baseDir ?? this.basePath;
 			const fdQuery = scopedQuery?.query ?? query;
-			const entries = walkDirectoryWithFd(fdBaseDir, this.fdPath, fdQuery, 100);
+			const entries = walkDirectoryWithFd(fdBaseDir, this.fdPath, fdQuery, 100, this.runFd);
 
 			// Score entries
 			const scoredEntries = entries

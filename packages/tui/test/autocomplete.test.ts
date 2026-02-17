@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { spawnSync } from "node:child_process";
+import { type SpawnSyncReturns, spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -44,6 +44,19 @@ const requireFdPath = (): string => {
 		throw new Error("fd is not available");
 	}
 	return fdPath;
+};
+
+const createFdResult = (overrides: Partial<SpawnSyncReturns<string>>): SpawnSyncReturns<string> => {
+	const base: SpawnSyncReturns<string> = {
+		pid: 1,
+		output: [null, "", ""],
+		stdout: "",
+		stderr: "",
+		status: 0,
+		signal: null,
+		error: undefined,
+	};
+	return { ...base, ...overrides };
 };
 
 describe("CombinedAutocompleteProvider", () => {
@@ -103,6 +116,31 @@ describe("CombinedAutocompleteProvider", () => {
 			if (result) {
 				assert.strictEqual(result.prefix, "/", "Prefix should be '/'");
 			}
+		});
+	});
+
+	describe("fd execution safety", () => {
+		it("returns null suggestions when fd exits via signal", () => {
+			const provider = new CombinedAutocompleteProvider([], "/tmp", "fd", () =>
+				createFdResult({ status: null, signal: "SIGTERM" }),
+			);
+
+			const result = provider.getSuggestions(["@src"], 0, 4);
+			assert.strictEqual(result, null);
+		});
+
+		it("surfaces suggestions when injected fd runner succeeds", () => {
+			const provider = new CombinedAutocompleteProvider([], "/tmp", "fd", () =>
+				createFdResult({
+					stdout: "src/\nsrc/index.ts\n",
+				}),
+			);
+
+			const result = provider.getSuggestions(["@"], 0, 1);
+			assert.notEqual(result, null);
+			const values = result?.items.map((item) => item.value) ?? [];
+			assert.ok(values.includes("@src/"));
+			assert.ok(values.includes("@src/index.ts"));
 		});
 	});
 

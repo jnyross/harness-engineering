@@ -4059,6 +4059,26 @@ to:
 
 **Result:** mac-system-theme example poll loop now recovers from transient callback errors instead of stalling.
 
+---
+
+### 226) tui autocomplete fd subprocess handling lacked explicit signal/error-path coverage
+
+**Finding:** `walkDirectoryWithFd` relied on status checks only and did not explicitly model `spawnSync` signal/error exits, making edge-case behavior less explicit and harder to regression-test.
+
+**Action:** Updated:
+
+- `packages/tui/src/autocomplete.ts`
+- `packages/tui/test/autocomplete.test.ts`
+- `packages/tui/CHANGELOG.md`
+
+to:
+
+- introduce an injectable fd runner in `CombinedAutocompleteProvider` for deterministic subprocess-path testing,
+- explicitly treat spawn error/signal/null-status outcomes as empty result sets,
+- add regression tests for signal-exit safety and injected successful output parsing.
+
+**Result:** autocomplete fd path handling now has explicit signal/error semantics and dedicated regression coverage.
+
 ## Validation Evidence
 
 - Root quality gate passes:
