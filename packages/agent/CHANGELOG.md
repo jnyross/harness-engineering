@@ -18,6 +18,7 @@
 - `validateReview()` now reuses the shared reviewer parser to keep verdict semantics aligned between gate checks and reviewer prompt contracts.
 - Blank/whitespace `PI_TEST_COMMAND` and `PI_VALIDATE_COMMAND` values now fall back to defaults instead of producing empty-command gate failures.
 - Gate command parsing now preserves Windows-style backslashes in binary paths while keeping escaped whitespace/quote support.
+- `spawnScript()` now handles pre-aborted signals and single-settlement cleanup for abort/timeout/error paths, preventing double-settlement races during subprocess teardown.
 - `writeState()` now creates parent directories via `dirname(path)` for clearer, cross-platform-safe nested state-file writes.
 - Added local Vitest aliasing for `@mariozechner/pi-ai` so agent package tests run from source without requiring prebuilt internal package artifacts.
 - Implemented actual LLM-backed review execution in `ExecutionEngine` (instead of placeholder rejection), wiring reviewer prompt output through the shared review parser.

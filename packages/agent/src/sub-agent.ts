@@ -91,6 +91,10 @@ export function spawnScript(
 	args: string[] = [],
 	options: { cwd?: string; env?: NodeJS.ProcessEnv; signal?: AbortSignal; timeoutMs?: number } = {},
 ): Promise<{ stdout: string; stderr: string; exitCode: number | null }> {
+	if (options.signal?.aborted) {
+		return Promise.reject(new DOMException("Aborted", "AbortError"));
+	}
+
 	return new Promise((resolve, reject) => {
 		const child = nodeSpawn(command, args, {
 			cwd: options.cwd ?? process.cwd(),
@@ -99,6 +103,7 @@ export function spawnScript(
 		});
 		let stdout = "";
 		let stderr = "";
+		let settled = false;
 		child.stdout?.on("data", (chunk: Buffer) => {
 			stdout += chunk.toString();
 		});
@@ -107,23 +112,46 @@ export function spawnScript(
 		});
 		const timeoutMs = options.timeoutMs;
 		let timeoutId: ReturnType<typeof setTimeout> | undefined;
+		const onAbort = () => {
+			child.kill("SIGTERM");
+			rejectOnce(new DOMException("Aborted", "AbortError"));
+		};
+
+		const cleanup = () => {
+			if (timeoutId) clearTimeout(timeoutId);
+			options.signal?.removeEventListener("abort", onAbort);
+		};
+
+		const resolveOnce = (value: { stdout: string; stderr: string; exitCode: number | null }) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			cleanup();
+			resolve(value);
+		};
+
+		const rejectOnce = (error: unknown) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			cleanup();
+			reject(error);
+		};
+
 		if (timeoutMs) {
 			timeoutId = setTimeout(() => {
 				child.kill("SIGTERM");
-				reject(new Error(`Script timed out after ${timeoutMs}ms`));
+				rejectOnce(new Error(`Script timed out after ${timeoutMs}ms`));
 			}, timeoutMs);
 		}
-		options.signal?.addEventListener("abort", () => {
-			child.kill("SIGTERM");
-			reject(new DOMException("Aborted", "AbortError"));
-		});
+		options.signal?.addEventListener("abort", onAbort, { once: true });
 		child.on("error", (err) => {
-			if (timeoutId) clearTimeout(timeoutId);
-			reject(err);
+			rejectOnce(err);
 		});
 		child.on("close", (code, _sig) => {
-			if (timeoutId) clearTimeout(timeoutId);
-			resolve({ stdout, stderr, exitCode: code });
+			resolveOnce({ stdout, stderr, exitCode: code });
 		});
 	});
 }
