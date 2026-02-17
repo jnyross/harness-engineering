@@ -4647,6 +4647,26 @@ to:
 
 **Result:** retry-delay parsing now rejects non-decimal header formats deterministically and preserves fallback delay extraction behavior.
 
+---
+
+### 255) agent runner executed side-effectful `main()` when imported
+
+**Finding:** `packages/agent/src/runner.ts` invoked `main()` unconditionally at module load, causing side effects when imported for testing or helper reuse.
+
+**Action:** Updated:
+
+- `packages/agent/src/runner.ts`
+- `packages/agent/test/runner.test.ts` (new)
+- `packages/agent/CHANGELOG.md`
+
+to:
+
+- guard direct CLI execution behind an `import.meta.url` entrypoint check,
+- expose reusable `parseRunnerArgs(...)` helper for focused parser coverage,
+- add regression tests for argument normalization behavior.
+
+**Result:** runner utilities can now be imported safely without accidental process-side effects, while preserving direct CLI invocation behavior.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4696,6 +4716,8 @@ to:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/bash-tool.test.ts`
 - agent project-runner args regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/project-runner.test.ts`
+- agent runner args regression tests pass:
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/runner.test.ts`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
 - pods SSH/SCP parser regression tests pass:
