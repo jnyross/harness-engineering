@@ -3,6 +3,7 @@
  */
 
 import { spawn } from "node:child_process";
+import { normalizeProcessExitCode } from "./process-exit-status.js";
 
 /**
  * Options for executing shell commands.
@@ -116,7 +117,8 @@ export async function execCommand(
 		});
 
 		proc.on("close", (code, signal) => {
-			resolveOnce({ stdout, stderr, code: code ?? (killed || signal ? 1 : 0), killed });
+			const normalizedCode = killed ? 1 : normalizeProcessExitCode(code, signal);
+			resolveOnce({ stdout, stderr, code: normalizedCode, killed });
 		});
 
 		proc.on("error", (err) => {
