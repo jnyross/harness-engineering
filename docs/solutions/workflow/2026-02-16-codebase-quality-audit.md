@@ -4667,10 +4667,222 @@ to:
 
 **Result:** runner utilities can now be imported safely without accidental process-side effects, while preserving direct CLI invocation behavior.
 
+---
+
+### 256) AI CLI provider selection accepted unsafe integer inputs
+
+**Finding:** interactive provider-selection parsing validated decimal formatting/range but did not reject unsafe integers, allowing oversized values to round before range checks.
+
+**Action:** Updated:
+
+- `packages/ai/src/cli-selection.ts`
+- `packages/ai/test/cli-selection.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require safe-integer parsing for numeric provider selections,
+- reject oversized numeric selections deterministically (`undefined` fallback),
+- add regression coverage for unsafe integer selection input.
+
+**Result:** provider-selection parsing now rejects unsafe integer values instead of accepting rounded coercions.
+
+---
+
+### 257) coding-agent `COLORFGBG` theme auto-detection accepted unsafe integer background indices
+
+**Finding:** theme background-index parsing validated decimal strings but accepted oversized integers that could round before dark/light classification.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/theme/theme.ts`
+- `packages/coding-agent/test/theme-colorfgbg.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require safe integers for `COLORFGBG` background indices,
+- preserve dark fallback on malformed/unsafe index values,
+- add regression tests for both valid light detection and unsafe-index fallback behavior.
+
+**Result:** theme auto-detection now ignores unsafe background indices and falls back deterministically.
+
+---
+
+### 258) coding-agent ANSI HTML export accepted out-of-range/unsafe SGR color values
+
+**Finding:** ANSI-to-HTML SGR parsing accepted numeric color parameters without byte-range guards, allowing invalid CSS color outputs for out-of-range/unsafe values.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/export-html/ansi-to-html.ts`
+- `packages/coding-agent/test/ansi-to-html.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- parse SGR tokens with safe-integer checks,
+- validate 256-color and RGB components to byte ranges before applying styles,
+- add regression coverage for out-of-range/unsafe SGR color payloads.
+
+**Result:** ANSI export now rejects malformed/out-of-range SGR color values instead of emitting invalid CSS styles.
+
+---
+
+### 259) web-ui model-discovery metadata parsing accepted unsafe integer context/token values
+
+**Finding:** remote model metadata integer parsing validated decimal formats but allowed unsafe integer values, enabling rounded context/token coercions.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/utils/model-discovery.ts`
+- `packages/web-ui/test/model-discovery.test.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- require safe integers for discovered numeric metadata fields,
+- fall back to defaults when unsafe values are encountered,
+- add regression tests for valid parsing and unsafe fallback behavior.
+
+**Result:** model discovery now rejects unsafe integer metadata deterministically.
+
+---
+
+### 260) changelog version parsing accepted unsafe integer version segments
+
+**Finding:** changelog parsing and last-version filtering converted version segments directly with `parseInt`, allowing unsafe version coercion.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/utils/changelog.ts`
+- `packages/coding-agent/test/changelog-utils.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- centralize safe semantic-version parsing helpers,
+- ignore changelog headers with unsafe version segments,
+- fall back to `0.0.0` when stored last-version input is malformed/unsafe.
+
+**Result:** changelog filtering now rejects unsafe version numerics and preserves deterministic update-entry selection.
+
+---
+
+### 261) MOM Slack timestamp conversion accepted unsafe millisecond outputs
+
+**Finding:** decimal/integer Slack timestamp conversion paths could produce millisecond values beyond safe-integer precision.
+
+**Action:** Updated:
+
+- `packages/mom/src/slack-timestamp.ts`
+- `packages/mom/test/slack-timestamp.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- enforce safe-integer checks on computed millisecond outputs for decimal and integer-second conversion paths,
+- return `undefined` for oversized timestamp values,
+- add regression tests for oversized decimal/integer timestamp rejection.
+
+**Result:** Slack timestamp normalization now rejects unsafe millisecond values instead of returning rounded coercions.
+
+---
+
+### 262) web-ui PPTX slide/notes ordering accepted unsafe archive index numbers
+
+**Finding:** PPTX slide and notes sorting extracted numeric indices directly with `parseInt`, allowing unsafe archive indices to round.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/utils/archive-index.ts` (new)
+- `packages/web-ui/src/utils/attachment-utils.ts`
+- `packages/web-ui/test/archive-index.test.ts` (new)
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- centralize safe archive-index parsing with strict decimal + safe-integer validation,
+- use guarded index parsing for slide/notes ordering,
+- add regression tests for valid, malformed, and unsafe archive index values.
+
+**Result:** PPTX ordering now ignores unsafe indices and avoids rounded sort-order coercions.
+
+---
+
+### 263) coding-agent HTML export color parsing accepted malformed/unsafe `rgb(...)` components
+
+**Finding:** export color parsing accepted raw numeric RGB components without range-safe guards, allowing malformed values to propagate into derived export colors.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/export-html/index.ts`
+- `packages/coding-agent/test/export-html-color-parsing.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- validate decimal RGB components as safe integers within `[0,255]`,
+- reuse guarded parsing in brightness/derived-export color calculations,
+- add regression tests for out-of-range and unsafe RGB component rejection.
+
+**Result:** HTML export color derivation now rejects malformed/unsafe RGB components deterministically.
+
+---
+
+### 264) TUI editor Kitty CSI-u parsing accepted unsafe integer modifier payloads
+
+**Finding:** Kitty CSI-u printable-key decoding parsed modifier/codepoint fields without safe-integer guards, allowing oversized modifier payloads to be misinterpreted as valid key events.
+
+**Action:** Updated:
+
+- `packages/tui/src/components/editor.ts`
+- `packages/tui/test/editor-kitty-csiu.test.ts`
+- `packages/tui/CHANGELOG.md`
+
+to:
+
+- add safe-integer parsing for Kitty codepoint/modifier fields,
+- reject malformed/unsafe modifier tokens explicitly,
+- add regression tests for valid printable CSI-u behavior and unsafe-modifier rejection.
+
+**Result:** editor CSI-u decoding now ignores malformed oversized numeric payloads instead of inserting unintended characters.
+
+---
+
+### 265) TUI overlay percentage parsing accepted overflow/out-of-range percentage values
+
+**Finding:** overlay width/row/col/maxHeight percentage parsing relied on raw `parseFloat` and accepted overflow/out-of-range percentages, coercing invalid values into clamped edge placement/sizing.
+
+**Action:** Updated:
+
+- `packages/tui/src/tui.ts`
+- `packages/tui/test/overlay-options.test.ts`
+- `packages/tui/CHANGELOG.md`
+
+to:
+
+- centralize percentage parsing with finite range validation (`0-100`),
+- reject malformed/overflow/out-of-range percentages and fall back to default/anchor layout behavior,
+- add regression tests for overflow width fallback and overflow row-percent center fallback behavior.
+
+**Result:** overlay layout now treats overflow/out-of-range percentages as invalid and avoids coercive edge clamping from malformed numeric inputs.
+
 ## Validation Evidence
 
 - Root quality gate passes:
   - `npm run check`
+- ai CLI selection parser regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/cli-selection.test.ts`
+- mom slack timestamp normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts`
+- web-ui model discovery + archive-index numeric parsing regression tests pass:
+  - `cd packages/web-ui && npx tsx --test test/model-discovery.test.ts test/archive-index.test.ts`
+- tui kitty CSI-u + overlay percentage parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi-tui" test -- test/editor-kitty-csiu.test.ts`
+  - `cd packages/tui && node --test --import tsx test/overlay-options.test.ts`
+- coding-agent changelog/export-color parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/changelog-utils.test.ts test/export-html-color-parsing.test.ts`
 - ai usage metadata regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts`
 - ai Gemini retry-delay regression tests pass:
