@@ -19,6 +19,7 @@
 - RPC client startup now handles spawn/startup failures deterministically (missing runtime, immediate process exit) and cleans up partial startup state before surfacing actionable errors.
 - Shared `execCommand()` now short-circuits pre-aborted signals, preserves non-zero exit status for canceled subprocesses, and reports spawn errors in stderr for clearer extension runtime diagnostics.
 - Shared `execCommand()` now also treats signal-terminated subprocess exits as non-zero failures when not caller-cancelled, avoiding false success on externally terminated commands.
+- Shared `execCommand()` now escalates timeout/abort termination to forced `SIGKILL` after a grace period when child processes ignore `SIGTERM`, preventing lingering subprocesses.
 - Interactive `/share` gist creation now uses shared `execCommand()` cancellation/error handling, preventing stuck loaders when `gh gist create` fails to spawn and preserving clean abort semantics.
 - Bash executor helpers (`executeBash`, `executeBashWithOperations`) now short-circuit pre-aborted signals, avoiding unnecessary subprocess/remote execution when cancellation is already requested.
 - Bash executor helpers now preserve non-zero semantics for signal/null exits when execution was not canceled by caller signals, avoiding false cancelled/success outcomes.

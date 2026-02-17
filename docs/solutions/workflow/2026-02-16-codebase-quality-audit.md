@@ -2411,6 +2411,26 @@ to:
 
 **Result:** `spawnScript()` now avoids lingering abort-resistant child processes, improving cancellation hygiene and preventing orphaned subprocesses.
 
+---
+
+### 138) `execCommand()` force-kill fallback checked `proc.killed` instead of live process state
+
+**Finding:** `execCommand()` used a `proc.killed` check before sending fallback `SIGKILL`. Because `proc.killed` flips to `true` as soon as `kill()` is invoked (not when the process actually exits), timeout/abort-resistant children could survive after ignored `SIGTERM`.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/exec.ts`
+- `packages/coding-agent/test/exec.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- use live process-exit state (`exitCode`/`signalCode`) before escalating to `SIGKILL`,
+- add optional `forceKillDelayMs` for deterministic testability while preserving default runtime behavior,
+- add regression coverage with a SIGTERM-resistant process verifying forced termination.
+
+**Result:** Shared command execution now reliably terminates timeout/abort-resistant subprocesses instead of leaving lingering children.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2458,7 +2478,7 @@ to:
 - ai Codex/Gemini SSE regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-stream.test.ts test/google-gemini-cli-empty-stream.test.ts`
 - coding-agent exec regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts` (includes signal-terminated subprocess failure semantics)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts` (includes signal-terminated subprocess failure semantics and forced-kill fallback for SIGTERM-resistant processes)
 - coding-agent execCommand regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - web-ui package checks pass:

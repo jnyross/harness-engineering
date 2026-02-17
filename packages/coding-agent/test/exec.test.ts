@@ -1,8 +1,30 @@
-import { existsSync, rmSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { execCommand } from "../src/core/exec.js";
+
+const signalAwareIt = process.platform === "win32" ? it.skip : it;
+
+function isProcessAlive(pid: number): boolean {
+	try {
+		process.kill(pid, 0);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+async function waitForCondition(condition: () => boolean, timeoutMs: number): Promise<boolean> {
+	const start = Date.now();
+	while (Date.now() - start < timeoutMs) {
+		if (condition()) {
+			return true;
+		}
+		await new Promise((resolve) => setTimeout(resolve, 25));
+	}
+	return condition();
+}
 
 describe("execCommand", () => {
 	it("captures stdout/stderr and success exit code", async () => {
@@ -73,5 +95,50 @@ describe("execCommand", () => {
 
 		expect(result.killed).toBe(false);
 		expect(result.code).toBe(1);
+	});
+
+	signalAwareIt("force kills timeout-resistant processes that ignore SIGTERM", async () => {
+		const pidFile = join(tmpdir(), `pi-exec-timeout-pid-${Date.now()}-${Math.random().toString(16).slice(2)}.txt`);
+		let childPid: number | undefined;
+
+		try {
+			const resultPromise = execCommand(
+				process.execPath,
+				[
+					"-e",
+					`const fs = require('node:fs'); fs.writeFileSync(${JSON.stringify(pidFile)}, String(process.pid)); process.on('SIGTERM', () => {}); setInterval(() => {}, 1000);`,
+				],
+				process.cwd(),
+				{
+					timeout: 25,
+					forceKillDelayMs: 50,
+				},
+			);
+
+			const pidReady = await waitForCondition(() => existsSync(pidFile), 1000);
+			expect(pidReady).toBe(true);
+
+			childPid = Number.parseInt(readFileSync(pidFile, "utf-8"), 10);
+			expect(Number.isFinite(childPid)).toBe(true);
+
+			const result = await resultPromise;
+			expect(result.killed).toBe(true);
+			expect(result.code).toBe(1);
+
+			const exited = await waitForCondition(() => !isProcessAlive(childPid!), 1000);
+			expect(exited).toBe(true);
+		} finally {
+			if (childPid && isProcessAlive(childPid)) {
+				try {
+					process.kill(childPid, "SIGKILL");
+				} catch {
+					// best-effort cleanup for test process
+				}
+			}
+			if (existsSync(pidFile)) {
+				writeFileSync(pidFile, "");
+				rmSync(pidFile, { force: true });
+			}
+		}
 	});
 });

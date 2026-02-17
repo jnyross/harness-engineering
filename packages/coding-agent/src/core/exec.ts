@@ -12,6 +12,8 @@ export interface ExecOptions {
 	signal?: AbortSignal;
 	/** Timeout in milliseconds */
 	timeout?: number;
+	/** Grace period before escalating SIGTERM to SIGKILL (milliseconds). */
+	forceKillDelayMs?: number;
 	/** Working directory */
 	cwd?: string;
 }
@@ -53,6 +55,7 @@ export async function execCommand(
 		let settled = false;
 		let timeoutId: NodeJS.Timeout | undefined;
 		let forceKillId: NodeJS.Timeout | undefined;
+		const forceKillDelayMs = options?.forceKillDelayMs ?? 5000;
 
 		const cleanup = () => {
 			if (timeoutId) {
@@ -79,12 +82,12 @@ export async function execCommand(
 			if (!killed) {
 				killed = true;
 				proc.kill("SIGTERM");
-				// Force kill after 5 seconds if SIGTERM doesn't work
+				// Force kill after grace period if SIGTERM doesn't work
 				forceKillId = setTimeout(() => {
-					if (!proc.killed) {
+					if (proc.exitCode === null && proc.signalCode === null) {
 						proc.kill("SIGKILL");
 					}
-				}, 5000);
+				}, forceKillDelayMs);
 			}
 		};
 
