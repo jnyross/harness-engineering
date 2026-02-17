@@ -3824,6 +3824,24 @@ to:
 
 **Result:** Provider refresh actions no longer apply stale async updates/alerts after component lifecycle races.
 
+---
+
+### 214) custom provider save flow could surface stale detached alerts and let callback exceptions disrupt close semantics
+
+**Finding:** Custom provider save path guarded stale success completions but still showed catch-path alerts after detach and allowed `onSave` callback exceptions to disrupt deterministic post-save close behavior.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/dialogs/CustomProviderDialog.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- suppress stale detached save-failure alerts with operation-sequence/connectivity checks,
+- isolate `onSave` callback exceptions so successful saves still close the dialog.
+
+**Result:** Custom provider save flow now preserves deterministic close semantics and avoids stale detached alerts in asynchronous save races.
+
 ## Validation Evidence
 
 - Root quality gate passes:

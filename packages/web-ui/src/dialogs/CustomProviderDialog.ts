@@ -150,10 +150,17 @@ export class CustomProviderDialog extends DialogBase {
 			}
 
 			if (this.onSaveCallback) {
-				this.onSaveCallback();
+				try {
+					this.onSaveCallback();
+				} catch (error) {
+					console.error("Custom provider onSave callback failed:", error);
+				}
 			}
 			this.close();
 		} catch (error) {
+			if (!this.isConnected || operationId !== this.operationSeq) {
+				return;
+			}
 			console.error("Failed to save provider:", error);
 			alert(i18n("Failed to save provider"));
 		}

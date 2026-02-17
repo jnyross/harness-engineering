@@ -41,6 +41,7 @@
 - `ProvidersModelsTab` now sequence-guards custom-provider/status async loads across disconnects, preventing stale provider/status state writes after settings tab unmount/remount races.
 - `ProvidersModelsTab.refreshProvider()` now also suppresses stale async refresh completions after disconnect/remount races, preventing detached status updates and stale error alerts.
 - `CustomProviderDialog` now invalidates stale async test/save completions across disconnects, preventing detached dialog state updates and stale callback/close paths after unmount races.
+- `CustomProviderDialog.save()` now suppresses stale detached error alerts and isolates `onSave` callback failures so successful saves still close deterministically.
 - `SessionListDialog` now invalidates stale async session-list loads across disconnects, preventing detached dialog state updates from in-flight storage reads.
 - `SessionListDialog.close()` now guards one-time delete-callback notification and clears callback state after close, preventing duplicate delete notifications on repeated close paths.
 - `SessionListDialog` now isolates selection/delete callback failures from close teardown, ensuring dialogs still close and callback fan-out continues when a consumer callback throws.
