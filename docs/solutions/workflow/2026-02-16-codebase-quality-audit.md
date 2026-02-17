@@ -5882,6 +5882,27 @@ to:
 
 **Result:** malformed string/list settings-file entries now sanitize to safe runtime values instead of forwarding incompatible types into coding-agent startup/runtime selection paths.
 
+---
+
+### 315) coding-agent keybindings config loading accepted malformed JSON/value shapes
+
+**Finding:** `packages/coding-agent/src/core/keybindings.ts` loaded keybindings JSON without structural/value normalization; malformed root/value types (non-object roots, non-string key entries, unknown actions) could be forwarded into runtime keybinding maps and editor keybinding initialization.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/keybindings.ts`
+- `packages/coding-agent/test/keybindings.test.ts` (new)
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize keybindings config root shape before use,
+- normalize keybinding values to trimmed `KeyId` lists while preserving explicit empty arrays for intentional unbinds,
+- ignore malformed entries and unknown actions while keeping valid overrides,
+- add regression coverage for malformed root/value handling and valid override preservation.
+
+**Result:** malformed keybindings JSON now fails safely (with defaults/valid subset preserved) instead of propagating incompatible runtime keybinding values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6032,6 +6053,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/countdown-timer.test.ts` (includes normal expiry, manual dispose stop, onTick-throw safety coverage, and timeout normalization coverage including positive-infinite clamping)
 - coding-agent settings manager normalization regression tests pass (numeric + boolean + enum + string/list settings):
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/settings-manager.test.ts`
+- coding-agent keybindings config normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/keybindings.test.ts test/settings-manager.test.ts`
 - coding-agent extension dialog callback regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extension-dialog-callbacks.test.ts` (includes throwing selector/input/editor callback safety and post-dispose callback suppression across selector/input/editor dialogs)
 - coding-agent session selector disposal regression tests pass:
