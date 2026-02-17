@@ -2656,6 +2656,26 @@ to:
 
 **Result:** Interactive-shell extension now reports clear, actionable failure diagnostics instead of ambiguous null-exit messaging.
 
+---
+
+### 151) pods `pi shell` child-process `error`/`exit` callbacks could race duplicate exit paths
+
+**Finding:** `pi shell` handled SSH child-process `error` and `exit` independently with direct `process.exit` calls, allowing duplicate shutdown-path races in edge startup/termination timing.
+
+**Action:** Updated:
+
+- `packages/pods/src/cli.ts`
+- `packages/pods/test/cli-shell.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- guard shell-child shutdown with single-settlement `exitOnce` handling,
+- preserve existing startup-failure diagnostics and non-zero signal semantics,
+- add regression coverage that validates non-zero SSH child exit codes are propagated verbatim.
+
+**Result:** Pods shell command now exits deterministically once across child-process event races while preserving accurate SSH exit-code propagation.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2715,7 +2735,7 @@ to:
 - pods process-exit helper regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/process-exit.test.ts`
 - pods interactive shell spawn-error regression tests pass:
-  - `npm --workspace "@mariozechner/pi" test -- test/process-exit.test.ts test/cli-shell.test.ts`
+  - `npm --workspace "@mariozechner/pi" test -- test/process-exit.test.ts test/cli-shell.test.ts` (includes SSH spawn failure, signal-exit non-zero semantics, and propagated non-zero SSH exit-code coverage)
 - coding-agent bash executor pre-abort regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/bash-executor.test.ts`
 - mom sandbox pre-abort executor regression tests pass:

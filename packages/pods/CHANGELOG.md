@@ -45,6 +45,7 @@
 - Extracted prompt argument helpers (`findReservedFlag`, dynamic provider-name generation) into a reusable module with dedicated tests.
 - Added shared process-exit helper handling both `exit` and spawn `error` events for model log streaming flows, avoiding hangs when SSH command spawning fails.
 - `pi shell` now handles SSH spawn startup failures via explicit process `error` handling, surfacing clear errors instead of unhandled child-process failures.
+- `pi shell` now uses single-settlement handling across SSH child `error`/`exit` events, preventing duplicate exit paths while preserving propagated non-zero SSH exit codes.
 - Reused validated SSH command parsing for `pi shell` and model-log streaming (`start`/`logs`) so non-SSH binaries are rejected consistently before command execution.
 - SSH execution helpers and `pi shell` now treat signal-terminated SSH child processes as non-zero exits, avoiding false success reporting on interrupted SSH sessions.
 - Shared `waitForProcessExit()` now treats signal-terminated child exits as non-zero results, avoiding false success semantics in process-monitoring flows.

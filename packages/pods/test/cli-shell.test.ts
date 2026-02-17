@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const CLI_PATH = join(__dirname, "..", "src", "cli.ts");
+const nonWindowsIt = process.platform === "win32" ? it.skip : it;
 
 describe("pi shell", () => {
 	it("reports SSH spawn startup failures cleanly", () => {
@@ -45,7 +46,7 @@ describe("pi shell", () => {
 		}
 	});
 
-	it("exits non-zero when SSH process terminates by signal", () => {
+	nonWindowsIt("exits non-zero when SSH process terminates by signal", () => {
 		const configDir = mkdtempSync(join(tmpdir(), "pi-pods-shell-signal-"));
 		const scriptDir = mkdtempSync(join(tmpdir(), "pi-pods-shell-script-"));
 		const sshPath = join(scriptDir, "ssh");
@@ -77,6 +78,44 @@ describe("pi shell", () => {
 			});
 
 			assert.equal(result.status, 1);
+		} finally {
+			rmSync(configDir, { recursive: true, force: true });
+			rmSync(scriptDir, { recursive: true, force: true });
+		}
+	});
+
+	nonWindowsIt("propagates non-zero SSH exit codes", () => {
+		const configDir = mkdtempSync(join(tmpdir(), "pi-pods-shell-exitcode-"));
+		const scriptDir = mkdtempSync(join(tmpdir(), "pi-pods-shell-exitcode-script-"));
+		const sshPath = join(scriptDir, "ssh");
+		try {
+			writeFileSync(sshPath, "#!/bin/sh\nexit 7\n", { mode: 0o755 });
+			chmodSync(sshPath, 0o755);
+
+			writeFileSync(
+				join(configDir, "pods.json"),
+				JSON.stringify(
+					{
+						active: "demo",
+						pods: {
+							demo: {
+								ssh: `${sshPath} user@host`,
+								gpus: [],
+								models: {},
+							},
+						},
+					},
+					null,
+					2,
+				),
+			);
+
+			const result = spawnSync("npx", ["tsx", CLI_PATH, "shell"], {
+				env: { ...process.env, PI_CONFIG_DIR: configDir },
+				encoding: "utf-8",
+			});
+
+			assert.equal(result.status, 7);
 		} finally {
 			rmSync(configDir, { recursive: true, force: true });
 			rmSync(scriptDir, { recursive: true, force: true });

@@ -205,14 +205,24 @@ try {
 						stdio: "inherit",
 						env: process.env,
 					});
+					let settled = false;
+					const exitOnce = (exitCode: number, message?: string) => {
+						if (settled) {
+							return;
+						}
+						settled = true;
+						if (message) {
+							console.error(chalk.red(message));
+						}
+						process.exit(exitCode);
+					};
 
 					sshProcess.on("error", (error) => {
-						console.error(chalk.red(`Failed to start SSH process: ${error.message}`));
-						process.exit(1);
+						exitOnce(1, `Failed to start SSH process: ${error.message}`);
 					});
 
 					sshProcess.on("exit", (code, signal) => {
-						process.exit(code ?? (signal ? 1 : 0));
+						exitOnce(code ?? (signal ? 1 : 0));
 					});
 				} catch (error) {
 					const message = error instanceof Error ? error.message : String(error);
