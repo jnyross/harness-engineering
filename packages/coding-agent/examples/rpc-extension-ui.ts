@@ -609,11 +609,20 @@ async function main() {
 
 	// -- Agent exit --
 
-	agent.on("exit", (code) => {
+	agent.on("error", (error) => {
 		tui.stop();
 		if (stderr) console.error(stderr);
-		console.log(`Agent exited with code ${code}`);
-		process.exit(code ?? 0);
+		console.error(`Failed to start agent process: ${error.message}`);
+		process.exit(1);
+	});
+
+	agent.on("exit", (code, signal) => {
+		tui.stop();
+		if (stderr) console.error(stderr);
+		const exitCode = code ?? (signal ? 1 : 0);
+		const reason = signal ? `signal ${signal}` : `code ${code}`;
+		console.log(`Agent exited with ${reason}`);
+		process.exit(exitCode);
 	});
 
 	// -- Start --

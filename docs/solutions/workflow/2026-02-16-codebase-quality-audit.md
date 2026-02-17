@@ -2293,6 +2293,25 @@ to:
 
 **Result:** RPC exit-listener lifecycle is now deterministic across failed-start and unexpected-exit paths, reducing stale listener state risk between client restarts.
 
+---
+
+### 132) RPC extension TUI example did not handle spawn failures or signal-exit semantics
+
+**Finding:** The RPC extension UI example did not register a child-process `error` handler and treated `code === null` exits as success (`0`), which can hide startup failures and signal-terminated exits during example usage.
+
+**Action:** Updated:
+
+- `packages/coding-agent/examples/rpc-extension-ui.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- handle agent spawn `error` events with explicit startup diagnostics and non-zero exit,
+- map signal-terminated agent exits to non-zero process exit status,
+- include explicit exit reason logging (`code` vs `signal`) for clearer troubleshooting in the example flow.
+
+**Result:** The RPC extension example now reports startup/termination failures with accurate process semantics, aligning demo behavior with hardened runtime conventions used in production paths.
+
 ## Validation Evidence
 
 - Root quality gate passes:
