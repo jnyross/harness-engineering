@@ -48,6 +48,9 @@ function escapeScriptContent(code: string): string {
 @customElement("sandbox-iframe")
 export class SandboxIframe extends LitElement {
 	private iframe?: HTMLIFrameElement;
+	private externalUrlHandler?: (e: MessageEvent) => void;
+	private sandboxReadyHandler?: (e: MessageEvent) => void;
+	private sandboxErrorHandler?: (e: MessageEvent) => void;
 
 	/**
 	 * Optional: Provide a function that returns the sandbox HTML URL.
@@ -69,7 +72,23 @@ export class SandboxIframe extends LitElement {
 		// Note: We don't unregister the sandbox here for loadContent() mode
 		// because the caller (HtmlArtifact) owns the sandbox lifecycle.
 		// For execute() mode, the sandbox is unregistered in the cleanup function.
+		this.clearSandboxWindowHandlers();
 		this.iframe?.remove();
+	}
+
+	private clearSandboxWindowHandlers(): void {
+		if (this.externalUrlHandler) {
+			window.removeEventListener("message", this.externalUrlHandler);
+			this.externalUrlHandler = undefined;
+		}
+		if (this.sandboxReadyHandler) {
+			window.removeEventListener("message", this.sandboxReadyHandler);
+			this.sandboxReadyHandler = undefined;
+		}
+		if (this.sandboxErrorHandler) {
+			window.removeEventListener("message", this.sandboxErrorHandler);
+			this.sandboxErrorHandler = undefined;
+		}
 	}
 
 	/**
@@ -124,6 +143,7 @@ export class SandboxIframe extends LitElement {
 		}
 
 		// Remove previous iframe if exists
+		this.clearSandboxWindowHandlers();
 		this.iframe?.remove();
 
 		if (this.sandboxUrlProvider) {
@@ -149,7 +169,7 @@ export class SandboxIframe extends LitElement {
 		RUNTIME_MESSAGE_ROUTER.setSandboxIframe(sandboxId, this.iframe);
 
 		// Listen for open-external-url messages from iframe
-		const externalUrlHandler = (e: MessageEvent) => {
+		this.externalUrlHandler = (e: MessageEvent) => {
 			if (e.data.type === "open-external-url" && e.source === this.iframe?.contentWindow) {
 				// Use chrome.tabs API to open in new tab
 				// biome-ignore lint/suspicious/noExplicitAny: migration
@@ -162,13 +182,19 @@ export class SandboxIframe extends LitElement {
 				}
 			}
 		};
-		window.addEventListener("message", externalUrlHandler);
+		window.addEventListener("message", this.externalUrlHandler);
 
 		// Listen for sandbox-ready and sandbox-error messages directly
-		const readyHandler = (e: MessageEvent) => {
+		this.sandboxReadyHandler = (e: MessageEvent) => {
 			if (e.data.type === "sandbox-ready" && e.source === this.iframe?.contentWindow) {
-				window.removeEventListener("message", readyHandler);
-				window.removeEventListener("message", errorHandler);
+				if (this.sandboxReadyHandler) {
+					window.removeEventListener("message", this.sandboxReadyHandler);
+					this.sandboxReadyHandler = undefined;
+				}
+				if (this.sandboxErrorHandler) {
+					window.removeEventListener("message", this.sandboxErrorHandler);
+					this.sandboxErrorHandler = undefined;
+				}
 
 				// Send content to sandbox
 				this.iframe?.contentWindow?.postMessage(
@@ -182,10 +208,16 @@ export class SandboxIframe extends LitElement {
 			}
 		};
 
-		const errorHandler = (e: MessageEvent) => {
+		this.sandboxErrorHandler = (e: MessageEvent) => {
 			if (e.data.type === "sandbox-error" && e.source === this.iframe?.contentWindow) {
-				window.removeEventListener("message", readyHandler);
-				window.removeEventListener("message", errorHandler);
+				if (this.sandboxReadyHandler) {
+					window.removeEventListener("message", this.sandboxReadyHandler);
+					this.sandboxReadyHandler = undefined;
+				}
+				if (this.sandboxErrorHandler) {
+					window.removeEventListener("message", this.sandboxErrorHandler);
+					this.sandboxErrorHandler = undefined;
+				}
 
 				// The sandbox.js already sent us the error via postMessage.
 				// We need to convert it to an execution-error message that the execute() consumer will handle.
@@ -201,8 +233,8 @@ export class SandboxIframe extends LitElement {
 			}
 		};
 
-		window.addEventListener("message", readyHandler);
-		window.addEventListener("message", errorHandler);
+		window.addEventListener("message", this.sandboxReadyHandler);
+		window.addEventListener("message", this.sandboxErrorHandler);
 
 		this.appendChild(this.iframe);
 	}
@@ -221,13 +253,13 @@ export class SandboxIframe extends LitElement {
 		RUNTIME_MESSAGE_ROUTER.setSandboxIframe(sandboxId, this.iframe);
 
 		// Listen for open-external-url messages from iframe
-		const externalUrlHandler = (e: MessageEvent) => {
+		this.externalUrlHandler = (e: MessageEvent) => {
 			if (e.data.type === "open-external-url" && e.source === this.iframe?.contentWindow) {
 				// Fallback for non-extension context
 				window.open(e.data.url, "_blank");
 			}
 		};
-		window.addEventListener("message", externalUrlHandler);
+		window.addEventListener("message", this.externalUrlHandler);
 
 		this.appendChild(this.iframe);
 	}
