@@ -64,4 +64,5 @@
 - Non-streaming SSH execution now adds fallback stderr diagnostics for startup failures, signal exits, and stderr-less non-zero exits, so callers no longer receive empty error output on remote command failures.
 - SCP startup failures now include full invoked-command context in diagnostics (e.g., quoted args + destination), improving troubleshooting when `scp` cannot be launched.
 - Interactive `pi shell` now surfaces explicit SSH failure reasons (signal/non-zero/unknown) and startup command context instead of exiting silently with only a status code.
+- `pi agent` delegated close-status failures now include the full invoked command in signal/unknown/non-zero diagnostics, improving troubleshooting for remote delegated CLI exits after successful spawn.
 

@@ -194,7 +194,11 @@ Current working directory: ${process.cwd()}`;
 				rejectOnce(new Error(`Failed to start agent command '${invokedCommand}': ${error.message}`)),
 			);
 			child.on("close", (code, signal) => {
-				const exitError = getPromptAgentExitError(code, signal);
+				const exitError = getPromptAgentExitError({
+					code,
+					signal,
+					invokedCommand,
+				});
 				if (!exitError) {
 					resolveOnce();
 					return;
@@ -217,15 +221,19 @@ Current working directory: ${process.cwd()}`;
 	}
 }
 
-export function getPromptAgentExitError(code: number | null, signal: NodeJS.Signals | null): string | undefined {
-	if (signal) {
-		return `Agent process exited due to signal ${signal}`;
+export function getPromptAgentExitError(options: {
+	code: number | null;
+	signal: NodeJS.Signals | null;
+	invokedCommand: string;
+}): string | undefined {
+	if (options.signal) {
+		return `Agent command '${options.invokedCommand}' exited due to signal ${options.signal}`;
 	}
-	if (code === null) {
-		return "Agent process exited with unknown status";
+	if (options.code === null) {
+		return `Agent command '${options.invokedCommand}' exited with unknown status`;
 	}
-	if (code !== 0) {
-		return `Agent process exited with code ${code}`;
+	if (options.code !== 0) {
+		return `Agent command '${options.invokedCommand}' exited with code ${options.code}`;
 	}
 	return undefined;
 }
