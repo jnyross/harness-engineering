@@ -78,9 +78,11 @@ window.onCompleted = (callback) => {
 		return `
 window.__completionCallbacks = [];
 window.sendRuntimeMessage = async (message) => {
+    const messageId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
     return await chrome.runtime.sendMessage({
         ...message,
-        sandboxId: ${JSON.stringify(sandboxId)}
+        sandboxId: ${JSON.stringify(sandboxId)},
+        messageId
     });
 };
 window.onCompleted = (callback) => {

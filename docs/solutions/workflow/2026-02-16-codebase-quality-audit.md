@@ -3308,6 +3308,25 @@ to:
 
 **Result:** Runtime bridge request lifecycles now settle deterministically even when provider handlers do not explicitly respond.
 
+---
+
+### 186) user-script runtime bridge requests lacked message IDs and required explicit provider responses
+
+**Finding:** User-script bridge calls did not include request IDs, making response correlation brittle and relying on provider-specific response behavior for `chrome.runtime.sendMessage` completion.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/sandbox/RuntimeMessageBridge.ts`
+- `packages/web-ui/src/components/sandbox/RuntimeMessageRouter.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- include generated `messageId` values for user-script runtime requests,
+- enforce one-time default response settlement in user-script routing even when providers omit explicit replies.
+
+**Result:** User-script runtime messaging now has explicit request correlation and deterministic `sendMessage` completion semantics.
+
 ## Validation Evidence
 
 - Root quality gate passes:
