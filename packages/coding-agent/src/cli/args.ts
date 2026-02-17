@@ -69,6 +69,13 @@ function readFlagValue(
 	return value;
 }
 
+function parseCommaSeparatedValues(value: string): string[] {
+	return value
+		.split(",")
+		.map((entry) => entry.trim())
+		.filter((entry) => entry.length > 0);
+}
+
 export function parseArgs(args: string[], extensionFlags?: Map<string, { type: "boolean" | "string" }>): Args {
 	const result: Args = {
 		messages: [],
@@ -142,7 +149,12 @@ export function parseArgs(args: string[], extensionFlags?: Map<string, { type: "
 		} else if (arg === "--models") {
 			const modelPatterns = readFlagValue(args, i, "--models");
 			if (modelPatterns !== undefined) {
-				result.models = modelPatterns.split(",").map((s) => s.trim());
+				const parsedPatterns = parseCommaSeparatedValues(modelPatterns);
+				if (parsedPatterns.length > 0) {
+					result.models = parsedPatterns;
+				} else {
+					console.error(chalk.yellow("Warning: --models requires at least one non-empty pattern"));
+				}
 				i++;
 			}
 		} else if (arg === "--no-tools") {
@@ -153,7 +165,7 @@ export function parseArgs(args: string[], extensionFlags?: Map<string, { type: "
 				continue;
 			}
 			i++;
-			const toolNames = toolsArg.split(",").map((s) => s.trim());
+			const toolNames = parseCommaSeparatedValues(toolsArg);
 			const validTools: ToolName[] = [];
 			for (const name of toolNames) {
 				if (name in allTools) {

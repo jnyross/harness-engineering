@@ -124,6 +124,11 @@ describe("parseArgs", () => {
 			const result = parseArgs(["--models", "gpt-4o,claude-sonnet,gemini-pro"]);
 			expect(result.models).toEqual(["gpt-4o", "claude-sonnet", "gemini-pro"]);
 		});
+
+		test("ignores empty entries in --models comma-separated list", () => {
+			const result = parseArgs(["--models", "gpt-4o, ,claude-sonnet,,"]);
+			expect(result.models).toEqual(["gpt-4o", "claude-sonnet"]);
+		});
 	});
 
 	describe("--no-session flag", () => {
@@ -238,6 +243,11 @@ describe("parseArgs", () => {
 			expect(result.noTools).toBe(true);
 			expect(result.tools).toEqual(["read", "bash"]);
 		});
+
+		test("ignores empty entries in --tools comma-separated list", () => {
+			const result = parseArgs(["--tools", "read,, ,bash,"]);
+			expect(result.tools).toEqual(["read", "bash"]);
+		});
 	});
 
 	describe("messages and file args", () => {
@@ -337,6 +347,19 @@ describe("parseArgs", () => {
 			const result = parseArgs(["--system-prompt", "--print"]);
 			expect(result.systemPrompt).toBe("--print");
 			expect(result.print).toBeUndefined();
+		});
+
+		test("warns when --models value contains only empty entries", () => {
+			const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+			try {
+				const result = parseArgs(["--models", ",,"]);
+				expect(result.models).toBeUndefined();
+				expect(errorSpy).toHaveBeenCalledWith(
+					expect.stringContaining("Warning: --models requires at least one non-empty pattern"),
+				);
+			} finally {
+				errorSpy.mockRestore();
+			}
 		});
 	});
 });
