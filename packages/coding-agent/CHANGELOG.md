@@ -25,6 +25,7 @@
 - Interactive `/share` gist creation now uses shared `execCommand()` cancellation/error handling, preventing stuck loaders when `gh gist create` fails to spawn and preserving clean abort semantics.
 - Extension selector/input dialogs in interactive mode now use single-settlement completion guards, preventing duplicate hide/resolve races when abort signals and UI completion fire concurrently.
 - Interactive external-editor launch now reports startup/signal/non-zero exit failures explicitly (while preserving current editor content) instead of silently no-oping.
+- CLI session/config selector TUI flows now use single-settlement close/exit handling, preventing duplicate teardown races between selection/cancel/exit callbacks.
 - Linux clipboard copy fallback now attaches a `wl-copy` spawn-error handler, preventing uncaught child-process errors from bubbling during best-effort clipboard writes.
 - Windows process-tree cleanup now attaches async spawn-error handling for `taskkill`, avoiding uncaught child-process errors in best-effort kill paths.
 - Sandbox extension example now uses single-settlement `error`/`close` handling with abort-listener cleanup and signal-exit normalization, avoiding racey duplicate settles in sandboxed bash execution.

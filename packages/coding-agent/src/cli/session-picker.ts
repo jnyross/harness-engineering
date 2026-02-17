@@ -18,27 +18,30 @@ export async function selectSession(
 		const ui = new TUI(new ProcessTerminal());
 		const keybindings = KeybindingsManager.create();
 		let resolved = false;
+		const settle = (value: string | null, shouldExit: boolean = false) => {
+			if (resolved) {
+				return;
+			}
+			resolved = true;
+			ui.stop();
+			if (shouldExit) {
+				process.exit(0);
+				return;
+			}
+			resolve(value);
+		};
 
 		const selector = new SessionSelectorComponent(
 			currentSessionsLoader,
 			allSessionsLoader,
 			(path: string) => {
-				if (!resolved) {
-					resolved = true;
-					ui.stop();
-					resolve(path);
-				}
+				settle(path);
 			},
 			() => {
-				if (!resolved) {
-					resolved = true;
-					ui.stop();
-					resolve(null);
-				}
+				settle(null);
 			},
 			() => {
-				ui.stop();
-				process.exit(0);
+				settle(null, true);
 			},
 			() => ui.requestRender(),
 			{ showRenameHint: false, keybindings },

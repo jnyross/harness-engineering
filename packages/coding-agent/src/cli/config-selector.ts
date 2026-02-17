@@ -23,6 +23,19 @@ export async function selectConfig(options: ConfigSelectorOptions): Promise<void
 	return new Promise((resolve) => {
 		const ui = new TUI(new ProcessTerminal());
 		let resolved = false;
+		const settle = (shouldExit: boolean = false) => {
+			if (resolved) {
+				return;
+			}
+			resolved = true;
+			ui.stop();
+			stopThemeWatcher();
+			if (shouldExit) {
+				process.exit(0);
+				return;
+			}
+			resolve();
+		};
 
 		const selector = new ConfigSelectorComponent(
 			options.resolvedPaths,
@@ -30,17 +43,10 @@ export async function selectConfig(options: ConfigSelectorOptions): Promise<void
 			options.cwd,
 			options.agentDir,
 			() => {
-				if (!resolved) {
-					resolved = true;
-					ui.stop();
-					stopThemeWatcher();
-					resolve();
-				}
+				settle();
 			},
 			() => {
-				ui.stop();
-				stopThemeWatcher();
-				process.exit(0);
+				settle(true);
 			},
 			() => ui.requestRender(),
 		);

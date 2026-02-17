@@ -2801,6 +2801,25 @@ to:
 
 **Result:** Interactive external-editor workflow now provides clear failure diagnostics without losing current editor state.
 
+---
+
+### 159) CLI session/config selector callbacks could race duplicate teardown paths
+
+**Finding:** Session/config selector TUI entrypoints had separate select/cancel/exit callbacks performing independent stop/resolve/exit logic without shared settlement guards, allowing duplicate teardown attempts in callback race scenarios.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/cli/session-picker.ts`
+- `packages/coding-agent/src/cli/config-selector.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- route all close/exit paths through single-settlement helpers,
+- centralize one-time TUI/theme teardown and optional process exit behavior.
+
+**Result:** CLI selector flows now perform deterministic one-time teardown across callback races, reducing duplicate UI shutdown/resolve/exit paths.
+
 ## Validation Evidence
 
 - Root quality gate passes:
