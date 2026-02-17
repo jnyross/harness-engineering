@@ -30,6 +30,7 @@
 - RPC client request sending now uses single-settlement handling for timeout/write-error paths, cleaning pending request state deterministically on startup/write failures.
 - RPC client request sending now also guards non-writable stdin and write-callback errors, preventing pending-request leaks when the RPC process pipe closes mid-session.
 - RPC client shutdown now uses single-settlement stop handling with timeout/listener cleanup, avoiding duplicate settle races between process exit and forced kill paths.
+- RPC client now rejects pending requests immediately when the RPC process exits unexpectedly, avoiding 30s request timeouts after child-process crashes.
 - `sleep(ms, signal)` now cleans up abort listeners on resolve/reject and avoids double-settlement paths during abort timing races.
 - Write tool now uses single-settlement abort cleanup during async filesystem operations, preventing duplicate settle races and ensuring consistent cancellation behavior.
 - Read tool now uses single-settlement abort cleanup during async filesystem operations, ensuring deterministic cancellation/error settlement behavior.

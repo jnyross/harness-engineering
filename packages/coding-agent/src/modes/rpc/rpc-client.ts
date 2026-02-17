@@ -54,6 +54,7 @@ export type RpcEventListener = (event: AgentEvent) => void;
 export class RpcClient {
 	private process: ChildProcess | null = null;
 	private rl: readline.Interface | null = null;
+	private processExitListener: ((code: number | null, signal: NodeJS.Signals | null) => void) | null = null;
 	private eventListeners: RpcEventListener[] = [];
 	private pendingRequests: Map<string, { resolve: (response: RpcResponse) => void; reject: (error: Error) => void }> =
 		new Map();
@@ -103,6 +104,7 @@ export class RpcClient {
 		this.rl.on("line", (line) => {
 			this.handleLine(line);
 		});
+		this.attachProcessExitListener(this.process);
 
 		try {
 			await new Promise<void>((resolve, reject) => {
@@ -169,6 +171,9 @@ export class RpcClient {
 				}, startupDelayMs);
 			});
 		} catch (error) {
+			if (this.process) {
+				this.detachProcessExitListener(this.process);
+			}
 			this.rl?.close();
 			this.process = null;
 			this.rl = null;
@@ -183,6 +188,7 @@ export class RpcClient {
 		if (!this.process) return;
 
 		const runningProcess = this.process;
+		this.detachProcessExitListener(runningProcess);
 		this.rl?.close();
 		runningProcess.kill("SIGTERM");
 
@@ -218,10 +224,7 @@ export class RpcClient {
 
 		this.process = null;
 		this.rl = null;
-		for (const { reject } of this.pendingRequests.values()) {
-			reject(new Error("RPC client stopped before response was received"));
-		}
-		this.pendingRequests.clear();
+		this.rejectPendingRequests(new Error("RPC client stopped before response was received"));
 	}
 
 	/**
@@ -529,6 +532,36 @@ export class RpcClient {
 	// =========================================================================
 	// Internal
 	// =========================================================================
+
+	private attachProcessExitListener(process: ChildProcess): void {
+		this.processExitListener = (code, signal) => {
+			const exitReason = signal ? `signal ${signal}` : `code ${code ?? "unknown"}`;
+			this.rejectPendingRequests(
+				new Error(`RPC client process exited before response was received (${exitReason})`),
+			);
+			this.rl?.close();
+			this.rl = null;
+			if (this.process === process) {
+				this.process = null;
+			}
+		};
+		process.on("exit", this.processExitListener);
+	}
+
+	private detachProcessExitListener(process: ChildProcess): void {
+		if (!this.processExitListener) {
+			return;
+		}
+		process.removeListener("exit", this.processExitListener);
+		this.processExitListener = null;
+	}
+
+	private rejectPendingRequests(error: Error): void {
+		for (const { reject } of this.pendingRequests.values()) {
+			reject(error);
+		}
+		this.pendingRequests.clear();
+	}
 
 	private handleLine(line: string): void {
 		try {

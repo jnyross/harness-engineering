@@ -50,6 +50,36 @@ describe("RpcClient.start", () => {
 		expect((client as any).pendingRequests.size).toBe(0);
 	});
 
+	it("rejects pending requests when process exits unexpectedly", () => {
+		const client = new RpcClient();
+
+		let rejectionError: Error | undefined;
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).pendingRequests.set("req_1", {
+			resolve: () => {},
+			reject: (error: Error) => {
+				rejectionError = error;
+			},
+		});
+
+		const fakeProcess = new EventEmitter() as EventEmitter & {
+			removeListener: (event: string, listener: (...args: unknown[]) => void) => EventEmitter;
+		};
+
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).process = fakeProcess;
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).attachProcessExitListener(fakeProcess);
+
+		fakeProcess.emit("exit", 9, null);
+
+		expect(rejectionError?.message).toContain("process exited before response was received");
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		expect((client as any).pendingRequests.size).toBe(0);
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		expect((client as any).process).toBeNull();
+	});
+
 	it("cleans up pending request when stdin write throws", async () => {
 		const client = new RpcClient();
 
