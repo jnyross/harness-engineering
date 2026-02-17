@@ -5,21 +5,32 @@ import type { Context } from "../src/types.js";
 const mockState = vi.hoisted(() => ({
 	constructorOpts: undefined as Record<string, unknown> | undefined,
 	streamParams: undefined as Record<string, unknown> | undefined,
+	useStringUsage: false,
 }));
 
 vi.mock("@anthropic-ai/sdk", () => {
 	const fakeStream = {
 		async *[Symbol.asyncIterator]() {
+			const toUsageValue = (value: number): number | string => (mockState.useStringUsage ? String(value) : value);
 			yield {
 				type: "message_start",
 				message: {
-					usage: { input_tokens: 10, output_tokens: 0 },
+					usage: {
+						input_tokens: toUsageValue(10),
+						output_tokens: toUsageValue(0),
+						cache_creation_input_tokens: toUsageValue(1),
+						cache_read_input_tokens: toUsageValue(2),
+					},
 				},
 			};
 			yield {
 				type: "message_delta",
 				delta: { stop_reason: "end_turn" },
-				usage: { output_tokens: 5 },
+				usage: {
+					output_tokens: toUsageValue(5),
+					cache_creation_input_tokens: toUsageValue(1),
+					cache_read_input_tokens: toUsageValue(2),
+				},
 			};
 		},
 		finalMessage: async () => ({
@@ -49,6 +60,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 	};
 
 	it("uses Bearer auth, Copilot headers, and valid Anthropic Messages payload", async () => {
+		mockState.useStringUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		expect(model.api).toBe("anthropic-messages");
 
@@ -87,6 +99,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 	});
 
 	it("includes interleaved-thinking beta when reasoning is enabled", async () => {
+		mockState.useStringUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const s = streamAnthropic(model, context, {
@@ -99,5 +112,18 @@ describe("Copilot Claude via Anthropic Messages", () => {
 
 		const headers = mockState.constructorOpts!.defaultHeaders as Record<string, string>;
 		expect(headers["anthropic-beta"]).toContain("interleaved-thinking-2025-05-14");
+	});
+
+	it("normalizes numeric-string usage counters from Anthropic stream events", async () => {
+		mockState.useStringUsage = true;
+		const model = getModel("github-copilot", "claude-sonnet-4");
+		const { streamAnthropic } = await import("../src/providers/anthropic.js");
+		const result = await streamAnthropic(model, context, { apiKey: "tid_copilot_session_test_token" }).result();
+
+		expect(result.usage.input).toBe(10);
+		expect(result.usage.output).toBe(5);
+		expect(result.usage.cacheRead).toBe(2);
+		expect(result.usage.cacheWrite).toBe(1);
+		expect(result.usage.totalTokens).toBe(18);
 	});
 });

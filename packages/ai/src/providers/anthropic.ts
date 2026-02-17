@@ -46,6 +46,19 @@ function resolveCacheRetention(cacheRetention?: CacheRetention): CacheRetention 
 	return "short";
 }
 
+function parseUsageNumber(value: unknown): number {
+	if (typeof value === "number" && Number.isFinite(value)) {
+		return value;
+	}
+	if (typeof value === "string" && value.trim().length > 0) {
+		const parsed = Number(value);
+		if (Number.isFinite(parsed)) {
+			return parsed;
+		}
+	}
+	return 0;
+}
+
 function getCacheControl(
 	baseUrl: string,
 	cacheRetention?: CacheRetention,
@@ -247,10 +260,10 @@ export const streamAnthropic: StreamFunction<"anthropic-messages", AnthropicOpti
 				if (event.type === "message_start") {
 					// Capture initial token usage from message_start event
 					// This ensures we have input token counts even if the stream is aborted early
-					output.usage.input = event.message.usage.input_tokens || 0;
-					output.usage.output = event.message.usage.output_tokens || 0;
-					output.usage.cacheRead = event.message.usage.cache_read_input_tokens || 0;
-					output.usage.cacheWrite = event.message.usage.cache_creation_input_tokens || 0;
+					output.usage.input = parseUsageNumber(event.message.usage.input_tokens);
+					output.usage.output = parseUsageNumber(event.message.usage.output_tokens);
+					output.usage.cacheRead = parseUsageNumber(event.message.usage.cache_read_input_tokens);
+					output.usage.cacheWrite = parseUsageNumber(event.message.usage.cache_creation_input_tokens);
 					// Anthropic doesn't provide total_tokens, compute from components
 					output.usage.totalTokens =
 						output.usage.input + output.usage.output + output.usage.cacheRead + output.usage.cacheWrite;
@@ -373,16 +386,16 @@ export const streamAnthropic: StreamFunction<"anthropic-messages", AnthropicOpti
 					// Only update usage fields if present (not null).
 					// Preserves input_tokens from message_start when proxies omit it in message_delta.
 					if (event.usage.input_tokens != null) {
-						output.usage.input = event.usage.input_tokens;
+						output.usage.input = parseUsageNumber(event.usage.input_tokens);
 					}
 					if (event.usage.output_tokens != null) {
-						output.usage.output = event.usage.output_tokens;
+						output.usage.output = parseUsageNumber(event.usage.output_tokens);
 					}
 					if (event.usage.cache_read_input_tokens != null) {
-						output.usage.cacheRead = event.usage.cache_read_input_tokens;
+						output.usage.cacheRead = parseUsageNumber(event.usage.cache_read_input_tokens);
 					}
 					if (event.usage.cache_creation_input_tokens != null) {
-						output.usage.cacheWrite = event.usage.cache_creation_input_tokens;
+						output.usage.cacheWrite = parseUsageNumber(event.usage.cache_creation_input_tokens);
 					}
 					// Anthropic doesn't provide total_tokens, compute from components
 					output.usage.totalTokens =
