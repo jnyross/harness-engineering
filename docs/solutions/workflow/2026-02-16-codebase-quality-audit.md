@@ -3126,6 +3126,27 @@ to:
 
 **Result:** Console copy-feedback state transitions are now timer-safe across repeated interactions and component teardown.
 
+---
+
+### 176) OAuth callback waiters for Gemini/Antigravity/Codex used polling loops instead of event-driven settlement
+
+**Finding:** OAuth local callback server waiters in multiple providers polled shared state with short sleep loops, which added avoidable timer churn and delayed cancellation/close responsiveness.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/google-gemini-cli.ts`
+- `packages/ai/src/utils/oauth/google-antigravity.ts`
+- `packages/ai/src/utils/oauth/openai-codex.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- replace polling-based callback waits with event-driven pending-promise settlement,
+- settle waits immediately on callback receipt, cancellation, and server close,
+- preserve Codex callback wait timeout behavior while removing sleep-loop polling.
+
+**Result:** OAuth callback waiting now reacts immediately to completion/cancel/close events with lower timer overhead and deterministic settlement.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -3158,6 +3179,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/abortable-sleep.test.ts test/github-copilot-anthropic.test.ts`
 - ai oauth cancellation regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts test/openai-codex-oauth-abort.test.ts test/google-antigravity-oauth-abort.test.ts test/google-gemini-cli-oauth-abort.test.ts`
+- ai oauth callback waiter regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-oauth-abort.test.ts test/google-gemini-cli-oauth-abort.test.ts test/google-antigravity-oauth-abort.test.ts`
 - ai google oauth hash-fragment parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-oauth-abort.test.ts test/google-antigravity-oauth-abort.test.ts`
 - ai google oauth url-only manual-input contract regression tests pass:

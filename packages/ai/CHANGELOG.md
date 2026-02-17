@@ -21,6 +21,7 @@
 - OpenAI Codex SSE parsing now flushes terminal buffered event chunks when streams end without trailing `\n\n` separators.
 - Shared `EventStream.result()` now rejects when streams end without a completion event/result, preventing silent hangs from incomplete stream lifecycles.
 - AI CLI readline prompts now resolve with safe fallbacks when the interface closes before input, preventing hangs during interrupted interactive provider selection/login flows.
+- Gemini CLI, Antigravity, and OpenAI Codex OAuth callback waiters now use event-driven settlement (instead of polling loops), improving cancellation/close responsiveness and reducing timer churn during local callback waits.
 
 ## [0.52.12] - 2026-02-13
 

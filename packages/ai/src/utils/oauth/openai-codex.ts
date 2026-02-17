@@ -233,6 +233,23 @@ async function startLocalOAuthServer(state: string): Promise<OAuthServerInfo> {
 	const http = await getNodeHttp();
 	let lastCode: string | null = null;
 	let cancelled = false;
+	let waitForCodeResolve: ((value: { code: string } | null) => void) | undefined;
+	let waitForCodePromise: Promise<{ code: string } | null> | undefined;
+	let waitForCodeTimeout: ReturnType<typeof setTimeout> | undefined;
+
+	const settleWait = (value: { code: string } | null) => {
+		if (waitForCodeTimeout) {
+			clearTimeout(waitForCodeTimeout);
+			waitForCodeTimeout = undefined;
+		}
+		if (!waitForCodeResolve) {
+			return;
+		}
+		const resolvePending = waitForCodeResolve;
+		waitForCodeResolve = undefined;
+		waitForCodePromise = undefined;
+		resolvePending(value);
+	};
 	const server = http.createServer((req, res) => {
 		try {
 			const url = new URL(req.url || "", "http://localhost");
@@ -256,6 +273,7 @@ async function startLocalOAuthServer(state: string): Promise<OAuthServerInfo> {
 			res.setHeader("Content-Type", "text/html; charset=utf-8");
 			res.end(SUCCESS_HTML);
 			lastCode = code;
+			settleWait({ code });
 		} catch {
 			res.statusCode = 500;
 			res.end("Internal error");
@@ -269,15 +287,24 @@ async function startLocalOAuthServer(state: string): Promise<OAuthServerInfo> {
 					close: () => server.close(),
 					cancelWait: () => {
 						cancelled = true;
+						settleWait(null);
 					},
 					waitForCode: async () => {
-						const sleep = () => new Promise((r) => setTimeout(r, 100));
-						for (let i = 0; i < 600; i += 1) {
-							if (lastCode) return { code: lastCode };
-							if (cancelled) return null;
-							await sleep();
+						if (lastCode) {
+							return { code: lastCode };
 						}
-						return null;
+						if (cancelled) {
+							return null;
+						}
+						if (!waitForCodePromise) {
+							waitForCodePromise = new Promise((resolveWait) => {
+								waitForCodeResolve = resolveWait;
+							});
+							waitForCodeTimeout = setTimeout(() => {
+								settleWait(null);
+							}, 60000);
+						}
+						return waitForCodePromise;
 					},
 				});
 			})
@@ -299,6 +326,11 @@ async function startLocalOAuthServer(state: string): Promise<OAuthServerInfo> {
 					waitForCode: async () => null,
 				});
 			});
+
+		server.on("close", () => {
+			cancelled = true;
+			settleWait(lastCode ? { code: lastCode } : null);
+		});
 	});
 }
 

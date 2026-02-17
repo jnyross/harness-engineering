@@ -63,6 +63,18 @@ async function startCallbackServer(): Promise<CallbackServerInfo> {
 	return new Promise((resolve, reject) => {
 		let result: { code: string; state: string } | null = null;
 		let cancelled = false;
+		let waitForCodeResolve: ((value: { code: string; state: string } | null) => void) | undefined;
+		let waitForCodePromise: Promise<{ code: string; state: string } | null> | undefined;
+
+		const settleWait = (value: { code: string; state: string } | null) => {
+			if (!waitForCodeResolve) {
+				return;
+			}
+			const resolvePending = waitForCodeResolve;
+			waitForCodeResolve = undefined;
+			waitForCodePromise = undefined;
+			resolvePending(value);
+		};
 
 		const server = createServer((req, res) => {
 			const url = new URL(req.url || "", `http://localhost:8085`);
@@ -86,6 +98,7 @@ async function startCallbackServer(): Promise<CallbackServerInfo> {
 						`<html><body><h1>Authentication Successful</h1><p>You can close this window and return to the terminal.</p></body></html>`,
 					);
 					result = { code, state };
+					settleWait(result);
 				} else {
 					res.writeHead(400, { "Content-Type": "text/html" });
 					res.end(
@@ -101,19 +114,28 @@ async function startCallbackServer(): Promise<CallbackServerInfo> {
 		server.on("error", (err) => {
 			reject(err);
 		});
+		server.on("close", () => {
+			cancelled = true;
+			settleWait(result);
+		});
 
 		server.listen(8085, "127.0.0.1", () => {
 			resolve({
 				server,
 				cancelWait: () => {
 					cancelled = true;
+					settleWait(result);
 				},
 				waitForCode: async () => {
-					const sleep = () => new Promise((r) => setTimeout(r, 100));
-					while (!result && !cancelled) {
-						await sleep();
+					if (result || cancelled) {
+						return result;
 					}
-					return result;
+					if (!waitForCodePromise) {
+						waitForCodePromise = new Promise((resolveWait) => {
+							waitForCodeResolve = resolveWait;
+						});
+					}
+					return waitForCodePromise;
 				},
 			});
 		});
