@@ -138,11 +138,13 @@ export class RuntimeMessageRouter {
 				if (!context) {
 					return;
 				}
+				const sourceWindow = e.source && "postMessage" in e.source ? (e.source as WindowProxy) : null;
 
 				// Create respond() function for bidirectional communication
 				// biome-ignore lint/suspicious/noExplicitAny: migration
 				const respond = (response: any) => {
-					context.iframe?.contentWindow?.postMessage(
+					const targetWindow = context.iframe?.contentWindow ?? sourceWindow;
+					targetWindow?.postMessage(
 						{
 							type: "runtime-response",
 							messageId,

@@ -3072,6 +3072,23 @@ to:
 
 **Result:** Runtime message routing is now resilient to malformed payloads and individual handler failures, preserving global router stability.
 
+---
+
+### 173) runtime message router could miss early responses when iframe reference was not yet attached
+
+**Finding:** Router response delivery relied on `context.iframe?.contentWindow`; during early iframe lifecycle races, missing iframe references could drop runtime responses and force sandbox-side timeout failures.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/sandbox/RuntimeMessageRouter.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- fall back to the incoming `MessageEvent.source` window when sandbox iframe references are not yet available.
+
+**Result:** Runtime request/response flows now remain responsive during early iframe attachment races instead of timing out unnecessarily.
+
 ## Validation Evidence
 
 - Root quality gate passes:

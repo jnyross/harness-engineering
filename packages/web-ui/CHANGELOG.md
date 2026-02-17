@@ -14,6 +14,7 @@
 - Sandboxed runtime bridge request/response promises now clear timeout handlers on early completion and guard single settlement, preventing 30s timeout timer buildup during rapid runtime messaging.
 - Sandboxed runtime bridge message handlers now ignore non-object postMessage payloads, preventing runtime handler crashes from unrelated window messages.
 - Runtime message router now ignores non-object sandbox payloads and isolates provider/consumer handler exceptions so one faulty handler cannot crash global message routing.
+- Runtime message router now falls back to the incoming message source window when sandbox iframe references are not yet attached, avoiding unnecessary request/response timeouts during early iframe lifecycle races.
 
 ## [0.52.12] - 2026-02-13
 
