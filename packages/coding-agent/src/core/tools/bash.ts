@@ -60,6 +60,11 @@ const defaultBashOperations: BashOperations = {
 		return new Promise((resolve, reject) => {
 			const { shell, args } = getShellConfig();
 
+			if (signal?.aborted) {
+				reject(new Error("aborted"));
+				return;
+			}
+
 			if (!existsSync(cwd)) {
 				reject(new Error(`Working directory does not exist: ${cwd}\nCannot execute bash commands.`));
 				return;

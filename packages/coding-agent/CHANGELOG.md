@@ -20,6 +20,7 @@
 - Shared `execCommand()` now short-circuits pre-aborted signals, preserves non-zero exit status for canceled subprocesses, and reports spawn errors in stderr for clearer extension runtime diagnostics.
 - Interactive `/share` gist creation now uses shared `execCommand()` cancellation/error handling, preventing stuck loaders when `gh gist create` fails to spawn and preserving clean abort semantics.
 - Bash executor helpers (`executeBash`, `executeBashWithOperations`) now short-circuit pre-aborted signals, avoiding unnecessary subprocess/remote execution when cancellation is already requested.
+- Built-in bash tool now short-circuits pre-aborted signals before shell spawn, preventing canceled calls from starting subprocesses.
 
 ## [0.52.12] - 2026-02-13
 

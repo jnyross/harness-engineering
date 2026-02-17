@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -281,6 +281,23 @@ describe("Coding Agent Tools", () => {
 			await expect(bashTool.execute("test-call-10", { command: "sleep 5", timeout: 1 })).rejects.toThrow(
 				/timed out/i,
 			);
+		});
+
+		it("should short-circuit pre-aborted signals", async () => {
+			const markerFile = join(testDir, `bash-preabort-${Date.now()}.txt`);
+			const controller = new AbortController();
+			controller.abort();
+
+			await expect(
+				bashTool.execute(
+					"test-call-pre-abort",
+					{
+						command: `${process.execPath} -e "require('fs').writeFileSync(${JSON.stringify(markerFile)}, 'created')"`,
+					},
+					controller.signal,
+				),
+			).rejects.toThrow(/aborted/i);
+			expect(existsSync(markerFile)).toBe(false);
 		});
 
 		it("should throw error when cwd does not exist", async () => {
