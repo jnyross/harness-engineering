@@ -1802,6 +1802,22 @@ to map signal-terminated exits to non-zero codes and added regression assertion 
 
 **Result:** Shared process-exit helper now reports signal-terminated subprocesses as failures instead of false success.
 
+---
+
+### 107) coding-agent bash executor marked signal exits as cancellations
+
+**Finding:** `executeBash()` treated `close` events with `code === null` as cancelled regardless of caller abort state, and `executeBashWithOperations()` surfaced null exits as undefined/success-like results when not aborted.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/bash-executor.ts`
+- `packages/coding-agent/test/bash-executor.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to base cancellation on caller abort signal state, map signal/null exits to non-zero failure semantics when not cancelled, and add regression coverage for local signal termination plus null exit codes from delegated operations.
+
+**Result:** Bash executor now preserves failure semantics for signal/null exits while keeping true caller-driven cancellation behavior.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1828,6 +1844,8 @@ to map signal-terminated exits to non-zero codes and added regression assertion 
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes signal-terminated bash command coverage)
 - pods process-exit regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/process-exit.test.ts` (includes signal-exit non-zero assertion)
+- coding-agent bash executor regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/bash-executor.test.ts` (includes signal/null exit non-zero semantics)
 - coding-agent execCommand regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - coding-agent interactive status tests pass after share flow command-exec refactor:
