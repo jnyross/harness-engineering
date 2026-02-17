@@ -22,6 +22,23 @@ export interface SpawnParallelAgentsOptions {
 	concurrency?: number;
 }
 
+export function getSpawnScriptCloseError(options: {
+	invokedCommand: string;
+	code: number | null;
+	signal: NodeJS.Signals | null;
+}): string | undefined {
+	if (options.code === 0 && !options.signal) {
+		return undefined;
+	}
+	if (options.signal) {
+		return `Script '${options.invokedCommand}' terminated by signal ${options.signal}`;
+	}
+	if (options.code === null) {
+		return `Script '${options.invokedCommand}' exited with unknown status`;
+	}
+	return `Script '${options.invokedCommand}' exited with code ${options.code}`;
+}
+
 /**
  * Build a user message from a string prompt (text content).
  */
@@ -178,7 +195,19 @@ export function spawnScript(
 		});
 		child.on("close", (code, closeSignal) => {
 			clearForceKill();
-			resolveOnce({ stdout, stderr, exitCode: normalizeChildExitCode(code, closeSignal) });
+			const exitCode = normalizeChildExitCode(code, closeSignal);
+			const closeError =
+				exitCode === 0
+					? undefined
+					: getSpawnScriptCloseError({
+							invokedCommand,
+							code,
+							signal: closeSignal,
+						});
+			if (closeError && !stderr.trim()) {
+				stderr = closeError;
+			}
+			resolveOnce({ stdout, stderr, exitCode });
 		});
 	});
 }

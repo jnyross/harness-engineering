@@ -2,7 +2,7 @@ import { existsSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { spawnScript } from "../src/sub-agent.js";
+import { getSpawnScriptCloseError, spawnScript } from "../src/sub-agent.js";
 
 const signalAwareIt = process.platform === "win32" ? it.skip : it;
 
@@ -108,6 +108,12 @@ describe("spawnScript", () => {
 		);
 	});
 
+	it("adds fallback stderr diagnostics for non-zero exits without stderr output", async () => {
+		const result = await spawnScript(process.execPath, ["-e", "process.exit(17);"]);
+		expect(result.exitCode).toBe(17);
+		expect(result.stderr).toContain(`Script '${process.execPath} -e process.exit(17);' exited with code 17`);
+	});
+
 	signalAwareIt("returns non-zero exit code when child exits by signal", async () => {
 		const result = await spawnScript(process.execPath, [
 			"-e",
@@ -115,5 +121,18 @@ describe("spawnScript", () => {
 		]);
 
 		expect(result.exitCode).toBe(1);
+		expect(result.stderr).toContain("terminated by signal SIGTERM");
+	});
+});
+
+describe("getSpawnScriptCloseError", () => {
+	it("classifies unknown null/null close statuses", () => {
+		expect(
+			getSpawnScriptCloseError({
+				invokedCommand: "node script.js",
+				code: null,
+				signal: null,
+			}),
+		).toBe("Script 'node script.js' exited with unknown status");
 	});
 });
