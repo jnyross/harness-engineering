@@ -2391,6 +2391,26 @@ to:
 
 **Result:** Bash tool now preserves deterministic failure semantics across both built-in and custom execution backends when command termination status is ambiguous.
 
+---
+
+### 137) `spawnScript()` could leave lingering children when `SIGTERM` was ignored
+
+**Finding:** On abort/timeout, `spawnScript()` only sent `SIGTERM` and rejected. If child scripts ignored `SIGTERM`, they could continue running in the background after caller cancellation.
+
+**Action:** Updated:
+
+- `packages/agent/src/sub-agent.ts`
+- `packages/agent/test/sub-agent.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to:
+
+- schedule a forced `SIGKILL` fallback after abort/timeout termination requests,
+- clear forced-kill timers on normal close/error paths,
+- add regression coverage with a child process that traps `SIGTERM` and verifies eventual termination.
+
+**Result:** `spawnScript()` now avoids lingering abort-resistant child processes, improving cancellation hygiene and preventing orphaned subprocesses.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2398,7 +2418,7 @@ to:
 - AI package tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test`
 - agent spawnScript regression tests pass:
-  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts`
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts` (includes signal-exit non-zero semantics and forced-kill fallback for SIGTERM-resistant children)
 - coding-agent RPC startup/shutdown regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures, pending-request rejection on stop and unexpected exit, stop timeout forced-kill cleanup, send timeout/write-error cleanup, closed-stdin send handling, and exit-listener cleanup assertions)
 - coding-agent sleep helper regression tests pass:

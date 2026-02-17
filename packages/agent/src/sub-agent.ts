@@ -101,6 +101,7 @@ export function spawnScript(
 			env: { ...process.env, ...options.env },
 			stdio: ["ignore", "pipe", "pipe"],
 		});
+		const forceKillGraceMs = 1000;
 		let stdout = "";
 		let stderr = "";
 		let settled = false;
@@ -112,8 +113,29 @@ export function spawnScript(
 		});
 		const timeoutMs = options.timeoutMs;
 		let timeoutId: ReturnType<typeof setTimeout> | undefined;
+		let forceKillId: ReturnType<typeof setTimeout> | undefined;
+
+		const clearForceKill = () => {
+			if (forceKillId) {
+				clearTimeout(forceKillId);
+				forceKillId = undefined;
+			}
+		};
+
+		const scheduleForceKill = () => {
+			if (forceKillId) {
+				return;
+			}
+			forceKillId = setTimeout(() => {
+				if (child.exitCode === null && child.signalCode === null) {
+					child.kill("SIGKILL");
+				}
+			}, forceKillGraceMs);
+		};
+
 		const onAbort = () => {
 			child.kill("SIGTERM");
+			scheduleForceKill();
 			rejectOnce(new DOMException("Aborted", "AbortError"));
 		};
 
@@ -143,14 +165,17 @@ export function spawnScript(
 		if (timeoutMs) {
 			timeoutId = setTimeout(() => {
 				child.kill("SIGTERM");
+				scheduleForceKill();
 				rejectOnce(new Error(`Script timed out after ${timeoutMs}ms`));
 			}, timeoutMs);
 		}
 		options.signal?.addEventListener("abort", onAbort, { once: true });
 		child.on("error", (err) => {
+			clearForceKill();
 			rejectOnce(err);
 		});
 		child.on("close", (code, closeSignal) => {
+			clearForceKill();
 			resolveOnce({ stdout, stderr, exitCode: code ?? (closeSignal ? 1 : 0) });
 		});
 	});
