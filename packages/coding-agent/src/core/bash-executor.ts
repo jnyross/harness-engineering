@@ -59,6 +59,15 @@ export interface BashResult {
  * @returns Promise resolving to execution result
  */
 export function executeBash(command: string, options?: BashExecutorOptions): Promise<BashResult> {
+	if (options?.signal?.aborted) {
+		return Promise.resolve({
+			output: "",
+			exitCode: undefined,
+			cancelled: true,
+			truncated: false,
+		});
+	}
+
 	return new Promise((resolve, reject) => {
 		const { shell, args } = getShellConfig();
 		const child: ChildProcess = spawn(shell, [...args, command], {
@@ -190,6 +199,15 @@ export async function executeBashWithOperations(
 	operations: BashOperations,
 	options?: BashExecutorOptions,
 ): Promise<BashResult> {
+	if (options?.signal?.aborted) {
+		return {
+			output: "",
+			exitCode: undefined,
+			cancelled: true,
+			truncated: false,
+		};
+	}
+
 	const outputChunks: string[] = [];
 	let outputBytes = 0;
 	const maxOutputBytes = DEFAULT_MAX_BYTES * 2;
