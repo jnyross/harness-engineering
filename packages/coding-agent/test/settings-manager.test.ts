@@ -224,4 +224,42 @@ describe("SettingsManager", () => {
 			expect(savedSettings.theme).toBe("light");
 		});
 	});
+
+	describe("retry settings normalization", () => {
+		it("falls back to defaults for invalid retry values", () => {
+			const manager = SettingsManager.inMemory({
+				retry: {
+					enabled: true,
+					maxRetries: -1,
+					baseDelayMs: Number.NaN,
+					maxDelayMs: 0,
+				},
+			});
+
+			expect(manager.getRetrySettings()).toEqual({
+				enabled: true,
+				maxRetries: 3,
+				baseDelayMs: 2000,
+				maxDelayMs: 60000,
+			});
+		});
+
+		it("clamps oversized retry delays and preserves valid retry counts", () => {
+			const manager = SettingsManager.inMemory({
+				retry: {
+					enabled: true,
+					maxRetries: 7,
+					baseDelayMs: Number.POSITIVE_INFINITY,
+					maxDelayMs: Number.MAX_SAFE_INTEGER,
+				},
+			});
+
+			expect(manager.getRetrySettings()).toEqual({
+				enabled: true,
+				maxRetries: 7,
+				baseDelayMs: 2_147_483_647,
+				maxDelayMs: 2_147_483_647,
+			});
+		});
+	});
 });

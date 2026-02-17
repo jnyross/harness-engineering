@@ -92,6 +92,34 @@ export interface Settings {
 	markdown?: MarkdownSettings;
 }
 
+const MAX_TIMEOUT_MS = 2_147_483_647;
+
+function normalizeRetryCount(value: number | undefined, fallback: number): number {
+	if (value === undefined) {
+		return fallback;
+	}
+	if (!Number.isSafeInteger(value) || value < 0) {
+		return fallback;
+	}
+	return value;
+}
+
+function normalizeRetryDelayMs(value: number | undefined, fallback: number): number {
+	if (value === undefined) {
+		return fallback;
+	}
+	if (Number.isNaN(value) || value <= 0) {
+		return fallback;
+	}
+	if (value > MAX_TIMEOUT_MS) {
+		return MAX_TIMEOUT_MS;
+	}
+	if (!Number.isSafeInteger(value)) {
+		return fallback;
+	}
+	return value;
+}
+
 /** Deep merge settings: project/overrides take precedence, nested objects merge recursively */
 function deepMergeSettings(base: Settings, overrides: Settings): Settings {
 	const result: Settings = { ...base };
@@ -504,9 +532,9 @@ export class SettingsManager {
 	getRetrySettings(): { enabled: boolean; maxRetries: number; baseDelayMs: number; maxDelayMs: number } {
 		return {
 			enabled: this.getRetryEnabled(),
-			maxRetries: this.settings.retry?.maxRetries ?? 3,
-			baseDelayMs: this.settings.retry?.baseDelayMs ?? 2000,
-			maxDelayMs: this.settings.retry?.maxDelayMs ?? 60000,
+			maxRetries: normalizeRetryCount(this.settings.retry?.maxRetries, 3),
+			baseDelayMs: normalizeRetryDelayMs(this.settings.retry?.baseDelayMs, 2000),
+			maxDelayMs: normalizeRetryDelayMs(this.settings.retry?.maxDelayMs, 60000),
 		};
 	}
 
