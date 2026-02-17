@@ -5084,6 +5084,26 @@ to:
 
 **Result:** HTML export theme override colors now resolve variable references deterministically instead of emitting unresolved variable tokens.
 
+---
+
+### 276) coding-agent export theme `$missingVar` references leaked unresolved tokens
+
+**Finding:** After adding export-color variable resolution support, legacy dollar-prefixed missing variables (for example `$missingVar`) could still pass through as unresolved literal strings instead of resolving to undefined.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/theme/theme.ts`
+- `packages/coding-agent/test/theme-export-colors.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- return `undefined` for missing `$var` export references,
+- preserve plain unresolved non-prefixed values as literals,
+- add regression coverage for missing dollar-prefixed export-variable behavior.
+
+**Result:** invalid `$missingVar` export references no longer leak unresolved tokens into generated export colors.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5115,6 +5135,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-colorfgbg.test.ts`
 - coding-agent export theme color resolution regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-export-colors.test.ts test/theme-hex-validation.test.ts test/theme-colorfgbg.test.ts`
+- coding-agent export missing `$var` regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-export-colors.test.ts`
 - ai usage metadata regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts`
 - ai Gemini retry-delay (including safe-millisecond bounds) regression tests pass:
