@@ -5289,6 +5289,26 @@ to:
 
 **Result:** mom bash timeout parsing now rejects oversized timeout values explicitly, preventing implicit timer clamping edge cases.
 
+---
+
+### 286) coding-agent shared exec timeout accepted oversized timer values
+
+**Finding:** `packages/coding-agent/src/core/exec.ts` forwarded timeout milliseconds directly to `setTimeout(...)`; oversized values beyond Node timer limits could be runtime-clamped and trigger unintended premature process termination.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/exec.ts`
+- `packages/coding-agent/test/exec.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize timeout values with explicit Node timer-range bounds,
+- ignore oversized/invalid timeout values instead of forwarding them to runtime clamping behavior,
+- add regression coverage proving oversized timeouts no longer force premature process kills.
+
+**Result:** shared command execution now handles oversized timeout inputs safely and deterministically, avoiding runtime timer clamp side effects.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5369,6 +5389,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
 - coding-agent bash oversized-timeout regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
+- coding-agent shared exec oversized-timeout regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - coding-agent find limit validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
 - coding-agent ls limit validation regression tests pass:
