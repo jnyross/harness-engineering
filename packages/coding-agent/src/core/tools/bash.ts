@@ -134,7 +134,7 @@ const defaultBashOperations: BashOperations = {
 
 			// Handle shell spawn errors
 			child.on("error", (err) => {
-				rejectOnce(err);
+				rejectOnce(new Error(`Failed to start bash command '${command}': ${err.message}`));
 			});
 
 			if (signal) {
