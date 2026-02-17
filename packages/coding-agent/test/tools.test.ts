@@ -5,11 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bashTool, createBashTool } from "../src/core/tools/bash.js";
 import { editTool } from "../src/core/tools/edit.js";
 import { findTool } from "../src/core/tools/find.js";
-import { grepTool } from "../src/core/tools/grep.js";
+import { createGrepTool, grepTool } from "../src/core/tools/grep.js";
 import { lsTool } from "../src/core/tools/ls.js";
 import { readTool } from "../src/core/tools/read.js";
 import { writeTool } from "../src/core/tools/write.js";
 import * as shellModule from "../src/utils/shell.js";
+import * as toolsManager from "../src/utils/tools-manager.js";
 
 // Helper to extract text from content blocks
 // biome-ignore lint/suspicious/noExplicitAny: migration
@@ -380,6 +381,29 @@ describe("Coding Agent Tools", () => {
 			expect(output).toContain("[1 matches limit reached. Use limit=2 for more, or refine pattern]");
 			// Ensure second match is not present
 			expect(output).not.toContain("match two");
+		});
+
+		it("should abort if cancelled before ripgrep starts", async () => {
+			const delayedEnsureTool = vi.spyOn(toolsManager, "ensureTool").mockImplementation(async () => {
+				await new Promise((resolve) => setTimeout(resolve, 50));
+				return "rg";
+			});
+
+			const grepWithCwd = createGrepTool(testDir);
+			const controller = new AbortController();
+			const run = grepWithCwd.execute(
+				"test-call-grep-abort",
+				{
+					pattern: "anything",
+					path: testDir,
+				},
+				controller.signal,
+			);
+
+			setTimeout(() => controller.abort(), 5);
+
+			await expect(run).rejects.toThrow(/Operation aborted/);
+			delayedEnsureTool.mockRestore();
 		});
 	});
 

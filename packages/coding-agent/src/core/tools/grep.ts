@@ -95,13 +95,24 @@ export function createGrepTool(cwd: string, options?: GrepToolOptions): AgentToo
 					return;
 				}
 
+				let aborted = false;
+				let stopSpawnedChild: (() => void) | undefined;
+
+				const onAbort = () => {
+					aborted = true;
+					stopSpawnedChild?.();
+				};
+
 				let settled = false;
 				const settle = (fn: () => void) => {
 					if (!settled) {
 						settled = true;
+						signal?.removeEventListener("abort", onAbort);
 						fn();
 					}
 				};
+
+				signal?.addEventListener("abort", onAbort, { once: true });
 
 				(async () => {
 					try {
@@ -165,13 +176,17 @@ export function createGrepTool(cwd: string, options?: GrepToolOptions): AgentToo
 
 						args.push(pattern, searchPath);
 
-						const child = spawn(rgPath, args, { stdio: ["ignore", "pipe", "pipe"] });
-						const rl = createInterface({ input: child.stdout });
+						if (aborted) {
+							settle(() => reject(new Error("Operation aborted")));
+							return;
+						}
+
+						const rgChild = spawn(rgPath, args, { stdio: ["ignore", "pipe", "pipe"] });
+						const rl = createInterface({ input: rgChild.stdout });
 						let stderr = "";
 						let matchCount = 0;
 						let matchLimitReached = false;
 						let linesTruncated = false;
-						let aborted = false;
 						let killedDueToLimit = false;
 						const outputLines: string[] = [];
 
@@ -181,20 +196,14 @@ export function createGrepTool(cwd: string, options?: GrepToolOptions): AgentToo
 						};
 
 						const stopChild = (dueToLimit: boolean = false) => {
-							if (!child.killed) {
+							if (!rgChild.killed) {
 								killedDueToLimit = dueToLimit;
-								child.kill();
+								rgChild.kill();
 							}
 						};
+						stopSpawnedChild = () => stopChild();
 
-						const onAbort = () => {
-							aborted = true;
-							stopChild();
-						};
-
-						signal?.addEventListener("abort", onAbort, { once: true });
-
-						child.stderr?.on("data", (chunk) => {
+						rgChild.stderr?.on("data", (chunk) => {
 							stderr += chunk.toString();
 						});
 
@@ -262,12 +271,12 @@ export function createGrepTool(cwd: string, options?: GrepToolOptions): AgentToo
 							}
 						});
 
-						child.on("error", (error) => {
+						rgChild.on("error", (error) => {
 							cleanup();
 							settle(() => reject(new Error(`Failed to run ripgrep: ${error.message}`)));
 						});
 
-						child.on("close", async (code) => {
+						rgChild.on("close", async (code) => {
 							cleanup();
 
 							if (aborted) {
