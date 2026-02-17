@@ -1912,6 +1912,21 @@ to track bootstrap listener references and remove them from shared cleanup paths
 
 **Result:** Sandbox execution cleanup now removes pending bootstrap listeners deterministically, avoiding cross-run listener accumulation when setup does not complete.
 
+---
+
+### 114) web-ui load-content path leaked window message handlers across reloads
+
+**Finding:** `SandboxedIframe.loadViaSandboxUrl()` / `loadViaSrcdoc()` registered window-level handlers (external URL + bootstrap) without shared teardown on subsequent loads/disconnect, allowing handler accumulation across repeated loads.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/SandboxedIframe.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to centralize window-handler references and clear them on reload/disconnect before attaching new handlers.
+
+**Result:** Sandboxed iframe load lifecycle now keeps window message handlers bounded, preventing cross-load listener leaks.
+
 ## Validation Evidence
 
 - Root quality gate passes:
