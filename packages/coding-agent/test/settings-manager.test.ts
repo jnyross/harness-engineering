@@ -293,6 +293,16 @@ describe("SettingsManager", () => {
 			expect(manager.getEditorPaddingX()).toBe(0);
 			expect(manager.getAutocompleteMaxVisible()).toBe(5);
 		});
+
+		it("normalizes malformed non-finite values passed through setters", () => {
+			const manager = SettingsManager.inMemory();
+
+			manager.setEditorPaddingX(Number.NaN);
+			manager.setAutocompleteMaxVisible(Number.NaN);
+
+			expect(manager.getEditorPaddingX()).toBe(0);
+			expect(manager.getAutocompleteMaxVisible()).toBe(5);
+		});
 	});
 
 	describe("token budget settings normalization", () => {

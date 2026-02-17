@@ -842,7 +842,7 @@ export class SettingsManager {
 	}
 
 	setEditorPaddingX(padding: number): void {
-		this.globalSettings.editorPaddingX = Math.max(0, Math.min(3, Math.floor(padding)));
+		this.globalSettings.editorPaddingX = normalizeEditorPaddingX(padding);
 		this.markModified("editorPaddingX");
 		this.save();
 	}
@@ -852,7 +852,7 @@ export class SettingsManager {
 	}
 
 	setAutocompleteMaxVisible(maxVisible: number): void {
-		this.globalSettings.autocompleteMaxVisible = Math.max(3, Math.min(20, Math.floor(maxVisible)));
+		this.globalSettings.autocompleteMaxVisible = normalizeAutocompleteMaxVisible(maxVisible);
 		this.markModified("autocompleteMaxVisible");
 		this.save();
 	}
