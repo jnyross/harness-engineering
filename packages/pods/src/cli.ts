@@ -15,6 +15,7 @@ import { normalizeContextOption, normalizeMemoryOption } from "./model-options.j
 import { extractModelsPathFromMountCommand } from "./mount-command.js";
 import { assertValidPodName } from "./pod-name.js";
 import { getSshStreamExitError, parseSshCommand, sshExecStreamDetailed } from "./ssh.js";
+import type { Pod } from "./types.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -175,7 +176,7 @@ try {
 			case "shell": {
 				// pi shell [<name>] - open interactive shell
 				const podName = commandArgs[1];
-				let podInfo: { name: string; pod: import("./types.js").Pod } | null = null;
+				let podInfo: { name: string; pod: Pod } | null = null;
 
 				if (podName) {
 					validatePodNameOrExit(podName);
@@ -251,7 +252,7 @@ try {
 					process.exit(1);
 				}
 
-				let podInfo: { name: string; pod: import("./types.js").Pod } | null = null;
+				let podInfo: { name: string; pod: Pod } | null = null;
 
 				if (podName) {
 					const config = loadConfig();
