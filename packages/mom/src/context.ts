@@ -28,6 +28,51 @@ interface LogMessage {
 	isBot?: boolean;
 }
 
+interface ParsedSyncLogMessage {
+	slackTs: string;
+	timestampMs: number;
+	userLabel: string;
+	text: string;
+	isBot: boolean;
+}
+
+function parseSyncLogMessage(line: string): ParsedSyncLogMessage | undefined {
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(line);
+	} catch {
+		return undefined;
+	}
+	if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+		return undefined;
+	}
+
+	const record = parsed as LogMessage;
+	if (typeof record.ts !== "string") {
+		return undefined;
+	}
+	const slackTs = record.ts.trim();
+	if (!slackTs) {
+		return undefined;
+	}
+
+	const userLabel =
+		(typeof record.userName === "string" && record.userName.trim()) ||
+		(typeof record.user === "string" && record.user.trim()) ||
+		"unknown";
+	const text = typeof record.text === "string" ? record.text : "";
+	const parsedTimestamp = typeof record.date === "string" ? Date.parse(record.date) : Number.NaN;
+	const timestampMs = Number.isFinite(parsedTimestamp) ? parsedTimestamp : Date.now();
+
+	return {
+		slackTs,
+		timestampMs,
+		userLabel,
+		text,
+		isBot: record.isBot === true,
+	};
+}
+
 /**
  * Sync user messages from log.jsonl to SessionManager.
  *
@@ -96,37 +141,29 @@ export function syncLogToSessionManager(
 	const newMessages: Array<{ timestamp: number; message: UserMessage }> = [];
 
 	for (const line of logLines) {
-		try {
-			const logMsg: LogMessage = JSON.parse(line);
+		const logMsg = parseSyncLogMessage(line);
+		if (!logMsg) continue;
 
-			const slackTs = logMsg.ts;
-			const date = logMsg.date;
-			if (!slackTs || !date) continue;
+		// Skip the current message being processed (will be added via prompt())
+		if (excludeSlackTs && logMsg.slackTs === excludeSlackTs) continue;
 
-			// Skip the current message being processed (will be added via prompt())
-			if (excludeSlackTs && slackTs === excludeSlackTs) continue;
+		// Skip bot messages - added through agent flow
+		if (logMsg.isBot) continue;
 
-			// Skip bot messages - added through agent flow
-			if (logMsg.isBot) continue;
+		// Build the message text as it would appear in context
+		const messageText = `[${logMsg.userLabel}]: ${logMsg.text}`;
 
-			// Build the message text as it would appear in context
-			const messageText = `[${logMsg.userName || logMsg.user || "unknown"}]: ${logMsg.text || ""}`;
+		// Skip if this exact message text is already in context
+		if (existingMessages.has(messageText)) continue;
 
-			// Skip if this exact message text is already in context
-			if (existingMessages.has(messageText)) continue;
+		const userMessage: UserMessage = {
+			role: "user",
+			content: [{ type: "text", text: messageText }],
+			timestamp: logMsg.timestampMs,
+		};
 
-			const msgTime = new Date(date).getTime() || Date.now();
-			const userMessage: UserMessage = {
-				role: "user",
-				content: [{ type: "text", text: messageText }],
-				timestamp: msgTime,
-			};
-
-			newMessages.push({ timestamp: msgTime, message: userMessage });
-			existingMessages.add(messageText); // Track to avoid duplicates within this sync
-		} catch {
-			// Skip malformed lines
-		}
+		newMessages.push({ timestamp: logMsg.timestampMs, message: userMessage });
+		existingMessages.add(messageText); // Track to avoid duplicates within this sync
 	}
 
 	if (newMessages.length === 0) return 0;
