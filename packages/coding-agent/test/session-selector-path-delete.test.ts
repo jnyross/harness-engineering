@@ -1,5 +1,5 @@
 import { DEFAULT_EDITOR_KEYBINDINGS, EditorKeybindingsManager, setEditorKeybindings } from "@mariozechner/pi-tui";
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { KeybindingsManager } from "../src/core/keybindings.js";
 import type { SessionInfo } from "../src/core/session-manager.js";
 import { SessionSelectorComponent } from "../src/modes/interactive/components/session-selector.js";
@@ -195,5 +195,33 @@ describe("session selector path/delete interactions", () => {
 
 		allDeferred.resolve([makeSession({ id: "all" })]);
 		await flushPromises();
+	});
+
+	it("ignores pending async loads after selector dispose", async () => {
+		const currentSessions = [makeSession({ id: "current" })];
+		const allDeferred = createDeferred<SessionInfo[]>();
+		const requestRender = vi.fn();
+
+		const selector = new SessionSelectorComponent(
+			async () => currentSessions,
+			async () => allDeferred.promise,
+			() => {},
+			() => {},
+			() => {},
+			requestRender,
+			{ keybindings },
+		);
+		await flushPromises();
+
+		const list = selector.getSessionList();
+		list.handleInput("\t"); // current -> all (starts async load)
+		await flushPromises();
+		const renderCallsBeforeDispose = requestRender.mock.calls.length;
+
+		selector.dispose();
+		allDeferred.resolve([makeSession({ id: "all" })]);
+		await flushPromises();
+
+		expect(requestRender.mock.calls.length).toBe(renderCallsBeforeDispose);
 	});
 });

@@ -130,6 +130,10 @@ class SessionSelectorHeader implements Component {
 
 	invalidate(): void {}
 
+	dispose(): void {
+		this.clearStatusTimeout();
+	}
+
 	render(width: number): string[] {
 		const title = this.scope === "current" ? "Resume Session (Current Folder)" : "Resume Session (All)";
 		const leftText = theme.bold(title);
@@ -696,6 +700,7 @@ export class SessionSelectorComponent extends Container implements Focusable {
 	private currentLoading = false;
 	private allLoading = false;
 	private allLoadSeq = 0;
+	private disposed = false;
 
 	private mode: "list" | "rename" = "list";
 	private renameInput = new Input();
@@ -904,6 +909,9 @@ export class SessionSelectorComponent extends Container implements Focusable {
 	}
 
 	private async loadScope(scope: SessionScope, reason: "initial" | "refresh" | "toggle"): Promise<void> {
+		if (this.disposed) {
+			return;
+		}
 		const showCwd = scope === "all";
 
 		// Mark loading
@@ -919,6 +927,7 @@ export class SessionSelectorComponent extends Container implements Focusable {
 		this.requestRender();
 
 		const onProgress = (loaded: number, total: number) => {
+			if (this.disposed) return;
 			if (scope !== this.scope) return;
 			if (seq !== undefined && seq !== this.allLoadSeq) return;
 			this.header.setProgress(loaded, total);
@@ -929,6 +938,9 @@ export class SessionSelectorComponent extends Container implements Focusable {
 			const sessions = await (scope === "current"
 				? this.currentSessionsLoader(onProgress)
 				: this.allSessionsLoader(onProgress));
+			if (this.disposed) {
+				return;
+			}
 
 			if (scope === "current") {
 				this.currentSessions = sessions;
@@ -949,6 +961,9 @@ export class SessionSelectorComponent extends Container implements Focusable {
 				this.onCancel();
 			}
 		} catch (err) {
+			if (this.disposed) {
+				return;
+			}
 			if (scope === "current") {
 				this.currentLoading = false;
 			} else {
@@ -1011,6 +1026,14 @@ export class SessionSelectorComponent extends Container implements Focusable {
 		this.header.setLoading(this.currentLoading);
 		this.sessionList.setSessions(this.currentSessions ?? [], false);
 		this.requestRender();
+	}
+
+	dispose(): void {
+		this.disposed = true;
+		this.allLoadSeq++;
+		this.currentLoading = false;
+		this.allLoading = false;
+		this.header.dispose();
 	}
 
 	getSessionList(): SessionList {

@@ -127,6 +127,14 @@ function isExpandable(obj: unknown): obj is Expandable {
 	return typeof obj === "object" && obj !== null && "setExpanded" in obj && typeof obj.setExpanded === "function";
 }
 
+interface Disposable {
+	dispose(): void;
+}
+
+function isDisposable(obj: unknown): obj is Disposable {
+	return typeof obj === "object" && obj !== null && "dispose" in obj && typeof obj.dispose === "function";
+}
+
 type CompactionQueuedMessage = {
 	text: string;
 	mode: "steer" | "followUp";
@@ -3041,12 +3049,21 @@ export class InteractiveMode {
 	 * @param create Factory that receives a `done` callback and returns the component and focus target
 	 */
 	private showSelector(create: (done: () => void) => { component: Component; focus: Component }): void {
+		const disposeCurrentSelector = () => {
+			const existing = this.editorContainer.children[0];
+			if (existing && existing !== this.editor && isDisposable(existing)) {
+				existing.dispose();
+			}
+		};
+
 		const done = () => {
+			disposeCurrentSelector();
 			this.editorContainer.clear();
 			this.editorContainer.addChild(this.editor);
 			this.ui.setFocus(this.editor);
 		};
 		const { component, focus } = create(done);
+		disposeCurrentSelector();
 		this.editorContainer.clear();
 		this.editorContainer.addChild(component);
 		this.ui.setFocus(focus);

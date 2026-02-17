@@ -3884,6 +3884,27 @@ to:
 
 **Result:** Extension dialog callback failures now surface as logged errors without crashing interactive input processing.
 
+---
+
+### 217) selector replacement/disposal flow could leave stale selector timers/async loads active after close
+
+**Finding:** Interactive selector replacement cleared editor containers without consistently disposing prior disposable selector components; session selector also lacked explicit disposal guards for pending status timers and in-flight load completions.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/interactive-mode.ts`
+- `packages/coding-agent/src/modes/interactive/components/session-selector.ts`
+- `packages/coding-agent/test/session-selector-path-delete.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- dispose current disposable selector components during selector swaps/teardown in interactive mode,
+- add explicit session-selector dispose semantics (timer cleanup + stale-load suppression),
+- add regression coverage ensuring pending async loads are ignored after selector disposal.
+
+**Result:** Interactive selector teardown now cleans up disposable selectors deterministically and avoids stale post-dispose session-selector updates.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -3912,6 +3933,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/countdown-timer.test.ts` (includes normal expiry, manual dispose stop, and onTick-throw safety coverage)
 - coding-agent extension dialog callback regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extension-dialog-callbacks.test.ts` (includes throwing selector/input/editor callback safety)
+- coding-agent session selector disposal regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/session-selector-path-delete.test.ts test/extension-dialog-callbacks.test.ts` (includes stale-load suppression after selector dispose)
 - coding-agent antigravity image SSE parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/antigravity-image-gen.test.ts` (includes terminal `data:` chunk without trailing newline and text+image ordering coverage)
 - coding-agent sleep helper regression tests pass:
