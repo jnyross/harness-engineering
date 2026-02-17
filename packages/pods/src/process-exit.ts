@@ -1,4 +1,5 @@
 import type { ChildProcess } from "child_process";
+import { normalizeChildExitCode } from "./child-exit-status.js";
 
 export interface ProcessExitResult {
 	code: number;
@@ -10,7 +11,7 @@ export function waitForProcessExit(process: ChildProcess): Promise<ProcessExitRe
 	return new Promise((resolve) => {
 		if (process.exitCode !== null || process.signalCode !== null) {
 			resolve({
-				code: process.exitCode ?? (process.signalCode ? 1 : 0),
+				code: normalizeChildExitCode(process.exitCode, process.signalCode),
 				signal: process.signalCode,
 			});
 			return;
@@ -37,7 +38,7 @@ export function waitForProcessExit(process: ChildProcess): Promise<ProcessExitRe
 		};
 
 		const onExit = (code: number | null, signal: NodeJS.Signals | null) => {
-			resolveOnce({ code: code ?? (signal ? 1 : 0), signal });
+			resolveOnce({ code: normalizeChildExitCode(code, signal), signal });
 		};
 
 		process.on("error", onError);

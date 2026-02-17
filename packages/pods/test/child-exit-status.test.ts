@@ -13,6 +13,10 @@ describe("child exit status helpers", () => {
 		assert.equal(normalizeChildExitCode(0, "SIGTERM"), 1);
 	});
 
+	it("maps unknown null/null exits to non-zero fallback", () => {
+		assert.equal(normalizeChildExitCode(null, null), 1);
+	});
+
 	it("returns signal termination messages when signal is present", () => {
 		assert.equal(getSignalTerminationMessage("SSH process", "SIGTERM"), "SSH process terminated by signal SIGTERM");
 	});
