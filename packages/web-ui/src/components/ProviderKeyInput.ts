@@ -30,6 +30,7 @@ export class ProviderKeyInput extends LitElement {
 	@state() private hasKey = false;
 	@state() private inputChanged = false;
 	private failureResetTimeout: ReturnType<typeof setTimeout> | undefined;
+	private operationSeq = 0;
 
 	protected createRenderRoot() {
 		return this;
@@ -37,11 +38,13 @@ export class ProviderKeyInput extends LitElement {
 
 	override async connectedCallback() {
 		super.connectedCallback();
-		await this.checkKeyStatus();
+		const operationId = ++this.operationSeq;
+		await this.checkKeyStatus(operationId);
 	}
 
 	override disconnectedCallback(): void {
 		super.disconnectedCallback();
+		this.operationSeq++;
 		if (this.failureResetTimeout) {
 			clearTimeout(this.failureResetTimeout);
 			this.failureResetTimeout = undefined;
@@ -59,9 +62,12 @@ export class ProviderKeyInput extends LitElement {
 		}, 5000);
 	}
 
-	private async checkKeyStatus() {
+	private async checkKeyStatus(operationId: number = this.operationSeq) {
 		try {
 			const key = await getAppStorage().providerKeys.get(this.provider);
+			if (!this.isConnected || operationId !== this.operationSeq) {
+				return;
+			}
 			this.hasKey = !!key;
 		} catch (error) {
 			console.error("Failed to check key status:", error);
@@ -104,26 +110,39 @@ export class ProviderKeyInput extends LitElement {
 
 	private async saveKey() {
 		if (!this.keyInput) return;
+		const operationId = ++this.operationSeq;
 
 		this.testing = true;
 		this.failed = false;
 
 		const success = await this.testApiKey(this.provider, this.keyInput);
+		if (!this.isConnected || operationId !== this.operationSeq) {
+			return;
+		}
 
 		this.testing = false;
 
 		if (success) {
 			try {
 				await getAppStorage().providerKeys.set(this.provider, this.keyInput);
+				if (!this.isConnected || operationId !== this.operationSeq) {
+					return;
+				}
 				this.hasKey = true;
 				this.inputChanged = false;
 				this.requestUpdate();
 			} catch (error) {
+				if (!this.isConnected || operationId !== this.operationSeq) {
+					return;
+				}
 				console.error("Failed to save API key:", error);
 				this.failed = true;
 				this.scheduleFailureReset();
 			}
 		} else {
+			if (!this.isConnected || operationId !== this.operationSeq) {
+				return;
+			}
 			this.failed = true;
 			this.scheduleFailureReset();
 		}

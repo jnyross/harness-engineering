@@ -20,6 +20,7 @@
 - User-script runtime bridge requests now attach `messageId` values, and router user-script responses now settle unconditionally once per request to preserve sendMessage completion semantics.
 - Runtime message router default acknowledgements are now gated to request messages carrying `messageId`, avoiding unsolicited responses for non-request sandbox broadcasts.
 - `ProviderKeyInput` now tracks and clears delayed failure-reset timers across retries/disconnects, preventing stale timeout callbacks from mutating detached component state.
+- `ProviderKeyInput` now sequence-guards async key status/test/save flows across disconnects, preventing stale async completions from mutating detached component state.
 - `ConsoleBlock` now clears copy-feedback reset timers on repeated copy/disconnect paths, preventing stale timeout callbacks after component unmount.
 - `AttachmentOverlay` now removes global keydown listeners and cancels in-flight preview loading in `disconnectedCallback()`, preventing listener/task leaks if the overlay is removed externally.
 - `ChatPanel` now cancels its deferred initial resize `requestAnimationFrame` callback on disconnect, preventing stale update callbacks after rapid mount/unmount cycles.

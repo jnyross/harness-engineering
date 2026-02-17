@@ -3508,6 +3508,24 @@ to:
 
 **Result:** Providers/models tab now avoids stale provider/status state mutations across disconnect/remount races.
 
+---
+
+### 197) provider-key input could apply stale async key-check/save outcomes after disconnect
+
+**Finding:** Provider key input component handled timeout cleanup but still allowed async key-status/test/save completions to write state after disconnect or superseded operations.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/ProviderKeyInput.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- introduce operation-sequence invalidation across connect/disconnect and save attempts,
+- bail out of async key-status/test/save completion handlers when detached or superseded.
+
+**Result:** Provider key input now avoids stale async state mutations across disconnect races and overlapping key operations.
+
 ## Validation Evidence
 
 - Root quality gate passes:
