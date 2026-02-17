@@ -5,6 +5,8 @@
  * Env: PI_PROVIDER, PI_MODEL (optional). Default provider: minimax.
  */
 
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { Message } from "@mariozechner/pi-ai";
 import { getModel } from "@mariozechner/pi-ai";
 import { parsePositiveIntegerOption } from "./cli-number.js";
@@ -18,18 +20,27 @@ function identityConvert(messages: AgentMessage[]): Message[] {
 	return messages.filter((m): m is Message => m.role === "user" || m.role === "assistant" || m.role === "toolResult");
 }
 
-function parseArgs(): { goal: string; iterations: number; maxTasks: number; providerOverride?: string } {
-	const args = process.argv.slice(2);
+function readRequiredOptionValue(args: string[], index: number, optionName: string): string {
+	const optionValue = args[index + 1];
+	if (optionValue === undefined || optionValue.startsWith("-")) {
+		throw new Error(`${optionName} requires a value`);
+	}
+	return optionValue;
+}
+
+export function parseProjectRunnerArgs(args: string[]): {
+	goal: string;
+	iterations: number;
+	maxTasks: number;
+	providerOverride?: string;
+} {
 	let iterations = 1;
 	let maxTasks = 20;
 	let providerOverride: string | undefined;
 	const rest: string[] = [];
 	for (let i = 0; i < args.length; i++) {
 		if (args[i] === "--iterations") {
-			const optionValue = args[i + 1];
-			if (optionValue === undefined) {
-				throw new Error("--iterations requires a value");
-			}
+			const optionValue = readRequiredOptionValue(args, i, "--iterations");
 			iterations = parsePositiveIntegerOption({
 				value: optionValue,
 				fallback: 1,
@@ -37,10 +48,7 @@ function parseArgs(): { goal: string; iterations: number; maxTasks: number; prov
 			});
 			i++;
 		} else if (args[i] === "--max-tasks") {
-			const optionValue = args[i + 1];
-			if (optionValue === undefined) {
-				throw new Error("--max-tasks requires a value");
-			}
+			const optionValue = readRequiredOptionValue(args, i, "--max-tasks");
 			maxTasks = parsePositiveIntegerOption({
 				value: optionValue,
 				fallback: 20,
@@ -48,10 +56,7 @@ function parseArgs(): { goal: string; iterations: number; maxTasks: number; prov
 			});
 			i++;
 		} else if (args[i] === "--provider") {
-			const optionValue = args[i + 1];
-			if (optionValue === undefined) {
-				throw new Error("--provider requires a value");
-			}
+			const optionValue = readRequiredOptionValue(args, i, "--provider");
 			providerOverride = optionValue;
 			i++;
 		} else {
@@ -68,7 +73,7 @@ function main(): void {
 	let maxTasks = 20;
 	let providerOverride: string | undefined;
 	try {
-		const parsed = parseArgs();
+		const parsed = parseProjectRunnerArgs(process.argv.slice(2));
 		goal = parsed.goal;
 		iterations = parsed.iterations;
 		maxTasks = parsed.maxTasks;
@@ -116,4 +121,6 @@ function main(): void {
 		});
 }
 
-main();
+if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
+	main();
+}

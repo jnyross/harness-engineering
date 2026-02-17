@@ -33,6 +33,7 @@
 - `runner.ts` / `project-runner.ts` numeric option parsing now rejects malformed or non-positive values (for example `--iterations 3rounds`, `PI_MAX_REDO_ROUNDS=0`) instead of silently coercing via `parseInt` fallback behavior.
 - `spawnScript()` timeout/spawn failures now include invoked-command context in error messages, improving diagnostics for sub-agent script delegation failures.
 - `spawnScript()` now adds fallback stderr diagnostics for signal/unknown/non-zero close statuses when scripts fail silently, so callers receive actionable failure reasons even without child stderr output.
+- `project-runner` CLI option parsing now rejects option-like/missing values for `--iterations`, `--max-tasks`, and `--provider` instead of treating subsequent flags as values.
 
 ## [0.52.12] - 2026-02-13
 
