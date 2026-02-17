@@ -5697,6 +5697,26 @@ to:
 
 **Result:** `drainInput()` now preserves long drain semantics for `Infinity`/oversized inputs by clamping, rather than unexpectedly reverting to short default timing windows.
 
+---
+
+### 306) mom one-shot delay normalization treated `Infinity` as invalid instead of oversized
+
+**Finding:** `packages/mom/src/events.ts` normalized one-shot delay values by rejecting all non-finite numbers; positive-infinite delays were treated as invalid (`undefined`) instead of being bounded/chunked like other oversized delay values.
+
+**Action:** Updated:
+
+- `packages/mom/src/events.ts`
+- `packages/mom/test/events-scheduling.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- reject only `NaN` and non-positive delay values,
+- clamp positive-infinite and other oversized delays to Node timer bounds with `needsReschedule=true`,
+- add regression coverage for positive-infinite one-shot delay normalization behavior.
+
+**Result:** one-shot scheduling now treats `Infinity` delays as oversized (chunked safely) instead of invalid, preserving deterministic long-delay behavior.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5813,7 +5833,7 @@ to:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/bash-tool.test.ts`
 - mom sandbox oversized-timeout regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
-- mom one-shot scheduling helper tests pass:
+- mom one-shot scheduling helper tests pass (including positive-infinite delay clamping/chunking):
   - `npm --workspace "@mariozechner/pi-mom" test -- test/events-scheduling.test.ts`
 - mom read-tool line-count regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/read-tool.test.ts`
