@@ -6,6 +6,7 @@ import { join } from "path";
 import { Readable } from "stream";
 import { finished } from "stream/promises";
 import { APP_NAME, getBinDir } from "../config.js";
+import { getToolExtractionError } from "./tool-extraction-status.js";
 
 const TOOLS_DIR = getBinDir();
 
@@ -169,13 +170,9 @@ async function downloadTool(tool: "fd" | "rg"): Promise<string> {
 			throw new Error(`Failed to extract ${assetName}: unsupported archive format`);
 		}
 
-		if (extractResult.error || extractResult.signal || extractResult.status !== 0) {
-			const errMsg =
-				extractResult.error?.message ??
-				(extractResult.signal
-					? `terminated by signal ${extractResult.signal}`
-					: extractResult.stderr?.toString().trim() || `exited with code ${extractResult.status}`);
-			throw new Error(`Failed to extract ${assetName}: ${errMsg}`);
+		const extractionError = getToolExtractionError(extractResult, { archiveName: assetName });
+		if (extractionError) {
+			throw new Error(extractionError);
 		}
 
 		// Find the binary in extracted files
