@@ -2749,6 +2749,23 @@ to:
 
 **Result:** RPC dialog request handling now remains settlement-safe even when response payload parsing fails unexpectedly.
 
+---
+
+### 156) RPC unknown-command responses dropped request correlation IDs
+
+**Finding:** Unknown-command handling emitted error responses with `id: undefined`, even when clients supplied request IDs, making unsupported-command failures harder to correlate on the client side.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/rpc/rpc-mode.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- propagate provided request IDs on unknown-command error responses.
+
+**Result:** RPC clients now receive correlated unknown-command errors with original request IDs, improving protocol diagnostics and retry/error handling.
+
 ## Validation Evidence
 
 - Root quality gate passes:
