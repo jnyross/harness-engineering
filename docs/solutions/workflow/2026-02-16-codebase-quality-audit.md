@@ -1411,12 +1411,30 @@ to add a package-level test script (`tsx --test`) supporting full-suite default 
 
 **Result:** Mom tests can now run through standard workspace script invocation (`npm --workspace "@mariozechner/pi-mom" test`), consistent with other packages.
 
+---
+
+### 83) mom sandbox process runners did not handle spawn `error` events
+
+**Finding:** `execSimple()` and executor process runners used `spawn(...)` but only listened for `close`. Missing-binary failures (`ENOENT`, etc.) emit `error` events; without listeners those failures can surface as uncaught runtime errors instead of controlled command failures.
+
+**Action:** Updated:
+
+- `packages/mom/src/sandbox.ts`
+- `packages/mom/test/sandbox.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to add explicit spawn `error` listeners with single-settlement guards in both sandbox runners, and added regression coverage proving docker-unavailable handling exits cleanly through existing validation flow.
+
+**Result:** Sandbox command execution now handles spawn startup failures predictably and reports them through existing error handling instead of relying on uncaught process-level errors.
+
 ## Validation Evidence
 
 - Root quality gate passes:
   - `npm run check`
 - AI package tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test`
+- mom sandbox regression tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes docker-missing spawn-error handling case)
 - Agent package tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test`
 - Targeted ExecutionEngine review tests pass:
