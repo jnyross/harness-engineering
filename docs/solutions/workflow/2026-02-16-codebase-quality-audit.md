@@ -4356,6 +4356,25 @@ to:
 
 **Result:** pods `--pod` parsing now consistently rejects both single- and double-dash option-like tokens as missing required pod names.
 
+---
+
+### 241) pods `--pod=<name>` parsing still accepted single-dash option-like values
+
+**Finding:** pods `extractPodOverride(...)` handled `--pod <name>` single-dash rejection, but `--pod=<name>` still accepted single-dash option-like values (for example `--pod=-h`) as pod names.
+
+**Action:** Updated:
+
+- `packages/pods/src/cli-args.ts`
+- `packages/pods/test/cli-args.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- apply leading-dash rejection consistently to both `--pod <name>` and `--pod=<name>` forms,
+- add regression coverage for the equals-form edge case.
+
+**Result:** pods pod-override parsing now enforces identical value validation semantics across both flag syntaxes.
+
 ## Validation Evidence
 
 - Root quality gate passes:
