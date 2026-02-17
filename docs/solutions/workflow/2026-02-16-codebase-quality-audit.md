@@ -4627,12 +4627,34 @@ to:
 
 **Result:** pods memory parsing now accepts only intended decimal percentage input formats and rejects non-decimal numeric coercions deterministically.
 
+---
+
+### 254) Gemini CLI retry-delay headers accepted non-decimal numeric formats
+
+**Finding:** Gemini CLI retry-delay parsing used broad numeric coercion for `Retry-After` and `x-ratelimit-reset-after` headers, so non-decimal numeric formats (for example `0x10`) were accepted instead of falling back to other delay hints.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/google-gemini-cli.ts`
+- `packages/ai/test/google-gemini-cli-retry-delay.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require decimal numeric format for delay-second headers before numeric conversion,
+- ignore non-decimal header values and continue fallback parsing (date/body patterns),
+- add regression tests for non-decimal header-value rejection.
+
+**Result:** retry-delay parsing now rejects non-decimal header formats deterministically and preserves fallback delay extraction behavior.
+
 ## Validation Evidence
 
 - Root quality gate passes:
   - `npm run check`
 - ai usage metadata regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts`
+- ai Gemini retry-delay regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-retry-delay.test.ts`
 - ai shared usage parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts test/amazon-bedrock-usage.test.ts test/openai-responses-shared-usage.test.ts`
 - ai OpenAI/Anthropic usage parser regression tests pass:
