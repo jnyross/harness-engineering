@@ -20,5 +20,9 @@ describe("readRequiredOptionValue", () => {
 			() => readRequiredOptionValue(["start", "--context", "--memory"], 1, "--context"),
 			/Option --context requires a value\./,
 		);
+		assert.throws(
+			() => readRequiredOptionValue(["start", "--context", "-m"], 1, "--context"),
+			/Option --context requires a value\./,
+		);
 	});
 });

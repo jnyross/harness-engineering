@@ -74,7 +74,7 @@
 - Streaming SSH helper startup failures now include full invoked command context (`ssh ... <remote-command>`), so `pi ssh`/setup callers see actionable spawn diagnostics.
 - `--context` normalization now rejects mixed alphanumeric inputs (for example `4096tokens`) instead of truncating via `parseInt`, ensuring only aliases or positive integer token counts are accepted.
 - `--gpus` option parsing now rejects mixed/non-numeric values (for example `2gpu`) instead of truncating via `parseInt`, ensuring only positive integer GPU counts are accepted.
-- CLI required-option parsing now rejects missing values (including option-like next tokens) for `pods setup` and `start` flags, preventing silent fallback when values are omitted.
+- CLI required-option parsing now rejects missing values (including single/double-dash option-like next tokens) for `pods setup` and `start` flags, preventing silent fallback when values are omitted.
 - `start --vllm` now requires at least one passthrough argument, preventing silent fallback to standard launch options when the flag is provided without values.
 - Pod setup GPU detection now skips malformed `nvidia-smi` CSV lines (with warning) instead of persisting `NaN` GPU IDs from partially parseable output.
 - Pod setup GPU detection now parses names using first/last CSV fields (id/memory), preserving GPU names that contain commas.
