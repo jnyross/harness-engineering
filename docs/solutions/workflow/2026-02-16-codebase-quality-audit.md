@@ -2042,10 +2042,10 @@ to:
 to:
 
 - parse manual input from full redirect URLs with query-string or hash-fragment `code`/`state`,
-- preserve fallback handling for `code#state`, query-string snippets, and bare code input,
+- keep Google OAuth manual input contract URL-only (non-URL snippets like `code#state` are rejected),
 - add regression tests proving mismatched hash-fragment state is rejected before network calls.
 
-**Result:** Google OAuth manual-input parsing now matches the hardened behavior across the other OAuth providers and supports hash-fragment callback variants consistently.
+**Result:** Google OAuth manual-input parsing now supports hash-fragment callback variants while preserving the original redirect-URL-only manual input contract.
 
 ## Validation Evidence
 
@@ -2066,6 +2066,8 @@ to:
 - ai oauth cancellation regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts test/openai-codex-oauth-abort.test.ts test/google-antigravity-oauth-abort.test.ts test/google-gemini-cli-oauth-abort.test.ts`
 - ai google oauth hash-fragment parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-oauth-abort.test.ts test/google-antigravity-oauth-abort.test.ts`
+- ai google oauth url-only manual-input contract regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-oauth-abort.test.ts test/google-antigravity-oauth-abort.test.ts`
 - ai anthropic oauth parsing/state-validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts`
