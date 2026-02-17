@@ -7,6 +7,28 @@ export interface ChangelogEntry {
 	content: string;
 }
 
+function parseSafeVersionComponent(value: string): number | undefined {
+	if (!/^\d+$/.test(value)) {
+		return undefined;
+	}
+	const parsed = Number.parseInt(value, 10);
+	return Number.isSafeInteger(parsed) ? parsed : undefined;
+}
+
+function parseVersionString(version: string): { major: number; minor: number; patch: number } | undefined {
+	const match = version.trim().match(/^(\d+)\.(\d+)\.(\d+)$/);
+	if (!match) {
+		return undefined;
+	}
+	const major = parseSafeVersionComponent(match[1]);
+	const minor = parseSafeVersionComponent(match[2]);
+	const patch = parseSafeVersionComponent(match[3]);
+	if (major === undefined || minor === undefined || patch === undefined) {
+		return undefined;
+	}
+	return { major, minor, patch };
+}
+
 /**
  * Parse changelog entries from CHANGELOG.md
  * Scans for ## lines and collects content until next ## or EOF
@@ -38,12 +60,15 @@ export function parseChangelog(changelogPath: string): ChangelogEntry[] {
 				// Try to parse version from this line
 				const versionMatch = line.match(/##\s+\[?(\d+)\.(\d+)\.(\d+)\]?/);
 				if (versionMatch) {
-					currentVersion = {
-						major: Number.parseInt(versionMatch[1], 10),
-						minor: Number.parseInt(versionMatch[2], 10),
-						patch: Number.parseInt(versionMatch[3], 10),
-					};
-					currentLines = [line];
+					const parsedVersion = parseVersionString(`${versionMatch[1]}.${versionMatch[2]}.${versionMatch[3]}`);
+					if (parsedVersion) {
+						currentVersion = parsedVersion;
+						currentLines = [line];
+					} else {
+						// Reset if version components are unsafe integers
+						currentVersion = null;
+						currentLines = [];
+					}
 				} else {
 					// Reset if we can't parse version
 					currentVersion = null;
@@ -84,11 +109,11 @@ export function compareVersions(v1: ChangelogEntry, v2: ChangelogEntry): number 
  */
 export function getNewEntries(entries: ChangelogEntry[], lastVersion: string): ChangelogEntry[] {
 	// Parse lastVersion
-	const parts = lastVersion.split(".").map(Number);
+	const parsedLastVersion = parseVersionString(lastVersion);
 	const last: ChangelogEntry = {
-		major: parts[0] || 0,
-		minor: parts[1] || 0,
-		patch: parts[2] || 0,
+		major: parsedLastVersion?.major ?? 0,
+		minor: parsedLastVersion?.minor ?? 0,
+		patch: parsedLastVersion?.patch ?? 0,
 		content: "",
 	};
 
