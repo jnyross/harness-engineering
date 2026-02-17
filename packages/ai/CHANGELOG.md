@@ -8,6 +8,7 @@
 - Consolidated provider retry sleep into a shared abortable helper that removes abort listeners on resolve/reject, preventing listener leaks across retry backoff paths.
 - GitHub Copilot OAuth polling now reuses the shared abortable sleep helper to avoid accumulating abort listeners across long-running device-flow polling loops.
 - Google Gemini CLI OAuth login now honors `AbortSignal` cancellation (including pre-aborted signals) across callback wait, token exchange, and project discovery flows.
+- Antigravity OAuth login now honors `AbortSignal` cancellation (including pre-aborted signals) across callback wait, token exchange, and project discovery flows.
 - Google Gemini CLI SSE parsing now flushes terminal buffered `data:` lines when streams end without trailing newline delimiters.
 - OpenAI Codex SSE parsing now flushes terminal buffered event chunks when streams end without trailing `\n\n` separators.
 

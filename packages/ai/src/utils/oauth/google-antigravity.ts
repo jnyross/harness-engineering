@@ -151,10 +151,22 @@ interface LoadCodeAssistPayload {
 	allowedTiers?: Array<{ id?: string; isDefault?: boolean }>;
 }
 
+function assertNotAborted(signal?: AbortSignal): void {
+	if (signal?.aborted) {
+		throw new Error("Login cancelled");
+	}
+}
+
 /**
  * Discover or provision a project for the user
  */
-async function discoverProject(accessToken: string, onProgress?: (message: string) => void): Promise<string> {
+async function discoverProject(
+	accessToken: string,
+	onProgress?: (message: string) => void,
+	signal?: AbortSignal,
+): Promise<string> {
+	assertNotAborted(signal);
+
 	const headers = {
 		Authorization: `Bearer ${accessToken}`,
 		"Content-Type": "application/json",
@@ -173,10 +185,12 @@ async function discoverProject(accessToken: string, onProgress?: (message: strin
 	onProgress?.("Checking for existing project...");
 
 	for (const endpoint of endpoints) {
+		assertNotAborted(signal);
 		try {
 			const loadResponse = await fetch(`${endpoint}/v1internal:loadCodeAssist`, {
 				method: "POST",
 				headers,
+				signal,
 				body: JSON.stringify({
 					metadata: {
 						ideType: "IDE_UNSPECIFIED",
@@ -185,6 +199,7 @@ async function discoverProject(accessToken: string, onProgress?: (message: strin
 					},
 				}),
 			});
+			assertNotAborted(signal);
 
 			if (loadResponse.ok) {
 				const data = (await loadResponse.json()) as LoadCodeAssistPayload;
@@ -202,6 +217,7 @@ async function discoverProject(accessToken: string, onProgress?: (message: strin
 				}
 			}
 		} catch {
+			assertNotAborted(signal);
 			// Try next endpoint
 		}
 	}
@@ -214,12 +230,13 @@ async function discoverProject(accessToken: string, onProgress?: (message: strin
 /**
  * Get user email from the access token
  */
-async function getUserEmail(accessToken: string): Promise<string | undefined> {
+async function getUserEmail(accessToken: string, signal?: AbortSignal): Promise<string | undefined> {
 	try {
 		const response = await fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
 			headers: {
 				Authorization: `Bearer ${accessToken}`,
 			},
+			signal,
 		});
 
 		if (response.ok) {
@@ -278,12 +295,18 @@ export async function loginAntigravity(
 	onAuth: (info: { url: string; instructions?: string }) => void,
 	onProgress?: (message: string) => void,
 	onManualCodeInput?: () => Promise<string>,
+	signal?: AbortSignal,
 ): Promise<OAuthCredentials> {
+	assertNotAborted(signal);
 	const { verifier, challenge } = await generatePKCE();
 
 	// Start local server for callback
 	onProgress?.("Starting local server for OAuth callback...");
 	const server = await startCallbackServer();
+	const onAbort = () => {
+		server.cancelWait();
+	};
+	signal?.addEventListener("abort", onAbort, { once: true });
 
 	let code: string | undefined;
 
@@ -327,6 +350,7 @@ export async function loginAntigravity(
 				});
 
 			const result = await server.waitForCode();
+			assertNotAborted(signal);
 
 			// If manual input was cancelled, throw that error
 			if (manualError) {
@@ -350,7 +374,9 @@ export async function loginAntigravity(
 
 			// If still no code, wait for manual promise and try that
 			if (!code) {
+				assertNotAborted(signal);
 				await manualPromise;
+				assertNotAborted(signal);
 				if (manualError) {
 					throw manualError;
 				}
@@ -365,6 +391,7 @@ export async function loginAntigravity(
 		} else {
 			// Original flow: just wait for callback
 			const result = await server.waitForCode();
+			assertNotAborted(signal);
 			if (result?.code) {
 				if (result.state !== verifier) {
 					throw new Error("OAuth state mismatch - possible CSRF attack");
@@ -376,11 +403,13 @@ export async function loginAntigravity(
 		if (!code) {
 			throw new Error("No authorization code received");
 		}
+		assertNotAborted(signal);
 
 		// Exchange code for tokens
 		onProgress?.("Exchanging authorization code for tokens...");
 		const tokenResponse = await fetch(TOKEN_URL, {
 			method: "POST",
+			signal,
 			headers: {
 				"Content-Type": "application/x-www-form-urlencoded",
 			},
@@ -411,10 +440,10 @@ export async function loginAntigravity(
 
 		// Get user email
 		onProgress?.("Getting user info...");
-		const email = await getUserEmail(tokenData.access_token);
+		const email = await getUserEmail(tokenData.access_token, signal);
 
 		// Discover project
-		const projectId = await discoverProject(tokenData.access_token, onProgress);
+		const projectId = await discoverProject(tokenData.access_token, onProgress, signal);
 
 		// Calculate expiry time (current time + expires_in seconds - 5 min buffer)
 		const expiresAt = Date.now() + tokenData.expires_in * 1000 - 5 * 60 * 1000;
@@ -429,6 +458,7 @@ export async function loginAntigravity(
 
 		return credentials;
 	} finally {
+		signal?.removeEventListener("abort", onAbort);
 		server.server.close();
 	}
 }
@@ -439,7 +469,7 @@ export const antigravityOAuthProvider: OAuthProviderInterface = {
 	usesCallbackServer: true,
 
 	async login(callbacks: OAuthLoginCallbacks): Promise<OAuthCredentials> {
-		return loginAntigravity(callbacks.onAuth, callbacks.onProgress, callbacks.onManualCodeInput);
+		return loginAntigravity(callbacks.onAuth, callbacks.onProgress, callbacks.onManualCodeInput, callbacks.signal);
 	},
 
 	async refreshToken(credentials: OAuthCredentials): Promise<OAuthCredentials> {
