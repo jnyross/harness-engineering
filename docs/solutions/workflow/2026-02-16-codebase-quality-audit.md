@@ -5183,6 +5183,30 @@ to:
 
 **Result:** missing export variable references (plain or `$`-prefixed) now resolve safely to undefined rather than leaking unresolved token strings.
 
+---
+
+### 281) pods memory percentage parsing could accept precision-rounded values above 100
+
+**Finding:** `packages/pods/src/model-options.ts` and `packages/pods/src/commands/models.ts` relied on `Number(...)` range checks for memory percentages; values like `100.0000000000000000001` could round down to `100` and be accepted incorrectly.
+
+**Action:** Updated:
+
+- `packages/pods/src/model-options.ts`
+- `packages/pods/src/commands/models.ts`
+- `packages/pods/test/model-options.test.ts`
+- `packages/pods/test/models-ssh-status.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- centralize memory percentage parsing in `parseMemoryPercentage(...)`,
+- enforce pre-conversion decimal range bounds using whole/fractional string checks,
+- reject fractional overflow above `100` before floating-point conversion,
+- reuse the hardened parser in both option normalization and model-start memory fraction resolution,
+- add regression tests for precision-rounding overflow inputs.
+
+**Result:** pods memory parsing now rejects precision-rounded overflow values deterministically instead of accepting them as `100%`.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5238,6 +5262,8 @@ to:
   - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts`
 - pods memory normalization canonical-format regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts`
+- pods memory precision-overflow regression tests pass:
+  - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts test/models-ssh-status.test.ts`
 - pods process-identifier safe-integer regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/process-identifiers.test.ts`
 - pods required-option smoke checks pass:
