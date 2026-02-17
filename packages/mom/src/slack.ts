@@ -3,7 +3,11 @@ import { WebClient } from "@slack/web-api";
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "fs";
 import { basename, join } from "path";
 import * as log from "./log.js";
-import { getLatestSlackTimestamp, parseSlackTimestampToMilliseconds } from "./slack-timestamp.js";
+import {
+	getLatestSlackTimestamp,
+	isSlackTimestampOlder,
+	parseSlackTimestampToMilliseconds,
+} from "./slack-timestamp.js";
 import type { Attachment, ChannelStore } from "./store.js";
 
 // ============================================================================
@@ -301,12 +305,15 @@ export class SlackBot {
 			slackEvent.attachments = this.logUserMessage(slackEvent);
 
 			// Only trigger processing for messages AFTER startup (not replayed old messages)
-			if (this.startupTs && e.ts < this.startupTs) {
-				log.logInfo(
-					`[${e.channel}] Logged old message (pre-startup), not triggering: ${slackEvent.text.substring(0, 30)}`,
-				);
-				ack();
-				return;
+			if (this.startupTs) {
+				const isOlderThanStartup = isSlackTimestampOlder(e.ts, this.startupTs);
+				if (isOlderThanStartup === true) {
+					log.logInfo(
+						`[${e.channel}] Logged old message (pre-startup), not triggering: ${slackEvent.text.substring(0, 30)}`,
+					);
+					ack();
+					return;
+				}
 			}
 
 			// Check for stop command - execute immediately, don't queue!
@@ -380,10 +387,13 @@ export class SlackBot {
 			slackEvent.attachments = this.logUserMessage(slackEvent);
 
 			// Only trigger processing for messages AFTER startup (not replayed old messages)
-			if (this.startupTs && e.ts < this.startupTs) {
-				log.logInfo(`[${e.channel}] Skipping old message (pre-startup): ${slackEvent.text.substring(0, 30)}`);
-				ack();
-				return;
+			if (this.startupTs) {
+				const isOlderThanStartup = isSlackTimestampOlder(e.ts, this.startupTs);
+				if (isOlderThanStartup === true) {
+					log.logInfo(`[${e.channel}] Skipping old message (pre-startup): ${slackEvent.text.substring(0, 30)}`);
+					ack();
+					return;
+				}
 			}
 
 			// Only trigger handler for DMs

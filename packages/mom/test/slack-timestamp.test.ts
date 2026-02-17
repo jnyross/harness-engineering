@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
 	getLatestSlackTimestamp,
+	isSlackTimestampOlder,
 	isValidSlackTimestamp,
 	parseSlackTimestampToMilliseconds,
 } from "../src/slack-timestamp.js";
@@ -50,6 +51,11 @@ describe("getLatestSlackTimestamp", () => {
 		const latest = getLatestSlackTimestamp(["1700000000", "1700000000.200000", "1700000000.100000"]);
 		assert.equal(latest, "1700000000.200000");
 	});
+
+	it("preserves microsecond ordering for timestamps within same millisecond", () => {
+		const latest = getLatestSlackTimestamp(["1700000000.123456", "1700000000.123789"]);
+		assert.equal(latest, "1700000000.123789");
+	});
 });
 
 describe("isValidSlackTimestamp", () => {
@@ -61,5 +67,18 @@ describe("isValidSlackTimestamp", () => {
 	it("returns false for missing or malformed values", () => {
 		assert.equal(isValidSlackTimestamp(undefined), false);
 		assert.equal(isValidSlackTimestamp("invalid"), false);
+	});
+});
+
+describe("isSlackTimestampOlder", () => {
+	it("compares valid timestamps across decimal and integer forms", () => {
+		assert.equal(isSlackTimestampOlder("1700000000.100000", "1700000000.200000"), true);
+		assert.equal(isSlackTimestampOlder("1700000000", "1700000000.100000"), true);
+		assert.equal(isSlackTimestampOlder("1700000001000", "1700000000.500000"), false);
+	});
+
+	it("returns undefined when either timestamp is malformed", () => {
+		assert.equal(isSlackTimestampOlder("invalid", "1700000000.100000"), undefined);
+		assert.equal(isSlackTimestampOlder("1700000000.100000", "invalid"), undefined);
 	});
 });

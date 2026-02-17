@@ -26,6 +26,7 @@
 - Slack live/backfill message timestamp handling now shares strict Slack timestamp parsing and ignores malformed history timestamps when selecting backfill cursors, preventing date-conversion crashes and malformed timestamp ordering drift.
 - Slack timestamp normalization now also handles integer-second timestamp variants correctly (in addition to decimal-second / epoch-ms forms), avoiding 1970-era date skew when decimals are omitted.
 - Slack integer timestamp normalization now uses value-magnitude detection (instead of string length), correctly handling integer-second variants even when strings include leading zeros.
+- Slack timestamp comparisons now preserve microsecond precision (including startup/backfill age checks), preventing ordering drift for same-millisecond events.
 - Channel-download transcript formatting now leaves malformed Slack timestamps as raw text instead of attempting invalid date conversion, preventing `RangeError` crashes during export.
 - Channel-download thread/message iteration now skips invalid/missing Slack timestamps with warnings instead of failing downstream thread fetch/formatting paths.
 - Read-tool line counting now validates `wc -l` output strictly and throws explicit parse errors for malformed output instead of continuing with `NaN`-derived offsets/line ranges.
