@@ -1,5 +1,9 @@
 import type { SpawnSyncReturns } from "node:child_process";
 
+export function getPackageManagerStartError(options: { invokedCommand: string; error: Error }): string {
+	return `Failed to start command ${options.invokedCommand}: ${options.error.message}`;
+}
+
 export function getPackageManagerSyncCommandError(
 	result: SpawnSyncReturns<string>,
 	options: { invokedCommand: string; timeoutMs?: number },
@@ -9,7 +13,7 @@ export function getPackageManagerSyncCommandError(
 		if (error.code === "ETIMEDOUT" && options.timeoutMs) {
 			return `Command ${options.invokedCommand} timed out after ${options.timeoutMs}ms`;
 		}
-		return `Failed to start command ${options.invokedCommand}: ${result.error.message}`;
+		return getPackageManagerStartError({ invokedCommand: options.invokedCommand, error: result.error });
 	}
 
 	if (result.signal) {

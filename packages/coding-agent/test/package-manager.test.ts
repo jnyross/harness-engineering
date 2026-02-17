@@ -1157,7 +1157,7 @@ export default function(api) { api.registerTool({ name: "test", description: "te
 			await expect(
 				// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
 				(packageManager as any).runCommand("/definitely/missing/binary-12345", []),
-			).rejects.toThrow("Failed to start /definitely/missing/binary-12345");
+			).rejects.toThrow("Failed to start command /definitely/missing/binary-12345");
 		});
 
 		signalAwareIt("rejects signal-terminated exits with explicit signal diagnostics", async () => {

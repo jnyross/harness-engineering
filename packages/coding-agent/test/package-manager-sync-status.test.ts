@@ -2,6 +2,7 @@ import type { SpawnSyncReturns } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import {
 	getPackageManagerAsyncCloseError,
+	getPackageManagerStartError,
 	getPackageManagerSyncCommandError,
 } from "../src/core/package-manager-sync-status.js";
 
@@ -66,6 +67,17 @@ describe("getPackageManagerSyncCommandError", () => {
 				invokedCommand: "npm root -g",
 			}),
 		).toBe("Failed to run command npm root -g: permission denied\n");
+	});
+});
+
+describe("getPackageManagerStartError", () => {
+	it("formats startup errors with full command context", () => {
+		expect(
+			getPackageManagerStartError({
+				invokedCommand: "npm install foo --prefix /tmp/proj",
+				error: new Error("ENOENT"),
+			}),
+		).toBe("Failed to start command npm install foo --prefix /tmp/proj: ENOENT");
 	});
 });
 
