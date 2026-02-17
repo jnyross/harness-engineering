@@ -2003,6 +2003,28 @@ to:
 
 **Result:** Codex OAuth startup is now deterministic regardless of lazy-import timing, and both manual-input parsing and post-start cancellation paths are covered by targeted tests.
 
+---
+
+### 118) OAuth manual redirect parsing missed hash-fragment callback formats
+
+**Finding:** Manual OAuth parsing improvements covered query-string forms, but both Anthropic and OpenAI Codex flows could still miss full redirect URLs that carry `code`/`state` in URL hash fragments (e.g. `...#code=...&state=...`), which is a common copy/paste variant in some browser flows.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/anthropic.ts`
+- `packages/ai/src/utils/oauth/openai-codex.ts`
+- `packages/ai/test/anthropic-oauth-abort.test.ts`
+- `packages/ai/test/openai-codex-oauth-abort.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- parse hash-fragment `code`/`state` pairs from full redirect URLs,
+- preserve existing support for query-string, `code#state`, and bare-code inputs,
+- add regression tests for Anthropic and Codex hash-fragment manual-input handling.
+
+**Result:** Manual OAuth input handling now accepts both query-string and hash-fragment redirect URL variants across Anthropic and Codex login flows.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2023,7 +2045,7 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts test/openai-codex-oauth-abort.test.ts test/google-antigravity-oauth-abort.test.ts test/google-gemini-cli-oauth-abort.test.ts`
 - ai anthropic oauth parsing/state-validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts`
-- ai openai-codex oauth startup/manual-flow/cancellation/base64url-decoding regression tests pass:
+- ai openai-codex oauth startup/manual-flow/cancellation/base64url-decoding/hash-fragment parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-oauth-abort.test.ts`
 - coding-agent tools regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted write coverage)
