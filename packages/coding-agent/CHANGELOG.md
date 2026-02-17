@@ -16,6 +16,7 @@
 - Prompt template expansion now validates quoted argument syntax (unmatched quotes are rejected instead of being silently misparsed).
 - Prompt-template and slash-command argument splitting now accepts any whitespace separator (spaces/tabs) when detecting command names and arguments.
 - Interactive extension-command detection now accepts tab-separated slash-command arguments (`/command\targ`) consistently with space-separated forms.
+- CLI argument parsing now warns when value-backed flags are provided without values (including extension string flags), instead of silently ignoring those options.
 - RPC client startup now handles spawn/startup failures deterministically (missing runtime, immediate process exit) and cleans up partial startup state before surfacing actionable errors.
 - RPC mode now finalizes pending extension UI requests and exits when stdin closes, uses single-settlement guards for dialog/editor RPC responses (including response-parse failures), and still exits cleanly if `session_shutdown` extension handlers throw.
 - RPC mode now preserves request IDs in unknown-command error responses, improving correlation for clients sending unsupported command types.

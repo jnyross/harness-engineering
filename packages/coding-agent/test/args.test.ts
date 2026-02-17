@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { parseArgs } from "../src/cli/args.js";
 
 describe("parseArgs", () => {
@@ -282,6 +282,41 @@ describe("parseArgs", () => {
 			expect(result.thinking).toBe("high");
 			expect(result.fileArgs).toEqual(["prompt.md"]);
 			expect(result.messages).toEqual(["Do the task"]);
+		});
+	});
+
+	describe("missing flag values", () => {
+		test("warns when value-backed flags are missing values", () => {
+			const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+			try {
+				const result = parseArgs(["--model"]);
+				expect(result.model).toBeUndefined();
+				expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("Warning: --model requires a value"));
+			} finally {
+				errorSpy.mockRestore();
+			}
+		});
+
+		test("warns for missing extension values", () => {
+			const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+			try {
+				const result = parseArgs(["--extension"]);
+				expect(result.extensions).toBeUndefined();
+				expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("Warning: --extension requires a value"));
+			} finally {
+				errorSpy.mockRestore();
+			}
+		});
+
+		test("warns for missing string extension-flag values", () => {
+			const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+			try {
+				const result = parseArgs(["--plan"], new Map([["plan", { type: "string" }]]));
+				expect(result.unknownFlags.has("plan")).toBe(false);
+				expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("Warning: --plan requires a value"));
+			} finally {
+				errorSpy.mockRestore();
+			}
 		});
 	});
 });

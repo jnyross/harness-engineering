@@ -51,6 +51,15 @@ export function isValidThinkingLevel(level: string): level is ThinkingLevel {
 	return VALID_THINKING_LEVELS.includes(level as ThinkingLevel);
 }
 
+function readFlagValue(args: string[], index: number, flagName: string): string | undefined {
+	const value = args[index + 1];
+	if (value === undefined) {
+		console.error(chalk.yellow(`Warning: ${flagName} requires a value`));
+		return undefined;
+	}
+	return value;
+}
+
 export function parseArgs(args: string[], extensionFlags?: Map<string, { type: "boolean" | "string" }>): Args {
 	const result: Args = {
 		messages: [],
@@ -65,37 +74,77 @@ export function parseArgs(args: string[], extensionFlags?: Map<string, { type: "
 			result.help = true;
 		} else if (arg === "--version" || arg === "-v") {
 			result.version = true;
-		} else if (arg === "--mode" && i + 1 < args.length) {
-			const mode = args[++i];
-			if (mode === "text" || mode === "json" || mode === "rpc") {
-				result.mode = mode;
+		} else if (arg === "--mode") {
+			const mode = readFlagValue(args, i, "--mode");
+			if (mode !== undefined) {
+				i++;
+				if (mode === "text" || mode === "json" || mode === "rpc") {
+					result.mode = mode;
+				}
 			}
 		} else if (arg === "--continue" || arg === "-c") {
 			result.continue = true;
 		} else if (arg === "--resume" || arg === "-r") {
 			result.resume = true;
-		} else if (arg === "--provider" && i + 1 < args.length) {
-			result.provider = args[++i];
-		} else if (arg === "--model" && i + 1 < args.length) {
-			result.model = args[++i];
-		} else if (arg === "--api-key" && i + 1 < args.length) {
-			result.apiKey = args[++i];
-		} else if (arg === "--system-prompt" && i + 1 < args.length) {
-			result.systemPrompt = args[++i];
-		} else if (arg === "--append-system-prompt" && i + 1 < args.length) {
-			result.appendSystemPrompt = args[++i];
+		} else if (arg === "--provider") {
+			const provider = readFlagValue(args, i, "--provider");
+			if (provider !== undefined) {
+				result.provider = provider;
+				i++;
+			}
+		} else if (arg === "--model") {
+			const model = readFlagValue(args, i, "--model");
+			if (model !== undefined) {
+				result.model = model;
+				i++;
+			}
+		} else if (arg === "--api-key") {
+			const apiKey = readFlagValue(args, i, "--api-key");
+			if (apiKey !== undefined) {
+				result.apiKey = apiKey;
+				i++;
+			}
+		} else if (arg === "--system-prompt") {
+			const systemPrompt = readFlagValue(args, i, "--system-prompt");
+			if (systemPrompt !== undefined) {
+				result.systemPrompt = systemPrompt;
+				i++;
+			}
+		} else if (arg === "--append-system-prompt") {
+			const appendSystemPrompt = readFlagValue(args, i, "--append-system-prompt");
+			if (appendSystemPrompt !== undefined) {
+				result.appendSystemPrompt = appendSystemPrompt;
+				i++;
+			}
 		} else if (arg === "--no-session") {
 			result.noSession = true;
-		} else if (arg === "--session" && i + 1 < args.length) {
-			result.session = args[++i];
-		} else if (arg === "--session-dir" && i + 1 < args.length) {
-			result.sessionDir = args[++i];
-		} else if (arg === "--models" && i + 1 < args.length) {
-			result.models = args[++i].split(",").map((s) => s.trim());
+		} else if (arg === "--session") {
+			const session = readFlagValue(args, i, "--session");
+			if (session !== undefined) {
+				result.session = session;
+				i++;
+			}
+		} else if (arg === "--session-dir") {
+			const sessionDir = readFlagValue(args, i, "--session-dir");
+			if (sessionDir !== undefined) {
+				result.sessionDir = sessionDir;
+				i++;
+			}
+		} else if (arg === "--models") {
+			const modelPatterns = readFlagValue(args, i, "--models");
+			if (modelPatterns !== undefined) {
+				result.models = modelPatterns.split(",").map((s) => s.trim());
+				i++;
+			}
 		} else if (arg === "--no-tools") {
 			result.noTools = true;
-		} else if (arg === "--tools" && i + 1 < args.length) {
-			const toolNames = args[++i].split(",").map((s) => s.trim());
+		} else if (arg === "--tools") {
+			const toolsArg = readFlagValue(args, i, "--tools");
+			if (toolsArg === undefined) {
+				continue;
+			}
+			i++;
+			const toolNames = toolsArg.split(",").map((s) => s.trim());
 			const validTools: ToolName[] = [];
 			for (const name of toolNames) {
 				if (name in allTools) {
@@ -107,35 +156,58 @@ export function parseArgs(args: string[], extensionFlags?: Map<string, { type: "
 				}
 			}
 			result.tools = validTools;
-		} else if (arg === "--thinking" && i + 1 < args.length) {
-			const level = args[++i];
-			if (isValidThinkingLevel(level)) {
-				result.thinking = level;
-			} else {
-				console.error(
-					chalk.yellow(
-						`Warning: Invalid thinking level "${level}". Valid values: ${VALID_THINKING_LEVELS.join(", ")}`,
-					),
-				);
+		} else if (arg === "--thinking") {
+			const level = readFlagValue(args, i, "--thinking");
+			if (level !== undefined) {
+				i++;
+				if (isValidThinkingLevel(level)) {
+					result.thinking = level;
+				} else {
+					console.error(
+						chalk.yellow(
+							`Warning: Invalid thinking level "${level}". Valid values: ${VALID_THINKING_LEVELS.join(", ")}`,
+						),
+					);
+				}
 			}
 		} else if (arg === "--print" || arg === "-p") {
 			result.print = true;
-		} else if (arg === "--export" && i + 1 < args.length) {
-			result.export = args[++i];
-		} else if ((arg === "--extension" || arg === "-e") && i + 1 < args.length) {
-			result.extensions = result.extensions ?? [];
-			result.extensions.push(args[++i]);
+		} else if (arg === "--export") {
+			const exportPath = readFlagValue(args, i, "--export");
+			if (exportPath !== undefined) {
+				result.export = exportPath;
+				i++;
+			}
+		} else if (arg === "--extension" || arg === "-e") {
+			const extensionPath = readFlagValue(args, i, arg);
+			if (extensionPath !== undefined) {
+				result.extensions = result.extensions ?? [];
+				result.extensions.push(extensionPath);
+				i++;
+			}
 		} else if (arg === "--no-extensions" || arg === "-ne") {
 			result.noExtensions = true;
-		} else if (arg === "--skill" && i + 1 < args.length) {
-			result.skills = result.skills ?? [];
-			result.skills.push(args[++i]);
-		} else if (arg === "--prompt-template" && i + 1 < args.length) {
-			result.promptTemplates = result.promptTemplates ?? [];
-			result.promptTemplates.push(args[++i]);
-		} else if (arg === "--theme" && i + 1 < args.length) {
-			result.themes = result.themes ?? [];
-			result.themes.push(args[++i]);
+		} else if (arg === "--skill") {
+			const skillPath = readFlagValue(args, i, "--skill");
+			if (skillPath !== undefined) {
+				result.skills = result.skills ?? [];
+				result.skills.push(skillPath);
+				i++;
+			}
+		} else if (arg === "--prompt-template") {
+			const promptTemplatePath = readFlagValue(args, i, "--prompt-template");
+			if (promptTemplatePath !== undefined) {
+				result.promptTemplates = result.promptTemplates ?? [];
+				result.promptTemplates.push(promptTemplatePath);
+				i++;
+			}
+		} else if (arg === "--theme") {
+			const themePath = readFlagValue(args, i, "--theme");
+			if (themePath !== undefined) {
+				result.themes = result.themes ?? [];
+				result.themes.push(themePath);
+				i++;
+			}
 		} else if (arg === "--no-skills" || arg === "-ns") {
 			result.noSkills = true;
 		} else if (arg === "--no-prompt-templates" || arg === "-np") {
@@ -160,8 +232,12 @@ export function parseArgs(args: string[], extensionFlags?: Map<string, { type: "
 			if (extFlag) {
 				if (extFlag.type === "boolean") {
 					result.unknownFlags.set(flagName, true);
-				} else if (extFlag.type === "string" && i + 1 < args.length) {
-					result.unknownFlags.set(flagName, args[++i]);
+				} else if (extFlag.type === "string") {
+					const flagValue = readFlagValue(args, i, arg);
+					if (flagValue !== undefined) {
+						result.unknownFlags.set(flagName, flagValue);
+						i++;
+					}
 				}
 			}
 			// Unknown flags without extensionFlags are silently ignored (first pass)
