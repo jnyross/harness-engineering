@@ -23,17 +23,11 @@ import { type ExtensionAPI, getMarkdownTheme } from "@mariozechner/pi-coding-age
 import { Container, Markdown, Spacer, Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 import { type AgentConfig, type AgentScope, discoverAgents } from "./agents.js";
+import { getSubagentProcessExitStatus } from "./subagent-exit-status.js";
 
 const MAX_PARALLEL_TASKS = 8;
 const MAX_CONCURRENCY = 4;
 const COLLAPSED_ITEM_COUNT = 10;
-
-function normalizeExitCode(code: number | null, signal: NodeJS.Signals | null): number {
-	if (signal) {
-		return 1;
-	}
-	return code ?? 1;
-}
 
 function formatTokens(count: number): string {
 	if (count < 1000) return count.toString();
@@ -368,7 +362,11 @@ async function runSingleAgent(
 
 			proc.on("close", (code, closeSignal) => {
 				if (buffer.trim()) processLine(buffer);
-				resolveOnce(normalizeExitCode(code, closeSignal));
+				const status = getSubagentProcessExitStatus(code, closeSignal);
+				if (status.failureReason && currentResult.stderr.trim().length === 0) {
+					currentResult.stderr += `${status.failureReason}\n`;
+				}
+				resolveOnce(status.exitCode);
 			});
 
 			proc.on("error", (error) => {

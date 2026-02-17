@@ -90,6 +90,7 @@
 - Interactive-shell extension example now classifies `spawnSync` startup/signal/unknown-status outcomes explicitly, treating rare `status=null/signal=null` closes as failures instead of false success.
 - RPC extension TUI example now reports `exit(code=null, signal=null)` as `unknown status` instead of the ambiguous `code null` reason string, while still normalizing the process exit to non-zero.
 - SSH extension example now reports `close(code=null, signal=null)` failures as `unknown status` (instead of ambiguous numeric fallbacks) while keeping non-zero normalization for signal/unknown exits.
+- Subagent extension example now records explicit diagnostics for signal and unknown `close(code=null, signal=null)` outcomes, avoiding empty stderr on failed delegated subagent process exits.
 
 ## [0.52.12] - 2026-02-13
 
