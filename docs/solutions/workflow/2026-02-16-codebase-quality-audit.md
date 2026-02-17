@@ -5597,6 +5597,26 @@ to:
 
 **Result:** extension dialog countdown timers now behave deterministically for malformed/oversized timeout inputs without relying on runtime timer coercion.
 
+---
+
+### 301) coding-agent `--tools` comma-list parsing still accepted blank-only values
+
+**Finding:** after initial comma-list hardening, `packages/coding-agent/src/cli/args.ts` still allowed `--tools ",,"` to resolve to an empty tool array without an explicit warning, which could silently disable built-in tools from malformed CLI input.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/cli/args.ts`
+- `packages/coding-agent/test/args.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- warn when `--tools` resolves to no non-empty tool names,
+- skip applying tool overrides for blank-only `--tools` values,
+- add regression coverage for blank-only tool-list warning behavior.
+
+**Result:** malformed blank-only `--tools` inputs now produce explicit warnings and no longer silently alter tool activation behavior.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5628,7 +5648,7 @@ to:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/terminal-timeouts.test.ts`
 - coding-agent changelog/export-color parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/changelog-utils.test.ts test/export-html-color-parsing.test.ts`
-- coding-agent CLI comma-list parsing regression tests pass:
+- coding-agent CLI comma-list parsing regression tests pass (including blank-only `--models`/`--tools` warning behavior):
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/args.test.ts`
 - coding-agent tool numeric-parameter safety regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/execution-plan.test.ts test/read-tool.test.ts test/tool-numeric-parameter-safety.test.ts`
