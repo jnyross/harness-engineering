@@ -26,6 +26,13 @@ import {
 	type WriteOperations,
 } from "@mariozechner/pi-coding-agent";
 
+function normalizeExitCode(code: number | null, signal: NodeJS.Signals | null): number {
+	if (signal) {
+		return 1;
+	}
+	return code ?? 1;
+}
+
 function sshExec(remote: string, command: string): Promise<Buffer> {
 	return new Promise((resolve, reject) => {
 		const child = spawn("ssh", [remote, command], { stdio: ["ignore", "pipe", "pipe"] });
@@ -53,7 +60,7 @@ function sshExec(remote: string, command: string): Promise<Buffer> {
 		child.stderr.on("data", (data) => errChunks.push(data));
 		child.on("error", (error) => rejectOnce(error));
 		child.on("close", (code, closeSignal) => {
-			const normalizedCode = code ?? (closeSignal ? 1 : 0);
+			const normalizedCode = normalizeExitCode(code, closeSignal);
 			if (normalizedCode !== 0) {
 				const reason = closeSignal ? `signal ${closeSignal}` : String(normalizedCode);
 				rejectOnce(new Error(`SSH failed (${reason}): ${Buffer.concat(errChunks).toString()}`));
@@ -147,7 +154,7 @@ function createRemoteBashOps(remote: string, remoteCwd: string, localCwd: string
 				child.on("close", (code, closeSignal) => {
 					if (signal?.aborted) rejectOnce(new Error("aborted"));
 					else if (timedOut) rejectOnce(new Error(`timeout:${timeout}`));
-					else resolveOnce({ exitCode: code ?? (closeSignal ? 1 : 0) });
+					else resolveOnce({ exitCode: normalizeExitCode(code, closeSignal) });
 				});
 			}),
 	};
