@@ -17,6 +17,7 @@
 - Runtime message router now falls back to the incoming message source window when sandbox iframe references are not yet attached, avoiding unnecessary request/response timeouts during early iframe lifecycle races.
 - `ProviderKeyInput` now tracks and clears delayed failure-reset timers across retries/disconnects, preventing stale timeout callbacks from mutating detached component state.
 - `ConsoleBlock` now clears copy-feedback reset timers on repeated copy/disconnect paths, preventing stale timeout callbacks after component unmount.
+- `AttachmentOverlay` now removes global keydown listeners and cancels in-flight preview loading in `disconnectedCallback()`, preventing listener/task leaks if the overlay is removed externally.
 
 ## [0.52.12] - 2026-02-13
 

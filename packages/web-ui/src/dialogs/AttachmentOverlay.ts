@@ -44,10 +44,20 @@ export class AttachmentOverlay extends LitElement {
 		window.addEventListener("keydown", this.boundHandleKeyDown);
 	}
 
+	override disconnectedCallback(): void {
+		super.disconnectedCallback();
+		if (this.boundHandleKeyDown) {
+			window.removeEventListener("keydown", this.boundHandleKeyDown);
+			this.boundHandleKeyDown = undefined;
+		}
+		this.cleanup();
+	}
+
 	private close() {
 		this.cleanup();
 		if (this.boundHandleKeyDown) {
 			window.removeEventListener("keydown", this.boundHandleKeyDown);
+			this.boundHandleKeyDown = undefined;
 		}
 		this.onCloseCallback?.();
 		this.remove();

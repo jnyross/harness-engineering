@@ -3147,6 +3147,24 @@ to:
 
 **Result:** OAuth callback waiting now reacts immediately to completion/cancel/close events with lower timer overhead and deterministic settlement.
 
+---
+
+### 177) AttachmentOverlay cleanup depended on close-button path only
+
+**Finding:** Attachment overlay removed global keydown listeners and preview-loading tasks in `close()`, but lacked `disconnectedCallback()` cleanup for external removal paths.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/dialogs/AttachmentOverlay.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- run listener/task cleanup from `disconnectedCallback()`,
+- ensure keydown handler references are cleared after explicit close.
+
+**Result:** Attachment overlay now releases global listeners/loading resources even when removed outside the normal close-button flow.
+
 ## Validation Evidence
 
 - Root quality gate passes:
