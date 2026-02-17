@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { getSubagentProcessExitStatus } from "../examples/extensions/subagent/subagent-exit-status.js";
+import {
+	getSubagentProcessExitStatus,
+	getSubagentStartError,
+} from "../examples/extensions/subagent/subagent-exit-status.js";
 
 describe("getSubagentProcessExitStatus", () => {
 	it("returns success for clean exits", () => {
@@ -25,5 +28,17 @@ describe("getSubagentProcessExitStatus", () => {
 			exitCode: 13,
 			failureReason: "Subagent process exited with code 13",
 		});
+	});
+});
+
+describe("getSubagentStartError", () => {
+	it("includes full command context in spawn startup diagnostics", () => {
+		expect(
+			getSubagentStartError({
+				command: "pi",
+				args: ["--mode", "json", "-p", "--no-session", "Task: explain"],
+				error: new Error("ENOENT"),
+			}),
+		).toBe("Failed to start subagent command 'pi --mode json -p --no-session Task: explain': ENOENT");
 	});
 });

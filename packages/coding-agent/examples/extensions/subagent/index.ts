@@ -23,7 +23,7 @@ import { type ExtensionAPI, getMarkdownTheme } from "@mariozechner/pi-coding-age
 import { Container, Markdown, Spacer, Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 import { type AgentConfig, type AgentScope, discoverAgents } from "./agents.js";
-import { getSubagentProcessExitStatus } from "./subagent-exit-status.js";
+import { getSubagentProcessExitStatus, getSubagentStartError } from "./subagent-exit-status.js";
 
 const MAX_PARALLEL_TASKS = 8;
 const MAX_CONCURRENCY = 4;
@@ -370,7 +370,7 @@ async function runSingleAgent(
 			});
 
 			proc.on("error", (error) => {
-				currentResult.stderr += `Failed to start subagent process: ${error.message}\n`;
+				currentResult.stderr += `${getSubagentStartError({ command: "pi", args, error })}\n`;
 				resolveOnce(1);
 			});
 
