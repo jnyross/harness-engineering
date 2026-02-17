@@ -4197,6 +4197,24 @@ to:
 
 **Result:** pods CLI now fails fast with explicit option-value diagnostics instead of silently ignoring missing required values.
 
+---
+
+### 233) `start --vllm` accepted empty passthrough arg lists
+
+**Finding:** `pi start ... --vllm` switched parsing into passthrough mode but did not require any trailing arguments, so a bare `--vllm` silently fell back to standard launch settings.
+
+**Action:** Updated:
+
+- `packages/pods/src/cli.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- reject `start --vllm` when no passthrough arguments are provided,
+- surface explicit `Option --vllm requires at least one argument.` diagnostics.
+
+**Result:** `--vllm` passthrough mode now has explicit argument requirements and no longer silently degrades to default launch behavior.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4210,6 +4228,8 @@ to:
 - pods required-option smoke checks pass:
   - `npx tsx packages/pods/src/cli.ts start demo-model --name demo --memory`
   - `npx tsx packages/pods/src/cli.ts pods setup demo "ssh host" --vllm`
+- pods `start --vllm` arg-requirement smoke check passes:
+  - `npx tsx packages/pods/src/cli.ts start demo-model --name demo --vllm`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
 - pods SSH/SCP parser regression tests pass:
