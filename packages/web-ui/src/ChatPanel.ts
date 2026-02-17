@@ -23,6 +23,7 @@ export class ChatPanel extends LitElement {
 	@state() private artifactCount = 0;
 	@state() private showArtifactsPanel = false;
 	@state() private windowWidth = 0;
+	private initResizeFrameId: number | undefined;
 
 	private resizeHandler = () => {
 		this.windowWidth = window.innerWidth;
@@ -42,7 +43,8 @@ export class ChatPanel extends LitElement {
 		this.style.height = "100%";
 		this.style.minHeight = "0";
 		// Update width after initial render
-		requestAnimationFrame(() => {
+		this.initResizeFrameId = requestAnimationFrame(() => {
+			this.initResizeFrameId = undefined;
 			this.windowWidth = window.innerWidth;
 			this.requestUpdate();
 		});
@@ -51,6 +53,10 @@ export class ChatPanel extends LitElement {
 	override disconnectedCallback() {
 		super.disconnectedCallback();
 		window.removeEventListener("resize", this.resizeHandler);
+		if (this.initResizeFrameId !== undefined) {
+			cancelAnimationFrame(this.initResizeFrameId);
+			this.initResizeFrameId = undefined;
+		}
 	}
 
 	async setAgent(

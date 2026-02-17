@@ -3165,6 +3165,24 @@ to:
 
 **Result:** Attachment overlay now releases global listeners/loading resources even when removed outside the normal close-button flow.
 
+---
+
+### 178) ChatPanel deferred initial resize callback could outlive component mount
+
+**Finding:** Chat panel scheduled a deferred initial width sync via `requestAnimationFrame` but did not cancel it on disconnect, allowing stale callbacks after rapid mount/unmount transitions.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/ChatPanel.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- track the deferred resize frame ID,
+- cancel pending frame callbacks during `disconnectedCallback()`.
+
+**Result:** Chat panel now avoids stale deferred resize callbacks after unmount.
+
 ## Validation Evidence
 
 - Root quality gate passes:
