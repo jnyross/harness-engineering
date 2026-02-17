@@ -1689,6 +1689,24 @@ to use single-settlement resolve/reject paths with listener cleanup and added re
 
 **Result:** Sleep helper now cleans abort listeners deterministically and avoids double-settlement behavior under abort timing races.
 
+---
+
+### 100) ai provider retry backoff sleep duplicated abort-listener leak pattern
+
+**Finding:** OpenAI Codex and Google Gemini CLI providers each had local retry `sleep()` helpers that attached abort listeners without cleanup, allowing listener accumulation across retry loops.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/abortable-sleep.ts` (new shared helper)
+- `packages/ai/src/providers/openai-codex-responses.ts`
+- `packages/ai/src/providers/google-gemini-cli.ts`
+- `packages/ai/test/abortable-sleep.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to centralize abort-aware sleep behavior with deterministic listener cleanup and added dedicated helper regression tests.
+
+**Result:** AI provider retry backoff now uses a shared abort-safe sleep implementation that avoids abort-listener leaks across retries.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1701,6 +1719,8 @@ to use single-settlement resolve/reject paths with listener cleanup and added re
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures + pending-request rejection on stop)
 - coding-agent sleep helper regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/sleep.test.ts` (includes listener cleanup on resolve + abort paths)
+- ai abortable sleep + retry stream regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/abortable-sleep.test.ts test/google-gemini-cli-retry-delay.test.ts test/openai-codex-stream.test.ts`
 - coding-agent execCommand regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - coding-agent interactive status tests pass after share flow command-exec refactor:
