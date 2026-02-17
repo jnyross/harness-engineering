@@ -1555,6 +1555,22 @@ to short-circuit pre-aborted execution signals before subprocess spawn and added
 
 **Result:** Mom sandbox command execution now respects cancellation preconditions immediately and avoids unnecessary subprocess startup.
 
+---
+
+### 92) coding-agent bash tool spawned shells for pre-aborted requests
+
+**Finding:** Built-in bash tool default execution path only handled aborted signals after shell spawn setup, allowing cancelled calls to still start subprocesses.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/bash.ts`
+- `packages/coding-agent/test/tools.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to short-circuit pre-aborted signals before shell spawn and added regression coverage proving aborted calls do not execute side-effect commands.
+
+**Result:** Built-in bash tool now honors cancellation preconditions before command startup, reducing unnecessary subprocess execution under cancelled runs.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1577,6 +1593,8 @@ to short-circuit pre-aborted execution signals before subprocess spawn and added
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/bash-executor.test.ts`
 - mom sandbox pre-abort executor regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes pre-aborted host executor case)
+- coding-agent tools regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted bash tool signal case)
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes docker-missing spawn-error handling case)
 - Agent package tests pass:
