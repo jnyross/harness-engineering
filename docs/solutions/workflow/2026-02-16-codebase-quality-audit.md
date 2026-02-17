@@ -2620,6 +2620,24 @@ to:
 
 **Result:** RPC mode now terminates cleanly when input streams end, avoiding orphaned headless processes and pending request leaks.
 
+---
+
+### 149) RPC extension UI example had separate `error`/`exit` shutdown paths without settlement guard
+
+**Finding:** The RPC extension TUI example handled child-process `error` and `exit` independently, which could trigger duplicated teardown/exit behavior if both events surfaced in edge startup/termination scenarios.
+
+**Action:** Updated:
+
+- `packages/coding-agent/examples/rpc-extension-ui.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- add a single-settlement `settleAndExit()` helper,
+- route both `error` and `exit` callbacks through the same guarded shutdown path.
+
+**Result:** RPC extension example now performs deterministic one-time teardown and process exit across child-process event races.
+
 ## Validation Evidence
 
 - Root quality gate passes:

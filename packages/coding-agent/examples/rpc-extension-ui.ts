@@ -609,20 +609,28 @@ async function main() {
 
 	// -- Agent exit --
 
-	agent.on("error", (error) => {
+	let processSettled = false;
+	const settleAndExit = (exitCode: number, message?: string) => {
+		if (processSettled) {
+			return;
+		}
+		processSettled = true;
 		tui.stop();
 		if (stderr) console.error(stderr);
-		console.error(`Failed to start agent process: ${error.message}`);
-		process.exit(1);
+		if (message) {
+			console.error(message);
+		}
+		process.exit(exitCode);
+	};
+
+	agent.on("error", (error) => {
+		settleAndExit(1, `Failed to start agent process: ${error.message}`);
 	});
 
 	agent.on("exit", (code, signal) => {
-		tui.stop();
-		if (stderr) console.error(stderr);
 		const exitCode = code ?? (signal ? 1 : 0);
 		const reason = signal ? `signal ${signal}` : `code ${code}`;
-		console.log(`Agent exited with ${reason}`);
-		process.exit(exitCode);
+		settleAndExit(exitCode, `Agent exited with ${reason}`);
 	});
 
 	// -- Start --
