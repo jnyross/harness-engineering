@@ -14,6 +14,7 @@
 - `--sandbox=docker:<name>` now validates docker container names before execution to reject unsafe shell-interpolated values.
 - Docker sandbox execution now invokes `docker exec` via argv (`spawn`) instead of shell-composed command strings, reducing shell interpolation risk.
 - Sandbox command runners now handle process spawn failures (`ENOENT`, etc.) via explicit `error` listeners instead of relying on uncaught process-level errors.
+- Sandbox executors now short-circuit pre-aborted signals before spawning subprocesses, preventing unnecessary command startup when cancellation was already requested.
 
 ### Changed
 

@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
+import { existsSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, describe, it } from "node:test";
-import { buildDockerExecArgs, parseSandboxArg, validateSandbox } from "../src/sandbox.js";
+import { buildDockerExecArgs, createExecutor, parseSandboxArg, validateSandbox } from "../src/sandbox.js";
 
 const originalExit = process.exit;
 const originalError = console.error;
@@ -55,5 +58,28 @@ describe("validateSandbox", () => {
 		process.env.PATH = "";
 
 		await assert.rejects(() => validateSandbox({ type: "docker", container: "mom-sandbox" }), /EXIT:1/);
+	});
+});
+
+describe("createExecutor", () => {
+	it("rejects immediately for pre-aborted host execution signals", async () => {
+		const markerPath = join(tmpdir(), `mom-host-exec-${Date.now()}.txt`);
+		if (existsSync(markerPath)) {
+			rmSync(markerPath);
+		}
+
+		const controller = new AbortController();
+		controller.abort();
+
+		const executor = createExecutor({ type: "host" });
+		await assert.rejects(
+			() =>
+				executor.exec(
+					`${process.execPath} -e "require('fs').writeFileSync(${JSON.stringify(markerPath)}, 'created')"`,
+					{ signal: controller.signal },
+				),
+			/Command aborted/,
+		);
+		assert.equal(existsSync(markerPath), false);
 	});
 });

@@ -138,6 +138,10 @@ export function buildDockerExecArgs(container: string, command: string): string[
 }
 
 function execWithSpawn(command: string, args: string[], options?: ExecOptions): Promise<ExecResult> {
+	if (options?.signal?.aborted) {
+		return Promise.reject(new Error("Command aborted"));
+	}
+
 	return new Promise((resolve, reject) => {
 		const child = spawn(command, args, {
 			detached: true,
