@@ -211,6 +211,11 @@ try {
 						env: process.env,
 					});
 
+					sshProcess.on("error", (error) => {
+						console.error(chalk.red(`Failed to start SSH process: ${error.message}`));
+						process.exit(1);
+					});
+
 					sshProcess.on("exit", (code) => {
 						process.exit(code || 0);
 					});
