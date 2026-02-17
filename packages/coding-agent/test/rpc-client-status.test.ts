@@ -45,7 +45,7 @@ describe("rpc client startup status helpers", () => {
 				stderr: "",
 			}),
 		).toBe(
-			"Agent process 'node dist/cli.js --mode rpc' exited before initialization with code unknown. Stderr: (none)",
+			"Agent process 'node dist/cli.js --mode rpc' exited before initialization with unknown status. Stderr: (none)",
 		);
 	});
 });

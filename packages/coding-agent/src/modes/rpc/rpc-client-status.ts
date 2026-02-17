@@ -21,7 +21,11 @@ export function getRpcClientStartupExitError(options: {
 	stderr: string;
 }): string {
 	const invokedCommand = buildRpcClientCommandText(options.command, options.args);
-	const exitReason = options.signal ? `signal ${options.signal}` : `code ${options.code ?? "unknown"}`;
+	const exitReason = options.signal
+		? `signal ${options.signal}`
+		: options.code === null
+			? "unknown status"
+			: `code ${options.code}`;
 	const stderr = options.stderr.trim() || "(none)";
 	return `Agent process '${invokedCommand}' exited before initialization with ${exitReason}. Stderr: ${stderr}`;
 }
