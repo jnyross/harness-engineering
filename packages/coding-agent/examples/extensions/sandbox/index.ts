@@ -80,6 +80,19 @@ function normalizeExitCode(code: number | null, signal: NodeJS.Signals | null): 
 	return code ?? 1;
 }
 
+function getSandboxExampleFailureReason(code: number | null, signal: NodeJS.Signals | null): string | undefined {
+	if (signal) {
+		return `Command terminated by signal ${signal}`;
+	}
+	if (code === null) {
+		return "Command exited with unknown status";
+	}
+	if (code !== 0) {
+		return `Command exited with code ${code}`;
+	}
+	return undefined;
+}
+
 function loadConfig(cwd: string): SandboxConfig {
 	const projectConfigPath = join(cwd, ".pi", "sandbox.json");
 	const globalConfigPath = join(homedir(), ".pi", "agent", "sandbox.json");
@@ -141,6 +154,7 @@ function createSandboxedBashOps(): BashOperations {
 			}
 
 			const wrappedCommand = await SandboxManager.wrapWithSandbox(command);
+			const invokedCommand = ["bash", "-c", wrappedCommand].join(" ");
 
 			return new Promise((resolve, reject) => {
 				const child = spawn("bash", ["-c", wrappedCommand], {
@@ -160,7 +174,7 @@ function createSandboxedBashOps(): BashOperations {
 					signal?.removeEventListener("abort", onAbort);
 				};
 
-				const resolveOnce = (value: { exitCode: number | null }) => {
+				const resolveOnce = (value: { exitCode: number | null; failureReason?: string }) => {
 					if (settled) {
 						return;
 					}
@@ -195,7 +209,8 @@ function createSandboxedBashOps(): BashOperations {
 				child.stderr?.on("data", onData);
 
 				child.on("error", (err) => {
-					rejectOnce(err);
+					const startupError = err instanceof Error ? err : new Error(String(err));
+					rejectOnce(new Error(`Failed to start sandbox command '${invokedCommand}': ${startupError.message}`));
 				});
 
 				const onAbort = () => {
@@ -216,7 +231,10 @@ function createSandboxedBashOps(): BashOperations {
 					} else if (timedOut) {
 						rejectOnce(new Error(`timeout:${timeout}`));
 					} else {
-						resolveOnce({ exitCode: normalizeExitCode(code, closeSignal) });
+						resolveOnce({
+							exitCode: normalizeExitCode(code, closeSignal),
+							failureReason: getSandboxExampleFailureReason(code, closeSignal),
+						});
 					}
 				});
 			});

@@ -47,6 +47,7 @@
 - Linux clipboard copy fallback now attaches a `wl-copy` spawn-error handler, preventing uncaught child-process errors from bubbling during best-effort clipboard writes.
 - Windows process-tree cleanup now attaches async spawn-error handling for `taskkill`, avoiding uncaught child-process errors in best-effort kill paths.
 - Sandbox extension example now uses single-settlement `error`/`close` handling with abort-listener cleanup and signal-exit normalization, avoiding racey duplicate settles in sandboxed bash execution.
+- Sandbox extension example now includes startup command context in spawn failures and propagates signal/unknown/non-zero close failure reasons to the built-in bash tool error output.
 - SSH extension example now uses single-settlement subprocess handling for SSH command and remote-bash execution paths, with signal/null exit normalization and deterministic abort/timeout cleanup.
 - Antigravity image-generation SSE parsing now flushes terminal buffered `data:` chunks without trailing newline delimiters, preventing dropped final image payloads.
 - Overlay QA extension now handles stream-process spawn failures explicitly, surfacing errors in the overlay instead of risking uncaught child-process errors.
