@@ -1135,4 +1135,27 @@ export default function(api) { api.registerTool({ name: "test", description: "te
 			expect(result.extensions.filter((r) => r.enabled).length).toBe(1);
 		});
 	});
+
+	describe("runCommand", () => {
+		it("resolves on zero exit", async () => {
+			await expect(
+				// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
+				(packageManager as any).runCommand(process.execPath, ["-e", "process.exit(0)"]),
+			).resolves.toBeUndefined();
+		});
+
+		it("rejects non-zero exits with command context", async () => {
+			await expect(
+				// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
+				(packageManager as any).runCommand(process.execPath, ["-e", "process.exit(3)"]),
+			).rejects.toThrow("failed with code 3");
+		});
+
+		it("rejects spawn startup failures with explicit message", async () => {
+			await expect(
+				// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
+				(packageManager as any).runCommand("/definitely/missing/binary-12345", []),
+			).rejects.toThrow("Failed to start");
+		});
+	});
 });

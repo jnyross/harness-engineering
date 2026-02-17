@@ -1699,17 +1699,39 @@ export class DefaultPackageManager implements PackageManager {
 
 	private runCommand(command: string, args: string[], options?: { cwd?: string }): Promise<void> {
 		return new Promise((resolvePromise, reject) => {
+			let settled = false;
+			const resolveOnce = () => {
+				if (settled) {
+					return;
+				}
+				settled = true;
+				resolvePromise();
+			};
+			const rejectOnce = (error: Error) => {
+				if (settled) {
+					return;
+				}
+				settled = true;
+				reject(error);
+			};
+
 			const child = spawn(command, args, {
 				cwd: options?.cwd,
 				stdio: "inherit",
 				shell: process.platform === "win32",
 			});
-			child.on("error", reject);
-			child.on("exit", (code) => {
+			child.on("error", (error) => {
+				rejectOnce(new Error(`Failed to start ${command}: ${error.message}`));
+			});
+			child.on("close", (code, signal) => {
+				if (signal) {
+					rejectOnce(new Error(`${command} ${args.join(" ")} exited due to signal ${signal}`));
+					return;
+				}
 				if (code === 0) {
-					resolvePromise();
+					resolveOnce();
 				} else {
-					reject(new Error(`${command} ${args.join(" ")} failed with code ${code}`));
+					rejectOnce(new Error(`${command} ${args.join(" ")} failed with code ${code}`));
 				}
 			});
 		});
