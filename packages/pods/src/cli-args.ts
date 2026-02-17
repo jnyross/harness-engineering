@@ -25,7 +25,7 @@ export function extractPodOverride(
 				throw new Error("Option --pod is only supported for model commands (start, stop, list, logs, agent).");
 			}
 			const podName = cliArgs[i + 1];
-			if (!podName || podName.startsWith("--")) {
+			if (!podName || podName.startsWith("-")) {
 				throw new Error("Option --pod requires a pod name.");
 			}
 			if (podOverride) {
