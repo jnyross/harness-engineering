@@ -1743,6 +1743,12 @@ export class DefaultPackageManager implements PackageManager {
 			encoding: "utf-8",
 			shell: process.platform === "win32",
 		});
+		if (result.error) {
+			throw new Error(`Failed to start ${command} ${args.join(" ")}: ${result.error.message}`);
+		}
+		if (result.status === null) {
+			throw new Error(`${command} ${args.join(" ")} exited due to signal ${result.signal ?? "unknown"}`);
+		}
 		if (result.status !== 0) {
 			throw new Error(`Failed to run ${command} ${args.join(" ")}: ${result.stderr || result.stdout}`);
 		}

@@ -1157,5 +1157,18 @@ export default function(api) { api.registerTool({ name: "test", description: "te
 				(packageManager as any).runCommand("/definitely/missing/binary-12345", []),
 			).rejects.toThrow("Failed to start");
 		});
+
+		it("runCommandSync returns stdout for successful commands", () => {
+			// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
+			const output = (packageManager as any).runCommandSync(process.execPath, ["-e", "process.stdout.write('ok')"]);
+			expect(output).toBe("ok");
+		});
+
+		it("runCommandSync rejects startup failures with explicit message", () => {
+			expect(() =>
+				// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
+				(packageManager as any).runCommandSync("/definitely/missing/binary-12345", []),
+			).toThrow("Failed to start");
+		});
 	});
 });
