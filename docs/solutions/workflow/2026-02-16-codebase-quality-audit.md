@@ -4097,10 +4097,69 @@ to:
 
 **Result:** managed tool bootstrap now reports clearer subprocess failure causes and avoids false-positive command availability under abnormal process exits.
 
+---
+
+### 228) `extract_document` pre-download size checks accepted malformed `Content-Length` prefixes
+
+**Finding:** web-ui `extract_document` tool parsed `Content-Length` with permissive integer coercion, which could partially accept malformed headers (for example `123abc`) during pre-download size gating.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/tools/extract-document.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- introduce strict `Content-Length` header parsing (`^\d+$` + safe-integer validation),
+- ignore malformed header values instead of partially coercing numeric prefixes.
+
+**Result:** document-size preflight checks now only trust strictly valid numeric `Content-Length` values.
+
+---
+
+### 229) terminal background auto-detection accepted malformed `COLORFGBG` tokens
+
+**Finding:** coding-agent theme auto-detection parsed `COLORFGBG` background tokens with permissive integer coercion, which could mis-detect light/dark defaults for malformed values.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/theme/theme.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- add strict background-index parsing (`^\d+$`) for `COLORFGBG`,
+- fall back deterministically when the environment token is malformed.
+
+**Result:** terminal theme auto-detection now ignores malformed `COLORFGBG` background values instead of partially coercing them.
+
+---
+
+### 230) AI usage/pricing numeric normalization still admitted malformed external number fields
+
+**Finding:** AI Cloud Code Assist usage metadata accepted negative/fractional token values, and model-catalog generation used permissive float parsing for provider pricing fields.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/google-gemini-cli.ts`
+- `packages/ai/test/google-gemini-cli-usage-metadata.test.ts`
+- `packages/ai/scripts/generate-models.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- normalize usage metadata to non-negative integer token counts (reject negatives, truncate fractional values),
+- add regression coverage for malformed/negative usage metadata payloads,
+- parse external pricing metadata with strict numeric conversion (`Number(...)`) instead of partial float coercion.
+
+**Result:** AI usage accounting and model-catalog price ingestion now handle malformed numeric payloads more defensively and deterministically.
+
 ## Validation Evidence
 
 - Root quality gate passes:
   - `npm run check`
+- ai usage metadata regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
 - pods SSH/SCP parser regression tests pass:
