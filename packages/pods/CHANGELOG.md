@@ -65,4 +65,5 @@
 - SCP startup failures now include full invoked-command context in diagnostics (e.g., quoted args + destination), improving troubleshooting when `scp` cannot be launched.
 - Interactive `pi shell` now surfaces explicit SSH failure reasons (signal/non-zero/unknown) and startup command context instead of exiting silently with only a status code.
 - `pi agent` delegated close-status failures now include the full invoked command in signal/unknown/non-zero diagnostics, improving troubleshooting for remote delegated CLI exits after successful spawn.
+- Model start/stop/list flows now fail fast on non-zero SSH command results (with stderr/stdout/exit-code diagnostics) instead of silently continuing with generic errors or stale config cleanup after SSH failures.
 

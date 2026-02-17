@@ -13,6 +13,7 @@ import { assertValidModelInstanceName, isValidModelInstanceName } from "../model
 import { waitForProcessExit } from "../process-exit.js";
 import { assertValidPid, isValidPid, isValidPort } from "../process-identifiers.js";
 import { joinShellArgs, shellExport } from "../shell-quote.js";
+import type { SSHResult } from "../ssh.js";
 import { extractHostFromSshCommand, parseSshCommand, sshExec } from "../ssh.js";
 import type { Pod } from "../types.js";
 
@@ -50,6 +51,24 @@ const getNextPort = (pod: Pod): number => {
 	}
 	return port;
 };
+
+export function getModelSshCommandError(options: { action: string; result: SSHResult }): string | undefined {
+	if (options.result.exitCode === 0) {
+		return undefined;
+	}
+
+	const stderr = options.result.stderr.trim();
+	if (stderr) {
+		return `${options.action} failed: ${stderr}`;
+	}
+
+	const stdout = options.result.stdout.trim();
+	if (stdout) {
+		return `${options.action} failed: ${stdout}`;
+	}
+
+	return `${options.action} failed: SSH command exited with code ${options.result.exitCode}`;
+}
 
 /**
  * Select GPUs for model deployment (round-robin)
@@ -230,13 +249,21 @@ export const startModel = async (
 		.replace("{{VLLM_ARGS}}", escapedVllmArgs);
 
 	// Upload customized script
-	await sshExec(
+	const uploadScriptResult = await sshExec(
 		pod.ssh,
 		`cat > /tmp/model_run_${name}.sh << 'EOF'
 ${scriptContent}
 EOF
 chmod +x /tmp/model_run_${name}.sh`,
 	);
+	const uploadScriptError = getModelSshCommandError({
+		action: `Uploading startup script for model '${name}'`,
+		result: uploadScriptResult,
+	});
+	if (uploadScriptError) {
+		console.error(chalk.red(uploadScriptError));
+		process.exit(1);
+	}
 
 	// Prepare environment
 	let env: string;
@@ -279,9 +306,20 @@ WRAPPER
 	`;
 
 	const pidResult = await sshExec(pod.ssh, startCmd);
+	const startRunnerError = getModelSshCommandError({
+		action: `Starting model runner for '${name}'`,
+		result: pidResult,
+	});
+	if (startRunnerError) {
+		console.error(chalk.red(startRunnerError));
+		process.exit(1);
+	}
+
 	const pid = parseInt(pidResult.stdout.trim(), 10);
 	if (!pid) {
-		console.error(chalk.red("Failed to start model runner"));
+		const startOutput = pidResult.stdout.trim();
+		const detail = pidResult.stderr.trim() || startOutput || "remote command did not return a valid PID";
+		console.error(chalk.red(`Failed to start model runner: ${detail}`));
 		process.exit(1);
 	}
 
@@ -492,7 +530,15 @@ export const stopModel = async (name: string, options: { pod?: string }) => {
 		pkill -TERM -P ${model.pid} 2>/dev/null || true
 		kill ${model.pid} 2>/dev/null || true
 	`;
-	await sshExec(pod.ssh, killCmd);
+	const stopResult = await sshExec(pod.ssh, killCmd);
+	const stopError = getModelSshCommandError({
+		action: `Stopping model '${name}'`,
+		result: stopResult,
+	});
+	if (stopError) {
+		console.error(chalk.red(stopError));
+		process.exit(1);
+	}
 
 	// Remove from config
 	const config = loadConfig();
@@ -541,7 +587,15 @@ export const stopAllModels = async (options: { pod?: string }) => {
 			kill $PID 2>/dev/null || true
 		done
 	`;
-	await sshExec(pod.ssh, killCmd);
+	const stopAllResult = await sshExec(pod.ssh, killCmd);
+	const stopAllError = getModelSshCommandError({
+		action: `Stopping models on pod '${podName}'`,
+		result: stopAllResult,
+	});
+	if (stopAllError) {
+		console.error(chalk.red(stopAllError));
+		process.exit(1);
+	}
 
 	// Clear all models from config
 	const config = loadConfig();
@@ -634,6 +688,15 @@ export const listModels = async (options: { pod?: string }) => {
 			fi
 		`;
 		const result = await sshExec(pod.ssh, checkCmd);
+		const checkError = getModelSshCommandError({
+			action: `Checking model '${name}' status`,
+			result,
+		});
+		if (checkError) {
+			console.log(chalk.red(`  ${name}: ${checkError}`));
+			anyDead = true;
+			continue;
+		}
 		const status = result.stdout.trim();
 		if (status === "dead") {
 			console.log(chalk.red(`  ${name}: Process ${model.pid} is not running`));
