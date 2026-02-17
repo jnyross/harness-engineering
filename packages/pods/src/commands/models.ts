@@ -316,6 +316,7 @@ WRAPPER
 		stdio: ["inherit", "pipe", "pipe"], // capture stdout and stderr
 		env: { ...process.env, FORCE_COLOR: "1" },
 	});
+	const logResultPromise = waitForProcessExit(logProcess);
 
 	let interrupted = false;
 	let startupComplete = false;
@@ -370,7 +371,7 @@ WRAPPER
 	logProcess.stdout?.on("data", processOutput);
 	logProcess.stderr?.on("data", processOutput);
 
-	const logResult = await waitForProcessExit(logProcess);
+	const logResult = await logResultPromise;
 	process.removeListener("SIGINT", sigintHandler);
 	if (logResult.error && !startupComplete && !interrupted) {
 		startupFailed = true;
@@ -688,8 +689,9 @@ export const viewLogs = async (name: string, options: { pod?: string }) => {
 			FORCE_COLOR: "1",
 		},
 	});
+	const logResultPromise = waitForProcessExit(logProcess);
 
-	const logResult = await waitForProcessExit(logProcess);
+	const logResult = await logResultPromise;
 	if (logResult.error) {
 		console.error(chalk.red(`Failed to stream logs: ${logResult.error.message}`));
 		process.exit(1);

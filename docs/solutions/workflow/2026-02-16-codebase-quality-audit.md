@@ -2563,6 +2563,24 @@ to:
 
 **Result:** Overlay QA streaming demo now degrades safely when process startup fails, with explicit in-overlay diagnostics instead of uncaught process errors.
 
+---
+
+### 146) pods model-log monitoring attached process-exit observation later than spawn
+
+**Finding:** In pods model start/log streaming flows, SSH log-process output handlers were attached before `waitForProcessExit()` setup. Very-early spawn failures could race before the shared exit/error observer was attached.
+
+**Action:** Updated:
+
+- `packages/pods/src/commands/models.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- start `waitForProcessExit(logProcess)` immediately after spawn in both model-start and log-view flows,
+- await the pre-attached exit/error promise after stream wiring.
+
+**Result:** Pods log monitoring now observes spawn/exit failures from the earliest point in process lifecycle, reducing startup race risk in SSH log streaming flows.
+
 ## Validation Evidence
 
 - Root quality gate passes:
