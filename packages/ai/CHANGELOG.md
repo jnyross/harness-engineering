@@ -7,6 +7,7 @@
 - Updated Codex WebSocket header conversion to iterate with `Headers.forEach()`, avoiding type incompatibilities in consumer check flows that use non-DOM `Headers` typings.
 - Consolidated provider retry sleep into a shared abortable helper that removes abort listeners on resolve/reject, preventing listener leaks across retry backoff paths.
 - GitHub Copilot OAuth polling now reuses the shared abortable sleep helper to avoid accumulating abort listeners across long-running device-flow polling loops.
+- Google Gemini CLI SSE parsing now flushes terminal buffered `data:` lines when streams end without trailing newline delimiters.
 
 ## [0.52.12] - 2026-02-13
 
