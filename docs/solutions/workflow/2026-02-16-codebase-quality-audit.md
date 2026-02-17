@@ -2839,6 +2839,22 @@ to:
 
 **Result:** Qwen OAuth example now reacts to cancellation consistently across polling/network paths and avoids accumulating stale abort listeners.
 
+---
+
+### 161) package-manager diagnostic context fix needed explicit regression assertions
+
+**Finding:** After improving package-manager async command diagnostics to include full invocation strings, existing tests only asserted generic failure substrings and did not lock in the richer command context.
+
+**Action:** Updated:
+
+- `packages/coding-agent/test/package-manager.test.ts`
+
+to:
+
+- assert full command-context diagnostics for non-zero exits and startup failures.
+
+**Result:** Regression coverage now enforces full-invocation error context in package-manager async command failures.
+
 ## Validation Evidence
 
 - Root quality gate passes:
