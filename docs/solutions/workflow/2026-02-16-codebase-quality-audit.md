@@ -5531,6 +5531,27 @@ to:
 
 **Result:** terminal input drain timing now behaves deterministically for malformed/oversized timeout arguments without relying on runtime timer coercion/clamping.
 
+---
+
+### 298) coding-agent comma-list CLI parsing accepted blank model/tool entries
+
+**Finding:** `packages/coding-agent/src/cli/args.ts` parsed `--models` / `--tools` by naive comma-split/trim; blank entries (`--models ",,"`, `--tools "read,,bash"`) were preserved, enabling unintended empty model patterns and noisy unknown-tool warnings for empty tokens.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/cli/args.ts`
+- `packages/coding-agent/test/args.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize comma-separated values by trimming and removing blank entries,
+- warn when `--models` resolves to no non-empty patterns,
+- keep valid model/tool entries while skipping empty tokens,
+- add regression coverage for blank-entry filtering and empty-`--models` warning behavior.
+
+**Result:** comma-list CLI flags now parse deterministically without empty-token side effects in model scoping or tool warnings.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5560,6 +5581,8 @@ to:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/terminal-timeouts.test.ts`
 - coding-agent changelog/export-color parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/changelog-utils.test.ts test/export-html-color-parsing.test.ts`
+- coding-agent CLI comma-list parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/args.test.ts`
 - coding-agent tool numeric-parameter safety regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/execution-plan.test.ts test/read-tool.test.ts test/tool-numeric-parameter-safety.test.ts`
 - coding-agent settings-selector numeric parsing regression tests pass:
