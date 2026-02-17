@@ -11,6 +11,7 @@ export class PersistentStorageDialog extends DialogBase {
 
 	private resolvePromise?: (persistGranted: boolean) => void;
 	private settled = false;
+	private requestSeq = 0;
 
 	protected modalWidth = "min(500px, 90vw)";
 	protected modalHeight = "auto";
@@ -44,10 +45,14 @@ export class PersistentStorageDialog extends DialogBase {
 	}
 
 	private async handleGrant() {
+		const requestId = ++this.requestSeq;
 		this.requesting = true;
 
 		try {
 			const granted = await navigator.storage.persist();
+			if (!this.isConnected || requestId !== this.requestSeq) {
+				return;
+			}
 			if (granted) {
 				console.log("✓ Persistent storage granted - sessions will be preserved");
 			} else {
@@ -55,11 +60,16 @@ export class PersistentStorageDialog extends DialogBase {
 			}
 			this.settle(granted);
 		} catch (error) {
+			if (!this.isConnected || requestId !== this.requestSeq) {
+				return;
+			}
 			console.error("Failed to request persistent storage:", error);
 			this.settle(false);
 		} finally {
-			this.requesting = false;
-			this.close();
+			if (this.isConnected && requestId === this.requestSeq) {
+				this.requesting = false;
+				this.close();
+			}
 		}
 	}
 
@@ -81,6 +91,12 @@ export class PersistentStorageDialog extends DialogBase {
 
 	override close() {
 		super.close();
+		this.settle(false);
+	}
+
+	override disconnectedCallback(): void {
+		super.disconnectedCallback();
+		this.requestSeq++;
 		this.settle(false);
 	}
 

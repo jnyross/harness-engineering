@@ -3544,6 +3544,25 @@ to:
 
 **Result:** API key prompt dialogs now avoid stale poll-driven resolution after detach and no longer leave dangling prompt promises when removed externally.
 
+---
+
+### 199) persistent storage dialog could leave stale async request completions and dangling prompt promise on detach
+
+**Finding:** Persistent storage dialog settled once on close, but did not invalidate in-flight permission requests when detached and did not explicitly settle pending request promises on external detach.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/dialogs/PersistentStorageDialog.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- sequence-guard async `navigator.storage.persist()` completions,
+- ignore stale completion paths after disconnect/superseding operations,
+- settle pending request promises during disconnect teardown.
+
+**Result:** Persistent storage dialog now avoids stale async state mutations and dangling request promises when dialogs are removed during in-flight permission checks.
+
 ## Validation Evidence
 
 - Root quality gate passes:
