@@ -153,6 +153,20 @@ export function streamProxy(model: Model<Api>, context: Context, options: ProxyS
 			reader = response.body!.getReader();
 			const decoder = new TextDecoder();
 			let buffer = "";
+			const processDataLine = (line: string) => {
+				if (!line.startsWith("data: ")) {
+					return;
+				}
+				const data = line.slice(6).trim();
+				if (!data) {
+					return;
+				}
+				const proxyEvent = JSON.parse(data) as ProxyAssistantMessageEvent;
+				const event = processProxyEvent(proxyEvent, partial);
+				if (event) {
+					stream.push(event);
+				}
+			};
 
 			while (true) {
 				const { done, value } = await reader.read();
@@ -167,18 +181,10 @@ export function streamProxy(model: Model<Api>, context: Context, options: ProxyS
 				buffer = lines.pop() || "";
 
 				for (const line of lines) {
-					if (line.startsWith("data: ")) {
-						const data = line.slice(6).trim();
-						if (data) {
-							const proxyEvent = JSON.parse(data) as ProxyAssistantMessageEvent;
-							const event = processProxyEvent(proxyEvent, partial);
-							if (event) {
-								stream.push(event);
-							}
-						}
-					}
+					processDataLine(line);
 				}
 			}
+			processDataLine(buffer);
 
 			if (options.signal?.aborted) {
 				throw new Error("Request aborted by user");
