@@ -1,7 +1,23 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { loginOpenAICodex, openaiCodexOAuthProvider } from "../src/utils/oauth/openai-codex.js";
 
-describe("openai-codex oauth abort handling", () => {
+function createAccessToken(accountId: string): string {
+	const header = Buffer.from(JSON.stringify({ alg: "none", typ: "JWT" }), "utf8").toString("base64");
+	const payload = Buffer.from(
+		JSON.stringify({
+			"https://api.openai.com/auth": { chatgpt_account_id: accountId },
+		}),
+		"utf8",
+	).toString("base64");
+	return `${header}.${payload}.signature`;
+}
+
+describe("openai-codex oauth login", () => {
+	afterEach(() => {
+		vi.unstubAllGlobals();
+		vi.restoreAllMocks();
+	});
+
 	it("rejects immediately when login signal is pre-aborted", async () => {
 		const controller = new AbortController();
 		const onAuth = vi.fn();
@@ -32,5 +48,59 @@ describe("openai-codex oauth abort handling", () => {
 			}),
 		).rejects.toThrow("Login cancelled");
 		expect(onAuth).not.toHaveBeenCalled();
+	});
+
+	it("rejects manual input when state mismatches", async () => {
+		const onPrompt = vi.fn(async () => "");
+		const fetchMock = vi.fn(async () => new Response(""));
+		vi.stubGlobal("fetch", fetchMock);
+
+		await expect(
+			loginOpenAICodex({
+				onAuth: () => {},
+				onPrompt,
+				onManualCodeInput: async () => "manual-code#wrong-state",
+			}),
+		).rejects.toThrow("State mismatch");
+		expect(fetchMock).not.toHaveBeenCalled();
+		expect(onPrompt).not.toHaveBeenCalled();
+	});
+
+	it("accepts manual code input and returns parsed account id", async () => {
+		const token = createAccessToken("acct_123");
+		const onPrompt = vi.fn(async () => "");
+		const fetchMock = vi.fn(
+			async (_input: unknown, _init?: RequestInit) =>
+				new Response(
+					JSON.stringify({
+						access_token: token,
+						refresh_token: "refresh-token",
+						expires_in: 3600,
+					}),
+					{
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					},
+				),
+		);
+		vi.stubGlobal("fetch", fetchMock);
+
+		const credentials = await loginOpenAICodex({
+			onAuth: () => {},
+			onPrompt,
+			onManualCodeInput: async () => "manual-code",
+		});
+
+		expect(credentials.accountId).toBe("acct_123");
+		expect(credentials.access).toBe(token);
+		expect(credentials.refresh).toBe("refresh-token");
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(onPrompt).not.toHaveBeenCalled();
+		const firstCall = fetchMock.mock.calls[0];
+		expect(firstCall).toBeDefined();
+		if (!firstCall) {
+			throw new Error("Expected token exchange fetch call");
+		}
+		expect(String(firstCall[1]?.body)).toContain("manual-code");
 	});
 });

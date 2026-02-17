@@ -8,11 +8,13 @@
 // NEVER convert to top-level imports - breaks browser/Vite builds (web-ui)
 let _randomBytes: typeof import("node:crypto").randomBytes | null = null;
 let _http: typeof import("node:http") | null = null;
+let _cryptoImportPromise: Promise<void> | null = null;
+let _httpImportPromise: Promise<void> | null = null;
 if (typeof process !== "undefined" && (process.versions?.node || process.versions?.bun)) {
-	import("node:crypto").then((m) => {
+	_cryptoImportPromise = import("node:crypto").then((m) => {
 		_randomBytes = m.randomBytes;
 	});
-	import("node:http").then((m) => {
+	_httpImportPromise = import("node:http").then((m) => {
 		_http = m;
 	});
 }
@@ -56,11 +58,65 @@ function assertNotAborted(signal?: AbortSignal): void {
 	}
 }
 
-function createState(): string {
-	if (!_randomBytes) {
-		throw new Error("OpenAI Codex OAuth is only available in Node.js environments");
+async function getNodeRandomBytes(): Promise<typeof import("node:crypto").randomBytes> {
+	if (_randomBytes) {
+		return _randomBytes;
 	}
-	return _randomBytes(16).toString("hex");
+	if (_cryptoImportPromise) {
+		await _cryptoImportPromise;
+	}
+	if (_randomBytes) {
+		return _randomBytes;
+	}
+	throw new Error("OpenAI Codex OAuth is only available in Node.js environments");
+}
+
+async function getNodeHttp(): Promise<typeof import("node:http")> {
+	if (_http) {
+		return _http;
+	}
+	if (_httpImportPromise) {
+		await _httpImportPromise;
+	}
+	if (_http) {
+		return _http;
+	}
+	throw new Error("OpenAI Codex OAuth is only available in Node.js environments");
+}
+
+async function createState(): Promise<string> {
+	const randomBytes = await getNodeRandomBytes();
+	return randomBytes(16).toString("hex");
+}
+
+function decodeBase64Segment(segment: string): string {
+	const normalized = segment.replace(/-/g, "+").replace(/_/g, "/");
+	const paddingLength = (4 - (normalized.length % 4)) % 4;
+	return atob(`${normalized}${"=".repeat(paddingLength)}`);
+}
+
+function parseJwtPayload(token: string): JwtPayload | null {
+	try {
+		const parts = token.split(".");
+		if (parts.length !== 3) {
+			return null;
+		}
+		const payload = parts[1];
+		if (!payload) {
+			return null;
+		}
+		const decoded = decodeBase64Segment(payload);
+		return JSON.parse(decoded) as JwtPayload;
+	} catch {
+		return null;
+	}
+}
+
+function decodeJwt(token: string): JwtPayload | null {
+	if (!_randomBytes) {
+		return parseJwtPayload(token);
+	}
+	return parseJwtPayload(token);
 }
 
 function parseAuthorizationInput(input: string): { code?: string; state?: string } {
@@ -91,18 +147,6 @@ function parseAuthorizationInput(input: string): { code?: string; state?: string
 	}
 
 	return { code: value };
-}
-
-function decodeJwt(token: string): JwtPayload | null {
-	try {
-		const parts = token.split(".");
-		if (parts.length !== 3) return null;
-		const payload = parts[1] ?? "";
-		const decoded = atob(payload);
-		return JSON.parse(decoded) as JwtPayload;
-	} catch {
-		return null;
-	}
 }
 
 async function exchangeAuthorizationCode(
@@ -194,7 +238,7 @@ async function createAuthorizationFlow(
 	originator: string = "pi",
 ): Promise<{ verifier: string; state: string; url: string }> {
 	const { verifier, challenge } = await generatePKCE();
-	const state = createState();
+	const state = await createState();
 
 	const url = new URL(AUTHORIZE_URL);
 	url.searchParams.set("response_type", "code");
@@ -217,13 +261,11 @@ type OAuthServerInfo = {
 	waitForCode: () => Promise<{ code: string } | null>;
 };
 
-function startLocalOAuthServer(state: string): Promise<OAuthServerInfo> {
-	if (!_http) {
-		throw new Error("OpenAI Codex OAuth is only available in Node.js environments");
-	}
+async function startLocalOAuthServer(state: string): Promise<OAuthServerInfo> {
+	const http = await getNodeHttp();
 	let lastCode: string | null = null;
 	let cancelled = false;
-	const server = _http.createServer((req, res) => {
+	const server = http.createServer((req, res) => {
 		try {
 			const url = new URL(req.url || "", "http://localhost");
 			if (url.pathname !== "/auth/callback") {
