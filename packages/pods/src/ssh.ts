@@ -1,4 +1,5 @@
 import { type SpawnOptions, spawn } from "child_process";
+import { normalizeChildExitCode } from "./child-exit-status.js";
 
 export interface SSHResult {
 	stdout: string;
@@ -226,7 +227,7 @@ export const sshExec = async (
 			resolveOnce({
 				stdout,
 				stderr,
-				exitCode: code ?? (signal ? 1 : 0),
+				exitCode: normalizeChildExitCode(code, signal),
 			});
 		});
 
@@ -290,7 +291,7 @@ export const sshExecStream = async (
 		const proc = spawn(sshBinary, sshArgs, spawnOptions);
 
 		proc.on("close", (code, signal) => {
-			resolveOnce(code ?? (signal ? 1 : 0));
+			resolveOnce(normalizeChildExitCode(code, signal));
 		});
 
 		proc.on("error", () => {

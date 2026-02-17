@@ -57,4 +57,5 @@
 - `pi shell` now normalizes signal-terminated SSH child exits as non-zero and surfaces explicit signal-termination diagnostics instead of silently exiting with code-only output.
 - shared child-exit normalization now treats unknown `code=null`/`signal=null` exits as non-zero, preventing ambiguous success semantics in process-exit monitoring paths.
 - `pi agent` delegated prompt command errors now include full invoked command context and normalize `close(code=null, signal=null)` outcomes to explicit unknown-status failures instead of ambiguous `code null` diagnostics.
+- SSH helper wrappers (`sshExec`, `sshExecStream`) now reuse shared child-exit normalization so unknown `code=null`/`signal=null` subprocess exits are treated as non-zero failures.
 
