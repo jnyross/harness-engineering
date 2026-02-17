@@ -5163,6 +5163,26 @@ to:
 
 **Result:** pods pid/port validator helpers now reject unsafe integers deterministically before any command-assembly usage of process identifiers.
 
+---
+
+### 280) coding-agent export theme plain missing variable references still leaked unresolved tokens
+
+**Finding:** export color resolution hardened `$missingVar` handling, but plain missing variable references (without `$`) could still pass unresolved token strings through to HTML export color values.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/theme/theme.ts`
+- `packages/coding-agent/test/theme-export-colors.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- return `undefined` for both plain and `$` missing export variable references,
+- isolate variable-resolution failures per export color override,
+- add regression coverage for plain missing export-variable fallback.
+
+**Result:** missing export variable references (plain or `$`-prefixed) now resolve safely to undefined rather than leaking unresolved token strings.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5197,6 +5217,8 @@ to:
 - coding-agent export missing `$var` regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-export-colors.test.ts`
 - coding-agent export malformed hex-color regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-export-colors.test.ts`
+- coding-agent export plain missing-variable regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-export-colors.test.ts`
 - ai usage metadata regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts`
