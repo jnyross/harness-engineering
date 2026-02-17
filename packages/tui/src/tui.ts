@@ -95,14 +95,25 @@ export interface OverlayMargin {
 /** Value that can be absolute (number) or percentage (string like "50%") */
 export type SizeValue = number | `${number}%`;
 
+function parsePercentageFraction(value: string): number | undefined {
+	const match = value.match(/^(\d+(?:\.\d+)?)%$/);
+	if (!match) {
+		return undefined;
+	}
+	const parsed = Number.parseFloat(match[1]);
+	if (!Number.isFinite(parsed) || parsed < 0 || parsed > 100) {
+		return undefined;
+	}
+	return parsed / 100;
+}
+
 /** Parse a SizeValue into absolute value given a reference size */
 function parseSizeValue(value: SizeValue | undefined, referenceSize: number): number | undefined {
 	if (value === undefined) return undefined;
 	if (typeof value === "number") return value;
-	// Parse percentage string like "50%"
-	const match = value.match(/^(\d+(?:\.\d+)?)%$/);
-	if (match) {
-		return Math.floor((referenceSize * parseFloat(match[1])) / 100);
+	const percentage = parsePercentageFraction(value);
+	if (percentage !== undefined) {
+		return Math.floor(referenceSize * percentage);
 	}
 	return undefined;
 }
@@ -590,10 +601,9 @@ export class TUI extends Container {
 		if (opt.row !== undefined) {
 			if (typeof opt.row === "string") {
 				// Percentage: 0% = top, 100% = bottom (overlay stays within bounds)
-				const match = opt.row.match(/^(\d+(?:\.\d+)?)%$/);
-				if (match) {
+				const percent = parsePercentageFraction(opt.row);
+				if (percent !== undefined) {
 					const maxRow = Math.max(0, availHeight - effectiveHeight);
-					const percent = parseFloat(match[1]) / 100;
 					row = marginTop + Math.floor(maxRow * percent);
 				} else {
 					// Invalid format, fall back to center
@@ -612,10 +622,9 @@ export class TUI extends Container {
 		if (opt.col !== undefined) {
 			if (typeof opt.col === "string") {
 				// Percentage: 0% = left, 100% = right (overlay stays within bounds)
-				const match = opt.col.match(/^(\d+(?:\.\d+)?)%$/);
-				if (match) {
+				const percent = parsePercentageFraction(opt.col);
+				if (percent !== undefined) {
 					const maxCol = Math.max(0, availWidth - width);
-					const percent = parseFloat(match[1]) / 100;
 					col = marginLeft + Math.floor(maxCol * percent);
 				} else {
 					// Invalid format, fall back to center

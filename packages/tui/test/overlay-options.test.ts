@@ -195,6 +195,22 @@ describe("TUI overlay options", () => {
 			assert.strictEqual(overlay.requestedWidth, 30);
 			tui.stop();
 		});
+
+		it("should treat overflow percentage width as invalid and use default width", async () => {
+			const terminal = new VirtualTerminal(100, 24);
+			const tui = new TUI(terminal);
+			const overlay = new StaticOverlay(["test"]);
+
+			tui.addChild(new EmptyContent());
+			tui.showOverlay(overlay, {
+				width: "99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999%",
+			});
+			tui.start();
+			await renderAndFlush(tui, terminal);
+
+			assert.strictEqual(overlay.requestedWidth, 80);
+			tui.stop();
+		});
 	});
 
 	describe("anchor positioning", () => {
@@ -389,6 +405,32 @@ describe("TUI overlay options", () => {
 
 			const viewport = terminal.getViewport();
 			assert.ok(viewport[23]?.includes("BOTTOM"), `Expected BOTTOM on last row, got: ${viewport[23]}`);
+			tui.stop();
+		});
+
+		it("should treat overflow row percentage as invalid and fall back to center", async () => {
+			const terminal = new VirtualTerminal(80, 24);
+			const tui = new TUI(terminal);
+			const overlay = new StaticOverlay(["CENTER-FALLBACK"]);
+
+			tui.addChild(new EmptyContent());
+			tui.showOverlay(overlay, {
+				width: 20,
+				row: "99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999%",
+			});
+			tui.start();
+			await renderAndFlush(tui, terminal);
+
+			const viewport = terminal.getViewport();
+			let foundRow = -1;
+			for (let i = 0; i < viewport.length; i++) {
+				if (viewport[i]?.includes("CENTER-FALLBACK")) {
+					foundRow = i;
+					break;
+				}
+			}
+
+			assert.ok(foundRow >= 10 && foundRow <= 13, `Expected centered row fallback, got ${foundRow}`);
 			tui.stop();
 		});
 	});
