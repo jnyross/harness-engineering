@@ -41,6 +41,7 @@
 - Settings mutators for `editorPaddingX` and `autocompleteMaxVisible` now normalize malformed non-finite inputs (`NaN`) before persistence, preventing invalid numeric values from being written into settings state.
 - Compaction/branch-summary token settings (`compaction.reserveTokens`, `compaction.keepRecentTokens`, `branchSummary.reserveTokens`) now normalize malformed/non-positive values from settings files to safe defaults, preventing invalid token-budget values from propagating into compaction logic.
 - Thinking budget settings now normalize malformed values from settings files, preserving only non-negative safe-integer overrides and falling back to provider defaults when all configured budget entries are invalid.
+- Boolean settings reads now normalize malformed non-boolean values to defaults across compaction/retry/display/image/editor toggles, preventing truthy/falsy coercions from malformed settings-file edits.
 - Interactive external-editor launch now reports startup/signal/non-zero exit failures explicitly (while preserving current editor content) instead of silently no-oping.
 - Interactive selector replacement now disposes previous disposable selector components before teardown, and session selector now cancels pending status timers/load updates on dispose, preventing stale async updates after selector close/switch.
 - Interactive chat/pending container clears now dispose disposable child components before removal, preventing leaked background timers/listeners from detached transient message components.

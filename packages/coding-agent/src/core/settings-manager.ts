@@ -149,6 +149,10 @@ function normalizePositiveSafeInteger(value: number | undefined, fallback: numbe
 	return value;
 }
 
+function normalizeBoolean(value: boolean | undefined, fallback: boolean): boolean {
+	return typeof value === "boolean" ? value : fallback;
+}
+
 function normalizeThinkingBudgetValue(value: number | undefined): number | undefined {
 	if (value === undefined || Number.isNaN(value)) {
 		return undefined;
@@ -546,7 +550,7 @@ export class SettingsManager {
 	}
 
 	getCompactionEnabled(): boolean {
-		return this.settings.compaction?.enabled ?? true;
+		return normalizeBoolean(this.settings.compaction?.enabled, true);
 	}
 
 	setCompactionEnabled(enabled: boolean): void {
@@ -581,7 +585,7 @@ export class SettingsManager {
 	}
 
 	getRetryEnabled(): boolean {
-		return this.settings.retry?.enabled ?? true;
+		return normalizeBoolean(this.settings.retry?.enabled, true);
 	}
 
 	setRetryEnabled(enabled: boolean): void {
@@ -603,7 +607,7 @@ export class SettingsManager {
 	}
 
 	getHideThinkingBlock(): boolean {
-		return this.settings.hideThinkingBlock ?? false;
+		return normalizeBoolean(this.settings.hideThinkingBlock, false);
 	}
 
 	setHideThinkingBlock(hide: boolean): void {
@@ -623,7 +627,7 @@ export class SettingsManager {
 	}
 
 	getQuietStartup(): boolean {
-		return this.settings.quietStartup ?? false;
+		return normalizeBoolean(this.settings.quietStartup, false);
 	}
 
 	setQuietStartup(quiet: boolean): void {
@@ -643,7 +647,7 @@ export class SettingsManager {
 	}
 
 	getCollapseChangelog(): boolean {
-		return this.settings.collapseChangelog ?? false;
+		return normalizeBoolean(this.settings.collapseChangelog, false);
 	}
 
 	setCollapseChangelog(collapse: boolean): void {
@@ -738,7 +742,7 @@ export class SettingsManager {
 	}
 
 	getEnableSkillCommands(): boolean {
-		return this.settings.enableSkillCommands ?? true;
+		return normalizeBoolean(this.settings.enableSkillCommands, true);
 	}
 
 	setEnableSkillCommands(enabled: boolean): void {
@@ -752,7 +756,7 @@ export class SettingsManager {
 	}
 
 	getShowImages(): boolean {
-		return this.settings.terminal?.showImages ?? true;
+		return normalizeBoolean(this.settings.terminal?.showImages, true);
 	}
 
 	setShowImages(show: boolean): void {
@@ -766,7 +770,7 @@ export class SettingsManager {
 
 	getClearOnShrink(): boolean {
 		// Settings takes precedence, then env var, then default false
-		if (this.settings.terminal?.clearOnShrink !== undefined) {
+		if (typeof this.settings.terminal?.clearOnShrink === "boolean") {
 			return this.settings.terminal.clearOnShrink;
 		}
 		return process.env.PI_CLEAR_ON_SHRINK === "1";
@@ -782,7 +786,7 @@ export class SettingsManager {
 	}
 
 	getImageAutoResize(): boolean {
-		return this.settings.images?.autoResize ?? true;
+		return normalizeBoolean(this.settings.images?.autoResize, true);
 	}
 
 	setImageAutoResize(enabled: boolean): void {
@@ -795,7 +799,7 @@ export class SettingsManager {
 	}
 
 	getBlockImages(): boolean {
-		return this.settings.images?.blockImages ?? false;
+		return normalizeBoolean(this.settings.images?.blockImages, false);
 	}
 
 	setBlockImages(blocked: boolean): void {
@@ -828,7 +832,10 @@ export class SettingsManager {
 	}
 
 	getShowHardwareCursor(): boolean {
-		return this.settings.showHardwareCursor ?? process.env.PI_HARDWARE_CURSOR === "1";
+		if (typeof this.settings.showHardwareCursor === "boolean") {
+			return this.settings.showHardwareCursor;
+		}
+		return process.env.PI_HARDWARE_CURSOR === "1";
 	}
 
 	setShowHardwareCursor(enabled: boolean): void {

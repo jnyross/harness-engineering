@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { join } from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { SettingsManager } from "../src/core/settings-manager.js";
+import { type Settings, SettingsManager } from "../src/core/settings-manager.js";
 
 describe("SettingsManager", () => {
 	const testDir = join(process.cwd(), "test-settings-tmp");
@@ -369,6 +369,62 @@ describe("SettingsManager", () => {
 				medium: 2048,
 				high: 4096,
 			});
+		});
+	});
+
+	describe("boolean settings normalization", () => {
+		it("falls back to defaults for malformed boolean settings values", () => {
+			const malformed = JSON.parse(`{
+				"compaction": { "enabled": "false" },
+				"retry": { "enabled": 1 },
+				"hideThinkingBlock": "true",
+				"quietStartup": "true",
+				"collapseChangelog": "false",
+				"enableSkillCommands": "false",
+				"terminal": { "showImages": "false", "clearOnShrink": "true" },
+				"images": { "autoResize": 0, "blockImages": 1 },
+				"showHardwareCursor": "true"
+			}`) as Partial<Settings>;
+
+			const manager = SettingsManager.inMemory(malformed);
+
+			expect(manager.getCompactionEnabled()).toBe(true);
+			expect(manager.getRetryEnabled()).toBe(true);
+			expect(manager.getHideThinkingBlock()).toBe(false);
+			expect(manager.getQuietStartup()).toBe(false);
+			expect(manager.getCollapseChangelog()).toBe(false);
+			expect(manager.getEnableSkillCommands()).toBe(true);
+			expect(manager.getShowImages()).toBe(true);
+			expect(manager.getClearOnShrink()).toBe(false);
+			expect(manager.getImageAutoResize()).toBe(true);
+			expect(manager.getBlockImages()).toBe(false);
+			expect(manager.getShowHardwareCursor()).toBe(false);
+		});
+
+		it("preserves valid boolean settings values", () => {
+			const manager = SettingsManager.inMemory({
+				compaction: { enabled: false },
+				retry: { enabled: false },
+				hideThinkingBlock: true,
+				quietStartup: true,
+				collapseChangelog: true,
+				enableSkillCommands: false,
+				terminal: { showImages: false, clearOnShrink: true },
+				images: { autoResize: false, blockImages: true },
+				showHardwareCursor: true,
+			});
+
+			expect(manager.getCompactionEnabled()).toBe(false);
+			expect(manager.getRetryEnabled()).toBe(false);
+			expect(manager.getHideThinkingBlock()).toBe(true);
+			expect(manager.getQuietStartup()).toBe(true);
+			expect(manager.getCollapseChangelog()).toBe(true);
+			expect(manager.getEnableSkillCommands()).toBe(false);
+			expect(manager.getShowImages()).toBe(false);
+			expect(manager.getClearOnShrink()).toBe(true);
+			expect(manager.getImageAutoResize()).toBe(false);
+			expect(manager.getBlockImages()).toBe(true);
+			expect(manager.getShowHardwareCursor()).toBe(true);
 		});
 	});
 });
