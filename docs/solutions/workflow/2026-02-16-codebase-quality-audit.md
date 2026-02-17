@@ -1927,6 +1927,40 @@ to centralize window-handler references and clear them on reload/disconnect befo
 
 **Result:** Sandboxed iframe load lifecycle now keeps window message handlers bounded, preventing cross-load listener leaks.
 
+---
+
+### 115) ai OAuth providers had inconsistent `AbortSignal` cancellation behavior
+
+**Finding:** OAuth login flows in `@mariozechner/pi-ai` were inconsistent about honoring caller cancellation:
+
+- Gemini CLI login did not thread `AbortSignal` through callback wait, project discovery polling, and token/user fetch requests.
+- Antigravity login similarly ignored signal-driven cancellation in callback wait and downstream fetch paths.
+- OpenAI Codex login accepted callback-server/manual fallback flows but did not honor cancellation during callback wait, prompt fallback, or token exchange.
+- Anthropic login ignored cancellation before prompt and during token exchange.
+
+This could leave login flows waiting on callback polling/prompts/fetches after user cancellation.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/google-gemini-cli.ts`
+- `packages/ai/src/utils/oauth/google-antigravity.ts`
+- `packages/ai/src/utils/oauth/openai-codex.ts`
+- `packages/ai/src/utils/oauth/anthropic.ts`
+- `packages/ai/test/google-gemini-cli-oauth-abort.test.ts`
+- `packages/ai/test/google-antigravity-oauth-abort.test.ts`
+- `packages/ai/test/openai-codex-oauth-abort.test.ts`
+- `packages/ai/test/anthropic-oauth-abort.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- thread `callbacks.signal` through provider `login(...)` entrypoints,
+- reject early for pre-aborted signals,
+- cancel callback polling waits on abort and clean up abort listeners deterministically,
+- pass signals into token exchange/user info/project discovery fetches where supported.
+
+**Result:** OAuth login cancellation semantics are now consistent across providers and fail fast on user-cancelled flows, with targeted regression coverage for pre-aborted signal handling.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1943,6 +1977,8 @@ to centralize window-handler references and clear them on reload/disconnect befo
   - `npm --workspace "@mariozechner/pi-ai" test -- test/abortable-sleep.test.ts test/google-gemini-cli-retry-delay.test.ts test/openai-codex-stream.test.ts`
 - ai copilot/oauth-related regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/abortable-sleep.test.ts test/github-copilot-anthropic.test.ts`
+- ai oauth cancellation regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts test/openai-codex-oauth-abort.test.ts test/google-antigravity-oauth-abort.test.ts test/google-gemini-cli-oauth-abort.test.ts`
 - coding-agent tools regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted write coverage)
 - coding-agent tools regression tests pass:
