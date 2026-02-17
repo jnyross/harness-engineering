@@ -71,11 +71,21 @@ export function createReadTool(cwd: string, options?: ReadToolOptions): AgentToo
 					}
 
 					let aborted = false;
+					let settled = false;
+					const settle = (fn: () => void) => {
+						if (!settled) {
+							settled = true;
+							if (signal) {
+								signal.removeEventListener("abort", onAbort);
+							}
+							fn();
+						}
+					};
 
 					// Set up abort handler
 					const onAbort = () => {
 						aborted = true;
-						reject(new Error("Operation aborted"));
+						settle(() => reject(new Error("Operation aborted")));
 					};
 
 					if (signal) {
@@ -195,22 +205,13 @@ export function createReadTool(cwd: string, options?: ReadToolOptions): AgentToo
 								return;
 							}
 
-							// Clean up abort handler
-							if (signal) {
-								signal.removeEventListener("abort", onAbort);
-							}
-
-							resolve({ content, details });
+							settle(() => resolve({ content, details }));
 							// biome-ignore lint/suspicious/noExplicitAny: migration
 						} catch (error: any) {
-							// Clean up abort handler
-							if (signal) {
-								signal.removeEventListener("abort", onAbort);
+							if (aborted) {
+								return;
 							}
-
-							if (!aborted) {
-								reject(error);
-							}
+							settle(() => reject(error));
 						}
 					})();
 				},

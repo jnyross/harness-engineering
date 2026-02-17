@@ -59,6 +59,17 @@ describe("Coding Agent Tools", () => {
 			await expect(readTool.execute("test-call-2", { path: testFile })).rejects.toThrow(/ENOENT|not found/i);
 		});
 
+		it("should short-circuit pre-aborted read signals", async () => {
+			const testFile = join(testDir, "read-pre-aborted.txt");
+			writeFileSync(testFile, "should-not-be-read");
+			const controller = new AbortController();
+			controller.abort();
+
+			await expect(
+				readTool.execute("test-call-read-pre-abort", { path: testFile }, controller.signal),
+			).rejects.toThrow(/Operation aborted/);
+		});
+
 		it("should truncate files exceeding line limit", async () => {
 			const testFile = join(testDir, "large.txt");
 			const lines = Array.from({ length: 2500 }, (_, i) => `Line ${i + 1}`);
