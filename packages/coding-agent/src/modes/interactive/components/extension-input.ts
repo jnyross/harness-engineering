@@ -20,7 +20,11 @@ export class ExtensionInputComponent extends Container implements Focusable {
 	private titleText: Text;
 	private baseTitle: string;
 	private countdown: CountdownTimer | undefined;
+	private disposed = false;
 	private invokeSubmit(value: string): void {
+		if (this.disposed) {
+			return;
+		}
 		try {
 			this.onSubmitCallback(value);
 		} catch (error) {
@@ -29,6 +33,9 @@ export class ExtensionInputComponent extends Container implements Focusable {
 	}
 
 	private invokeCancel(): void {
+		if (this.disposed) {
+			return;
+		}
 		try {
 			this.onCancelCallback();
 		} catch (error) {
@@ -84,6 +91,9 @@ export class ExtensionInputComponent extends Container implements Focusable {
 	}
 
 	handleInput(keyData: string): void {
+		if (this.disposed) {
+			return;
+		}
 		const kb = getEditorKeybindings();
 		if (kb.matches(keyData, "selectConfirm") || keyData === "\n") {
 			this.invokeSubmit(this.input.getValue());
@@ -95,6 +105,7 @@ export class ExtensionInputComponent extends Container implements Focusable {
 	}
 
 	dispose(): void {
+		this.disposed = true;
 		this.countdown?.dispose();
 	}
 }

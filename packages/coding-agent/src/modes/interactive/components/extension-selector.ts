@@ -23,7 +23,11 @@ export class ExtensionSelectorComponent extends Container {
 	private titleText: Text;
 	private baseTitle: string;
 	private countdown: CountdownTimer | undefined;
+	private disposed = false;
 	private invokeSelect(option: string): void {
+		if (this.disposed) {
+			return;
+		}
 		try {
 			this.onSelectCallback(option);
 		} catch (error) {
@@ -32,6 +36,9 @@ export class ExtensionSelectorComponent extends Container {
 	}
 
 	private invokeCancel(): void {
+		if (this.disposed) {
+			return;
+		}
 		try {
 			this.onCancelCallback();
 		} catch (error) {
@@ -101,6 +108,9 @@ export class ExtensionSelectorComponent extends Container {
 	}
 
 	handleInput(keyData: string): void {
+		if (this.disposed) {
+			return;
+		}
 		const kb = getEditorKeybindings();
 		if (kb.matches(keyData, "selectUp") || keyData === "k") {
 			this.selectedIndex = Math.max(0, this.selectedIndex - 1);
@@ -117,6 +127,7 @@ export class ExtensionSelectorComponent extends Container {
 	}
 
 	dispose(): void {
+		this.disposed = true;
 		this.countdown?.dispose();
 	}
 }

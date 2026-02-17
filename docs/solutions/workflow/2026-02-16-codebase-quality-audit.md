@@ -3926,6 +3926,27 @@ to:
 
 **Result:** Extension editor callbacks are now suppressed after disposal, avoiding stale post-teardown callback execution.
 
+---
+
+### 219) extension selector/input callbacks could still run after disposal
+
+**Finding:** Selector/input dialogs isolated callback exceptions but did not explicitly suppress callback invocation after component disposal.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/components/extension-selector.ts`
+- `packages/coding-agent/src/modes/interactive/components/extension-input.ts`
+- `packages/coding-agent/test/extension-dialog-callbacks.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- add disposed-state guards for selector/input callback paths and key handling,
+- suppress callback invocation after teardown,
+- extend regression coverage for post-dispose selector/input callback suppression.
+
+**Result:** Extension selector/input callbacks are now reliably ignored after disposal, preventing stale callback execution during teardown races.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -3953,7 +3974,7 @@ to:
 - coding-agent countdown timer regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/countdown-timer.test.ts` (includes normal expiry, manual dispose stop, and onTick-throw safety coverage)
 - coding-agent extension dialog callback regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extension-dialog-callbacks.test.ts` (includes throwing selector/input/editor callback safety and post-dispose callback suppression)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extension-dialog-callbacks.test.ts` (includes throwing selector/input/editor callback safety and post-dispose callback suppression across selector/input/editor dialogs)
 - coding-agent session selector disposal regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/session-selector-path-delete.test.ts test/extension-dialog-callbacks.test.ts` (includes stale-load suppression after selector dispose)
 - coding-agent antigravity image SSE parsing regression tests pass:

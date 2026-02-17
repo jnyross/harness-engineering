@@ -22,6 +22,19 @@ describe("extension dialog callback safety", () => {
 		expect(consoleError).toHaveBeenCalled();
 	});
 
+	it("extension selector ignores callbacks after dispose", () => {
+		const onCancel = vi.fn();
+		const onSelect = vi.fn();
+		const selector = new ExtensionSelectorComponent("Choose", ["one"], onSelect, onCancel);
+
+		selector.dispose();
+		selector.handleInput("\n");
+		selector.handleInput("\x1b");
+
+		expect(onSelect).not.toHaveBeenCalled();
+		expect(onCancel).not.toHaveBeenCalled();
+	});
+
 	it("extension input isolates onSubmit callback exceptions", () => {
 		const onCancel = vi.fn();
 		const onSubmit = vi.fn(() => {
@@ -33,6 +46,19 @@ describe("extension dialog callback safety", () => {
 		expect(() => input.handleInput("\n")).not.toThrow();
 		expect(onSubmit).toHaveBeenCalledWith("");
 		expect(consoleError).toHaveBeenCalled();
+	});
+
+	it("extension input ignores callbacks after dispose", () => {
+		const onCancel = vi.fn();
+		const onSubmit = vi.fn();
+		const input = new ExtensionInputComponent("Input", undefined, onSubmit, onCancel);
+
+		input.dispose();
+		input.handleInput("\n");
+		input.handleInput("\x1b");
+
+		expect(onSubmit).not.toHaveBeenCalled();
+		expect(onCancel).not.toHaveBeenCalled();
 	});
 
 	it("extension editor isolates submit/cancel callback exceptions", () => {
