@@ -4215,6 +4215,27 @@ to:
 
 **Result:** `--vllm` passthrough mode now has explicit argument requirements and no longer silently degrades to default launch behavior.
 
+---
+
+### 234) coding-agent CLI silently ignored missing values for value-backed flags
+
+**Finding:** coding-agent CLI parser ignored value-backed flags when values were omitted (including extension string flags), which could silently drop user intent without diagnostics.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/cli/args.ts`
+- `packages/coding-agent/test/args.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- centralize value extraction for value-backed flags,
+- emit explicit warnings when required flag values are missing,
+- apply the same missing-value warnings to extension-registered string flags,
+- add regression coverage for missing-value warning behavior.
+
+**Result:** coding-agent CLI now surfaces actionable diagnostics when value-backed flags are missing arguments instead of silently ignoring them.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4230,6 +4251,8 @@ to:
   - `npx tsx packages/pods/src/cli.ts pods setup demo "ssh host" --vllm`
 - pods `start --vllm` arg-requirement smoke check passes:
   - `npx tsx packages/pods/src/cli.ts start demo-model --name demo --vllm`
+- coding-agent CLI args regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/args.test.ts`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
 - pods SSH/SCP parser regression tests pass:
