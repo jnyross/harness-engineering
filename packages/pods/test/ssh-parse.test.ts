@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { extractHostFromSshCommand, parseShellCommand, sshExec } from "../src/ssh.js";
+import { extractHostFromSshCommand, parseShellCommand, parseSshCommand, sshExec } from "../src/ssh.js";
 
 describe("parseShellCommand", () => {
 	it("parses simple ssh commands", () => {
@@ -55,6 +55,19 @@ describe("extractHostFromSshCommand", () => {
 
 	it("returns undefined for non-ssh commands", () => {
 		assert.equal(extractHostFromSshCommand("bash -lc 'echo hi'"), undefined);
+	});
+});
+
+describe("parseSshCommand", () => {
+	it("returns parsed ssh binary and args", () => {
+		assert.deepEqual(parseSshCommand("ssh -p 2222 user@host"), {
+			sshBinary: "ssh",
+			sshArgs: ["-p", "2222", "user@host"],
+		});
+	});
+
+	it("rejects non-ssh binaries", () => {
+		assert.throws(() => parseSshCommand("bash -lc 'echo hi'"), /expected ssh binary/);
 	});
 });
 

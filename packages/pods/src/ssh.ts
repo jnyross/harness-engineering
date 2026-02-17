@@ -123,7 +123,7 @@ export function parseShellCommand(command: string): string[] {
 	return tokens;
 }
 
-function parseSshInvocation(sshCmd: string): { sshBinary: string; sshArgs: string[] } {
+export function parseSshCommand(sshCmd: string): { sshBinary: string; sshArgs: string[] } {
 	const sshParts = parseShellCommand(sshCmd);
 	if (sshParts.length === 0) {
 		throw new Error("Invalid SSH command: command is empty.");
@@ -142,7 +142,7 @@ function parseSshInvocation(sshCmd: string): { sshBinary: string; sshArgs: strin
 export function extractHostFromSshCommand(sshCmd: string): string | undefined {
 	let sshArgs: string[];
 	try {
-		({ sshArgs } = parseSshInvocation(sshCmd));
+		({ sshArgs } = parseSshCommand(sshCmd));
 	} catch {
 		return undefined;
 	}
@@ -177,7 +177,7 @@ export const sshExec = async (
 		let sshBinary: string;
 		let sshArgs: string[];
 		try {
-			const parsed = parseSshInvocation(sshCmd);
+			const parsed = parseSshCommand(sshCmd);
 			sshBinary = parsed.sshBinary;
 			sshArgs = [...parsed.sshArgs];
 		} catch (error) {
@@ -243,7 +243,7 @@ export const sshExecStream = async (
 		let sshBinary: string;
 		let sshArgs: string[];
 		try {
-			const parsed = parseSshInvocation(sshCmd);
+			const parsed = parseSshCommand(sshCmd);
 			sshBinary = parsed.sshBinary;
 			sshArgs = [...parsed.sshArgs];
 		} catch {
@@ -289,7 +289,7 @@ export const scpFile = async (sshCmd: string, localPath: string, remotePath: str
 	let port = "22";
 	let sshArgs: string[];
 	try {
-		const parsed = parseSshInvocation(sshCmd);
+		const parsed = parseSshCommand(sshCmd);
 		sshArgs = parsed.sshArgs;
 	} catch {
 		return false;

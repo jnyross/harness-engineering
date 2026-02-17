@@ -21,7 +21,7 @@ describe("pi shell", () => {
 						active: "demo",
 						pods: {
 							demo: {
-								ssh: "definitely-missing-ssh-binary user@host",
+								ssh: "/definitely/missing/ssh user@host",
 								gpus: [],
 								models: {},
 							},

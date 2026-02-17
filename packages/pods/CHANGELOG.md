@@ -45,4 +45,5 @@
 - Extracted prompt argument helpers (`findReservedFlag`, dynamic provider-name generation) into a reusable module with dedicated tests.
 - Added shared process-exit helper handling both `exit` and spawn `error` events for model log streaming flows, avoiding hangs when SSH command spawning fails.
 - `pi shell` now handles SSH spawn startup failures via explicit process `error` handling, surfacing clear errors instead of unhandled child-process failures.
+- Reused validated SSH command parsing for `pi shell` and model-log streaming (`start`/`logs`) so non-SSH binaries are rejected consistently before command execution.
 

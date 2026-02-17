@@ -12,7 +12,7 @@ import { assertValidModelInstanceName, isValidModelInstanceName } from "../model
 import { waitForProcessExit } from "../process-exit.js";
 import { assertValidPid, isValidPid, isValidPort } from "../process-identifiers.js";
 import { joinShellArgs, shellExport } from "../shell-quote.js";
-import { extractHostFromSshCommand, parseShellCommand, sshExec } from "../ssh.js";
+import { extractHostFromSshCommand, parseSshCommand, sshExec } from "../ssh.js";
 import type { Pod } from "../types.js";
 
 /**
@@ -299,12 +299,9 @@ WRAPPER
 	let sshCommand: string;
 	let sshArgs: string[];
 	try {
-		const parsedSshCommand = parseShellCommand(pod.ssh);
-		if (parsedSshCommand.length === 0) {
-			throw new Error("Invalid SSH command: command is empty.");
-		}
-		sshCommand = parsedSshCommand[0];
-		sshArgs = parsedSshCommand.slice(1);
+		const parsedSshCommand = parseSshCommand(pod.ssh);
+		sshCommand = parsedSshCommand.sshBinary;
+		sshArgs = parsedSshCommand.sshArgs;
 	} catch (error) {
 		console.error(chalk.red(error instanceof Error ? error.message : String(error)));
 		process.exit(1);
@@ -675,12 +672,9 @@ export const viewLogs = async (name: string, options: { pod?: string }) => {
 	let sshCommand: string;
 	let sshArgs: string[];
 	try {
-		const parsedSshCommand = parseShellCommand(pod.ssh);
-		if (parsedSshCommand.length === 0) {
-			throw new Error("Invalid SSH command: command is empty.");
-		}
-		sshCommand = parsedSshCommand[0];
-		sshArgs = parsedSshCommand.slice(1);
+		const parsedSshCommand = parseSshCommand(pod.ssh);
+		sshCommand = parsedSshCommand.sshBinary;
+		sshArgs = parsedSshCommand.sshArgs;
 	} catch (error) {
 		console.error(chalk.red(error instanceof Error ? error.message : String(error)));
 		process.exit(1);

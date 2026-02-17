@@ -13,7 +13,7 @@ import { getActivePod, loadConfig } from "./config.js";
 import { normalizeContextOption, normalizeMemoryOption } from "./model-options.js";
 import { extractModelsPathFromMountCommand } from "./mount-command.js";
 import { assertValidPodName } from "./pod-name.js";
-import { parseShellCommand, sshExecStream } from "./ssh.js";
+import { parseSshCommand, sshExecStream } from "./ssh.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -200,12 +200,7 @@ try {
 
 				// Execute SSH in interactive mode
 				try {
-					const sshParts = parseShellCommand(podInfo.pod.ssh);
-					if (sshParts.length === 0) {
-						throw new Error("Invalid SSH command: command is empty.");
-					}
-					const sshBinary = sshParts[0];
-					const sshArgs = sshParts.slice(1);
+					const { sshBinary, sshArgs } = parseSshCommand(podInfo.pod.ssh);
 					const sshProcess = spawn(sshBinary, sshArgs, {
 						stdio: "inherit",
 						env: process.env,
