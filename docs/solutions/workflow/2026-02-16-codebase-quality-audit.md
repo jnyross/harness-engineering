@@ -5409,6 +5409,25 @@ to:
 
 **Result:** RPC extension dialog timeout fallbacks now avoid premature timer-clamped settlement for oversized timeout inputs.
 
+---
+
+### 292) coding-agent RPC client wait helpers accepted oversized timer values
+
+**Finding:** `packages/coding-agent/src/modes/rpc/rpc-client.ts` used caller-provided wait timeout values directly in `waitForIdle(...)` / `collectEvents(...)`; oversized values beyond Node timer bounds could be runtime-clamped and trigger premature timeout rejections.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/rpc/rpc-client.ts`
+- `packages/coding-agent/test/rpc-client-timeout.test.ts` (new)
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize/clamp RPC client wait timeout values to Node timer bounds before scheduling timers,
+- add regression tests covering in-range and oversized timeout normalization behavior.
+
+**Result:** RPC client wait-timeout helpers now avoid early timer-clamped timeout failures for oversized timeout inputs.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5495,6 +5514,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/sleep.test.ts`
 - coding-agent RPC dialog timeout normalization tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-mode-timeout.test.ts`
+- coding-agent RPC client timeout normalization tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client-timeout.test.ts`
 - agent spawnScript oversized-timeout regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts`
 - ai abortable sleep oversized-timeout regression tests pass:
