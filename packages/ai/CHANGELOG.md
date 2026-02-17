@@ -10,7 +10,7 @@
 - Google Gemini CLI OAuth login now honors `AbortSignal` cancellation (including pre-aborted signals) across callback wait, token exchange, and project discovery flows.
 - Antigravity OAuth login now honors `AbortSignal` cancellation (including pre-aborted signals) across callback wait, token exchange, and project discovery flows.
 - OpenAI Codex OAuth login now honors `AbortSignal` cancellation (including pre-aborted signals) across callback wait, fallback prompt, and token exchange flows.
-- OpenAI Codex OAuth login now waits for lazy Node runtime imports before generating state/callback servers, and exits promptly when cancelled after auth startup, eliminating startup race and mid-flow cancellation stalls.
+- OpenAI Codex OAuth login now waits for lazy Node runtime imports before generating state/callback servers, exits promptly when cancelled after auth startup, and decodes base64url JWT payload segments reliably when extracting account IDs.
 - Anthropic OAuth login now honors `AbortSignal` cancellation (including pre-aborted signals) before prompting for user code and during token exchange.
 - Anthropic OAuth login now validates pasted OAuth state values and supports full redirect URL/query-string input by extracting `code`/`state` parameters before token exchange.
 - Google Gemini CLI SSE parsing now flushes terminal buffered `data:` lines when streams end without trailing newline delimiters.

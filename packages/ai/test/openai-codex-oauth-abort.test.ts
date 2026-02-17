@@ -1,14 +1,20 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { loginOpenAICodex, openaiCodexOAuthProvider } from "../src/utils/oauth/openai-codex.js";
 
+function toBase64Url(input: string): string {
+	return Buffer.from(input, "utf8").toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
 function createAccessToken(accountId: string): string {
-	const header = Buffer.from(JSON.stringify({ alg: "none", typ: "JWT" }), "utf8").toString("base64");
-	const payload = Buffer.from(
+	const header = toBase64Url(JSON.stringify({ alg: "none", typ: "JWT" }));
+	const payload = toBase64Url(
 		JSON.stringify({
-			"https://api.openai.com/auth": { chatgpt_account_id: accountId },
+			"https://api.openai.com/auth": {
+				chatgpt_account_id: accountId,
+				extra: "a+/b",
+			},
 		}),
-		"utf8",
-	).toString("base64");
+	);
 	return `${header}.${payload}.signature`;
 }
 
@@ -102,6 +108,33 @@ describe("openai-codex oauth login", () => {
 			throw new Error("Expected token exchange fetch call");
 		}
 		expect(String(firstCall[1]?.body)).toContain("manual-code");
+	});
+
+	it("extracts account id from base64url JWT payload segments", async () => {
+		const token = createAccessToken("acct_base64url");
+		const fetchMock = vi.fn(
+			async (_input: unknown, _init?: RequestInit) =>
+				new Response(
+					JSON.stringify({
+						access_token: token,
+						refresh_token: "refresh-token",
+						expires_in: 3600,
+					}),
+					{
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					},
+				),
+		);
+		vi.stubGlobal("fetch", fetchMock);
+
+		const credentials = await loginOpenAICodex({
+			onAuth: () => {},
+			onPrompt: async () => "",
+			onManualCodeInput: async () => "code-from-manual-input",
+		});
+
+		expect(credentials.accountId).toBe("acct_base64url");
 	});
 
 	it("rejects when signal aborts after auth URL is emitted", async () => {
