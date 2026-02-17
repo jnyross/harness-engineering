@@ -22,6 +22,15 @@ describe("parseShellCommand", () => {
 		]);
 	});
 
+	it("preserves windows-style backslashes in command paths", () => {
+		assert.deepEqual(parseShellCommand(String.raw`C:\Windows\System32\OpenSSH\ssh.exe -p 22 ubuntu@demo.host`), [
+			String.raw`C:\Windows\System32\OpenSSH\ssh.exe`,
+			"-p",
+			"22",
+			"ubuntu@demo.host",
+		]);
+	});
+
 	it("rejects malformed commands with unmatched quote", () => {
 		assert.throws(() => parseShellCommand(`ssh "user@host`), /unmatched quote/);
 	});
@@ -35,6 +44,10 @@ describe("extractHostFromSshCommand", () => {
 		assert.equal(extractHostFromSshCommand("/usr/bin/ssh -p 22 ubuntu@demo.host"), "demo.host");
 		assert.equal(
 			extractHostFromSshCommand("C:/Windows/System32/OpenSSH/ssh.exe -p 22 ubuntu@demo.host"),
+			"demo.host",
+		);
+		assert.equal(
+			extractHostFromSshCommand(String.raw`C:\Windows\System32\OpenSSH\ssh.exe -p 22 ubuntu@demo.host`),
 			"demo.host",
 		);
 		assert.equal(extractHostFromSshCommand("ssh -o StrictHostKeyChecking=no demo.host"), "demo.host");

@@ -41,16 +41,10 @@ export function parseShellCommand(command: string): string[] {
 	const tokens: string[] = [];
 	let current = "";
 	let quote: "'" | '"' | null = null;
-	let escaping = false;
 	let tokenStarted = false;
 
-	for (const char of command) {
-		if (escaping) {
-			current += char;
-			escaping = false;
-			tokenStarted = true;
-			continue;
-		}
+	for (let i = 0; i < command.length; i++) {
+		const char = command[i];
 
 		if (quote === "'") {
 			if (char === "'") {
@@ -66,7 +60,13 @@ export function parseShellCommand(command: string): string[] {
 			if (char === '"') {
 				quote = null;
 			} else if (char === "\\") {
-				escaping = true;
+				const nextChar = command[i + 1];
+				if (nextChar === '"' || nextChar === "\\") {
+					current += nextChar;
+					i++;
+				} else {
+					current += "\\";
+				}
 			} else {
 				current += char;
 			}
@@ -81,7 +81,20 @@ export function parseShellCommand(command: string): string[] {
 		}
 
 		if (char === "\\") {
-			escaping = true;
+			const nextChar = command[i + 1];
+			if (
+				nextChar === " " ||
+				nextChar === "\t" ||
+				nextChar === "\n" ||
+				nextChar === '"' ||
+				nextChar === "'" ||
+				nextChar === "\\"
+			) {
+				current += nextChar;
+				i++;
+			} else {
+				current += "\\";
+			}
 			tokenStarted = true;
 			continue;
 		}
@@ -97,10 +110,6 @@ export function parseShellCommand(command: string): string[] {
 
 		current += char;
 		tokenStarted = true;
-	}
-
-	if (escaping) {
-		throw new Error("Invalid SSH command: trailing escape character.");
 	}
 
 	if (quote) {

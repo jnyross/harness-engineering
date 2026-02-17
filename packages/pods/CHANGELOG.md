@@ -24,7 +24,7 @@
 - Added regression tests for `pi agent` validation failures on malformed SSH host config and invalid persisted model ports.
 - Updated package `test` script to `tsx --test` so workspace test runs auto-discover tests while still allowing file-level filtering via `npm test -- <pattern>`.
 - Centralized GPU-name parsing in a shared helper used by model config selection and known-model compatibility display, with regression tests.
-- SSH command validation now accepts standard `ssh.exe` binary forms (including absolute Windows-style paths) in addition to `ssh`.
+- SSH command validation now accepts standard `ssh.exe` binary forms (including absolute Windows-style paths with `/` or `\`) in addition to `ssh`.
 
 ### Fixed
 
