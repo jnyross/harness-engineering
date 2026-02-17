@@ -2332,6 +2332,26 @@ to:
 
 **Result:** `spawnScript()` now reports deterministic non-zero exit codes for signal terminations, aligning subprocess failure semantics with the rest of the monorepo hardening work.
 
+---
+
+### 134) subagent extension example had process-settlement and abort-listener race risks
+
+**Finding:** The `examples/extensions/subagent` runner used raw `close`/`error` handlers without single-settlement guards, returned success for `code === null`, and left abort listeners/timeouts active after process completion.
+
+**Action:** Updated:
+
+- `packages/coding-agent/examples/extensions/subagent/index.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- introduce single-settlement `resolveOnce` handling for `close`/`error` races,
+- map signal/null exits to non-zero exit codes,
+- remove abort listeners and clear kill timers during cleanup,
+- preserve startup diagnostics by appending explicit spawn-failure messages to stderr.
+
+**Result:** Subagent example process lifecycle is now deterministic and cleanup-safe, matching the hardened cancellation/error semantics used elsewhere in the codebase.
+
 ## Validation Evidence
 
 - Root quality gate passes:

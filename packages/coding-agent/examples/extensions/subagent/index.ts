@@ -288,6 +288,27 @@ async function runSingleAgent(
 		const exitCode = await new Promise<number>((resolve) => {
 			const proc = spawn("pi", args, { cwd: cwd ?? defaultCwd, shell: false, stdio: ["ignore", "pipe", "pipe"] });
 			let buffer = "";
+			let settled = false;
+			let abortListener: (() => void) | undefined;
+			let killTimeout: ReturnType<typeof setTimeout> | undefined;
+
+			const cleanup = () => {
+				if (killTimeout) {
+					clearTimeout(killTimeout);
+				}
+				if (signal && abortListener) {
+					signal.removeEventListener("abort", abortListener);
+				}
+			};
+
+			const resolveOnce = (value: number) => {
+				if (settled) {
+					return;
+				}
+				settled = true;
+				cleanup();
+				resolve(value);
+			};
 
 			const processLine = (line: string) => {
 				if (!line.trim()) return;
@@ -338,25 +359,31 @@ async function runSingleAgent(
 				currentResult.stderr += data.toString();
 			});
 
-			proc.on("close", (code) => {
+			proc.on("close", (code, closeSignal) => {
 				if (buffer.trim()) processLine(buffer);
-				resolve(code ?? 0);
+				resolveOnce(code ?? (closeSignal ? 1 : 0));
 			});
 
-			proc.on("error", () => {
-				resolve(1);
+			proc.on("error", (error) => {
+				currentResult.stderr += `Failed to start subagent process: ${error.message}\n`;
+				resolveOnce(1);
 			});
 
 			if (signal) {
-				const killProc = () => {
+				abortListener = () => {
 					wasAborted = true;
 					proc.kill("SIGTERM");
-					setTimeout(() => {
-						if (!proc.killed) proc.kill("SIGKILL");
+					killTimeout = setTimeout(() => {
+						if (proc.exitCode === null && proc.signalCode === null) {
+							proc.kill("SIGKILL");
+						}
 					}, 5000);
 				};
-				if (signal.aborted) killProc();
-				else signal.addEventListener("abort", killProc, { once: true });
+				if (signal.aborted) {
+					abortListener();
+				} else {
+					signal.addEventListener("abort", abortListener, { once: true });
+				}
 			}
 		});
 

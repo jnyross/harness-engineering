@@ -38,6 +38,7 @@
 - Package-manager command execution now uses single-settlement handling for spawn `error`/`close` races and reports clearer startup/signal failures.
 - Package-manager synchronous command execution now reports explicit startup failures when binaries cannot be spawned.
 - RPC extension TUI example now handles agent spawn failures explicitly and maps signal-terminated agent exits to non-zero process exits.
+- Subagent extension example now uses single-settlement process handling with abort-listener cleanup and non-zero signal-exit mapping to avoid stale listeners and false success exits.
 
 ## [0.52.12] - 2026-02-13
 
