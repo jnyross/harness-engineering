@@ -13,6 +13,7 @@ import { join } from "node:path";
 import { type ChildProcess, spawn } from "child_process";
 import stripAnsi from "strip-ansi";
 import { getShellConfig, getShellEnv, killProcessTree, sanitizeBinaryOutput } from "../utils/shell.js";
+import { normalizeProcessExitCode } from "./process-exit-status.js";
 import type { BashOperations } from "./tools/bash.js";
 import { DEFAULT_MAX_BYTES, truncateTail } from "./tools/truncate.js";
 
@@ -185,7 +186,7 @@ export function executeBash(command: string, options?: BashExecutorOptions): Pro
 
 			resolveOnce({
 				output: truncationResult.truncated ? truncationResult.content : fullOutput,
-				exitCode: cancelled ? undefined : (code ?? (signal ? 1 : 0)),
+				exitCode: cancelled ? undefined : normalizeProcessExitCode(code, signal),
 				cancelled,
 				truncated: truncationResult.truncated,
 				fullOutputPath: tempFilePath,

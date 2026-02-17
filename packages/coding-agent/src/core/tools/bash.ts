@@ -6,6 +6,7 @@ import type { AgentTool } from "@mariozechner/pi-agent-core";
 import { type Static, Type } from "@sinclair/typebox";
 import { spawn } from "child_process";
 import { getShellConfig, getShellEnv, killProcessTree } from "../../utils/shell.js";
+import { normalizeProcessExitCode } from "../process-exit-status.js";
 import { DEFAULT_MAX_BYTES, DEFAULT_MAX_LINES, formatSize, type TruncationResult, truncateTail } from "./truncate.js";
 
 /**
@@ -157,7 +158,7 @@ const defaultBashOperations: BashOperations = {
 					return;
 				}
 
-				resolveOnce({ exitCode: code ?? (closeSignal ? 1 : 0) });
+				resolveOnce({ exitCode: normalizeProcessExitCode(code, closeSignal) });
 			});
 		});
 	},
