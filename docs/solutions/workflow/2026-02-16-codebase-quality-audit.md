@@ -4504,6 +4504,26 @@ to:
 
 **Result:** OpenAI Completions and Anthropic usage accounting now avoids negative/fractional drift under malformed metadata and remains consistent with integer token semantics.
 
+---
+
+### 248) coding-agent grep tool accepted malformed numeric `context`/`limit` values
+
+**Finding:** coding-agent grep tool accepted arbitrary numeric `context`/`limit` values and silently coerced out-of-range/non-integer inputs (for example `context=-1`, `context=1.5`, `limit=0`) instead of failing fast.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/grep.ts`
+- `packages/coding-agent/test/tools.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- constrain schema-level `context`/`limit` to integer domains,
+- validate runtime values with explicit non-negative/positive integer requirements,
+- add regression tests covering malformed numeric range inputs.
+
+**Result:** grep tool now rejects malformed numeric range inputs deterministically instead of silently coercing them.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4529,6 +4549,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/read-tool.test.ts`
 - coding-agent read-tool range validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/read-tool.test.ts test/tools.test.ts`
+- coding-agent grep range validation regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
 - mom CLI args/model regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/cli-args.test.ts test/agent-model.test.ts`
 - mom CLI args parser regression tests pass:
