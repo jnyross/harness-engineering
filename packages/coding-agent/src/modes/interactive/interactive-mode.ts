@@ -101,6 +101,7 @@ import { ToolExecutionComponent } from "./components/tool-execution.js";
 import { TreeSelectorComponent } from "./components/tree-selector.js";
 import { UserMessageComponent } from "./components/user-message.js";
 import { UserMessageSelectorComponent } from "./components/user-message-selector.js";
+import { getExternalEditorError } from "./external-editor-status.js";
 import { getGhAuthStatusError } from "./gh-auth-status.js";
 import {
 	getAvailableThemes,
@@ -2797,24 +2798,15 @@ export class InteractiveMode {
 				stdio: "inherit",
 			});
 
-			if (result.error) {
-				this.showWarning(`Failed to start external editor: ${result.error.message}`);
+			const editorError = getExternalEditorError(result);
+			if (editorError) {
+				this.showWarning(`${editorError}. Keeping current content.`);
 				return;
 			}
 
 			// On successful exit (status 0), replace editor content
-			if (result.status === 0) {
-				const newContent = fs.readFileSync(tmpFile, "utf-8").replace(/\n$/, "");
-				this.editor.setText(newContent);
-				return;
-			}
-
-			if (result.signal) {
-				this.showWarning(`External editor terminated by signal ${result.signal}. Keeping current content.`);
-				return;
-			}
-
-			this.showWarning(`External editor exited with code ${result.status ?? "unknown"}. Keeping current content.`);
+			const newContent = fs.readFileSync(tmpFile, "utf-8").replace(/\n$/, "");
+			this.editor.setText(newContent);
 		} finally {
 			// Clean up temp file
 			try {
