@@ -289,6 +289,21 @@ describe("Coding Agent Tools", () => {
 				}),
 			).rejects.toThrow(/Found 3 occurrences/);
 		});
+
+		it("should short-circuit pre-aborted edit signals", async () => {
+			const testFile = join(testDir, "edit-pre-aborted.txt");
+			writeFileSync(testFile, "alpha beta gamma");
+			const controller = new AbortController();
+			controller.abort();
+
+			await expect(
+				editTool.execute(
+					"test-call-edit-pre-abort",
+					{ path: testFile, oldText: "beta", newText: "delta" },
+					controller.signal,
+				),
+			).rejects.toThrow(/Operation aborted/);
+		});
 	});
 
 	describe("bash tool", () => {

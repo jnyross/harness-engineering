@@ -79,11 +79,21 @@ export function createEditTool(cwd: string, options?: EditToolOptions): AgentToo
 				}
 
 				let aborted = false;
+				let settled = false;
+				const settle = (fn: () => void) => {
+					if (!settled) {
+						settled = true;
+						if (signal) {
+							signal.removeEventListener("abort", onAbort);
+						}
+						fn();
+					}
+				};
 
 				// Set up abort handler
 				const onAbort = () => {
 					aborted = true;
-					reject(new Error("Operation aborted"));
+					settle(() => reject(new Error("Operation aborted")));
 				};
 
 				if (signal) {
@@ -97,10 +107,7 @@ export function createEditTool(cwd: string, options?: EditToolOptions): AgentToo
 						try {
 							await ops.access(absolutePath);
 						} catch {
-							if (signal) {
-								signal.removeEventListener("abort", onAbort);
-							}
-							reject(new Error(`File not found: ${path}`));
+							settle(() => reject(new Error(`File not found: ${path}`)));
 							return;
 						}
 
@@ -130,12 +137,11 @@ export function createEditTool(cwd: string, options?: EditToolOptions): AgentToo
 						const matchResult = fuzzyFindText(normalizedContent, normalizedOldText);
 
 						if (!matchResult.found) {
-							if (signal) {
-								signal.removeEventListener("abort", onAbort);
-							}
-							reject(
-								new Error(
-									`Could not find the exact text in ${path}. The old text must match exactly including all whitespace and newlines.`,
+							settle(() =>
+								reject(
+									new Error(
+										`Could not find the exact text in ${path}. The old text must match exactly including all whitespace and newlines.`,
+									),
 								),
 							);
 							return;
@@ -147,12 +153,11 @@ export function createEditTool(cwd: string, options?: EditToolOptions): AgentToo
 						const occurrences = fuzzyContent.split(fuzzyOldText).length - 1;
 
 						if (occurrences > 1) {
-							if (signal) {
-								signal.removeEventListener("abort", onAbort);
-							}
-							reject(
-								new Error(
-									`Found ${occurrences} occurrences of the text in ${path}. The text must be unique. Please provide more context to make it unique.`,
+							settle(() =>
+								reject(
+									new Error(
+										`Found ${occurrences} occurrences of the text in ${path}. The text must be unique. Please provide more context to make it unique.`,
+									),
 								),
 							);
 							return;
@@ -173,12 +178,11 @@ export function createEditTool(cwd: string, options?: EditToolOptions): AgentToo
 
 						// Verify the replacement actually changed something
 						if (baseContent === newContent) {
-							if (signal) {
-								signal.removeEventListener("abort", onAbort);
-							}
-							reject(
-								new Error(
-									`No changes made to ${path}. The replacement produced identical content. This might indicate an issue with special characters or the text not existing as expected.`,
+							settle(() =>
+								reject(
+									new Error(
+										`No changes made to ${path}. The replacement produced identical content. This might indicate an issue with special characters or the text not existing as expected.`,
+									),
 								),
 							);
 							return;
@@ -192,31 +196,24 @@ export function createEditTool(cwd: string, options?: EditToolOptions): AgentToo
 							return;
 						}
 
-						// Clean up abort handler
-						if (signal) {
-							signal.removeEventListener("abort", onAbort);
-						}
-
 						const diffResult = generateDiffString(baseContent, newContent);
-						resolve({
-							content: [
-								{
-									type: "text",
-									text: `Successfully replaced text in ${path}.`,
-								},
-							],
-							details: { diff: diffResult.diff, firstChangedLine: diffResult.firstChangedLine },
-						});
+						settle(() =>
+							resolve({
+								content: [
+									{
+										type: "text",
+										text: `Successfully replaced text in ${path}.`,
+									},
+								],
+								details: { diff: diffResult.diff, firstChangedLine: diffResult.firstChangedLine },
+							}),
+						);
 						// biome-ignore lint/suspicious/noExplicitAny: migration
 					} catch (error: any) {
-						// Clean up abort handler
-						if (signal) {
-							signal.removeEventListener("abort", onAbort);
+						if (aborted) {
+							return;
 						}
-
-						if (!aborted) {
-							reject(error);
-						}
+						settle(() => reject(error));
 					}
 				})();
 			});
