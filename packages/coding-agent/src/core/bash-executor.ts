@@ -71,6 +71,7 @@ export function executeBash(command: string, options?: BashExecutorOptions): Pro
 
 	return new Promise((resolve, reject) => {
 		const { shell, args } = getShellConfig();
+		const invokedCommand = [shell, ...args, command].join(" ");
 		const child: ChildProcess = spawn(shell, [...args, command], {
 			detached: true,
 			env: getShellEnv(),
@@ -194,7 +195,8 @@ export function executeBash(command: string, options?: BashExecutorOptions): Pro
 		});
 
 		child.on("error", (err) => {
-			rejectOnce(err);
+			const startupError = err instanceof Error ? err : new Error(String(err));
+			rejectOnce(new Error(`Failed to start shell command '${invokedCommand}': ${startupError.message}`));
 		});
 	});
 }

@@ -109,6 +109,8 @@ describe("bash executor cancellation behavior", () => {
 			args: ["-c"],
 		});
 
-		await expect(executeBash("echo test")).rejects.toThrow(/ENOENT|spawn/i);
+		await expect(executeBash("echo test")).rejects.toThrow(
+			/Failed to start shell command '\/definitely\/missing-shell-binary -c echo test'/,
+		);
 	});
 });
