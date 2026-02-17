@@ -380,7 +380,9 @@ describe("Coding Agent Tools", () => {
 
 			const bashWithBadShell = createBashTool(testDir);
 
-			await expect(bashWithBadShell.execute("test-call-12", { command: "echo test" })).rejects.toThrow(/ENOENT/);
+			await expect(bashWithBadShell.execute("test-call-12", { command: "echo test" })).rejects.toThrow(
+				/Failed to start bash command '\/nonexistent-shell-path-xyz123 -c echo test'/,
+			);
 		});
 
 		it("should prepend command prefix when configured", async () => {

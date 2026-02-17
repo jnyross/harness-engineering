@@ -65,6 +65,7 @@
 - grep tool ripgrep-close handling now normalizes signal/null-status exits with explicit diagnostics (while preserving intentional match-limit termination as success).
 - find tool fd-close handling now centralizes spawn/signal/null-status diagnostics and preserves non-zero exits with partial stdout while surfacing hard failures.
 - bash tool local-shell spawn failures now include command context in startup errors, improving diagnostics for invalid shell-path or startup-failure scenarios.
+- bash tool local-shell spawn failures now include full shell invocation context (`shell + args + command`) in startup errors, improving diagnostics for invalid shell-path or startup-failure scenarios.
 - Bash executor helpers (`executeBash`, `executeBashWithOperations`) now short-circuit pre-aborted signals, avoiding unnecessary subprocess/remote execution when cancellation is already requested.
 - Bash executor helpers now preserve non-zero semantics for signal/null exits when execution was not canceled by caller signals, avoiding false cancelled/success outcomes.
 - Bash executor local process handling now uses single-settlement guards across child `error`/`close` events, preventing duplicate resolve/reject races during spawn failures.

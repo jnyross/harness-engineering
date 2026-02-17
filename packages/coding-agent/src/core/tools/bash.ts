@@ -60,6 +60,7 @@ const defaultBashOperations: BashOperations = {
 	exec: (command, cwd, { onData, signal, timeout, env }) => {
 		return new Promise((resolve, reject) => {
 			const { shell, args } = getShellConfig();
+			const invokedCommand = [shell, ...args, command].join(" ");
 
 			if (signal?.aborted) {
 				reject(new Error("aborted"));
@@ -135,7 +136,7 @@ const defaultBashOperations: BashOperations = {
 
 			// Handle shell spawn errors
 			child.on("error", (err) => {
-				rejectOnce(new Error(`Failed to start bash command '${command}': ${err.message}`));
+				rejectOnce(new Error(`Failed to start bash command '${invokedCommand}': ${err.message}`));
 			});
 
 			if (signal) {
