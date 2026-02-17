@@ -17,6 +17,7 @@ import {
 import { KeybindingsManager } from "../../../core/keybindings.js";
 import type { SessionInfo, SessionListProgress } from "../../../core/session-manager.js";
 import { theme } from "../theme/theme.js";
+import { getTrashCommandErrorHint } from "../trash-command-status.js";
 import { DynamicBorder } from "./dynamic-border.js";
 import { appKey, appKeyHint, keyHint } from "./keybinding-hints.js";
 import { filterAndSortSessions, hasSessionName, type NameFilter, type SortMode } from "./session-selector-search.js";
@@ -635,19 +636,6 @@ async function deleteSessionFile(
 	const trashArgs = sessionPath.startsWith("-") ? ["--", sessionPath] : [sessionPath];
 	const trashResult = spawnSync("trash", trashArgs, { encoding: "utf-8" });
 
-	const getTrashErrorHint = (): string | null => {
-		const parts: string[] = [];
-		if (trashResult.error) {
-			parts.push(trashResult.error.message);
-		}
-		const stderr = trashResult.stderr?.trim();
-		if (stderr) {
-			parts.push(stderr.split("\n")[0] ?? stderr);
-		}
-		if (parts.length === 0) return null;
-		return `trash: ${parts.join(" · ").slice(0, 200)}`;
-	};
-
 	// If trash reports success, or the file is gone afterwards, treat it as successful
 	if (trashResult.status === 0 || !existsSync(sessionPath)) {
 		return { ok: true, method: "trash" };
@@ -659,7 +647,7 @@ async function deleteSessionFile(
 		return { ok: true, method: "unlink" };
 	} catch (err) {
 		const unlinkError = err instanceof Error ? err.message : String(err);
-		const trashErrorHint = getTrashErrorHint();
+		const trashErrorHint = getTrashCommandErrorHint(trashResult);
 		const error = trashErrorHint ? `${unlinkError} (${trashErrorHint})` : unlinkError;
 		return { ok: false, method: "unlink", error };
 	}
