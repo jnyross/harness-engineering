@@ -1982,6 +1982,26 @@ to:
 
 **Result:** Anthropic manual OAuth input handling is now safer and more robust for headless/manual flows, with explicit CSRF-state validation and URL parsing support.
 
+---
+
+### 117) openai-codex OAuth startup depended on lazy import timing
+
+**Finding:** `loginOpenAICodex(...)` relied on top-level lazy imports (`node:crypto`, `node:http`) that populated module-level variables asynchronously. Immediate login invocation could race before those variables were initialized, causing false "only available in Node.js" errors despite running in Node.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/openai-codex.ts`
+- `packages/ai/test/openai-codex-oauth-abort.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- explicitly await lazy import promises before using crypto/http helpers (`getNodeRandomBytes`, `getNodeHttp`),
+- make OAuth state generation and callback-server startup use those awaited helpers,
+- add regression tests for manual login paths (state mismatch rejection + successful manual code exchange/account extraction).
+
+**Result:** Codex OAuth startup is now deterministic regardless of lazy-import timing, and manual-input parsing paths are covered by targeted tests.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2002,6 +2022,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts test/openai-codex-oauth-abort.test.ts test/google-antigravity-oauth-abort.test.ts test/google-gemini-cli-oauth-abort.test.ts`
 - ai anthropic oauth parsing/state-validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts`
+- ai openai-codex oauth startup/manual-flow regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-oauth-abort.test.ts`
 - coding-agent tools regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted write coverage)
 - coding-agent tools regression tests pass:
