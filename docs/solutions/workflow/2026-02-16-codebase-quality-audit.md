@@ -4396,6 +4396,27 @@ to:
 
 **Result:** read-tool now reports/enforces correct line boundaries and no longer accepts false extra-line offsets caused by newline-count approximation.
 
+---
+
+### 243) coding-agent read-tool treated trailing newline as extra readable line
+
+**Finding:** coding-agent read-tool split text with `text.split("\n")`, which treated trailing newlines as additional empty lines and allowed out-of-range offsets (for example offset `2` on `hello\n`).
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/read.ts`
+- `packages/coding-agent/test/read-tool.test.ts` (new)
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize text into logical lines (drop only terminal split-empty segment),
+- enforce offset bounds only for explicitly provided offsets against exact logical line counts,
+- preserve offset-less empty-file reads,
+- add regression coverage for trailing-newline, empty-file, and empty-file-offset scenarios.
+
+**Result:** coding-agent read-tool now enforces exact line-offset boundaries and no longer exposes false extra-line offsets from trailing newline artifacts.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4413,6 +4434,8 @@ to:
   - `npx tsx packages/pods/src/cli.ts start demo-model --name demo --vllm`
 - coding-agent CLI args regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/args.test.ts`
+- coding-agent read-tool line-count regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/read-tool.test.ts`
 - mom CLI args/model regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/cli-args.test.ts test/agent-model.test.ts`
 - mom CLI args parser regression tests pass:
