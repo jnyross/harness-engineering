@@ -2,6 +2,8 @@ import { spawn } from "child_process";
 
 export type SandboxConfig = { type: "host" } | { type: "docker"; container: string };
 
+const DOCKER_CONTAINER_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.-]*$/;
+
 export function parseSandboxArg(value: string): SandboxConfig {
 	if (value === "host") {
 		return { type: "host" };
@@ -10,6 +12,12 @@ export function parseSandboxArg(value: string): SandboxConfig {
 		const container = value.slice("docker:".length);
 		if (!container) {
 			console.error("Error: docker sandbox requires container name (e.g., docker:mom-sandbox)");
+			process.exit(1);
+		}
+		if (!DOCKER_CONTAINER_NAME_PATTERN.test(container)) {
+			console.error(
+				"Error: invalid docker container name. Use letters, numbers, dots, underscores, and dashes only.",
+			);
 			process.exit(1);
 		}
 		return { type: "docker", container };

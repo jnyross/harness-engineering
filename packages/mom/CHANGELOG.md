@@ -9,6 +9,10 @@
   - `PI_MOM_MODEL` / `MOM_MODEL_ID`
   with validation and clear startup errors for unknown providers/models.
 
+### Fixed
+
+- `--sandbox=docker:<name>` now validates docker container names before execution to reject unsafe shell-interpolated values.
+
 ## [0.52.12] - 2026-02-13
 
 ## [0.52.11] - 2026-02-13
