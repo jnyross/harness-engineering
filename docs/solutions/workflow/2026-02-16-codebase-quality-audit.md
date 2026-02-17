@@ -1850,6 +1850,22 @@ to route SSE line handling through a reusable line processor and flush the remai
 
 **Result:** Gemini CLI streaming now handles terminal SSE events reliably even when providers omit trailing newline delimiters.
 
+---
+
+### 110) ai OpenAI Codex SSE parser could drop terminal buffered chunk
+
+**Finding:** OpenAI Codex SSE parser only emitted chunks delimited by `\n\n`; a terminal buffered chunk without trailing separator could be dropped at stream end.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/openai-codex-responses.ts`
+- `packages/ai/test/openai-codex-stream.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to centralize SSE chunk parsing and flush trailing buffered chunk after stream completion, with regression coverage for terminal chunks lacking trailing separators.
+
+**Result:** OpenAI Codex streaming now preserves final SSE events even when providers omit trailing chunk delimiters.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1882,6 +1898,8 @@ to route SSE line handling through a reusable line processor and flush the remai
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts` (includes trailing SSE line without newline)
 - ai Gemini CLI SSE regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-empty-stream.test.ts` (includes terminal `data:` line without trailing newline)
+- ai Codex/Gemini SSE regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-stream.test.ts test/google-gemini-cli-empty-stream.test.ts`
 - coding-agent execCommand regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - coding-agent interactive status tests pass after share flow command-exec refactor:
