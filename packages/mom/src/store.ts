@@ -31,6 +31,15 @@ interface PendingDownload {
 	url: string;
 }
 
+function parseLoggedMessageTimestamp(line: string): string | undefined {
+	const parsed = JSON.parse(line) as { ts?: unknown };
+	if (typeof parsed.ts !== "string") {
+		return undefined;
+	}
+	const trimmed = parsed.ts.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
 export class ChannelStore {
 	private workingDir: string;
 	private botToken: string;
@@ -174,8 +183,8 @@ export class ChannelStore {
 				return null;
 			}
 			const lastLine = lines[lines.length - 1];
-			const message = JSON.parse(lastLine) as LoggedMessage;
-			return message.ts;
+			const timestamp = parseLoggedMessageTimestamp(lastLine);
+			return timestamp ?? null;
 		} catch {
 			return null;
 		}

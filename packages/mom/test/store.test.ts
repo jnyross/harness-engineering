@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, it } from "node:test";
@@ -77,5 +77,33 @@ describe("ChannelStore timestamp normalization", () => {
 
 		const logged = readLoggedMessage(tempDir, "C789");
 		assert.equal(logged.date, "2023-11-14T22:13:20.000Z");
+	});
+
+	it("returns null for malformed last log lines without string timestamps", () => {
+		const tempDir = mkdtempSync(join(tmpdir(), "mom-store-test-"));
+		tempDirs.push(tempDir);
+		const channelId = "C999";
+		const channelDir = join(tempDir, channelId);
+		mkdirSync(channelDir, { recursive: true });
+		const logPath = join(channelDir, "log.jsonl");
+
+		writeFileSync(logPath, `${JSON.stringify({ ts: 12345, text: "invalid ts type" })}\n`, "utf-8");
+
+		const store = new ChannelStore({ workingDir: tempDir, botToken: "test-token" });
+		assert.equal(store.getLastTimestamp(channelId), null);
+	});
+
+	it("returns null for blank timestamp strings on last log line", () => {
+		const tempDir = mkdtempSync(join(tmpdir(), "mom-store-test-"));
+		tempDirs.push(tempDir);
+		const channelId = "C1000";
+		const channelDir = join(tempDir, channelId);
+		mkdirSync(channelDir, { recursive: true });
+		const logPath = join(channelDir, "log.jsonl");
+
+		writeFileSync(logPath, `${JSON.stringify({ ts: "   ", text: "blank ts" })}\n`, "utf-8");
+
+		const store = new ChannelStore({ workingDir: tempDir, botToken: "test-token" });
+		assert.equal(store.getLastTimestamp(channelId), null);
 	});
 });
