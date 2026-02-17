@@ -47,7 +47,7 @@ export function parseOneShotTimestampMs(value: string): number | undefined {
 }
 
 export function normalizeOneShotDelayMs(delayMs: number): { delayMs: number; needsReschedule: boolean } | undefined {
-	if (!Number.isFinite(delayMs) || delayMs <= 0) {
+	if (Number.isNaN(delayMs) || delayMs <= 0) {
 		return undefined;
 	}
 	if (delayMs > MAX_TIMER_DELAY_MS) {

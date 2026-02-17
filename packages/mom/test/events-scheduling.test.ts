@@ -18,6 +18,10 @@ describe("one-shot event scheduling helpers", () => {
 		assert.deepEqual(normalizeOneShotDelayMs(1), { delayMs: 1, needsReschedule: false });
 		assert.deepEqual(normalizeOneShotDelayMs(2_147_483_647), { delayMs: 2_147_483_647, needsReschedule: false });
 		assert.deepEqual(normalizeOneShotDelayMs(2_147_483_648), { delayMs: 2_147_483_647, needsReschedule: true });
+		assert.deepEqual(normalizeOneShotDelayMs(Number.POSITIVE_INFINITY), {
+			delayMs: 2_147_483_647,
+			needsReschedule: true,
+		});
 		assert.equal(normalizeOneShotDelayMs(0), undefined);
 		assert.equal(normalizeOneShotDelayMs(-10), undefined);
 		assert.equal(normalizeOneShotDelayMs(Number.NaN), undefined);
