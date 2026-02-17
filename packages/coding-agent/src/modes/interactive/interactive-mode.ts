@@ -101,6 +101,7 @@ import { ToolExecutionComponent } from "./components/tool-execution.js";
 import { TreeSelectorComponent } from "./components/tree-selector.js";
 import { UserMessageComponent } from "./components/user-message.js";
 import { UserMessageSelectorComponent } from "./components/user-message-selector.js";
+import { getGhAuthStatusError } from "./gh-auth-status.js";
 import {
 	getAvailableThemes,
 	getAvailableThemesWithPaths,
@@ -3851,8 +3852,9 @@ export class InteractiveMode {
 		// Check if gh is available and logged in
 		try {
 			const authResult = spawnSync("gh", ["auth", "status"], { encoding: "utf-8" });
-			if (authResult.status !== 0) {
-				this.showError("GitHub CLI is not logged in. Run 'gh auth login' first.");
+			const authError = getGhAuthStatusError(authResult);
+			if (authError) {
+				this.showError(authError);
 				return;
 			}
 		} catch {

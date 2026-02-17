@@ -3729,6 +3729,27 @@ to:
 
 **Result:** Session list dialog now emits delete notifications at most once per dialog lifecycle.
 
+---
+
+### 209) interactive `/share` auth preflight misclassified missing/interrupted `gh` checks as auth failures
+
+**Finding:** Interactive share flow checked `gh auth status` via `spawnSync` but did not normalize spawn/signal outcomes, which could report missing/interrupted CLI checks as generic “not logged in” failures.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/gh-auth-status.ts` (new)
+- `packages/coding-agent/src/modes/interactive/interactive-mode.ts`
+- `packages/coding-agent/test/gh-auth-status.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- centralize `gh auth status` result classification,
+- distinguish spawn failures, signal interruptions, and actual unauthenticated states with explicit guidance,
+- add focused regression tests for all classification branches.
+
+**Result:** Interactive share preflight now surfaces accurate diagnostics for missing/interrupted GitHub CLI checks versus true authentication failures.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -3751,6 +3772,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/read-piped-stdin.test.ts` (includes TTY short-circuit, trimmed piped content, stdin error rejection, and close-before-end settlement coverage)
 - coding-agent prompt-confirm/read-piped-stdin helper regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-confirm.test.ts test/read-piped-stdin.test.ts` (includes yes/no parsing, early stdin-close settlement, pre-closed prompt handling, and pre-ended piped-stdin coverage)
+- coding-agent gh auth-status classification regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/gh-auth-status.test.ts` (includes missing gh spawn failure, signal interruption, non-zero auth status, and success cases)
 - coding-agent antigravity image SSE parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/antigravity-image-gen.test.ts` (includes terminal `data:` chunk without trailing newline and text+image ordering coverage)
 - coding-agent sleep helper regression tests pass:
