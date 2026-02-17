@@ -1443,6 +1443,22 @@ to reject immediately for pre-aborted signals, enforce single-settlement cleanup
 
 **Result:** Subprocess spawning in agent helpers now has deterministic cancellation/timeout semantics with clean listener teardown and race-safe promise settlement.
 
+---
+
+### 85) coding-agent RPC client startup could miss spawn/startup failures
+
+**Finding:** `RpcClient.start()` used a fixed startup sleep and only checked `exitCode`, which could miss startup-time spawn errors (e.g., missing runtime binary) and leave partially initialized client state after failed starts.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/rpc/rpc-client.ts`
+- `packages/coding-agent/test/rpc-client.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to add deterministic startup failure handling (spawn error + early exit), single-settlement startup lifecycle guards, and cleanup of partially initialized process/readline state on failure. Added targeted regression tests for missing runtime and immediate CLI-exit startup failures.
+
+**Result:** RPC client startup now fails fast and predictably on runtime/startup issues, with clean client-state rollback and actionable error reporting.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1451,6 +1467,8 @@ to reject immediately for pre-aborted signals, enforce single-settlement cleanup
   - `npm --workspace "@mariozechner/pi-ai" test`
 - agent spawnScript regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts`
+- coding-agent RPC startup regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes docker-missing spawn-error handling case)
 - Agent package tests pass:
