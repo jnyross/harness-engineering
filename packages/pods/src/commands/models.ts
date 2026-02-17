@@ -9,6 +9,7 @@ import { extractGpuType } from "../gpu-name.js";
 import { getModelConfig, getModelName, isKnownModel } from "../model-configs.js";
 import { assertValidModelId } from "../model-id.js";
 import { assertValidModelInstanceName, isValidModelInstanceName } from "../model-name.js";
+import { waitForProcessExit } from "../process-exit.js";
 import { assertValidPid, isValidPid, isValidPort } from "../process-identifiers.js";
 import { joinShellArgs, shellExport } from "../shell-quote.js";
 import { extractHostFromSshCommand, parseShellCommand, sshExec } from "../ssh.js";
@@ -372,8 +373,12 @@ WRAPPER
 	logProcess.stdout?.on("data", processOutput);
 	logProcess.stderr?.on("data", processOutput);
 
-	await new Promise<void>((resolve) => logProcess.on("exit", resolve));
+	const logResult = await waitForProcessExit(logProcess);
 	process.removeListener("SIGINT", sigintHandler);
+	if (logResult.error && !startupComplete && !interrupted) {
+		startupFailed = true;
+		failureReason = `Failed to stream startup logs: ${logResult.error.message}`;
+	}
 
 	if (startupFailed) {
 		// Model failed to start - clean up and report error
@@ -690,10 +695,11 @@ export const viewLogs = async (name: string, options: { pod?: string }) => {
 		},
 	});
 
-	// Wait for process to exit
-	await new Promise<void>((resolve) => {
-		logProcess.on("exit", () => resolve());
-	});
+	const logResult = await waitForProcessExit(logProcess);
+	if (logResult.error) {
+		console.error(chalk.red(`Failed to stream logs: ${logResult.error.message}`));
+		process.exit(1);
+	}
 };
 
 /**

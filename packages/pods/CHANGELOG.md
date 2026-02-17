@@ -43,4 +43,5 @@
 - Standardized pods command guidance/error text to use the actually invoked binary name (`pi`, `pi-pods`, wrappers), including delegated command hints in models/prompt/pods flows.
 - Added targeted tests for shared CLI command context helpers to guard dynamic command-name rendering behavior.
 - Extracted prompt argument helpers (`findReservedFlag`, dynamic provider-name generation) into a reusable module with dedicated tests.
+- Added shared process-exit helper handling both `exit` and spawn `error` events for model log streaming flows, avoiding hangs when SSH command spawning fails.
 
