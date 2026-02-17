@@ -103,8 +103,56 @@ const APP_ACTIONS: AppAction[] = [
 	"resume",
 ];
 
+const EDITOR_ACTIONS = Object.keys(DEFAULT_EDITOR_KEYBINDINGS) as EditorAction[];
+
 function isAppAction(action: string): action is AppAction {
 	return APP_ACTIONS.includes(action as AppAction);
+}
+
+function isEditorAction(action: string): action is EditorAction {
+	return EDITOR_ACTIONS.includes(action as EditorAction);
+}
+
+function normalizeKeybindingValue(value: unknown): KeyId[] | undefined {
+	if (typeof value === "string") {
+		const trimmed = value.trim();
+		return trimmed.length > 0 ? [trimmed as KeyId] : undefined;
+	}
+	if (!Array.isArray(value)) {
+		return undefined;
+	}
+
+	const normalized = value
+		.filter((entry): entry is string => typeof entry === "string")
+		.map((entry) => entry.trim())
+		.filter((entry): entry is KeyId => entry.length > 0);
+
+	if (normalized.length > 0) {
+		return normalized;
+	}
+	return value.length === 0 ? [] : undefined;
+}
+
+function normalizeKeybindingsConfig(config: unknown): KeybindingsConfig {
+	if (!config || typeof config !== "object" || Array.isArray(config)) {
+		return {};
+	}
+
+	const record = config as Record<string, unknown>;
+	const normalized: KeybindingsConfig = {};
+	for (const [action, value] of Object.entries(record)) {
+		if (!isAppAction(action) && !isEditorAction(action)) {
+			continue;
+		}
+
+		const parsed = normalizeKeybindingValue(value);
+		if (parsed === undefined) {
+			continue;
+		}
+		normalized[action as KeyAction] = parsed.length === 1 ? parsed[0] : parsed;
+	}
+
+	return normalized;
 }
 
 /**
@@ -145,13 +193,13 @@ export class KeybindingsManager {
 	 * Create in-memory.
 	 */
 	static inMemory(config: KeybindingsConfig = {}): KeybindingsManager {
-		return new KeybindingsManager(config);
+		return new KeybindingsManager(normalizeKeybindingsConfig(config));
 	}
 
 	private static loadFromFile(path: string): KeybindingsConfig {
 		if (!existsSync(path)) return {};
 		try {
-			return JSON.parse(readFileSync(path, "utf-8"));
+			return normalizeKeybindingsConfig(JSON.parse(readFileSync(path, "utf-8")));
 		} catch {
 			return {};
 		}

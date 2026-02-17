@@ -44,6 +44,7 @@
 - Boolean settings reads now normalize malformed non-boolean values to defaults across compaction/retry/display/image/editor toggles, preventing truthy/falsy coercions from malformed settings-file edits.
 - Enum settings reads (`defaultThinkingLevel`, steering/follow-up mode, transport, double-escape action) now normalize malformed values to defaults instead of forwarding unsupported strings from settings-file edits.
 - String/list settings reads (`defaultProvider`, `defaultModel`, `theme`, shell path/prefix, extension/skill/prompt/theme paths, enabled model patterns, package source arrays) now normalize malformed values and trim/filter invalid entries from settings files instead of forwarding incompatible runtime types.
+- Keybindings config loading now normalizes parsed JSON structure and key values (including malformed root/value types), ignoring invalid entries while preserving valid overrides and explicit unbind arrays.
 - Interactive external-editor launch now reports startup/signal/non-zero exit failures explicitly (while preserving current editor content) instead of silently no-oping.
 - Interactive selector replacement now disposes previous disposable selector components before teardown, and session selector now cancels pending status timers/load updates on dispose, preventing stale async updates after selector close/switch.
 - Interactive chat/pending container clears now dispose disposable child components before removal, preventing leaked background timers/listeners from detached transient message components.
