@@ -1396,6 +1396,21 @@ to execute docker sandbox commands via argv-based `spawn("docker", ["exec", ...]
 
 **Result:** Mom docker sandbox command execution no longer relies on shell-composed host command strings, reducing interpolation risk and aligning with argument-safe execution patterns used elsewhere.
 
+---
+
+### 82) mom package lacked a standard workspace test entrypoint
+
+**Finding:** Mom regression tests were runnable via direct `tsx --test ...` invocation, but `@mariozechner/pi-mom` had no package-level `npm test` script for standard workspace-targeted execution.
+
+**Action:** Updated:
+
+- `packages/mom/package.json`
+- `packages/mom/CHANGELOG.md`
+
+to add a package-level test script (`tsx --test`) supporting full-suite default runs and file-filtered runs via `npm test -- <pattern>`.
+
+**Result:** Mom tests can now run through standard workspace script invocation (`npm --workspace "@mariozechner/pi-mom" test`), consistent with other packages.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1542,6 +1557,8 @@ to execute docker sandbox commands via argv-based `spawn("docker", ["exec", ...]
   - `cd packages/mom && npx tsx --test test/sandbox.test.ts`
 - mom docker argv execution coverage:
   - `cd packages/mom && npx tsx --test test/sandbox.test.ts` (includes `buildDockerExecArgs` assertion for shell-free argv construction)
+- mom workspace test-script behavior:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
