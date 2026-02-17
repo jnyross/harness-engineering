@@ -11,7 +11,7 @@ const createPlanSchema = Type.Object({
 });
 
 const updateProgressSchema = Type.Object({
-	task_index: Type.Number({ description: "Index of the task to update (0-based)" }),
+	task_index: Type.Integer({ minimum: 0, description: "Index of the task to update (0-based)" }),
 	status: Type.Enum(
 		{ completed: "completed", in_progress: "in_progress", blocked: "blocked" },
 		{
@@ -49,6 +49,13 @@ export interface PlanOperations {
 	readFile: (absolutePath: string) => Promise<string>;
 	writeFile: (absolutePath: string, content: string) => Promise<void>;
 	fileExists: (absolutePath: string) => Promise<boolean>;
+}
+
+function parseTaskIndex(taskIndex: number): number {
+	if (!Number.isInteger(taskIndex) || taskIndex < 0) {
+		throw new Error(`Invalid task index: ${taskIndex}. Task index must be a non-negative integer.`);
+	}
+	return taskIndex;
 }
 
 const defaultPlanOperations: PlanOperations = {
@@ -150,6 +157,7 @@ export function createUpdateProgressTool(cwd: string, options?: PlanToolOptions)
 		parameters: updateProgressSchema,
 		execute: async (_toolCallId: string, params: unknown, _signal?: AbortSignal) => {
 			const { task_index, status } = params as UpdateProgressInput;
+			const normalizedTaskIndex = parseTaskIndex(task_index);
 			const exists = await ops.fileExists(planPath);
 			if (!exists) {
 				throw new Error("No execution plan found. Create one first with create_execution_plan.");
@@ -161,20 +169,20 @@ export function createUpdateProgressTool(cwd: string, options?: PlanToolOptions)
 				throw new Error("Failed to parse execution plan");
 			}
 
-			if (task_index < 0 || task_index >= plan.tasks.length) {
-				throw new Error(`Invalid task index: ${task_index}. Plan has ${plan.tasks.length} tasks.`);
+			if (normalizedTaskIndex >= plan.tasks.length) {
+				throw new Error(`Invalid task index: ${normalizedTaskIndex}. Plan has ${plan.tasks.length} tasks.`);
 			}
 
-			plan.tasks[task_index].status = status as ExecutionPlanTask["status"];
+			plan.tasks[normalizedTaskIndex].status = status as ExecutionPlanTask["status"];
 			await ops.writeFile(planPath, formatPlan(plan));
 
-			const task = plan.tasks[task_index];
+			const task = plan.tasks[normalizedTaskIndex];
 			const statusText = status === "completed" ? "completed" : status === "in_progress" ? "in progress" : "blocked";
 
 			const outputContent: TextContent[] = [
 				{
 					type: "text",
-					text: `Updated task ${task_index + 1} to "${statusText}": ${task.description}`,
+					text: `Updated task ${normalizedTaskIndex + 1} to "${statusText}": ${task.description}`,
 				},
 			];
 
