@@ -19,7 +19,11 @@ import { dirname, join } from "node:path";
 import * as readline from "node:readline";
 import { fileURLToPath } from "node:url";
 import { type Component, Container, Input, matchesKey, ProcessTerminal, SelectList, TUI } from "@mariozechner/pi-tui";
-import { getRpcExtensionExitReason, normalizeRpcExtensionExitCode } from "./rpc-extension-exit-status.js";
+import {
+	getRpcExtensionExitReason,
+	getRpcExtensionStartError,
+	normalizeRpcExtensionExitCode,
+} from "./rpc-extension-exit-status.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -247,12 +251,10 @@ class InputDialog implements Component {
 async function main() {
 	const extensionPath = join(__dirname, "extensions/rpc-demo.ts");
 	const cliPath = join(__dirname, "../dist/cli.js");
+	const command = "node";
+	const commandArgs = [cliPath, "--mode", "rpc", "--no-session", "--no-extension", "--extension", extensionPath];
 
-	const agent = spawn(
-		"node",
-		[cliPath, "--mode", "rpc", "--no-session", "--no-extension", "--extension", extensionPath],
-		{ stdio: ["pipe", "pipe", "pipe"] },
-	);
+	const agent = spawn(command, commandArgs, { stdio: ["pipe", "pipe", "pipe"] });
 
 	let stderr = "";
 	agent.stderr?.on("data", (data: Buffer) => {
@@ -625,7 +627,14 @@ async function main() {
 	};
 
 	agent.on("error", (error) => {
-		settleAndExit(1, `Failed to start agent process: ${error.message}`);
+		settleAndExit(
+			1,
+			getRpcExtensionStartError({
+				command,
+				args: commandArgs,
+				error,
+			}),
+		);
 	});
 
 	agent.on("exit", (code, signal) => {

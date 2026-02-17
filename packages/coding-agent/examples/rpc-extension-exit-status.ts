@@ -14,3 +14,8 @@ export function getRpcExtensionExitReason(code: number | null, signal: NodeJS.Si
 	}
 	return `code ${code}`;
 }
+
+export function getRpcExtensionStartError(options: { command: string; args: string[]; error: Error }): string {
+	const invokedCommand = [options.command, ...options.args].join(" ").trim();
+	return `Failed to start agent process '${invokedCommand}': ${options.error.message}`;
+}
