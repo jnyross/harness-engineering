@@ -1,10 +1,15 @@
 import { existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { executeBash, executeBashWithOperations } from "../src/core/bash-executor.js";
+import * as shellModule from "../src/utils/shell.js";
 
 describe("bash executor cancellation behavior", () => {
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
 	it("short-circuits executeBash when signal is pre-aborted", async () => {
 		const markerFile = join(tmpdir(), `pi-bash-executor-${Date.now()}.txt`);
 		if (existsSync(markerFile)) {
@@ -96,5 +101,14 @@ describe("bash executor cancellation behavior", () => {
 		expect(result.cancelled).toBe(false);
 		expect(result.exitCode).toBe(1);
 		expect(result.output).toContain("terminated");
+	});
+
+	it("rejects when shell process fails to spawn", async () => {
+		vi.spyOn(shellModule, "getShellConfig").mockReturnValue({
+			shell: "/definitely/missing-shell-binary",
+			args: ["-c"],
+		});
+
+		await expect(executeBash("echo test")).rejects.toThrow(/ENOENT|spawn/i);
 	});
 });

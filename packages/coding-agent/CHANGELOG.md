@@ -32,6 +32,7 @@
 - Interactive-shell extension now normalizes spawn/signal exit statuses and reports clearer failure reasons (startup failure, signal termination, or non-zero exit) instead of ambiguous `null` exit output.
 - Bash executor helpers (`executeBash`, `executeBashWithOperations`) now short-circuit pre-aborted signals, avoiding unnecessary subprocess/remote execution when cancellation is already requested.
 - Bash executor helpers now preserve non-zero semantics for signal/null exits when execution was not canceled by caller signals, avoiding false cancelled/success outcomes.
+- Bash executor local process handling now uses single-settlement guards across child `error`/`close` events, preventing duplicate resolve/reject races during spawn failures.
 - Built-in bash tool now short-circuits pre-aborted signals before shell spawn, preventing canceled calls from starting subprocesses.
 - Built-in bash tool execution now uses single-settlement cleanup and reports signal-terminated subprocesses as non-zero exits instead of false success.
 - Bash tool now normalizes null/unknown command exit statuses to non-zero failures, avoiding false success when custom executors return ambiguous null exits.

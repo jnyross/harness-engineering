@@ -2712,6 +2712,25 @@ to:
 
 **Result:** RPC mode now exits reliably during shutdown even if extension cleanup handlers throw, avoiding stuck headless shutdowns.
 
+---
+
+### 154) bash executor local child-process lifecycle could race duplicate settle on spawn failure
+
+**Finding:** `executeBash()` resolved/rejected directly from child `close` and `error` handlers without a shared single-settlement guard, allowing duplicate settle races in spawn-failure edge paths.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/bash-executor.ts`
+- `packages/coding-agent/test/bash-executor.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- add single-settlement resolve/reject helpers and centralized cleanup for local bash execution,
+- add regression coverage for shell spawn startup failure handling.
+
+**Result:** Local bash executor process handling now settles deterministically once across child lifecycle races, with preserved cancellation/output semantics.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2753,7 +2772,7 @@ to:
 - pods process-exit regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/process-exit.test.ts` (includes signal-exit non-zero assertion)
 - coding-agent bash executor regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/bash-executor.test.ts` (includes signal/null exit non-zero semantics)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/bash-executor.test.ts` (includes signal/null exit non-zero semantics and shell spawn-startup failure coverage)
 - agent proxy stream regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts` (includes trailing SSE line without newline)
 - ai Gemini CLI SSE regression tests pass:

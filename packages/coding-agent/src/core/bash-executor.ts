@@ -75,6 +75,7 @@ export function executeBash(command: string, options?: BashExecutorOptions): Pro
 			env: getShellEnv(),
 			stdio: ["ignore", "pipe", "pipe"],
 		});
+		let settled = false;
 
 		// Track sanitized output for truncation
 		const outputChunks: string[] = [];
@@ -85,6 +86,33 @@ export function executeBash(command: string, options?: BashExecutorOptions): Pro
 		let tempFilePath: string | undefined;
 		let tempFileStream: WriteStream | undefined;
 		let totalBytes = 0;
+
+		const cleanup = () => {
+			if (options?.signal) {
+				options.signal.removeEventListener("abort", abortHandler);
+			}
+			if (tempFileStream) {
+				tempFileStream.end();
+			}
+		};
+
+		const resolveOnce = (result: BashResult) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			cleanup();
+			resolve(result);
+		};
+
+		const rejectOnce = (error: Error) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			cleanup();
+			reject(error);
+		};
 
 		// Handle abort signal
 		const abortHandler = () => {
@@ -97,7 +125,7 @@ export function executeBash(command: string, options?: BashExecutorOptions): Pro
 			if (options.signal.aborted) {
 				// Already aborted, don't even start
 				child.kill();
-				resolve({
+				resolveOnce({
 					output: "",
 					exitCode: undefined,
 					cancelled: true,
@@ -149,22 +177,13 @@ export function executeBash(command: string, options?: BashExecutorOptions): Pro
 		child.stderr?.on("data", handleData);
 
 		child.on("close", (code, signal) => {
-			// Clean up abort listener
-			if (options?.signal) {
-				options.signal.removeEventListener("abort", abortHandler);
-			}
-
-			if (tempFileStream) {
-				tempFileStream.end();
-			}
-
 			// Combine buffered chunks for truncation (already sanitized)
 			const fullOutput = outputChunks.join("");
 			const truncationResult = truncateTail(fullOutput);
 
 			const cancelled = options?.signal?.aborted ?? false;
 
-			resolve({
+			resolveOnce({
 				output: truncationResult.truncated ? truncationResult.content : fullOutput,
 				exitCode: cancelled ? undefined : (code ?? (signal ? 1 : 0)),
 				cancelled,
@@ -174,16 +193,7 @@ export function executeBash(command: string, options?: BashExecutorOptions): Pro
 		});
 
 		child.on("error", (err) => {
-			// Clean up abort listener
-			if (options?.signal) {
-				options.signal.removeEventListener("abort", abortHandler);
-			}
-
-			if (tempFileStream) {
-				tempFileStream.end();
-			}
-
-			reject(err);
+			rejectOnce(err);
 		});
 	});
 }
