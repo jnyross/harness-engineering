@@ -50,4 +50,24 @@ describe("extractRetryDelay header parsing", () => {
 
 		expect(delay).toBe(31000);
 	});
+
+	it("ignores malformed x-ratelimit-reset header and falls back to body parsing", () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2025-01-01T00:00:00Z"));
+
+		const response = new Response("", { headers: { "x-ratelimit-reset": "1735689620oops" } });
+		const delay = extractRetryDelay("Please retry in 2s", response);
+
+		expect(delay).toBe(3000);
+	});
+
+	it("returns undefined when only malformed x-ratelimit-reset is present", () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2025-01-01T00:00:00Z"));
+
+		const response = new Response("", { headers: { "x-ratelimit-reset": "not-a-timestamp" } });
+		const delay = extractRetryDelay("", response);
+
+		expect(delay).toBeUndefined();
+	});
 });

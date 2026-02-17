@@ -189,8 +189,9 @@ export function extractRetryDelay(errorText: string, response?: Response | Heade
 
 		const rateLimitReset = headers.get("x-ratelimit-reset");
 		if (rateLimitReset) {
-			const resetSeconds = Number.parseInt(rateLimitReset, 10);
-			if (!Number.isNaN(resetSeconds)) {
+			const trimmedRateLimitReset = rateLimitReset.trim();
+			if (/^\d+$/.test(trimmedRateLimitReset)) {
+				const resetSeconds = Number.parseInt(trimmedRateLimitReset, 10);
 				const delay = normalizeDelay(resetSeconds * 1000 - Date.now());
 				if (delay !== undefined) {
 					return delay;

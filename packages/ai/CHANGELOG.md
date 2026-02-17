@@ -24,6 +24,7 @@
 - Google Gemini CLI and Antigravity OAuth manual input parsing now accepts hash-fragment redirect URL formats (e.g. `#code=...&state=...`) in addition to query-string redirect URLs.
 - OAuth manual-input parsing for Anthropic/Codex/Gemini/Antigravity is now centralized in a shared helper, reducing parser drift across providers.
 - AI CLI provider selection now validates interactive numeric input strictly (rejecting mixed values like `1foo` instead of truncating via `parseInt`).
+- Gemini CLI retry-delay parsing now ignores malformed `x-ratelimit-reset` header values instead of partially coercing them, correctly falling back to other delay hints.
 - Google Gemini CLI SSE parsing now flushes terminal buffered `data:` lines when streams end without trailing newline delimiters.
 - OpenAI Codex SSE parsing now flushes terminal buffered event chunks when streams end without trailing `\n\n` separators.
 - Shared `EventStream.result()` now rejects when streams end without a completion event/result, preventing silent hangs from incomplete stream lifecycles.
