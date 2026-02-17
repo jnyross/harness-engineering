@@ -29,6 +29,8 @@ describe("parseSlackTimestampToMilliseconds", () => {
 		assert.equal(parseSlackTimestampToMilliseconds("1700000000oops"), undefined);
 		assert.equal(parseSlackTimestampToMilliseconds("-1"), undefined);
 		assert.equal(parseSlackTimestampToMilliseconds(""), undefined);
+		assert.equal(parseSlackTimestampToMilliseconds("9007199254740.993"), undefined);
+		assert.equal(parseSlackTimestampToMilliseconds("9007199254740993"), undefined);
 	});
 });
 
