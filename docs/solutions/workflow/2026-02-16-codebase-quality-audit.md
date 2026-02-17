@@ -4934,6 +4934,26 @@ to:
 
 **Result:** coding-agent tool parameter parsing now rejects unsafe integers instead of accepting rounded coercions.
 
+---
+
+### 269) TUI Kitty key parsing accepted unsafe integer CSI-u/modifyOtherKeys fields
+
+**Finding:** `packages/tui/src/keys.ts` parsed CSI-u and modifyOtherKeys numeric fields with `parseInt(...)` and no safe-integer bounds, allowing oversized modifier/codepoint payloads into modifier bitmasking and key-id synthesis paths.
+
+**Action:** Updated:
+
+- `packages/tui/src/keys.ts`
+- `packages/tui/test/keys.test.ts`
+- `packages/tui/CHANGELOG.md`
+
+to:
+
+- centralize Kitty numeric parsing through safe-integer helpers,
+- reject unsafe/invalid modifier and Unicode codepoint fields before sequence parsing succeeds,
+- add regression tests asserting unsafe modifier sequences do not match parsed key IDs.
+
+**Result:** malformed oversized Kitty numeric fields are now rejected before key matching/parsing, preventing false synthesized modifier combinations from unsafe integer coercion.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4947,6 +4967,8 @@ to:
 - tui kitty CSI-u + overlay percentage parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/editor-kitty-csiu.test.ts`
   - `cd packages/tui && node --test --import tsx test/overlay-options.test.ts`
+- tui key parser Kitty unsafe-integer regression tests pass:
+  - `npm --workspace "@mariozechner/pi-tui" test -- test/keys.test.ts`
 - tui cell-size response parsing regression tests pass:
   - `cd packages/tui && node --test --import tsx test/tui-cell-size-response.test.ts`
 - coding-agent changelog/export-color parsing regression tests pass:
