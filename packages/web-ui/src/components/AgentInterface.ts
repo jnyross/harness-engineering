@@ -102,6 +102,9 @@ export class AgentInterface extends LitElement {
 
 		// Wait for first render to get scroll container
 		await this.updateComplete;
+		if (!this.isConnected) {
+			return;
+		}
 		this._scrollContainer = this.querySelector(".overflow-y-auto") as HTMLElement;
 
 		if (this._scrollContainer) {

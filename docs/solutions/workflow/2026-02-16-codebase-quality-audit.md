@@ -3364,6 +3364,23 @@ to:
 
 **Result:** AI CLI prompt helper now settles predictably across both pre-closed and mid-close readline states.
 
+---
+
+### 189) AgentInterface async mount flow could attach listeners after disconnect
+
+**Finding:** Agent interface awaited `updateComplete` inside `connectedCallback()` before attaching scroll/observer/session subscriptions, but lacked a post-await `isConnected` guard; rapid detach during await could lead to late listener attachment after teardown.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/AgentInterface.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- short-circuit `connectedCallback()` post-render setup when the component is no longer connected.
+
+**Result:** Agent interface no longer attaches post-render listeners/subscriptions after disconnect races.
+
 ## Validation Evidence
 
 - Root quality gate passes:
