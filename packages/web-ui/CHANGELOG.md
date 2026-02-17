@@ -50,6 +50,7 @@
 - `MessageEditor` now coalesces/cancels deferred model-selector open animation frames on disconnect, preventing stale post-detach selector opens.
 - `MessageEditor` now sequence-guards async attachment ingestion (paste/file-select/drag-drop) across disconnects, preventing stale detached state updates from in-flight file processing.
 - Model-discovery numeric parsing now validates remote context/token/port values strictly before fallback, avoiding `NaN` propagation from malformed provider metadata.
+- `extract_document` now parses `Content-Length` headers strictly before pre-download size checks, avoiding partial numeric coercion from malformed header values.
 
 ## [0.52.12] - 2026-02-13
 

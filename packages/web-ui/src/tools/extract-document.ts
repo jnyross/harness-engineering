@@ -29,6 +29,18 @@ export interface ExtractDocumentResult {
 	size: number;
 }
 
+function parseContentLengthHeader(contentLength: string | null): number | undefined {
+	const rawValue = contentLength?.trim();
+	if (!rawValue || !/^\d+$/.test(rawValue)) {
+		return undefined;
+	}
+	const parsed = Number.parseInt(rawValue, 10);
+	if (!Number.isSafeInteger(parsed) || parsed < 0) {
+		return undefined;
+	}
+	return parsed;
+}
+
 // ============================================================================
 // TOOL
 // ============================================================================
@@ -74,14 +86,11 @@ export function createExtractDocumentTool(): AgentTool<typeof extractDocumentSch
 				}
 
 				// Check size before downloading
-				const contentLength = response.headers.get("content-length");
-				if (contentLength) {
-					const size = Number.parseInt(contentLength, 10);
-					if (size > MAX_SIZE) {
-						throw new Error(
-							`Document is too large (${(size / 1024 / 1024).toFixed(1)}MB). Maximum supported size is 50MB.`,
-						);
-					}
+				const contentLength = parseContentLengthHeader(response.headers.get("content-length"));
+				if (contentLength !== undefined && contentLength > MAX_SIZE) {
+					throw new Error(
+						`Document is too large (${(contentLength / 1024 / 1024).toFixed(1)}MB). Maximum supported size is 50MB.`,
+					);
 				}
 
 				// Download the document
