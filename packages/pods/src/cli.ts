@@ -225,7 +225,10 @@ try {
 					});
 
 					sshProcess.on("exit", (code, signal) => {
-						exitOnce(normalizeChildExitCode(code, signal), getSshStreamExitError(code, signal));
+						exitOnce(
+							normalizeChildExitCode(code, signal),
+							getSshStreamExitError(code, signal, `SSH process '${invokedCommand}'`),
+						);
 					});
 				} catch (error) {
 					const message = error instanceof Error ? error.message : String(error);

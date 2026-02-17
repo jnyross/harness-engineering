@@ -69,4 +69,5 @@
 - CLI pod-shell/ssh command paths now use top-level `Pod` type imports (instead of inline `import("./types").Pod` annotations), aligning with static import conventions used across the monorepo.
 - Pod setup SSH preflight/GPU-detection now surfaces explicit stderr/stdout/exit-code diagnostics; GPU detection failures are warned with actionable context instead of silently reporting zero GPUs.
 - Model log-stream failure diagnostics now include the full invoked SSH tail command context in startup/live-log paths, making spawn/exit troubleshooting actionable without reproducing command construction manually.
+- Interactive `pi shell` exit diagnostics now include the full invoked SSH command context for signal/non-zero/unknown exits, matching startup-failure diagnostic detail.
 

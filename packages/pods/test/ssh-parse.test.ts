@@ -176,6 +176,13 @@ describe("getSshStreamExitError", () => {
 	it("reports unknown null/null exits", () => {
 		assert.equal(getSshStreamExitError(null, null), "SSH process exited with unknown status");
 	});
+
+	it("supports custom process labels for diagnostics", () => {
+		assert.equal(
+			getSshStreamExitError(9, null, "startup log stream (ssh user@host tail -f file.log)"),
+			"startup log stream (ssh user@host tail -f file.log) exited with code 9",
+		);
+	});
 });
 
 describe("scpFile", () => {

@@ -277,15 +277,19 @@ export const sshExec = async (
 /**
  * Execute an SSH command with streaming output to console
  */
-export function getSshStreamExitError(code: number | null, signal: NodeJS.Signals | null): string | undefined {
+export function getSshStreamExitError(
+	code: number | null,
+	signal: NodeJS.Signals | null,
+	processLabel: string = "SSH process",
+): string | undefined {
 	if (signal) {
-		return getSignalTerminationMessage("SSH process", signal);
+		return getSignalTerminationMessage(processLabel, signal);
 	}
 	if (code === null) {
-		return "SSH process exited with unknown status";
+		return `${processLabel} exited with unknown status`;
 	}
 	if (code !== 0) {
-		return `SSH process exited with code ${code}`;
+		return `${processLabel} exited with code ${code}`;
 	}
 	return undefined;
 }
