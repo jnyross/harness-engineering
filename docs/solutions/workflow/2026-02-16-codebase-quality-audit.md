@@ -1657,6 +1657,22 @@ to use single-settlement abort cleanup paths, add early cancellation checks duri
 
 **Result:** Find/ls tool execution now handles abort lifecycle deterministically with consistent listener cleanup and cancellation behavior.
 
+---
+
+### 98) coding-agent RPC stop left pending requests unresolved until timeout
+
+**Finding:** `RpcClient.stop()` cleared pending request tracking without actively rejecting waiting callers, leaving request promises dependent on timeout rather than immediate shutdown feedback.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/rpc/rpc-client.ts`
+- `packages/coding-agent/test/rpc-client.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to reject pending in-flight RPC requests during client shutdown and added regression coverage for stop-time pending-request rejection behavior.
+
+**Result:** RPC clients now fail pending requests immediately on stop, avoiding shutdown-time request hangs.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1665,8 +1681,8 @@ to use single-settlement abort cleanup paths, add early cancellation checks duri
   - `npm --workspace "@mariozechner/pi-ai" test`
 - agent spawnScript regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts`
-- coding-agent RPC startup regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts`
+- coding-agent RPC startup/shutdown regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures + pending-request rejection on stop)
 - coding-agent execCommand regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - coding-agent interactive status tests pass after share flow command-exec refactor:
