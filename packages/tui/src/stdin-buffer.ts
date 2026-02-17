@@ -22,6 +22,8 @@ import { EventEmitter } from "events";
 const ESC = "\x1b";
 const BRACKETED_PASTE_START = "\x1b[200~";
 const BRACKETED_PASTE_END = "\x1b[201~";
+const DEFAULT_BUFFER_TIMEOUT_MS = 10;
+const MAX_TIMEOUT_MS = 2_147_483_647;
 
 /**
  * Check if a string is a complete escape sequence or needs more data
@@ -231,6 +233,16 @@ export type StdinBufferOptions = {
 	timeout?: number;
 };
 
+function parseBufferTimeoutMs(timeout: number | undefined): number {
+	if (timeout === undefined) {
+		return DEFAULT_BUFFER_TIMEOUT_MS;
+	}
+	if (!Number.isFinite(timeout) || timeout <= 0) {
+		return DEFAULT_BUFFER_TIMEOUT_MS;
+	}
+	return timeout > MAX_TIMEOUT_MS ? MAX_TIMEOUT_MS : timeout;
+}
+
 export type StdinBufferEventMap = {
 	data: [string];
 	paste: [string];
@@ -249,7 +261,7 @@ export class StdinBuffer extends EventEmitter<StdinBufferEventMap> {
 
 	constructor(options: StdinBufferOptions = {}) {
 		super();
-		this.timeoutMs = options.timeout ?? 10;
+		this.timeoutMs = parseBufferTimeoutMs(options.timeout);
 	}
 
 	public process(data: string | Buffer): void {

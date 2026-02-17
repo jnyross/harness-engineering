@@ -269,6 +269,19 @@ describe("StdinBuffer", () => {
 			assert.deepStrictEqual(emittedSequences, [""]);
 		});
 
+		it("should clamp oversized timeout values instead of flushing immediately", async () => {
+			const oversizedBuffer = new StdinBuffer({ timeout: Number.MAX_SAFE_INTEGER });
+			const oversizedEmitted: string[] = [];
+			oversizedBuffer.on("data", (sequence) => {
+				oversizedEmitted.push(sequence);
+			});
+
+			oversizedBuffer.process("\x1b[<35");
+			await wait(15);
+			assert.deepStrictEqual(oversizedEmitted, []);
+			oversizedBuffer.destroy();
+		});
+
 		it("should handle lone escape character with timeout", async () => {
 			processInput("\x1b");
 			assert.deepStrictEqual(emittedSequences, []);

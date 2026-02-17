@@ -12,6 +12,7 @@
 - Overlay percentage sizing/positioning now rejects numeric-overflow percentage inputs, falling back to default/anchor layout behavior instead of coercing overflow values via `parseFloat`.
 - Overlay percentage parsing now rejects precision-rounded values slightly above 100% (for example `100.0000000000000000001%`) before float conversion, preventing accidental acceptance as exactly `100%`.
 - Terminal cell-size response parsing now rejects unsafe integer width/height payloads before applying image cell dimensions, preventing oversized response coercion from malformed terminal replies.
+- `StdinBuffer` now clamps oversized timeout option values to Node.js timer limits (and falls back for invalid non-positive values), preventing implicit runtime timer clamping from prematurely flushing partial escape-sequence buffers.
 
 ## [0.52.12] - 2026-02-13
 
