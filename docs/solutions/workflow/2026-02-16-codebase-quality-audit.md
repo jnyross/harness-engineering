@@ -3473,6 +3473,23 @@ to:
 
 **Result:** Artifact panel now avoids stale frame-driven DOM mutations after rapid unmount/remount sequences.
 
+---
+
+### 195) proxy settings tab could apply async load results after disconnect
+
+**Finding:** Proxy settings tab loaded persisted values asynchronously in `connectedCallback()` without invalidating stale in-flight reads during unmount/remount races.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/dialogs/SettingsDialog.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- sequence-tag proxy settings reads and ignore stale completions when disconnected/reconnected before async storage calls complete.
+
+**Result:** Proxy settings tab no longer mutates component state from stale async loads after disconnect races.
+
 ## Validation Evidence
 
 - Root quality gate passes:

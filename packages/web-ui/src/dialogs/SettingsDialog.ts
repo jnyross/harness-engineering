@@ -44,20 +44,30 @@ export class ApiKeysTab extends SettingsTab {
 export class ProxyTab extends SettingsTab {
 	@state() private proxyEnabled = false;
 	@state() private proxyUrl = "http://localhost:3001";
+	private settingsLoadSeq = 0;
 
 	override async connectedCallback() {
 		super.connectedCallback();
+		const loadSeq = ++this.settingsLoadSeq;
 		// Load proxy settings when tab is connected
 		try {
 			const storage = getAppStorage();
 			const enabled = await storage.settings.get<boolean>("proxy.enabled");
 			const url = await storage.settings.get<string>("proxy.url");
+			if (!this.isConnected || loadSeq !== this.settingsLoadSeq) {
+				return;
+			}
 
 			if (enabled !== null) this.proxyEnabled = enabled;
 			if (url !== null) this.proxyUrl = url;
 		} catch (error) {
 			console.error("Failed to load proxy settings:", error);
 		}
+	}
+
+	override disconnectedCallback(): void {
+		super.disconnectedCallback();
+		this.settingsLoadSeq++;
 	}
 
 	private async saveProxySettings() {

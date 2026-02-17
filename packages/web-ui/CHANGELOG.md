@@ -31,6 +31,7 @@
 - `ConsoleRuntimeProvider.complete()` now cleans runtime error listeners in a `finally` block, ensuring listener teardown even when runtime message delivery fails.
 - `ModelSelector` now invalidates in-flight custom-provider discovery when disconnected, preventing stale async completion updates after dialog close/remount races.
 - `ModelSelector.firstUpdated()` now exits when disconnected before post-render setup, preventing late focus/listener wiring after close races.
+- `ProxyTab` now invalidates in-flight async settings loads across disconnects, preventing stale proxy state writes after tab unmount races.
 
 ## [0.52.12] - 2026-02-13
 
