@@ -4607,6 +4607,26 @@ to:
 
 **Result:** execution-plan progress updates now reject malformed indices deterministically and preserve clear index-validation diagnostics.
 
+---
+
+### 253) pods memory option accepted non-decimal numeric formats
+
+**Finding:** pods `--memory` normalization used broad numeric coercion, so non-decimal formats (for example `1e2`, `0x10`, `.5`) were accepted even though CLI guidance expects decimal percentages.
+
+**Action:** Updated:
+
+- `packages/pods/src/model-options.ts`
+- `packages/pods/test/model-options.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- require decimal numeric format (`digits` with optional decimal fraction) before numeric conversion,
+- reject scientific/hex/shorthand numeric formats with explicit validation errors,
+- add regression coverage for malformed numeric-format inputs.
+
+**Result:** pods memory parsing now accepts only intended decimal percentage input formats and rejects non-decimal numeric coercions deterministically.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4621,6 +4641,8 @@ to:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/agent-model.test.ts`
 - pods required-option parser regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/cli-options.test.ts test/cli-args.test.ts`
+- pods model-option parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts`
 - pods required-option smoke checks pass:
   - `npx tsx packages/pods/src/cli.ts start demo-model --name demo --memory`
   - `npx tsx packages/pods/src/cli.ts pods setup demo "ssh host" --vllm`
