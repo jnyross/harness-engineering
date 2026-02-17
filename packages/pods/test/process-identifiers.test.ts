@@ -14,14 +14,14 @@ describe("process identifier validation", () => {
 	});
 
 	it("rejects invalid pids", () => {
-		for (const pid of [0, -1, 1.5, 3_000_000_000]) {
+		for (const pid of [0, -1, 1.5, 3_000_000_000, 9_007_199_254_740_992]) {
 			assert.equal(isValidPid(pid), false);
 			assert.throws(() => assertValidPid(pid, "test"), /Invalid test pid/);
 		}
 	});
 
 	it("rejects invalid ports", () => {
-		for (const port of [0, -1, 65536, 8080.5]) {
+		for (const port of [0, -1, 65536, 8080.5, 9_007_199_254_740_992]) {
 			assert.equal(isValidPort(port), false);
 			assert.throws(() => assertValidPort(port, "test"), /Invalid test port/);
 		}

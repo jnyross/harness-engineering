@@ -26,6 +26,7 @@
 - Centralized GPU-name parsing in a shared helper used by model config selection and known-model compatibility display, with regression tests.
 - SSH command validation now accepts standard `ssh.exe` binary forms (including absolute Windows-style paths with `/` or `\`) in addition to `ssh`.
 - Memory-option normalization now uses direct numeric-string conversion after validation, preserving canonical output formatting (for example `50.0%` normalizes to `50%`) without redundant branch logic.
+- PID/port validator helpers now require safe integers, rejecting oversized unsafe numeric values before command assembly uses persisted process identifiers.
 
 ### Fixed
 

@@ -1,11 +1,11 @@
 const MAX_PID = 2_147_483_647;
 
 export function isValidPid(pid: number): boolean {
-	return Number.isInteger(pid) && pid > 0 && pid <= MAX_PID;
+	return Number.isSafeInteger(pid) && pid > 0 && pid <= MAX_PID;
 }
 
 export function isValidPort(port: number): boolean {
-	return Number.isInteger(port) && port > 0 && port <= 65535;
+	return Number.isSafeInteger(port) && port > 0 && port <= 65535;
 }
 
 export function assertValidPid(pid: number, context: string): void {
