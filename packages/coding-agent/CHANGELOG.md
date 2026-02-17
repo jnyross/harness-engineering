@@ -63,6 +63,7 @@
 - external-editor startup diagnostics now preserve original command casing in command-context messages (instead of lowercasing paths/arguments).
 - Theme auto-detection now parses `COLORFGBG` background indices strictly, ignoring malformed values instead of partially coercing numeric prefixes.
 - Theme auto-detection now also rejects unsafe integer `COLORFGBG` background indices (greater than `Number.MAX_SAFE_INTEGER`) instead of accepting rounded numeric coercions.
+- Theme hex-color parsing now rejects malformed 6-digit hex tokens containing invalid trailing characters (for example `#ff00f-`) instead of partially coercing them via permissive base-16 parsing.
 - ANSI export HTML conversion now rejects malformed SGR parameter tokens instead of partially coercing numeric prefixes (for example `1x` no longer maps to bold).
 - ANSI export HTML conversion now ignores out-of-range and unsafe-integer SGR color parameters instead of emitting invalid CSS color values from oversized numeric coercions.
 - Interactive changelog parser now rejects unsafe integer version components in changelog headers and last-seen version state, preventing rounded version coercion in update-entry filtering.
