@@ -94,6 +94,7 @@
 - Read tool now uses single-settlement abort cleanup during async filesystem operations, ensuring deterministic cancellation/error settlement behavior.
 - Read tool text line counting now treats trailing newlines correctly and enforces exact offset bounds, preventing false extra-line offsets (for example offset `2` on `hello\n`).
 - Read tool now rejects non-positive/non-integer `offset`/`limit` inputs instead of coercing them silently.
+- Grep tool now rejects non-integer/out-of-range `context`/`limit` values instead of silently coercing them.
 - Edit tool now uses single-settlement abort cleanup across validation/read/write branches, ensuring deterministic cancellation/error settlement behavior.
 - Package-manager command execution now uses single-settlement handling for spawn `error`/`close` races and reports clearer startup/signal failures.
 - Package-manager async command failures now include the full invoked command line in startup/signal/non-zero diagnostics for easier troubleshooting.

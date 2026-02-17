@@ -537,6 +537,35 @@ describe("Coding Agent Tools", () => {
 
 			ensureToolMock.mockRestore();
 		});
+
+		it("should reject non-integer or out-of-range context/limit values", async () => {
+			const testFile = join(testDir, "grep-invalid-ranges.txt");
+			writeFileSync(testFile, "match line\n");
+
+			await expect(
+				grepTool.execute("test-call-12b", {
+					pattern: "match",
+					path: testFile,
+					context: -1,
+				}),
+			).rejects.toThrow("Parameter 'context' must be a non-negative integer.");
+
+			await expect(
+				grepTool.execute("test-call-12c", {
+					pattern: "match",
+					path: testFile,
+					context: 1.5,
+				}),
+			).rejects.toThrow("Parameter 'context' must be a non-negative integer.");
+
+			await expect(
+				grepTool.execute("test-call-12d", {
+					pattern: "match",
+					path: testFile,
+					limit: 0,
+				}),
+			).rejects.toThrow("Parameter 'limit' must be a positive integer.");
+		});
 	});
 
 	describe("find tool", () => {

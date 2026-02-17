@@ -25,9 +25,11 @@ const grepSchema = Type.Object({
 		Type.Boolean({ description: "Treat pattern as literal string instead of regex (default: false)" }),
 	),
 	context: Type.Optional(
-		Type.Number({ description: "Number of lines to show before and after each match (default: 0)" }),
+		Type.Integer({ minimum: 0, description: "Number of lines to show before and after each match (default: 0)" }),
 	),
-	limit: Type.Optional(Type.Number({ description: "Maximum number of matches to return (default: 100)" })),
+	limit: Type.Optional(
+		Type.Integer({ minimum: 1, description: "Maximum number of matches to return (default: 100)" }),
+	),
 });
 
 export type GrepToolInput = Static<typeof grepSchema>;
@@ -38,6 +40,26 @@ export interface GrepToolDetails {
 	truncation?: TruncationResult;
 	matchLimitReached?: number;
 	linesTruncated?: boolean;
+}
+
+function parseContextValue(context: number | undefined): number {
+	if (context === undefined) {
+		return 0;
+	}
+	if (!Number.isInteger(context) || context < 0) {
+		throw new Error("Parameter 'context' must be a non-negative integer.");
+	}
+	return context;
+}
+
+function parseLimitValue(limit: number | undefined): number {
+	if (limit === undefined) {
+		return DEFAULT_LIMIT;
+	}
+	if (!Number.isInteger(limit) || limit < 1) {
+		throw new Error("Parameter 'limit' must be a positive integer.");
+	}
+	return limit;
 }
 
 /**
@@ -90,6 +112,8 @@ export function createGrepTool(cwd: string, options?: GrepToolOptions): AgentToo
 			},
 			signal?: AbortSignal,
 		) => {
+			const contextValue = parseContextValue(context);
+			const effectiveLimit = parseLimitValue(limit);
 			return new Promise((resolve, reject) => {
 				if (signal?.aborted) {
 					reject(new Error("Operation aborted"));
@@ -133,9 +157,6 @@ export function createGrepTool(cwd: string, options?: GrepToolOptions): AgentToo
 							settle(() => reject(new Error(`Path not found: ${searchPath}`)));
 							return;
 						}
-						const contextValue = context && context > 0 ? context : 0;
-						const effectiveLimit = Math.max(1, limit ?? DEFAULT_LIMIT);
-
 						const formatPath = (filePath: string): string => {
 							if (isDirectory) {
 								const relative = path.relative(searchPath, filePath);
