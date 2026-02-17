@@ -18,5 +18,6 @@ describe("normalizeDialogTimeoutMs", () => {
 	it("clamps oversized timeout values to Node timer max", () => {
 		expect(normalizeDialogTimeoutMs(2_147_483_648)).toBe(2_147_483_647);
 		expect(normalizeDialogTimeoutMs(Number.MAX_SAFE_INTEGER)).toBe(2_147_483_647);
+		expect(normalizeDialogTimeoutMs(Number.POSITIVE_INFINITY)).toBe(2_147_483_647);
 	});
 });

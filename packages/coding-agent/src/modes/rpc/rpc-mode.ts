@@ -35,7 +35,7 @@ export function normalizeDialogTimeoutMs(timeout: number | undefined): number | 
 	if (timeout === undefined) {
 		return undefined;
 	}
-	if (!Number.isFinite(timeout) || timeout <= 0) {
+	if (Number.isNaN(timeout) || timeout <= 0) {
 		return undefined;
 	}
 	return timeout > MAX_TIMEOUT_MS ? MAX_TIMEOUT_MS : timeout;
