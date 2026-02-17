@@ -233,6 +233,7 @@ async function startLocalOAuthServer(state: string): Promise<OAuthServerInfo> {
 	const http = await getNodeHttp();
 	let lastCode: string | null = null;
 	let cancelled = false;
+	let settled = false;
 	let waitForCodeResolve: ((value: { code: string } | null) => void) | undefined;
 	let waitForCodePromise: Promise<{ code: string } | null> | undefined;
 	let waitForCodeTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -281,9 +282,17 @@ async function startLocalOAuthServer(state: string): Promise<OAuthServerInfo> {
 	});
 
 	return new Promise((resolve) => {
+		const resolveOnce = (value: OAuthServerInfo) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			resolve(value);
+		};
+
 		server
 			.listen(1455, "127.0.0.1", () => {
-				resolve({
+				resolveOnce({
 					close: () => server.close(),
 					cancelWait: () => {
 						cancelled = true;
@@ -314,7 +323,7 @@ async function startLocalOAuthServer(state: string): Promise<OAuthServerInfo> {
 					err.code,
 					") Falling back to manual paste.",
 				);
-				resolve({
+				resolveOnce({
 					close: () => {
 						try {
 							server.close();

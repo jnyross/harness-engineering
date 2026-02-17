@@ -1,3 +1,4 @@
+import { createServer } from "node:http";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { loginOpenAICodex, openaiCodexOAuthProvider } from "../src/utils/oauth/openai-codex.js";
 
@@ -188,5 +189,50 @@ describe("openai-codex oauth login", () => {
 			}),
 		).rejects.toThrow("Login cancelled");
 		expect(onPrompt).not.toHaveBeenCalled();
+	});
+
+	it("falls back to manual input when callback port is unavailable", async () => {
+		const busyServer = createServer((_req, res) => {
+			res.statusCode = 200;
+			res.end("busy");
+		});
+		await new Promise<void>((resolve) => {
+			busyServer.listen(1455, "127.0.0.1", () => resolve());
+		});
+
+		let authState = "";
+		const token = createAccessToken("acct_busy_port");
+		const fetchMock = vi.fn(
+			async (_input: unknown, _init?: RequestInit) =>
+				new Response(
+					JSON.stringify({
+						access_token: token,
+						refresh_token: "refresh-busy-port",
+						expires_in: 3600,
+					}),
+					{
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					},
+				),
+		);
+		vi.stubGlobal("fetch", fetchMock);
+
+		try {
+			const credentials = await loginOpenAICodex({
+				onAuth: ({ url }) => {
+					authState = new URL(url).searchParams.get("state") ?? "";
+				},
+				onPrompt: async () => "",
+				onManualCodeInput: async () => `http://localhost:1455/auth/callback?code=manual-code&state=${authState}`,
+			});
+
+			expect(credentials.accountId).toBe("acct_busy_port");
+			expect(credentials.refresh).toBe("refresh-busy-port");
+		} finally {
+			await new Promise<void>((resolve) => {
+				busyServer.close(() => resolve());
+			});
+		}
 	});
 });
