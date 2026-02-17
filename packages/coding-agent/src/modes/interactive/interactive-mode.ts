@@ -43,7 +43,7 @@ import {
 	TUI,
 	visibleWidth,
 } from "@mariozechner/pi-tui";
-import { spawn, spawnSync } from "child_process";
+import { spawnSync } from "child_process";
 import {
 	APP_NAME,
 	getAuthPath,
@@ -54,6 +54,7 @@ import {
 } from "../../config.js";
 import { type AgentSession, type AgentSessionEvent, parseSkillBlock } from "../../core/agent-session.js";
 import type { CompactionResult } from "../../core/compaction/index.js";
+import { execCommand } from "../../core/exec.js";
 import type {
 	ExtensionContext,
 	ExtensionRunner,
@@ -3863,27 +3864,14 @@ export class InteractiveMode {
 			}
 		};
 
-		// Create a secret gist asynchronously
-		let proc: ReturnType<typeof spawn> | null = null;
-
 		loader.onAbort = () => {
-			proc?.kill();
 			restoreEditor();
 			this.showStatus("Share cancelled");
 		};
 
 		try {
-			const result = await new Promise<{ stdout: string; stderr: string; code: number | null }>((resolve) => {
-				proc = spawn("gh", ["gist", "create", "--public=false", tmpFile]);
-				let stdout = "";
-				let stderr = "";
-				proc.stdout?.on("data", (data) => {
-					stdout += data.toString();
-				});
-				proc.stderr?.on("data", (data) => {
-					stderr += data.toString();
-				});
-				proc.on("close", (code) => resolve({ stdout, stderr, code }));
+			const result = await execCommand("gh", ["gist", "create", "--public=false", tmpFile], process.cwd(), {
+				signal: loader.signal,
 			});
 
 			if (loader.signal.aborted) return;
