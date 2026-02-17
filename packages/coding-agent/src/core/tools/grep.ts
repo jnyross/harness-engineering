@@ -5,7 +5,7 @@ import { spawn } from "child_process";
 import { readFileSync, statSync } from "fs";
 import path from "path";
 import { ensureTool } from "../../utils/tools-manager.js";
-import { getRipgrepExitError } from "./grep-exit-status.js";
+import { getRipgrepExitError, getRipgrepStartError } from "./grep-exit-status.js";
 import { resolveToCwd } from "./path-utils.js";
 import {
 	DEFAULT_MAX_BYTES,
@@ -273,7 +273,17 @@ export function createGrepTool(cwd: string, options?: GrepToolOptions): AgentToo
 
 						rgChild.on("error", (error) => {
 							cleanup();
-							settle(() => reject(new Error(`Failed to run ripgrep: ${error.message}`)));
+							settle(() =>
+								reject(
+									new Error(
+										getRipgrepStartError({
+											command: rgPath,
+											args,
+											error,
+										}),
+									),
+								),
+							);
 						});
 
 						rgChild.on("close", async (code, closeSignal) => {

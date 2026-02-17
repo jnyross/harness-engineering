@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getRipgrepExitError } from "../src/core/tools/grep-exit-status.js";
+import { getRipgrepExitError, getRipgrepStartError } from "../src/core/tools/grep-exit-status.js";
 
 describe("getRipgrepExitError", () => {
 	it("returns undefined for successful exit codes", () => {
@@ -49,5 +49,17 @@ describe("getRipgrepExitError", () => {
 				killedDueToLimit: false,
 			}),
 		).toBe("regex parse error");
+	});
+});
+
+describe("getRipgrepStartError", () => {
+	it("includes full invoked command in startup diagnostics", () => {
+		expect(
+			getRipgrepStartError({
+				command: "/usr/bin/rg",
+				args: ["--json", "needle", "/tmp/workspace"],
+				error: new Error("ENOENT"),
+			}),
+		).toBe("Failed to run ripgrep command '/usr/bin/rg --json needle /tmp/workspace': ENOENT");
 	});
 });

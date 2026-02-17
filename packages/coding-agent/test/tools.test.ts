@@ -506,6 +506,22 @@ describe("Coding Agent Tools", () => {
 				),
 			).rejects.toThrow(/Operation aborted/);
 		});
+
+		it("should include command context when ripgrep fails to start", async () => {
+			const ensureToolMock = vi.spyOn(toolsManager, "ensureTool").mockResolvedValue("/nonexistent-rg-path-xyz123");
+			const grepWithCwd = createGrepTool(testDir);
+
+			await expect(
+				grepWithCwd.execute("test-call-grep-spawn-error", {
+					pattern: "match",
+					path: testDir,
+				}),
+			).rejects.toThrow(
+				/Failed to run ripgrep command '\/nonexistent-rg-path-xyz123 --json --line-number --color=never --hidden match /,
+			);
+
+			ensureToolMock.mockRestore();
+		});
 	});
 
 	describe("find tool", () => {

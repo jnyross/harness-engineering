@@ -23,3 +23,8 @@ export function getRipgrepExitError(options: {
 
 	return trimmedStderr || `ripgrep exited with code ${options.code}`;
 }
+
+export function getRipgrepStartError(options: { command: string; args: string[]; error: Error }): string {
+	const invokedCommand = [options.command, ...options.args].join(" ").trim();
+	return `Failed to run ripgrep command '${invokedCommand}': ${options.error.message}`;
+}
