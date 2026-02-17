@@ -4868,6 +4868,26 @@ to:
 
 **Result:** overlay layout now treats overflow/out-of-range percentages as invalid and avoids coercive edge clamping from malformed numeric inputs.
 
+---
+
+### 266) TUI cell-size response parsing accepted unsafe integer dimension payloads
+
+**Finding:** terminal cell-size response parsing converted captured numeric fields directly and accepted oversized integer payloads, allowing malformed responses to update global image cell dimensions with rounded values.
+
+**Action:** Updated:
+
+- `packages/tui/src/tui.ts`
+- `packages/tui/test/tui-cell-size-response.test.ts`
+- `packages/tui/CHANGELOG.md`
+
+to:
+
+- parse response width/height fields as positive safe integers,
+- ignore malformed/unsafe response payloads while still draining response frames,
+- add regression tests for valid updates and unsafe-response rejection behavior.
+
+**Result:** TUI now ignores malformed oversized cell-size payloads and only applies validated positive safe-integer dimensions.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4881,6 +4901,8 @@ to:
 - tui kitty CSI-u + overlay percentage parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/editor-kitty-csiu.test.ts`
   - `cd packages/tui && node --test --import tsx test/overlay-options.test.ts`
+- tui cell-size response parsing regression tests pass:
+  - `cd packages/tui && node --test --import tsx test/tui-cell-size-response.test.ts`
 - coding-agent changelog/export-color parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/changelog-utils.test.ts test/export-html-color-parsing.test.ts`
 - ai usage metadata regression tests pass:
