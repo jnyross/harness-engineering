@@ -5104,6 +5104,25 @@ to:
 
 **Result:** invalid `$missingVar` export references no longer leak unresolved tokens into generated export colors.
 
+---
+
+### 277) pods memory-option normalization contained redundant branch logic
+
+**Finding:** `normalizeMemoryOption(...)` used a redundant integer/non-integer branch with identical outcomes (`String(value)` in both paths), obscuring normalization intent and leaving canonicalization behavior implicit.
+
+**Action:** Updated:
+
+- `packages/pods/src/model-options.ts`
+- `packages/pods/test/model-options.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- simplify memory normalization to direct validated numeric-string conversion,
+- explicitly regress-test canonical formatting of integer-equivalent decimal input (e.g. `50.0% -> 50%`).
+
+**Result:** memory-option normalization behavior remains unchanged but is now explicit and simpler to maintain.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5152,6 +5171,8 @@ to:
 - pods required-option parser regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/cli-options.test.ts test/cli-args.test.ts`
 - pods model-option parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts`
+- pods memory normalization canonical-format regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts`
 - pods required-option smoke checks pass:
   - `npx tsx packages/pods/src/cli.ts start demo-model --name demo --memory`
