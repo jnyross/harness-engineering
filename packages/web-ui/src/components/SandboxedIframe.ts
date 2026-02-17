@@ -106,6 +106,7 @@ export class SandboxIframe extends LitElement {
 		const validationError = this.validateHtml(completeHtml);
 		if (validationError) {
 			console.error("HTML validation failed:", validationError);
+			RUNTIME_MESSAGE_ROUTER.unregisterSandbox(sandboxId);
 			// Show error in iframe instead of crashing
 			this.iframe?.remove();
 			this.iframe = document.createElement("iframe");
@@ -343,6 +344,8 @@ export class SandboxIframe extends LitElement {
 			// 5. Validate HTML before sending to sandbox
 			const validationError = this.validateHtml(completeHtml);
 			if (validationError) {
+				completed = true;
+				cleanup();
 				reject(new Error(`HTML validation failed: ${validationError}`));
 				return;
 			}
