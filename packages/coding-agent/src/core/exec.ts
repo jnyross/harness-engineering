@@ -36,6 +36,10 @@ export async function execCommand(
 	cwd: string,
 	options?: ExecOptions,
 ): Promise<ExecResult> {
+	if (options?.signal?.aborted) {
+		return { stdout: "", stderr: "Command aborted", code: 1, killed: true };
+	}
+
 	return new Promise((resolve) => {
 		const proc = spawn(command, args, {
 			cwd,
@@ -46,14 +50,37 @@ export async function execCommand(
 		let stdout = "";
 		let stderr = "";
 		let killed = false;
+		let settled = false;
 		let timeoutId: NodeJS.Timeout | undefined;
+		let forceKillId: NodeJS.Timeout | undefined;
+
+		const cleanup = () => {
+			if (timeoutId) {
+				clearTimeout(timeoutId);
+			}
+			if (forceKillId) {
+				clearTimeout(forceKillId);
+			}
+			if (options?.signal) {
+				options.signal.removeEventListener("abort", killProcess);
+			}
+		};
+
+		const resolveOnce = (result: ExecResult) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			cleanup();
+			resolve(result);
+		};
 
 		const killProcess = () => {
 			if (!killed) {
 				killed = true;
 				proc.kill("SIGTERM");
 				// Force kill after 5 seconds if SIGTERM doesn't work
-				setTimeout(() => {
+				forceKillId = setTimeout(() => {
 					if (!proc.killed) {
 						proc.kill("SIGKILL");
 					}
@@ -86,19 +113,14 @@ export async function execCommand(
 		});
 
 		proc.on("close", (code) => {
-			if (timeoutId) clearTimeout(timeoutId);
-			if (options?.signal) {
-				options.signal.removeEventListener("abort", killProcess);
-			}
-			resolve({ stdout, stderr, code: code ?? 0, killed });
+			resolveOnce({ stdout, stderr, code: code ?? (killed ? 1 : 0), killed });
 		});
 
-		proc.on("error", (_err) => {
-			if (timeoutId) clearTimeout(timeoutId);
-			if (options?.signal) {
-				options.signal.removeEventListener("abort", killProcess);
+		proc.on("error", (err) => {
+			if (!stderr.trim()) {
+				stderr = err.message;
 			}
-			resolve({ stdout, stderr, code: 1, killed });
+			resolveOnce({ stdout, stderr, code: 1, killed });
 		});
 	});
 }

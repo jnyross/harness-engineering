@@ -17,6 +17,7 @@
 - Prompt-template and slash-command argument splitting now accepts any whitespace separator (spaces/tabs) when detecting command names and arguments.
 - Interactive extension-command detection now accepts tab-separated slash-command arguments (`/command\targ`) consistently with space-separated forms.
 - RPC client startup now handles spawn/startup failures deterministically (missing runtime, immediate process exit) and cleans up partial startup state before surfacing actionable errors.
+- Shared `execCommand()` now short-circuits pre-aborted signals, preserves non-zero exit status for canceled subprocesses, and reports spawn errors in stderr for clearer extension runtime diagnostics.
 
 ## [0.52.12] - 2026-02-13
 
