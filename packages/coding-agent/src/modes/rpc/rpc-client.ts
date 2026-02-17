@@ -15,8 +15,12 @@ import { getRpcClientStartError, getRpcClientStartupExitError } from "./rpc-clie
 import type { RpcCommand, RpcResponse, RpcSessionState, RpcSlashCommand } from "./rpc-types.js";
 
 const MAX_TIMEOUT_MS = 2_147_483_647;
+const DEFAULT_RPC_WAIT_TIMEOUT_MS = 60_000;
 
-export function normalizeRpcTimeoutMs(timeout: number): number {
+export function normalizeRpcTimeoutMs(timeout: number, fallbackMs = DEFAULT_RPC_WAIT_TIMEOUT_MS): number {
+	if (Number.isNaN(timeout) || timeout <= 0) {
+		return fallbackMs;
+	}
 	return timeout > MAX_TIMEOUT_MS ? MAX_TIMEOUT_MS : timeout;
 }
 
@@ -497,10 +501,13 @@ export class RpcClient {
 	 */
 	waitForIdle(timeout = 60000): Promise<void> {
 		return new Promise((resolve, reject) => {
-			const timer = setTimeout(() => {
-				unsubscribe();
-				reject(new Error(`Timeout waiting for agent to become idle. Stderr: ${this.stderr}`));
-			}, normalizeRpcTimeoutMs(timeout));
+			const timer = setTimeout(
+				() => {
+					unsubscribe();
+					reject(new Error(`Timeout waiting for agent to become idle. Stderr: ${this.stderr}`));
+				},
+				normalizeRpcTimeoutMs(timeout, DEFAULT_RPC_WAIT_TIMEOUT_MS),
+			);
 
 			const unsubscribe = this.onEvent((event) => {
 				if (event.type === "agent_end") {
@@ -518,10 +525,13 @@ export class RpcClient {
 	collectEvents(timeout = 60000): Promise<AgentEvent[]> {
 		return new Promise((resolve, reject) => {
 			const events: AgentEvent[] = [];
-			const timer = setTimeout(() => {
-				unsubscribe();
-				reject(new Error(`Timeout collecting events. Stderr: ${this.stderr}`));
-			}, normalizeRpcTimeoutMs(timeout));
+			const timer = setTimeout(
+				() => {
+					unsubscribe();
+					reject(new Error(`Timeout collecting events. Stderr: ${this.stderr}`));
+				},
+				normalizeRpcTimeoutMs(timeout, DEFAULT_RPC_WAIT_TIMEOUT_MS),
+			);
 
 			const unsubscribe = this.onEvent((event) => {
 				events.push(event);
