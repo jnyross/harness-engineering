@@ -53,7 +53,7 @@
 - mac-system-theme example now clears prior polling intervals on repeated starts, serializes async theme polls, and resets in-flight guards via `finally`, preventing overlapping `osascript` checks and poll-loop stalls after callback errors.
 - tools bootstrap checks now treat `spawnSync` signal/null-status exits as missing commands and tar extraction failures now report signal/code diagnostics instead of ambiguous unknown-error messages.
 - interactive and extension-editor external-editor launch flows now share normalized `spawnSync` status handling for startup failures, signal exits, unknown null-status exits, and non-zero exits, with explicit keep-current-content messaging.
-- session delete fallback diagnostics now normalize `trash` spawn outcomes (startup failures, signal exits, and non-zero statuses) into explicit error hints when unlink fallback also fails.
+- session delete fallback diagnostics now normalize `trash` spawn outcomes (startup failures, timeouts, signal exits, and non-zero statuses) into explicit error hints when unlink fallback also fails.
 - shell bash-path lookup now centralizes `spawnSync` result parsing (including signal/error/null-status handling) and validates multi-path lookup output deterministically.
 - grep tool ripgrep-close handling now normalizes signal/null-status exits with explicit diagnostics (while preserving intentional match-limit termination as success).
 - Bash executor helpers (`executeBash`, `executeBashWithOperations`) now short-circuit pre-aborted signals, avoiding unnecessary subprocess/remote execution when cancellation is already requested.

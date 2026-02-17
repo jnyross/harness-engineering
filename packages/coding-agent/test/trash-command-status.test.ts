@@ -25,6 +25,13 @@ describe("getTrashCommandErrorHint", () => {
 		expect(hint).toBe("trash: ENOENT");
 	});
 
+	it("includes timeout spawn errors", () => {
+		const error = new Error("spawnSync trash ETIMEDOUT") as NodeJS.ErrnoException;
+		error.code = "ETIMEDOUT";
+		const hint = getTrashCommandErrorHint(createResult({ status: null, error }));
+		expect(hint).toBe("trash: spawnSync trash ETIMEDOUT");
+	});
+
 	it("includes signal and first stderr line", () => {
 		const hint = getTrashCommandErrorHint(
 			createResult({
