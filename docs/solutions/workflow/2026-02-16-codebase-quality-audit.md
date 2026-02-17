@@ -3089,6 +3089,24 @@ to:
 
 **Result:** Runtime request/response flows now remain responsive during early iframe attachment races instead of timing out unnecessarily.
 
+---
+
+### 174) ProviderKeyInput failure-reset timers were not cleaned up across retries/disconnect
+
+**Finding:** API key validation failures used raw `setTimeout` callbacks to clear error badges, but timers were not tracked/cleared on repeated failures or component unmount, allowing stale callbacks against detached state.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/ProviderKeyInput.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- centralize failure-reset timer scheduling with replacement cleanup,
+- clear pending timers in `disconnectedCallback()`.
+
+**Result:** Provider key input failure-status reset is now lifecycle-safe and avoids stale timeout callbacks.
+
 ## Validation Evidence
 
 - Root quality gate passes:

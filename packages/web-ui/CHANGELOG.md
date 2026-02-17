@@ -15,6 +15,7 @@
 - Sandboxed runtime bridge message handlers now ignore non-object postMessage payloads, preventing runtime handler crashes from unrelated window messages.
 - Runtime message router now ignores non-object sandbox payloads and isolates provider/consumer handler exceptions so one faulty handler cannot crash global message routing.
 - Runtime message router now falls back to the incoming message source window when sandbox iframe references are not yet attached, avoiding unnecessary request/response timeouts during early iframe lifecycle races.
+- `ProviderKeyInput` now tracks and clears delayed failure-reset timers across retries/disconnects, preventing stale timeout callbacks from mutating detached component state.
 
 ## [0.52.12] - 2026-02-13
 

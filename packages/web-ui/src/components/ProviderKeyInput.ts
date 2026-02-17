@@ -29,6 +29,7 @@ export class ProviderKeyInput extends LitElement {
 	@state() private failed = false;
 	@state() private hasKey = false;
 	@state() private inputChanged = false;
+	private failureResetTimeout: ReturnType<typeof setTimeout> | undefined;
 
 	protected createRenderRoot() {
 		return this;
@@ -37,6 +38,25 @@ export class ProviderKeyInput extends LitElement {
 	override async connectedCallback() {
 		super.connectedCallback();
 		await this.checkKeyStatus();
+	}
+
+	override disconnectedCallback(): void {
+		super.disconnectedCallback();
+		if (this.failureResetTimeout) {
+			clearTimeout(this.failureResetTimeout);
+			this.failureResetTimeout = undefined;
+		}
+	}
+
+	private scheduleFailureReset(): void {
+		if (this.failureResetTimeout) {
+			clearTimeout(this.failureResetTimeout);
+		}
+		this.failureResetTimeout = setTimeout(() => {
+			this.failed = false;
+			this.failureResetTimeout = undefined;
+			this.requestUpdate();
+		}, 5000);
 	}
 
 	private async checkKeyStatus() {
@@ -101,17 +121,11 @@ export class ProviderKeyInput extends LitElement {
 			} catch (error) {
 				console.error("Failed to save API key:", error);
 				this.failed = true;
-				setTimeout(() => {
-					this.failed = false;
-					this.requestUpdate();
-				}, 5000);
+				this.scheduleFailureReset();
 			}
 		} else {
 			this.failed = true;
-			setTimeout(() => {
-				this.failed = false;
-				this.requestUpdate();
-			}, 5000);
+			this.scheduleFailureReset();
 		}
 	}
 
