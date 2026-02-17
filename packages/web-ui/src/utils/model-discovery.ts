@@ -3,14 +3,14 @@ import type { Api, Model } from "@mariozechner/pi-ai";
 import { Ollama } from "ollama/browser";
 
 function parsePositiveInteger(value: unknown): number | undefined {
-	if (typeof value === "number" && Number.isInteger(value) && value > 0) {
+	if (typeof value === "number" && Number.isSafeInteger(value) && value > 0) {
 		return value;
 	}
 	if (typeof value === "string") {
 		const trimmed = value.trim();
 		if (/^\d+$/.test(trimmed)) {
 			const parsed = Number.parseInt(trimmed, 10);
-			if (Number.isInteger(parsed) && parsed > 0) {
+			if (Number.isSafeInteger(parsed) && parsed > 0) {
 				return parsed;
 			}
 		}
