@@ -3862,6 +3862,27 @@ to:
 
 **Result:** Interactive extension countdown timers now fail safely without leaking repeated interval-driven callback failures.
 
+---
+
+### 216) extension selector/input dialog callbacks could throw through interactive key handling
+
+**Finding:** Extension selector/input components invoked extension-provided callbacks directly from input handlers, allowing callback exceptions to bubble through interactive key handling paths.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/components/extension-selector.ts`
+- `packages/coding-agent/src/modes/interactive/components/extension-input.ts`
+- `packages/coding-agent/test/extension-dialog-callbacks.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- wrap extension callback invocations in exception-isolating helper methods,
+- retain interactive loop stability when extension callbacks throw,
+- add regression coverage for throwing `onSelect` and `onSubmit` callbacks.
+
+**Result:** Extension dialog callback failures now surface as logged errors without crashing interactive input processing.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -3888,6 +3909,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/gh-auth-status.test.ts` (includes missing gh spawn failure, signal interruption, non-zero auth status, and success cases)
 - coding-agent countdown timer regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/countdown-timer.test.ts` (includes normal expiry, manual dispose stop, and onTick-throw safety coverage)
+- coding-agent extension dialog callback regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extension-dialog-callbacks.test.ts` (includes throwing `onSelect`/`onSubmit` callback safety)
 - coding-agent antigravity image SSE parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/antigravity-image-gen.test.ts` (includes terminal `data:` chunk without trailing newline and text+image ordering coverage)
 - coding-agent sleep helper regression tests pass:

@@ -23,6 +23,21 @@ export class ExtensionSelectorComponent extends Container {
 	private titleText: Text;
 	private baseTitle: string;
 	private countdown: CountdownTimer | undefined;
+	private invokeSelect(option: string): void {
+		try {
+			this.onSelectCallback(option);
+		} catch (error) {
+			console.error("Extension selector onSelect callback failed:", error);
+		}
+	}
+
+	private invokeCancel(): void {
+		try {
+			this.onCancelCallback();
+		} catch (error) {
+			console.error("Extension selector onCancel callback failed:", error);
+		}
+	}
 
 	constructor(
 		title: string,
@@ -50,7 +65,7 @@ export class ExtensionSelectorComponent extends Container {
 				opts.timeout,
 				opts.tui,
 				(s) => this.titleText.setText(theme.fg("accent", `${this.baseTitle} (${s}s)`)),
-				() => this.onCancelCallback(),
+				() => this.invokeCancel(),
 			);
 		}
 
@@ -95,9 +110,9 @@ export class ExtensionSelectorComponent extends Container {
 			this.updateList();
 		} else if (kb.matches(keyData, "selectConfirm") || keyData === "\n") {
 			const selected = this.options[this.selectedIndex];
-			if (selected) this.onSelectCallback(selected);
+			if (selected) this.invokeSelect(selected);
 		} else if (kb.matches(keyData, "selectCancel")) {
-			this.onCancelCallback();
+			this.invokeCancel();
 		}
 	}
 

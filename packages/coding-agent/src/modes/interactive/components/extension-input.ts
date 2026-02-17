@@ -20,6 +20,21 @@ export class ExtensionInputComponent extends Container implements Focusable {
 	private titleText: Text;
 	private baseTitle: string;
 	private countdown: CountdownTimer | undefined;
+	private invokeSubmit(value: string): void {
+		try {
+			this.onSubmitCallback(value);
+		} catch (error) {
+			console.error("Extension input onSubmit callback failed:", error);
+		}
+	}
+
+	private invokeCancel(): void {
+		try {
+			this.onCancelCallback();
+		} catch (error) {
+			console.error("Extension input onCancel callback failed:", error);
+		}
+	}
 
 	// Focusable implementation - propagate to input for IME cursor positioning
 	private _focused = false;
@@ -56,7 +71,7 @@ export class ExtensionInputComponent extends Container implements Focusable {
 				opts.timeout,
 				opts.tui,
 				(s) => this.titleText.setText(theme.fg("accent", `${this.baseTitle} (${s}s)`)),
-				() => this.onCancelCallback(),
+				() => this.invokeCancel(),
 			);
 		}
 
@@ -71,9 +86,9 @@ export class ExtensionInputComponent extends Container implements Focusable {
 	handleInput(keyData: string): void {
 		const kb = getEditorKeybindings();
 		if (kb.matches(keyData, "selectConfirm") || keyData === "\n") {
-			this.onSubmitCallback(this.input.getValue());
+			this.invokeSubmit(this.input.getValue());
 		} else if (kb.matches(keyData, "selectCancel")) {
-			this.onCancelCallback();
+			this.invokeCancel();
 		} else {
 			this.input.handleInput(keyData);
 		}
