@@ -4318,6 +4318,25 @@ to:
 
 **Result:** project-runner CLI parsing now fails fast on malformed option values and no longer swallows subsequent flags as accidental option values.
 
+---
+
+### 239) pods required-option parsing still accepted single-dash option-like tokens
+
+**Finding:** shared pods required-option parsing rejected `--option` next tokens but still accepted single-dash option-like tokens (for example `--context -m`) as literal values.
+
+**Action:** Updated:
+
+- `packages/pods/src/cli-options.ts`
+- `packages/pods/test/cli-options.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- treat any leading-dash next token as invalid for required option values,
+- add focused regression coverage for single-dash rejection.
+
+**Result:** pods required-option parsing now consistently rejects both single-dash and double-dash option-like tokens as missing required values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
