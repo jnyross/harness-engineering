@@ -3107,6 +3107,25 @@ to:
 
 **Result:** Provider key input failure-status reset is now lifecycle-safe and avoids stale timeout callbacks.
 
+---
+
+### 175) ConsoleBlock copy-feedback timer lacked lifecycle cleanup
+
+**Finding:** Console copy feedback used a raw timeout to clear `copied` state without tracking/canceling prior timers, allowing stale callbacks after repeated copy actions or component unmount.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/ConsoleBlock.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- track copy-feedback timeout handles,
+- replace/clear timers on repeated copy actions,
+- clear pending timers in `disconnectedCallback()`.
+
+**Result:** Console copy-feedback state transitions are now timer-safe across repeated interactions and component teardown.
+
 ## Validation Evidence
 
 - Root quality gate passes:

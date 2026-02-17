@@ -9,6 +9,7 @@ export class ConsoleBlock extends LitElement {
 	@property() content: string = "";
 	@property() variant: "default" | "error" = "default";
 	@state() private copied = false;
+	private copiedResetTimeout: ReturnType<typeof setTimeout> | undefined;
 
 	protected override createRenderRoot(): HTMLElement | DocumentFragment {
 		return this;
@@ -19,12 +20,24 @@ export class ConsoleBlock extends LitElement {
 		this.style.display = "block";
 	}
 
+	override disconnectedCallback(): void {
+		super.disconnectedCallback();
+		if (this.copiedResetTimeout) {
+			clearTimeout(this.copiedResetTimeout);
+			this.copiedResetTimeout = undefined;
+		}
+	}
+
 	private async copy() {
 		try {
 			await navigator.clipboard.writeText(this.content || "");
 			this.copied = true;
-			setTimeout(() => {
+			if (this.copiedResetTimeout) {
+				clearTimeout(this.copiedResetTimeout);
+			}
+			this.copiedResetTimeout = setTimeout(() => {
 				this.copied = false;
+				this.copiedResetTimeout = undefined;
 			}, 1500);
 		} catch (e) {
 			console.error("Copy failed", e);
