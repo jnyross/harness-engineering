@@ -2,6 +2,26 @@ import { LMStudioClient } from "@lmstudio/sdk";
 import type { Api, Model } from "@mariozechner/pi-ai";
 import { Ollama } from "ollama/browser";
 
+function parsePositiveInteger(value: unknown): number | undefined {
+	if (typeof value === "number" && Number.isInteger(value) && value > 0) {
+		return value;
+	}
+	if (typeof value === "string") {
+		const trimmed = value.trim();
+		if (/^\d+$/.test(trimmed)) {
+			const parsed = Number.parseInt(trimmed, 10);
+			if (Number.isInteger(parsed) && parsed > 0) {
+				return parsed;
+			}
+		}
+	}
+	return undefined;
+}
+
+function parsePositiveIntegerOrFallback(value: unknown, fallback: number): number {
+	return parsePositiveInteger(value) ?? fallback;
+}
+
 /**
  * Discover models from an Ollama server.
  * @param baseUrl - Base URL of the Ollama server (e.g., "http://localhost:11434")
@@ -40,7 +60,7 @@ export async function discoverOllamaModels(baseUrl: string, _apiKey?: string): P
 				// Get context window size - look for architecture-specific keys
 				const architecture = modelInfo["general.architecture"] || "";
 				const contextKey = `${architecture}.context_length`;
-				const contextWindow = parseInt(modelInfo[contextKey] || "8192", 10);
+				const contextWindow = parsePositiveIntegerOrFallback(modelInfo[contextKey], 8192);
 
 				// Ollama caps max tokens at 10x context length
 				const maxTokens = contextWindow * 10;
@@ -114,8 +134,8 @@ export async function discoverLlamaCppModels(baseUrl: string, apiKey?: string): 
 		// biome-ignore lint/suspicious/noExplicitAny: migration
 		return data.data.map((model: any) => {
 			// llama.cpp doesn't always provide context window info
-			const contextWindow = model.context_length || 8192;
-			const maxTokens = model.max_tokens || 4096;
+			const contextWindow = parsePositiveIntegerOrFallback(model.context_length, 8192);
+			const maxTokens = parsePositiveIntegerOrFallback(model.max_tokens, 4096);
 
 			const llamaModel: Model<Api> = {
 				id: model.id,
@@ -178,7 +198,7 @@ export async function discoverVLLMModels(baseUrl: string, apiKey?: string): Prom
 		// biome-ignore lint/suspicious/noExplicitAny: migration
 		return data.data.map((model: any) => {
 			// vLLM provides max_model_len which is the context window
-			const contextWindow = model.max_model_len || 8192;
+			const contextWindow = parsePositiveIntegerOrFallback(model.max_model_len, 8192);
 			const maxTokens = Math.min(contextWindow, 4096); // Cap max tokens
 
 			const vllmModel: Model<Api> = {
@@ -218,7 +238,7 @@ export async function discoverLMStudioModels(baseUrl: string, _apiKey?: string):
 	try {
 		// Extract host and port from baseUrl
 		const url = new URL(baseUrl);
-		const port = url.port ? parseInt(url.port, 10) : 1234;
+		const port = parsePositiveInteger(url.port) ?? 1234;
 
 		// Create LM Studio client
 		const client = new LMStudioClient({ baseUrl: `ws://${url.hostname}:${port}` });
@@ -230,7 +250,7 @@ export async function discoverLMStudioModels(baseUrl: string, _apiKey?: string):
 		return models
 			.filter((model) => model.type === "llm")
 			.map((model) => {
-				const contextWindow = model.maxContextLength;
+				const contextWindow = parsePositiveIntegerOrFallback(model.maxContextLength, 8192);
 				// Use 10x context length like Ollama does
 				const maxTokens = contextWindow;
 

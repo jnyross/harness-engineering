@@ -49,6 +49,7 @@
 - `SessionListDialog` now isolates selection/delete callback failures from close teardown, ensuring dialogs still close and callback fan-out continues when a consumer callback throws.
 - `MessageEditor` now coalesces/cancels deferred model-selector open animation frames on disconnect, preventing stale post-detach selector opens.
 - `MessageEditor` now sequence-guards async attachment ingestion (paste/file-select/drag-drop) across disconnects, preventing stale detached state updates from in-flight file processing.
+- Model-discovery numeric parsing now validates remote context/token/port values strictly before fallback, avoiding `NaN` propagation from malformed provider metadata.
 
 ## [0.52.12] - 2026-02-13
 
