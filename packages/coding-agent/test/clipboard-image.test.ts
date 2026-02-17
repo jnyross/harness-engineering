@@ -46,6 +46,18 @@ function spawnError(error: Error): SpawnSyncReturns<Buffer> {
 	};
 }
 
+function spawnSignal(signal: NodeJS.Signals): SpawnSyncReturns<Buffer> {
+	return {
+		pid: 123,
+		output: [Buffer.alloc(0), Buffer.alloc(0), Buffer.alloc(0)],
+		stdout: Buffer.alloc(0),
+		stderr: Buffer.alloc(0),
+		status: null,
+		signal,
+		error: undefined,
+	};
+}
+
 describe("readClipboardImage", () => {
 	beforeEach(() => {
 		vi.resetModules();
@@ -105,6 +117,34 @@ describe("readClipboardImage", () => {
 		expect(result).not.toBeNull();
 		expect(result?.mimeType).toBe("image/png");
 		expect(Array.from(result?.bytes ?? [])).toEqual([9, 8]);
+	});
+
+	test("Wayland: falls back to xclip when wl-paste exits via signal", async () => {
+		mocks.clipboard.hasImage.mockImplementation(() => {
+			throw new Error("clipboard.hasImage should not be called on Wayland");
+		});
+
+		mocks.spawnSync.mockImplementation((command, args, _options) => {
+			if (command === "wl-paste") {
+				return spawnSignal("SIGTERM");
+			}
+
+			if (command === "xclip" && args.includes("TARGETS")) {
+				return spawnOk(Buffer.from("image/png\n", "utf-8"));
+			}
+
+			if (command === "xclip" && args.includes("image/png")) {
+				return spawnOk(Buffer.from([4, 5, 6]));
+			}
+
+			return spawnOk(Buffer.alloc(0));
+		});
+
+		const { readClipboardImage } = await import("../src/utils/clipboard-image.js");
+		const result = await readClipboardImage({ platform: "linux", env: { WAYLAND_DISPLAY: "1" } });
+		expect(result).not.toBeNull();
+		expect(result?.mimeType).toBe("image/png");
+		expect(Array.from(result?.bytes ?? [])).toEqual([4, 5, 6]);
 	});
 
 	test("Non-Wayland: uses clipboard", async () => {

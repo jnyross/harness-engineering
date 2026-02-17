@@ -98,6 +98,10 @@ function runCommand(
 		return { ok: false, stdout: Buffer.alloc(0) };
 	}
 
+	if (result.signal || result.status === null) {
+		return { ok: false, stdout: Buffer.alloc(0) };
+	}
+
 	if (result.status !== 0) {
 		return { ok: false, stdout: Buffer.alloc(0) };
 	}
