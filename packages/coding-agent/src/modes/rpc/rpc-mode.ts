@@ -29,6 +29,18 @@ import type {
 	RpcSlashCommand,
 } from "./rpc-types.js";
 
+const MAX_TIMEOUT_MS = 2_147_483_647;
+
+export function normalizeDialogTimeoutMs(timeout: number | undefined): number | undefined {
+	if (timeout === undefined) {
+		return undefined;
+	}
+	if (!Number.isFinite(timeout) || timeout <= 0) {
+		return undefined;
+	}
+	return timeout > MAX_TIMEOUT_MS ? MAX_TIMEOUT_MS : timeout;
+}
+
 // Re-export types for consumers
 export type {
 	RpcCommand,
@@ -97,6 +109,7 @@ export async function runRpcMode(session: AgentSession): Promise<never> {
 		return new Promise((resolve, reject) => {
 			let timeoutId: ReturnType<typeof setTimeout> | undefined;
 			let settled = false;
+			const timeoutMs = normalizeDialogTimeoutMs(opts?.timeout);
 
 			const settle = (value: T) => {
 				if (settled) {
@@ -118,10 +131,10 @@ export async function runRpcMode(session: AgentSession): Promise<never> {
 			};
 			opts?.signal?.addEventListener("abort", onAbort, { once: true });
 
-			if (opts?.timeout) {
+			if (timeoutMs !== undefined) {
 				timeoutId = setTimeout(() => {
 					settle(defaultValue);
-				}, opts.timeout);
+				}, timeoutMs);
 			}
 
 			pendingExtensionRequests.set(id, {
@@ -147,7 +160,12 @@ export async function runRpcMode(session: AgentSession): Promise<never> {
 					reject(error);
 				},
 			});
-			output({ type: "extension_ui_request", id, ...request } as RpcExtensionUIRequest);
+			output({
+				type: "extension_ui_request",
+				id,
+				...request,
+				...(timeoutMs !== undefined ? { timeout: timeoutMs } : {}),
+			} as RpcExtensionUIRequest);
 		});
 	}
 
@@ -156,17 +174,17 @@ export async function runRpcMode(session: AgentSession): Promise<never> {
 	 */
 	const createExtensionUIContext = (): ExtensionUIContext => ({
 		select: (title, options, opts) =>
-			createDialogPromise(opts, undefined, { method: "select", title, options, timeout: opts?.timeout }, (r) =>
+			createDialogPromise(opts, undefined, { method: "select", title, options }, (r) =>
 				"cancelled" in r && r.cancelled ? undefined : "value" in r ? r.value : undefined,
 			),
 
 		confirm: (title, message, opts) =>
-			createDialogPromise(opts, false, { method: "confirm", title, message, timeout: opts?.timeout }, (r) =>
+			createDialogPromise(opts, false, { method: "confirm", title, message }, (r) =>
 				"cancelled" in r && r.cancelled ? false : "confirmed" in r ? r.confirmed : false,
 			),
 
 		input: (title, placeholder, opts) =>
-			createDialogPromise(opts, undefined, { method: "input", title, placeholder, timeout: opts?.timeout }, (r) =>
+			createDialogPromise(opts, undefined, { method: "input", title, placeholder }, (r) =>
 				"cancelled" in r && r.cancelled ? undefined : "value" in r ? r.value : undefined,
 			),
 
