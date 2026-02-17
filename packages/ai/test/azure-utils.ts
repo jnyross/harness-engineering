@@ -8,9 +8,11 @@ function parseDeploymentNameMap(value: string | undefined): Map<string, string> 
 	for (const entry of value.split(",")) {
 		const trimmed = entry.trim();
 		if (!trimmed) continue;
-		const [modelId, deploymentName] = trimmed.split("=", 2);
+		const [modelIdRaw, deploymentNameRaw] = trimmed.split("=", 2);
+		const modelId = modelIdRaw?.trim();
+		const deploymentName = deploymentNameRaw?.trim();
 		if (!modelId || !deploymentName) continue;
-		map.set(modelId.trim(), deploymentName.trim());
+		map.set(modelId, deploymentName);
 	}
 	return map;
 }

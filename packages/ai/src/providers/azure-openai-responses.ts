@@ -18,15 +18,17 @@ import { buildBaseOptions, clampReasoning } from "./simple-options.js";
 const DEFAULT_AZURE_API_VERSION = "v1";
 const AZURE_TOOL_CALL_PROVIDERS = new Set(["openai", "openai-codex", "opencode", "azure-openai-responses"]);
 
-function parseDeploymentNameMap(value: string | undefined): Map<string, string> {
+export function parseDeploymentNameMap(value: string | undefined): Map<string, string> {
 	const map = new Map<string, string>();
 	if (!value) return map;
 	for (const entry of value.split(",")) {
 		const trimmed = entry.trim();
 		if (!trimmed) continue;
-		const [modelId, deploymentName] = trimmed.split("=", 2);
+		const [modelIdRaw, deploymentNameRaw] = trimmed.split("=", 2);
+		const modelId = modelIdRaw?.trim();
+		const deploymentName = deploymentNameRaw?.trim();
 		if (!modelId || !deploymentName) continue;
-		map.set(modelId.trim(), deploymentName.trim());
+		map.set(modelId, deploymentName);
 	}
 	return map;
 }
