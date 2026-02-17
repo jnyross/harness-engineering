@@ -1348,6 +1348,22 @@ to detect the first whitespace separator using `search(/\s/)` and added regressi
 
 **Result:** Slash-command and prompt-template parsing now handles space- and tab-separated command arguments consistently.
 
+---
+
+### 79) interactive extension-command detection failed for tab-separated args
+
+**Finding:** Interactive extension-command detection still split on literal spaces, so tab-separated extension invocations could be misclassified as non-extension commands in compaction/retry queue paths.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/interactive-mode.ts`
+- `packages/coding-agent/test/interactive-mode-status.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to use first-whitespace detection for extension command names and added regression tests for tab-separated extension command detection.
+
+**Result:** Interactive extension-command detection now handles tab-separated and space-separated forms consistently.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1488,6 +1504,8 @@ to detect the first whitespace separator using `search(/\s/)` and added regressi
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-templates.test.ts test/parse-command-args.test.ts` (includes unmatched-quote template invocation rejection)
 - coding-agent tab-separated command parsing coverage:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-templates.test.ts` (includes `/tmpl\t...` invocation case)
+- coding-agent tab-separated extension-command detection coverage:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/interactive-mode-status.test.ts` (includes `/demo\targ` extension-command detection case)
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
