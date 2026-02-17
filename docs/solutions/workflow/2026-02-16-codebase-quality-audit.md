@@ -2450,6 +2450,23 @@ to:
 
 **Result:** Interactive extension dialogs now finalize deterministically across abort/complete races, reducing duplicate hide/render churn and listener cleanup ambiguity.
 
+---
+
+### 140) Linux clipboard fallback could surface uncaught child-process spawn errors
+
+**Finding:** `copyToClipboard()` used spawned `wl-copy` with only stdin error handling. Unexpected spawn-time failures could emit unhandled child-process `error` events despite the clipboard path being best-effort.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/utils/clipboard.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- attach a no-op `error` listener to spawned `wl-copy` processes in the best-effort Linux fallback path.
+
+**Result:** Clipboard copy fallback now suppresses uncaught spawn-error bubbling in degraded environments while preserving existing best-effort behavior.
+
 ## Validation Evidence
 
 - Root quality gate passes:

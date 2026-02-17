@@ -34,6 +34,9 @@ export function copyToClipboard(text: string): void {
 					execSync("which wl-copy", { stdio: "ignore" });
 					// wl-copy with execSync hangs due to fork behavior; use spawn instead
 					const proc = spawn("wl-copy", [], { stdio: ["pipe", "ignore", "ignore"] });
+					proc.on("error", () => {
+						// Ignore spawn errors for best-effort clipboard fallback.
+					});
 					proc.stdin.on("error", () => {
 						// Ignore EPIPE errors if wl-copy exits early
 					});
