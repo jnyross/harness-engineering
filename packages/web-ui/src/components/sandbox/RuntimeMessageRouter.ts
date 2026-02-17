@@ -142,7 +142,7 @@ export class RuntimeMessageRouter {
 					return;
 				}
 				const sourceWindow = e.source && "postMessage" in e.source ? (e.source as WindowProxy) : null;
-				const shouldRespond = true;
+				const shouldRespond = typeof messageId === "string" && messageId.length > 0;
 				let responded = false;
 
 				// Create respond() function for bidirectional communication

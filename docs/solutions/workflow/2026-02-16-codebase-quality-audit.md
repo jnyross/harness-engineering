@@ -3398,6 +3398,23 @@ to:
 
 **Result:** Model selector no longer performs delayed post-render setup after disconnect races.
 
+---
+
+### 191) runtime router default acknowledgements were not gated to request-shaped messages
+
+**Finding:** After adding default runtime responses, iframe routing acknowledged all handled messages regardless of request identity, risking unsolicited responses for sandbox broadcasts lacking request IDs.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/sandbox/RuntimeMessageRouter.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- restrict default acknowledgement behavior to messages carrying non-empty `messageId` request IDs.
+
+**Result:** Runtime router now only emits fallback responses for request-shaped messages, preserving deterministic request settlement without acknowledging non-request broadcasts.
+
 ## Validation Evidence
 
 - Root quality gate passes:
