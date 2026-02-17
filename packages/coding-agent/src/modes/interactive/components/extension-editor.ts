@@ -28,6 +28,21 @@ export class ExtensionEditorComponent extends Container {
 	private onCancelCallback: () => void;
 	private tui: TUI;
 	private keybindings: KeybindingsManager;
+	private invokeSubmit(value: string): void {
+		try {
+			this.onSubmitCallback(value);
+		} catch (error) {
+			console.error("Extension editor onSubmit callback failed:", error);
+		}
+	}
+
+	private invokeCancel(): void {
+		try {
+			this.onCancelCallback();
+		} catch (error) {
+			console.error("Extension editor onCancel callback failed:", error);
+		}
+	}
 
 	constructor(
 		tui: TUI,
@@ -60,7 +75,7 @@ export class ExtensionEditorComponent extends Container {
 		}
 		// Wire up Enter to submit (Shift+Enter for newlines, like the main editor)
 		this.editor.onSubmit = (text: string) => {
-			this.onSubmitCallback(text);
+			this.invokeSubmit(text);
 		};
 		this.addChild(this.editor);
 
@@ -87,7 +102,7 @@ export class ExtensionEditorComponent extends Container {
 		const kb = getEditorKeybindings();
 		// Escape or Ctrl+C to cancel
 		if (kb.matches(keyData, "selectCancel")) {
-			this.onCancelCallback();
+			this.invokeCancel();
 			return;
 		}
 

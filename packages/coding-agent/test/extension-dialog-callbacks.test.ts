@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from "vitest";
+import { ExtensionEditorComponent } from "../src/modes/interactive/components/extension-editor.js";
 import { ExtensionInputComponent } from "../src/modes/interactive/components/extension-input.js";
 import { ExtensionSelectorComponent } from "../src/modes/interactive/components/extension-selector.js";
 import { initTheme } from "../src/modes/interactive/theme/theme.js";
@@ -32,5 +33,25 @@ describe("extension dialog callback safety", () => {
 		expect(() => input.handleInput("\n")).not.toThrow();
 		expect(onSubmit).toHaveBeenCalledWith("");
 		expect(consoleError).toHaveBeenCalled();
+	});
+
+	it("extension editor isolates submit/cancel callback exceptions", () => {
+		const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+		const component = Object.create(ExtensionEditorComponent.prototype) as {
+			invokeSubmit(value: string): void;
+			invokeCancel(): void;
+			onSubmitCallback: (value: string) => void;
+			onCancelCallback: () => void;
+		};
+		component.onSubmitCallback = () => {
+			throw new Error("editor submit failed");
+		};
+		component.onCancelCallback = () => {
+			throw new Error("editor cancel failed");
+		};
+
+		expect(() => component.invokeSubmit("value")).not.toThrow();
+		expect(() => component.invokeCancel()).not.toThrow();
+		expect(consoleError).toHaveBeenCalledTimes(2);
 	});
 });
