@@ -17,7 +17,7 @@
 - Prompt-template and slash-command argument splitting now accepts any whitespace separator (spaces/tabs) when detecting command names and arguments.
 - Interactive extension-command detection now accepts tab-separated slash-command arguments (`/command\targ`) consistently with space-separated forms.
 - RPC client startup now handles spawn/startup failures deterministically (missing runtime, immediate process exit) and cleans up partial startup state before surfacing actionable errors.
-- RPC mode now finalizes pending extension UI requests and exits when stdin closes, preventing orphaned headless processes when RPC input streams terminate unexpectedly.
+- RPC mode now finalizes pending extension UI requests and exits when stdin closes, and uses single-settlement guards for dialog/editor RPC responses to prevent duplicate resolve/reject races during shutdown/timeout/abort timing.
 - Shared `execCommand()` now short-circuits pre-aborted signals, preserves non-zero exit status for canceled subprocesses, and reports spawn errors in stderr for clearer extension runtime diagnostics.
 - Shared `execCommand()` now also treats signal-terminated subprocess exits as non-zero failures when not caller-cancelled, avoiding false success on externally terminated commands.
 - Shared `execCommand()` now escalates timeout/abort termination to forced `SIGKILL` after a grace period when child processes ignore `SIGTERM`, preventing lingering subprocesses.

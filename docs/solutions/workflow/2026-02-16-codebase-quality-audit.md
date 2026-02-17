@@ -2676,6 +2676,24 @@ to:
 
 **Result:** Pods shell command now exits deterministically once across child-process event races while preserving accurate SSH exit-code propagation.
 
+---
+
+### 152) RPC dialog/editor promises could race duplicate settlement under shutdown/timeout timing
+
+**Finding:** RPC mode dialog and editor request promises relied on callback ordering without explicit single-settlement guards, so overlapping timeout/abort/shutdown response paths could attempt duplicate resolve/reject handling.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/rpc/rpc-mode.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- add single-settlement guards for dialog/editor RPC promise lifecycles,
+- centralize cleanup (`pendingExtensionRequests`, timers, abort listeners) in guarded settle/reject paths.
+
+**Result:** RPC extension UI request handling now settles exactly once across overlapping response/timeout/abort/shutdown paths, reducing promise race and cleanup ambiguity.
+
 ## Validation Evidence
 
 - Root quality gate passes:

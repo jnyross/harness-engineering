@@ -96,6 +96,16 @@ export async function runRpcMode(session: AgentSession): Promise<never> {
 		const id = crypto.randomUUID();
 		return new Promise((resolve, reject) => {
 			let timeoutId: ReturnType<typeof setTimeout> | undefined;
+			let settled = false;
+
+			const settle = (value: T) => {
+				if (settled) {
+					return;
+				}
+				settled = true;
+				cleanup();
+				resolve(value);
+			};
 
 			const cleanup = () => {
 				if (timeoutId) clearTimeout(timeoutId);
@@ -104,24 +114,28 @@ export async function runRpcMode(session: AgentSession): Promise<never> {
 			};
 
 			const onAbort = () => {
-				cleanup();
-				resolve(defaultValue);
+				settle(defaultValue);
 			};
 			opts?.signal?.addEventListener("abort", onAbort, { once: true });
 
 			if (opts?.timeout) {
 				timeoutId = setTimeout(() => {
-					cleanup();
-					resolve(defaultValue);
+					settle(defaultValue);
 				}, opts.timeout);
 			}
 
 			pendingExtensionRequests.set(id, {
 				resolve: (response: RpcExtensionUIResponse) => {
-					cleanup();
-					resolve(parseResponse(response));
+					settle(parseResponse(response));
 				},
-				reject,
+				reject: (error: Error) => {
+					if (settled) {
+						return;
+					}
+					settled = true;
+					cleanup();
+					reject(error);
+				},
 			});
 			output({ type: "extension_ui_request", id, ...request } as RpcExtensionUIRequest);
 		});
@@ -239,17 +253,38 @@ export async function runRpcMode(session: AgentSession): Promise<never> {
 		async editor(title: string, prefill?: string): Promise<string | undefined> {
 			const id = crypto.randomUUID();
 			return new Promise((resolve, reject) => {
+				let settled = false;
+				const cleanup = () => {
+					pendingExtensionRequests.delete(id);
+				};
+				const settle = (value: string | undefined) => {
+					if (settled) {
+						return;
+					}
+					settled = true;
+					cleanup();
+					resolve(value);
+				};
+				const rejectOnce = (error: Error) => {
+					if (settled) {
+						return;
+					}
+					settled = true;
+					cleanup();
+					reject(error);
+				};
+
 				pendingExtensionRequests.set(id, {
 					resolve: (response: RpcExtensionUIResponse) => {
 						if ("cancelled" in response && response.cancelled) {
-							resolve(undefined);
+							settle(undefined);
 						} else if ("value" in response) {
-							resolve(response.value);
+							settle(response.value);
 						} else {
-							resolve(undefined);
+							settle(undefined);
 						}
 					},
-					reject,
+					reject: rejectOnce,
 				});
 				output({ type: "extension_ui_request", id, method: "editor", title, prefill } as RpcExtensionUIRequest);
 			});
