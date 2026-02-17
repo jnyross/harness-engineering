@@ -4,7 +4,7 @@ import { spawn } from "child_process";
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import { getSignalTerminationMessage, normalizeChildExitCode } from "./child-exit-status.js";
+import { normalizeChildExitCode } from "./child-exit-status.js";
 import { extractPodOverride, resolveAppCommand } from "./cli-args.js";
 import { setCliCommand } from "./cli-command.js";
 import { listModels, showKnownModels, startModel, stopAllModels, stopModel, viewLogs } from "./commands/models.js";
@@ -14,7 +14,7 @@ import { getActivePod, loadConfig } from "./config.js";
 import { normalizeContextOption, normalizeMemoryOption } from "./model-options.js";
 import { extractModelsPathFromMountCommand } from "./mount-command.js";
 import { assertValidPodName } from "./pod-name.js";
-import { parseSshCommand, sshExecStreamDetailed } from "./ssh.js";
+import { getSshStreamExitError, parseSshCommand, sshExecStreamDetailed } from "./ssh.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -202,6 +202,7 @@ try {
 				// Execute SSH in interactive mode
 				try {
 					const { sshBinary, sshArgs } = parseSshCommand(podInfo.pod.ssh);
+					const invokedCommand = [sshBinary, ...sshArgs].join(" ");
 					const sshProcess = spawn(sshBinary, sshArgs, {
 						stdio: "inherit",
 						env: process.env,
@@ -219,11 +220,11 @@ try {
 					};
 
 					sshProcess.on("error", (error) => {
-						exitOnce(1, `Failed to start SSH process: ${error.message}`);
+						exitOnce(1, `Failed to start SSH process '${invokedCommand}': ${error.message}`);
 					});
 
 					sshProcess.on("exit", (code, signal) => {
-						exitOnce(normalizeChildExitCode(code, signal), getSignalTerminationMessage("SSH process", signal));
+						exitOnce(normalizeChildExitCode(code, signal), getSshStreamExitError(code, signal));
 					});
 				} catch (error) {
 					const message = error instanceof Error ? error.message : String(error);

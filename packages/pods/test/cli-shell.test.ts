@@ -78,6 +78,7 @@ describe("pi shell", () => {
 			});
 
 			assert.equal(result.status, 1);
+			assert.match(result.stderr ?? "", /SSH process terminated by signal SIGTERM/);
 		} finally {
 			rmSync(configDir, { recursive: true, force: true });
 			rmSync(scriptDir, { recursive: true, force: true });
@@ -116,6 +117,7 @@ describe("pi shell", () => {
 			});
 
 			assert.equal(result.status, 7);
+			assert.match(result.stderr ?? "", /SSH process exited with code 7/);
 		} finally {
 			rmSync(configDir, { recursive: true, force: true });
 			rmSync(scriptDir, { recursive: true, force: true });
