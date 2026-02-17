@@ -4567,6 +4567,26 @@ to:
 
 **Result:** find tool now rejects malformed numeric limit inputs deterministically rather than silently coercing them.
 
+---
+
+### 251) coding-agent ls tool accepted malformed numeric `limit` values
+
+**Finding:** coding-agent ls tool accepted arbitrary numeric `limit` values and silently coerced invalid inputs (for example `limit=0`, `limit=3.2`) instead of failing fast.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/ls.ts`
+- `packages/coding-agent/test/tools.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- constrain schema/runtime `limit` to positive integers,
+- reject malformed values with explicit diagnostics,
+- add regression coverage for invalid numeric limits.
+
+**Result:** ls tool now rejects malformed numeric limit inputs deterministically instead of silently coercing them.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4597,6 +4617,8 @@ to:
 - coding-agent bash timeout validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
 - coding-agent find limit validation regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
+- coding-agent ls limit validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
 - mom CLI args/model regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/cli-args.test.ts test/agent-model.test.ts`
