@@ -5489,6 +5489,27 @@ to:
 
 **Result:** pod setup GPU detection now handles comma-formatted memory values without corrupting GPU name/memory fields.
 
+---
+
+### 296) coding-agent RPC wait timeout helper accepted invalid non-positive timeout inputs
+
+**Finding:** `packages/coding-agent/src/modes/rpc/rpc-client.ts` normalized only oversized timeout values in `normalizeRpcTimeoutMs(...)`; invalid `0`/negative/`NaN` timeout inputs were forwarded to `setTimeout(...)` coercion, causing unintended immediate timeout failures in `waitForIdle(...)`/`collectEvents(...)`.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/rpc/rpc-client.ts`
+- `packages/coding-agent/test/rpc-client-timeout.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize non-positive/`NaN` timeout values to default RPC wait timeout behavior,
+- preserve existing oversized-timeout clamping to Node timer bounds,
+- keep optional custom fallback support for timeout normalization callers,
+- add regression coverage for invalid-timeout fallback behavior.
+
+**Result:** RPC wait helpers now avoid accidental immediate timeout failures from invalid timeout inputs while preserving max-range timeout clamping.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5579,7 +5600,7 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/sleep.test.ts`
 - coding-agent RPC dialog timeout normalization tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-mode-timeout.test.ts`
-- coding-agent RPC client timeout normalization tests pass:
+- coding-agent RPC client timeout normalization tests pass (including invalid non-positive fallback behavior):
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client-timeout.test.ts`
 - agent spawnScript oversized-timeout regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts`
