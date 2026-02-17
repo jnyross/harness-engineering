@@ -4,6 +4,7 @@
 
 import { getModels } from "../../models.js";
 import type { Api, Model } from "../../types.js";
+import { abortableSleep } from "../abortable-sleep.js";
 import type { OAuthCredentials, OAuthLoginCallbacks, OAuthProviderInterface } from "./types.js";
 
 type CopilotCredentials = OAuthCredentials & {
@@ -141,29 +142,6 @@ async function startDeviceFlow(domain: string): Promise<DeviceCodeResponse> {
 	};
 }
 
-/**
- * Sleep that can be interrupted by an AbortSignal
- */
-function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
-	return new Promise((resolve, reject) => {
-		if (signal?.aborted) {
-			reject(new Error("Login cancelled"));
-			return;
-		}
-
-		const timeout = setTimeout(resolve, ms);
-
-		signal?.addEventListener(
-			"abort",
-			() => {
-				clearTimeout(timeout);
-				reject(new Error("Login cancelled"));
-			},
-			{ once: true },
-		);
-	});
-}
-
 async function pollForGitHubAccessToken(
 	domain: string,
 	deviceCode: string,
@@ -201,20 +179,20 @@ async function pollForGitHubAccessToken(
 		if (raw && typeof raw === "object" && typeof (raw as DeviceTokenErrorResponse).error === "string") {
 			const err = (raw as DeviceTokenErrorResponse).error;
 			if (err === "authorization_pending") {
-				await abortableSleep(intervalMs, signal);
+				await abortableSleep(intervalMs, signal, "Login cancelled");
 				continue;
 			}
 
 			if (err === "slow_down") {
 				intervalMs += 5000;
-				await abortableSleep(intervalMs, signal);
+				await abortableSleep(intervalMs, signal, "Login cancelled");
 				continue;
 			}
 
 			throw new Error(`Device flow failed: ${err}`);
 		}
 
-		await abortableSleep(intervalMs, signal);
+		await abortableSleep(intervalMs, signal, "Login cancelled");
 	}
 
 	throw new Error("Device flow timed out");
