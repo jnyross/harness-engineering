@@ -4154,12 +4154,35 @@ to:
 
 **Result:** AI usage accounting and model-catalog price ingestion now handle malformed numeric payloads more defensively and deterministically.
 
+---
+
+### 231) mom API key resolution was hardcoded to Anthropic regardless of selected model provider
+
+**Finding:** mom resolved model provider/model ID via environment overrides, but runtime API-key lookup always requested Anthropic credentials, breaking non-Anthropic provider selection and contradicting configurable model intent.
+
+**Action:** Updated:
+
+- `packages/mom/src/agent.ts`
+- `packages/mom/test/agent-model.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- make API-key lookup provider-aware (`getMomApiKey(..., model.provider)`),
+- add provider-specific missing-key diagnostics,
+- normalize env override parsing by trimming and ignoring blank values before fallback/validation,
+- add regression tests for provider-aware key lookup and env override handling.
+
+**Result:** mom model/provider configuration now drives matching credential lookup reliably instead of always requiring Anthropic keys.
+
 ## Validation Evidence
 
 - Root quality gate passes:
   - `npm run check`
 - ai usage metadata regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts`
+- mom model/key resolution regression tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/agent-model.test.ts`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
 - pods SSH/SCP parser regression tests pass:
