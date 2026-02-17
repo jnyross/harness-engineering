@@ -9,9 +9,14 @@ export function parseSlackTimestampToMilliseconds(timestamp: string): number | u
 	}
 
 	if (/^\d+$/.test(trimmed)) {
-		const milliseconds = Number.parseInt(trimmed, 10);
-		if (Number.isFinite(milliseconds) && milliseconds >= 0) {
-			return milliseconds;
+		const numericValue = Number.parseInt(trimmed, 10);
+		if (Number.isSafeInteger(numericValue) && numericValue >= 0) {
+			// Slack timestamps are usually decimal seconds (e.g. "1700000000.123456").
+			// Handle integer-second variants by treating <=10-digit values as seconds.
+			if (trimmed.length <= 10) {
+				return numericValue * 1000;
+			}
+			return numericValue;
 		}
 	}
 

@@ -60,4 +60,22 @@ describe("ChannelStore timestamp normalization", () => {
 		assert.equal(Number.isNaN(loggedMs), false);
 		assert.ok(loggedMs >= before && loggedMs <= after);
 	});
+
+	it("converts integer-second timestamps to ISO dates", async () => {
+		const tempDir = mkdtempSync(join(tmpdir(), "mom-store-test-"));
+		tempDirs.push(tempDir);
+		const store = new ChannelStore({ workingDir: tempDir, botToken: "test-token" });
+
+		await store.logMessage("C789", {
+			date: "",
+			ts: "1700000000",
+			user: "U3",
+			text: "hello",
+			attachments: [],
+			isBot: false,
+		});
+
+		const logged = readLoggedMessage(tempDir, "C789");
+		assert.equal(logged.date, "2023-11-14T22:13:20.000Z");
+	});
 });

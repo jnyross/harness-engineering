@@ -12,6 +12,10 @@ describe("parseSlackTimestampToMilliseconds", () => {
 		assert.equal(parseSlackTimestampToMilliseconds("1700000000123"), 1700000000123);
 	});
 
+	it("parses integer second timestamps", () => {
+		assert.equal(parseSlackTimestampToMilliseconds("1700000000"), 1700000000000);
+	});
+
 	it("rejects malformed timestamp values", () => {
 		assert.equal(parseSlackTimestampToMilliseconds("1700000000oops"), undefined);
 		assert.equal(parseSlackTimestampToMilliseconds("-1"), undefined);
@@ -32,5 +36,10 @@ describe("getLatestSlackTimestamp", () => {
 
 	it("returns undefined when no timestamps are valid", () => {
 		assert.equal(getLatestSlackTimestamp(["abc", "ts", "-1"]), undefined);
+	});
+
+	it("compares mixed integer-seconds and decimal-second timestamps correctly", () => {
+		const latest = getLatestSlackTimestamp(["1700000000", "1700000000.200000", "1700000000.100000"]);
+		assert.equal(latest, "1700000000.200000");
 	});
 });
