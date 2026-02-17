@@ -22,6 +22,16 @@ describe("parseCommandArgs utility", () => {
 		expect(parseCommandArgs(String.raw`path\\to\\file other`)).toEqual([String.raw`path\to\file`, "other"]);
 	});
 
+	test("preserves non-escape backslashes for windows-style paths", () => {
+		expect(parseCommandArgs(String.raw`C:\Users\demo`)).toEqual([String.raw`C:\Users\demo`]);
+	});
+
+	test("preserves windows-style backslashes inside quotes", () => {
+		expect(parseCommandArgs(String.raw`"C:\Users\Jane Doe\export.html"`)).toEqual([
+			String.raw`C:\Users\Jane Doe\export.html`,
+		]);
+	});
+
 	test("supports quoted slash-command arguments with spaces", () => {
 		expect(parseCommandArgs(`/export "session export.html"`)).toEqual(["/export", "session export.html"]);
 	});

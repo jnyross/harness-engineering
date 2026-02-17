@@ -5,25 +5,21 @@ export function parseCommandArgs(argsString: string, options?: { strict?: boolea
 	const args: string[] = [];
 	let current = "";
 	let inQuote: "'" | '"' | null = null;
-	let escaping = false;
 	let tokenStarted = false;
 
 	for (let i = 0; i < argsString.length; i++) {
 		const char = argsString[i];
 
 		if (inQuote) {
-			if (inQuote === '"' && escaping) {
-				current += char;
-				escaping = false;
-				continue;
-			}
-
 			if (inQuote === '"' && char === "\\") {
 				const nextChar = argsString[i + 1];
-				if (nextChar !== undefined) {
-					escaping = true;
+				if (nextChar === '"' || nextChar === "\\") {
+					current += nextChar;
+					i++;
 					continue;
 				}
+				current += "\\";
+				continue;
 			}
 
 			if (char === inQuote) {
@@ -42,7 +38,7 @@ export function parseCommandArgs(argsString: string, options?: { strict?: boolea
 			}
 		} else if (char === "\\") {
 			const nextChar = argsString[i + 1];
-			if (nextChar !== undefined) {
+			if (nextChar === " " || nextChar === "\t" || nextChar === '"' || nextChar === "'" || nextChar === "\\") {
 				current += nextChar;
 				tokenStarted = true;
 				i++;
@@ -54,10 +50,6 @@ export function parseCommandArgs(argsString: string, options?: { strict?: boolea
 			current += char;
 			tokenStarted = true;
 		}
-	}
-
-	if (escaping) {
-		current += "\\";
 	}
 
 	if (inQuote && options?.strict) {
