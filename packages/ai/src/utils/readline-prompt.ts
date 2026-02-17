@@ -24,9 +24,18 @@ export function promptWithCloseFallback(rl: Interface, question: string, closeFa
 			resolveOnce(closeFallback);
 		};
 
+		if ((rl as Interface & { closed?: boolean }).closed) {
+			resolveOnce(closeFallback);
+			return;
+		}
+
 		rl.on("close", onClose);
-		rl.question(question, (answer) => {
-			resolveOnce(answer);
-		});
+		try {
+			rl.question(question, (answer) => {
+				resolveOnce(answer);
+			});
+		} catch {
+			resolveOnce(closeFallback);
+		}
 	});
 }

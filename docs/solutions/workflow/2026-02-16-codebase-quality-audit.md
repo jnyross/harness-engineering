@@ -3344,6 +3344,26 @@ to:
 
 **Result:** TUI loader now maintains a single spinner interval across repeated `start()` calls.
 
+---
+
+### 188) readline prompt helper did not short-circuit already-closed interfaces
+
+**Finding:** Shared readline prompt helper handled close events during active questions but did not explicitly short-circuit already-closed interfaces, risking brittle behavior if callers prompt after prior closure.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/readline-prompt.ts`
+- `packages/ai/test/readline-prompt.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- return fallback values immediately when the interface is already closed,
+- guard `rl.question(...)` with fallback settlement on synchronous errors,
+- add regression coverage for already-closed interface prompts.
+
+**Result:** AI CLI prompt helper now settles predictably across both pre-closed and mid-close readline states.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -3371,7 +3391,7 @@ to:
 - ai shared event-stream lifecycle regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/event-stream.test.ts test/openai-codex-stream.test.ts test/google-gemini-cli-empty-stream.test.ts` (includes incomplete-end rejection and stream consumer compatibility coverage)
 - ai readline prompt lifecycle regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/readline-prompt.test.ts` (includes close-fallback settlement and answered-value stability)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/readline-prompt.test.ts` (includes close-fallback settlement, answered-value stability, and already-closed interface fallback)
 - ai copilot/oauth-related regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/abortable-sleep.test.ts test/github-copilot-anthropic.test.ts`
 - ai oauth cancellation regression tests pass:

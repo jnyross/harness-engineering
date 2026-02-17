@@ -38,4 +38,13 @@ describe("promptWithCloseFallback", () => {
 		await expect(resultPromise).resolves.toBe("yes");
 		rl.close();
 	});
+
+	it("resolves fallback immediately when interface is already closed", async () => {
+		const input = new PassThrough();
+		const output = new PassThrough();
+		const rl = createInterface({ input, output });
+		rl.close();
+
+		await expect(promptWithCloseFallback(rl, "question? ", "fallback")).resolves.toBe("fallback");
+	});
 });
