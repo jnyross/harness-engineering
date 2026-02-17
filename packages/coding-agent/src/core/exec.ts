@@ -112,8 +112,8 @@ export async function execCommand(
 			stderr += data.toString();
 		});
 
-		proc.on("close", (code) => {
-			resolveOnce({ stdout, stderr, code: code ?? (killed ? 1 : 0), killed });
+		proc.on("close", (code, signal) => {
+			resolveOnce({ stdout, stderr, code: code ?? (killed || signal ? 1 : 0), killed });
 		});
 
 		proc.on("error", (err) => {

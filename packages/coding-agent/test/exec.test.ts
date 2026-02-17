@@ -63,4 +63,15 @@ describe("execCommand", () => {
 		expect(result.killed).toBe(true);
 		expect(result.code).toBe(1);
 	});
+
+	it("treats signal-terminated subprocess exits as failures", async () => {
+		const result = await execCommand(
+			process.execPath,
+			["-e", "setTimeout(() => process.kill(process.pid, 'SIGTERM'), 1);"],
+			process.cwd(),
+		);
+
+		expect(result.killed).toBe(false);
+		expect(result.code).toBe(1);
+	});
 });
