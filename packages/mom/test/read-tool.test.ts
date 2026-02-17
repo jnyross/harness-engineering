@@ -85,4 +85,22 @@ describe("createReadTool line count parsing", () => {
 			/Offset 2 is beyond end of file \(1 lines total\)/,
 		);
 	});
+
+	it("rejects non-positive and non-integer offset/limit values", async () => {
+		const executor = createMockExecutor(async () => ({ stdout: "", stderr: "", code: 0 }));
+		const tool = createReadTool(executor);
+
+		await assert.rejects(
+			() => tool.execute("tool-5", { label: "read", path: "file.txt", offset: 0 }, undefined),
+			/Parameter 'offset' must be a positive integer\./,
+		);
+		await assert.rejects(
+			() => tool.execute("tool-6", { label: "read", path: "file.txt", offset: 1.5 }, undefined),
+			/Parameter 'offset' must be a positive integer\./,
+		);
+		await assert.rejects(
+			() => tool.execute("tool-7", { label: "read", path: "file.txt", limit: -1 }, undefined),
+			/Parameter 'limit' must be a positive integer\./,
+		);
+	});
 });

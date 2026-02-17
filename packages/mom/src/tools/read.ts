@@ -27,8 +27,8 @@ function isImageFile(filePath: string): string | null {
 const readSchema = Type.Object({
 	label: Type.String({ description: "Brief description of what you're reading and why (shown to user)" }),
 	path: Type.String({ description: "Path to the file to read (relative or absolute)" }),
-	offset: Type.Optional(Type.Number({ description: "Line number to start reading from (1-indexed)" })),
-	limit: Type.Optional(Type.Number({ description: "Maximum number of lines to read" })),
+	offset: Type.Optional(Type.Integer({ minimum: 1, description: "Line number to start reading from (1-indexed)" })),
+	limit: Type.Optional(Type.Integer({ minimum: 1, description: "Maximum number of lines to read" })),
 });
 
 interface ReadToolDetails {
@@ -52,6 +52,19 @@ function parseLineCountOutput(output: string, filePath: string): number {
 	return parsedCount;
 }
 
+function parsePositiveIntegerParameter(
+	value: number | undefined,
+	parameterName: "offset" | "limit",
+): number | undefined {
+	if (value === undefined) {
+		return undefined;
+	}
+	if (!Number.isInteger(value) || value <= 0) {
+		throw new Error(`Parameter '${parameterName}' must be a positive integer.`);
+	}
+	return value;
+}
+
 export function createReadTool(executor: Executor): AgentTool<typeof readSchema> {
 	return {
 		name: "read",
@@ -63,6 +76,8 @@ export function createReadTool(executor: Executor): AgentTool<typeof readSchema>
 			{ path, offset, limit }: { label: string; path: string; offset?: number; limit?: number },
 			signal?: AbortSignal,
 		): Promise<{ content: (TextContent | ImageContent)[]; details: ReadToolDetails | undefined }> => {
+			const normalizedOffset = parsePositiveIntegerParameter(offset, "offset");
+			const normalizedLimit = parsePositiveIntegerParameter(limit, "limit");
 			const mimeType = isImageFile(path);
 
 			if (mimeType) {
@@ -90,12 +105,12 @@ export function createReadTool(executor: Executor): AgentTool<typeof readSchema>
 			const totalFileLines = parseLineCountOutput(countResult.stdout, path);
 
 			// Apply offset if specified (1-indexed)
-			const startLine = offset ? Math.max(1, offset) : 1;
+			const startLine = normalizedOffset ?? 1;
 			const startLineDisplay = startLine;
 
 			// Check if offset is out of bounds
-			if (offset !== undefined && startLine > totalFileLines) {
-				throw new Error(`Offset ${offset} is beyond end of file (${totalFileLines} lines total)`);
+			if (normalizedOffset !== undefined && startLine > totalFileLines) {
+				throw new Error(`Offset ${normalizedOffset} is beyond end of file (${totalFileLines} lines total)`);
 			}
 
 			// Read content with offset
@@ -115,9 +130,9 @@ export function createReadTool(executor: Executor): AgentTool<typeof readSchema>
 			let userLimitedLines: number | undefined;
 
 			// Apply user limit if specified
-			if (limit !== undefined) {
+			if (normalizedLimit !== undefined) {
 				const lines = selectedContent.split("\n");
-				const endLine = Math.min(limit, lines.length);
+				const endLine = Math.min(normalizedLimit, lines.length);
 				selectedContent = lines.slice(0, endLine).join("\n");
 				userLimitedLines = endLine;
 			}
