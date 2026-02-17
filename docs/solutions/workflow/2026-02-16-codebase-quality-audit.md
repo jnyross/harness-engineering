@@ -5207,6 +5207,27 @@ to:
 
 **Result:** pods memory parsing now rejects precision-rounded overflow values deterministically instead of accepting them as `100%`.
 
+---
+
+### 282) tui overlay percentage parsing could accept precision-rounded values above 100%
+
+**Finding:** `packages/tui/src/tui.ts` parsed overlay percentage values via float conversion after regex validation; precision-overflow values such as `100.0000000000000000001%` could round down to `100` and be accepted in width/position parsing.
+
+**Action:** Updated:
+
+- `packages/tui/src/tui.ts`
+- `packages/tui/test/overlay-options.test.ts`
+- `packages/tui/CHANGELOG.md`
+
+to:
+
+- tighten percentage parsing to split whole/fractional components explicitly,
+- reject values above `100` using pre-conversion BigInt + fractional digit checks,
+- keep existing percentage behavior for valid values (`0%` through `100%`, including `100.0%`),
+- add regression coverage for precision-overflow width and row percentage fallbacks.
+
+**Result:** overlay percentage parsing now rejects precision-rounded overflow inputs deterministically, preserving fallback layout behavior for invalid values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5220,6 +5241,8 @@ to:
 - tui kitty CSI-u + overlay percentage parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/editor-kitty-csiu.test.ts`
   - `cd packages/tui && node --test --import tsx test/overlay-options.test.ts`
+- tui overlay precision-overflow percentage regression tests pass:
+  - `npm --workspace "@mariozechner/pi-tui" test -- test/overlay-options.test.ts`
 - tui key parser Kitty unsafe-integer regression tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/keys.test.ts`
 - tui ANSI wrap style-tracker regression tests pass:
