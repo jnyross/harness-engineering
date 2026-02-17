@@ -57,7 +57,6 @@ describe("normalizeCountdownTimeoutMs", () => {
 		expect(normalizeCountdownTimeoutMs(0)).toBeUndefined();
 		expect(normalizeCountdownTimeoutMs(-1)).toBeUndefined();
 		expect(normalizeCountdownTimeoutMs(Number.NaN)).toBeUndefined();
-		expect(normalizeCountdownTimeoutMs(Number.POSITIVE_INFINITY)).toBeUndefined();
 	});
 
 	it("preserves valid timeout values within timer range", () => {
@@ -69,5 +68,6 @@ describe("normalizeCountdownTimeoutMs", () => {
 	it("clamps oversized timeout values to Node timer max", () => {
 		expect(normalizeCountdownTimeoutMs(2_147_483_648)).toBe(2_147_483_647);
 		expect(normalizeCountdownTimeoutMs(Number.MAX_SAFE_INTEGER)).toBe(2_147_483_647);
+		expect(normalizeCountdownTimeoutMs(Number.POSITIVE_INFINITY)).toBe(2_147_483_647);
 	});
 });

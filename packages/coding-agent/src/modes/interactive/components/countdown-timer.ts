@@ -10,7 +10,7 @@ export function normalizeCountdownTimeoutMs(timeoutMs: number | undefined): numb
 	if (timeoutMs === undefined) {
 		return undefined;
 	}
-	if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+	if (Number.isNaN(timeoutMs) || timeoutMs <= 0) {
 		return undefined;
 	}
 	return timeoutMs > MAX_TIMEOUT_MS ? MAX_TIMEOUT_MS : timeoutMs;
