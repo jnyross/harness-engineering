@@ -463,4 +463,70 @@ describe("SettingsManager", () => {
 			expect(manager.getDoubleEscapeAction()).toBe("none");
 		});
 	});
+
+	describe("string and list settings normalization", () => {
+		it("falls back safely for malformed string/list settings values", () => {
+			const malformed = JSON.parse(`{
+				"defaultProvider": 123,
+				"defaultModel": true,
+				"theme": 42,
+				"shellPath": {},
+				"shellCommandPrefix": [],
+				"extensions": "/tmp/ext.ts",
+				"skills": [1, "skill-a", "", "   "],
+				"prompts": ["  /tmp/prompt.md  ", null],
+				"themes": [{}, "dark"],
+				"enabledModels": [1, "", "openai/gpt-5"],
+				"packages": [
+					"npm:valid-package",
+					{ "source": "npm:scoped-package", "extensions": ["ext.ts", 1], "skills": "invalid" },
+					{ "source": "" },
+					42
+				]
+			}`) as Partial<Settings>;
+
+			const manager = SettingsManager.inMemory(malformed);
+
+			expect(manager.getDefaultProvider()).toBeUndefined();
+			expect(manager.getDefaultModel()).toBeUndefined();
+			expect(manager.getTheme()).toBeUndefined();
+			expect(manager.getShellPath()).toBeUndefined();
+			expect(manager.getShellCommandPrefix()).toBeUndefined();
+			expect(manager.getExtensionPaths()).toEqual([]);
+			expect(manager.getSkillPaths()).toEqual(["skill-a"]);
+			expect(manager.getPromptTemplatePaths()).toEqual(["/tmp/prompt.md"]);
+			expect(manager.getThemePaths()).toEqual(["dark"]);
+			expect(manager.getEnabledModels()).toEqual(["openai/gpt-5"]);
+			expect(manager.getPackages()).toEqual([
+				"npm:valid-package",
+				{ source: "npm:scoped-package", extensions: ["ext.ts"] },
+			]);
+		});
+
+		it("preserves valid string/list settings values with trimming", () => {
+			const manager = SettingsManager.inMemory({
+				defaultProvider: "  openai  ",
+				defaultModel: " gpt-5 ",
+				theme: " dark ",
+				shellPath: " /bin/zsh ",
+				shellCommandPrefix: " set -e ",
+				extensions: [" ./ext.ts "],
+				skills: [" ./skills "],
+				prompts: [" ./prompts "],
+				themes: [" ./themes "],
+				enabledModels: [" openai/gpt-5 ", " anthropic/claude-sonnet "],
+			});
+
+			expect(manager.getDefaultProvider()).toBe("openai");
+			expect(manager.getDefaultModel()).toBe("gpt-5");
+			expect(manager.getTheme()).toBe("dark");
+			expect(manager.getShellPath()).toBe("/bin/zsh");
+			expect(manager.getShellCommandPrefix()).toBe("set -e");
+			expect(manager.getExtensionPaths()).toEqual(["./ext.ts"]);
+			expect(manager.getSkillPaths()).toEqual(["./skills"]);
+			expect(manager.getPromptTemplatePaths()).toEqual(["./prompts"]);
+			expect(manager.getThemePaths()).toEqual(["./themes"]);
+			expect(manager.getEnabledModels()).toEqual(["openai/gpt-5", "anthropic/claude-sonnet"]);
+		});
+	});
 });

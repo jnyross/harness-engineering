@@ -188,6 +188,72 @@ function normalizeDoubleEscapeAction(value: Settings["doubleEscapeAction"] | und
 	return value === "fork" || value === "tree" || value === "none" ? value : "tree";
 }
 
+function normalizeOptionalNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function normalizeStringArray(value: unknown): string[] {
+	if (!Array.isArray(value)) {
+		return [];
+	}
+	const normalized: string[] = [];
+	for (const entry of value) {
+		const parsed = normalizeOptionalNonEmptyString(entry);
+		if (parsed !== undefined) {
+			normalized.push(parsed);
+		}
+	}
+	return normalized;
+}
+
+function normalizePackageSourceEntry(value: unknown): PackageSource | undefined {
+	if (typeof value === "string") {
+		return normalizeOptionalNonEmptyString(value);
+	}
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+
+	const record = value as Record<string, unknown>;
+	const source = normalizeOptionalNonEmptyString(record.source);
+	if (!source) {
+		return undefined;
+	}
+
+	const normalized: Exclude<PackageSource, string> = { source };
+	if (Array.isArray(record.extensions)) {
+		normalized.extensions = normalizeStringArray(record.extensions);
+	}
+	if (Array.isArray(record.skills)) {
+		normalized.skills = normalizeStringArray(record.skills);
+	}
+	if (Array.isArray(record.prompts)) {
+		normalized.prompts = normalizeStringArray(record.prompts);
+	}
+	if (Array.isArray(record.themes)) {
+		normalized.themes = normalizeStringArray(record.themes);
+	}
+	return normalized;
+}
+
+function normalizePackageSources(value: unknown): PackageSource[] {
+	if (!Array.isArray(value)) {
+		return [];
+	}
+	const normalized: PackageSource[] = [];
+	for (const entry of value) {
+		const parsed = normalizePackageSourceEntry(entry);
+		if (parsed !== undefined) {
+			normalized.push(parsed);
+		}
+	}
+	return normalized;
+}
+
 function normalizeThinkingBudgetValue(value: number | undefined): number | undefined {
 	if (value === undefined || Number.isNaN(value)) {
 		return undefined;
@@ -507,11 +573,11 @@ export class SettingsManager {
 	}
 
 	getDefaultProvider(): string | undefined {
-		return this.settings.defaultProvider;
+		return normalizeOptionalNonEmptyString(this.settings.defaultProvider);
 	}
 
 	getDefaultModel(): string | undefined {
-		return this.settings.defaultModel;
+		return normalizeOptionalNonEmptyString(this.settings.defaultModel);
 	}
 
 	setDefaultProvider(provider: string): void {
@@ -555,7 +621,7 @@ export class SettingsManager {
 	}
 
 	getTheme(): string | undefined {
-		return this.settings.theme;
+		return normalizeOptionalNonEmptyString(this.settings.theme);
 	}
 
 	setTheme(theme: string): void {
@@ -652,7 +718,7 @@ export class SettingsManager {
 	}
 
 	getShellPath(): string | undefined {
-		return this.settings.shellPath;
+		return normalizeOptionalNonEmptyString(this.settings.shellPath);
 	}
 
 	setShellPath(path: string | undefined): void {
@@ -672,7 +738,7 @@ export class SettingsManager {
 	}
 
 	getShellCommandPrefix(): string | undefined {
-		return this.settings.shellCommandPrefix;
+		return normalizeOptionalNonEmptyString(this.settings.shellCommandPrefix);
 	}
 
 	setShellCommandPrefix(prefix: string | undefined): void {
@@ -692,7 +758,7 @@ export class SettingsManager {
 	}
 
 	getPackages(): PackageSource[] {
-		return [...(this.settings.packages ?? [])];
+		return normalizePackageSources(this.settings.packages);
 	}
 
 	setPackages(packages: PackageSource[]): void {
@@ -709,7 +775,7 @@ export class SettingsManager {
 	}
 
 	getExtensionPaths(): string[] {
-		return [...(this.settings.extensions ?? [])];
+		return normalizeStringArray(this.settings.extensions);
 	}
 
 	setExtensionPaths(paths: string[]): void {
@@ -726,7 +792,7 @@ export class SettingsManager {
 	}
 
 	getSkillPaths(): string[] {
-		return [...(this.settings.skills ?? [])];
+		return normalizeStringArray(this.settings.skills);
 	}
 
 	setSkillPaths(paths: string[]): void {
@@ -743,7 +809,7 @@ export class SettingsManager {
 	}
 
 	getPromptTemplatePaths(): string[] {
-		return [...(this.settings.prompts ?? [])];
+		return normalizeStringArray(this.settings.prompts);
 	}
 
 	setPromptTemplatePaths(paths: string[]): void {
@@ -760,7 +826,7 @@ export class SettingsManager {
 	}
 
 	getThemePaths(): string[] {
-		return [...(this.settings.themes ?? [])];
+		return normalizeStringArray(this.settings.themes);
 	}
 
 	setThemePaths(paths: string[]): void {
@@ -847,7 +913,8 @@ export class SettingsManager {
 	}
 
 	getEnabledModels(): string[] | undefined {
-		return this.settings.enabledModels;
+		const normalized = normalizeStringArray(this.settings.enabledModels);
+		return normalized.length > 0 ? normalized : undefined;
 	}
 
 	setEnabledModels(patterns: string[] | undefined): void {
