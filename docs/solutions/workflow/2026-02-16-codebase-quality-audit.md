@@ -1738,6 +1738,22 @@ to use single-settlement abort cleanup and added pre-aborted write regression co
 
 **Result:** Write tool now settles deterministically under abort timing races and preserves consistent cancellation semantics.
 
+---
+
+### 103) coding-agent read tool used split abort cleanup/reject branches
+
+**Finding:** Read tool managed abort listener cleanup in separate success/error branches, which made cancellation/exception settlement behavior less deterministic during async read flows.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/read.ts`
+- `packages/coding-agent/test/tools.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to use single-settlement abort cleanup and added pre-aborted read regression coverage.
+
+**Result:** Read tool now has deterministic cancellation/error settlement semantics with centralized abort-listener cleanup.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1756,6 +1772,8 @@ to use single-settlement abort cleanup and added pre-aborted write regression co
   - `npm --workspace "@mariozechner/pi-ai" test -- test/abortable-sleep.test.ts test/github-copilot-anthropic.test.ts`
 - coding-agent tools regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted write coverage)
+- coding-agent tools regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted read + write coverage)
 - coding-agent execCommand regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - coding-agent interactive status tests pass after share flow command-exec refactor:
