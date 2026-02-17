@@ -5143,6 +5143,26 @@ to:
 
 **Result:** malformed export hex colors are now ignored safely instead of propagating invalid CSS color values.
 
+---
+
+### 279) pods process-identifier helpers accepted unsafe integer values
+
+**Finding:** `packages/pods/src/process-identifiers.ts` validated pid/port values using `Number.isInteger(...)`, which could accept unsafe integers (`> Number.MAX_SAFE_INTEGER`) before range checks in helper call paths.
+
+**Action:** Updated:
+
+- `packages/pods/src/process-identifiers.ts`
+- `packages/pods/test/process-identifiers.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- require safe integers for pid/port validation helpers,
+- reject oversized unsafe numeric values in pid/port helper assertions,
+- add regression coverage for unsafe-integer pid/port rejection.
+
+**Result:** pods pid/port validator helpers now reject unsafe integers deterministically before any command-assembly usage of process identifiers.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5196,6 +5216,8 @@ to:
   - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts`
 - pods memory normalization canonical-format regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts`
+- pods process-identifier safe-integer regression tests pass:
+  - `npm --workspace "@mariozechner/pi" test -- test/process-identifiers.test.ts`
 - pods required-option smoke checks pass:
   - `npx tsx packages/pods/src/cli.ts start demo-model --name demo --memory`
   - `npx tsx packages/pods/src/cli.ts pods setup demo "ssh host" --vllm`
