@@ -25,13 +25,7 @@ import {
 	type ReadOperations,
 	type WriteOperations,
 } from "@mariozechner/pi-coding-agent";
-
-function normalizeExitCode(code: number | null, signal: NodeJS.Signals | null): number {
-	if (signal) {
-		return 1;
-	}
-	return code ?? 1;
-}
+import { getSshExampleFailureReason, normalizeSshExampleExitCode } from "./ssh-exit-status.js";
 
 function sshExec(remote: string, command: string): Promise<Buffer> {
 	return new Promise((resolve, reject) => {
@@ -60,9 +54,9 @@ function sshExec(remote: string, command: string): Promise<Buffer> {
 		child.stderr.on("data", (data) => errChunks.push(data));
 		child.on("error", (error) => rejectOnce(error));
 		child.on("close", (code, closeSignal) => {
-			const normalizedCode = normalizeExitCode(code, closeSignal);
+			const normalizedCode = normalizeSshExampleExitCode(code, closeSignal);
 			if (normalizedCode !== 0) {
-				const reason = closeSignal ? `signal ${closeSignal}` : String(normalizedCode);
+				const reason = getSshExampleFailureReason(code, closeSignal);
 				rejectOnce(new Error(`SSH failed (${reason}): ${Buffer.concat(errChunks).toString()}`));
 			} else {
 				resolveOnce(Buffer.concat(chunks));
@@ -154,7 +148,7 @@ function createRemoteBashOps(remote: string, remoteCwd: string, localCwd: string
 				child.on("close", (code, closeSignal) => {
 					if (signal?.aborted) rejectOnce(new Error("aborted"));
 					else if (timedOut) rejectOnce(new Error(`timeout:${timeout}`));
-					else resolveOnce({ exitCode: normalizeExitCode(code, closeSignal) });
+					else resolveOnce({ exitCode: normalizeSshExampleExitCode(code, closeSignal) });
 				});
 			}),
 	};
