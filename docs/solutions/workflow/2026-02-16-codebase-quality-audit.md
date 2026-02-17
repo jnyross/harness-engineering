@@ -2820,6 +2820,25 @@ to:
 
 **Result:** CLI selector flows now perform deterministic one-time teardown across callback races, reducing duplicate UI shutdown/resolve/exit paths.
 
+---
+
+### 160) Qwen CLI provider example OAuth flow missed full abort propagation and sleep cleanup
+
+**Finding:** The Qwen custom-provider OAuth example used a local sleep helper that did not remove abort listeners on success and did not consistently pass `AbortSignal` into device/token HTTP requests.
+
+**Action:** Updated:
+
+- `packages/coding-agent/examples/extensions/custom-provider-qwen-cli/index.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- harden local abortable sleep with deterministic listener cleanup,
+- propagate abort signals to device-code and token polling requests,
+- reject early for pre-aborted login signals.
+
+**Result:** Qwen OAuth example now reacts to cancellation consistently across polling/network paths and avoids accumulating stale abort listeners.
+
 ## Validation Evidence
 
 - Root quality gate passes:

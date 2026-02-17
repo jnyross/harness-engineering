@@ -74,19 +74,40 @@ function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
 			reject(new Error("Login cancelled"));
 			return;
 		}
-		const timeout = setTimeout(resolve, ms);
-		signal?.addEventListener(
-			"abort",
-			() => {
-				clearTimeout(timeout);
-				reject(new Error("Login cancelled"));
-			},
-			{ once: true },
-		);
+
+		let settled = false;
+		const timeout = setTimeout(() => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			cleanup();
+			resolve();
+		}, ms);
+
+		const onAbort = () => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			clearTimeout(timeout);
+			cleanup();
+			reject(new Error("Login cancelled"));
+		};
+
+		const cleanup = () => {
+			signal?.removeEventListener("abort", onAbort);
+		};
+
+		signal?.addEventListener("abort", onAbort, { once: true });
 	});
 }
 
-async function startDeviceFlow(): Promise<{ deviceCode: DeviceCodeResponse; verifier: string }> {
+async function startDeviceFlow(signal?: AbortSignal): Promise<{ deviceCode: DeviceCodeResponse; verifier: string }> {
+	if (signal?.aborted) {
+		throw new Error("Login cancelled");
+	}
+
 	const { verifier, challenge } = await generatePKCE();
 
 	const body = new URLSearchParams({
@@ -107,6 +128,7 @@ async function startDeviceFlow(): Promise<{ deviceCode: DeviceCodeResponse; veri
 		method: "POST",
 		headers,
 		body: body.toString(),
+		signal,
 	});
 
 	if (!response.ok) {
@@ -174,6 +196,7 @@ async function pollForToken(
 				Accept: "application/json",
 			},
 			body: body.toString(),
+			signal,
 		});
 
 		const responseText = await response.text();
@@ -211,7 +234,7 @@ async function pollForToken(
 }
 
 async function loginQwen(callbacks: OAuthLoginCallbacks): Promise<OAuthCredentials> {
-	const { deviceCode, verifier } = await startDeviceFlow();
+	const { deviceCode, verifier } = await startDeviceFlow(callbacks.signal);
 
 	// Show verification URL and user code to user
 	const authUrl = deviceCode.verification_uri_complete || deviceCode.verification_uri;

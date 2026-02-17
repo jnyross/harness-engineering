@@ -33,6 +33,7 @@
 - Antigravity image-generation SSE parsing now flushes terminal buffered `data:` chunks without trailing newline delimiters, preventing dropped final image payloads.
 - Overlay QA extension now handles stream-process spawn failures explicitly, surfacing errors in the overlay instead of risking uncaught child-process errors.
 - Interactive-shell extension now normalizes spawn/signal exit statuses and reports clearer failure reasons (startup failure, signal termination, or non-zero exit) instead of ambiguous `null` exit output.
+- Qwen CLI custom-provider example now honors abort signals across device-code/token requests and uses cleanup-safe abortable sleep handling during OAuth polling.
 - Bash executor helpers (`executeBash`, `executeBashWithOperations`) now short-circuit pre-aborted signals, avoiding unnecessary subprocess/remote execution when cancellation is already requested.
 - Bash executor helpers now preserve non-zero semantics for signal/null exits when execution was not canceled by caller signals, avoiding false cancelled/success outcomes.
 - Bash executor local process handling now uses single-settlement guards across child `error`/`close` events, preventing duplicate resolve/reject races during spawn failures.
