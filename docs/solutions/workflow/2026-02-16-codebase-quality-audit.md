@@ -2212,6 +2212,26 @@ to:
 
 **Result:** RPC clients now fail fast when the child process exits unexpectedly, avoiding unnecessary timeout waits for in-flight requests.
 
+---
+
+### 128) package-manager sync command helper hid spawn startup failures
+
+**Finding:** `DefaultPackageManager.runCommandSync(...)` handled non-zero statuses but did not explicitly branch on `spawnSync` startup errors (`result.error`) or signal-null status paths, making missing-binary failures less actionable.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/package-manager.ts`
+- `packages/coding-agent/test/package-manager.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- surface explicit startup errors (`Failed to start ...`) when sync spawn fails,
+- guard null-status signal exits with clear signal diagnostics,
+- add regression coverage for successful stdout path and missing-binary sync spawn failures.
+
+**Result:** Package-manager sync command diagnostics now distinguish startup failures from command exit failures with clearer error context.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2299,7 +2319,7 @@ to:
 - coding-agent package tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test`
 - coding-agent package-manager command-settlement regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts`
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes async settlement coverage and sync spawn-start failure diagnostics)
 - TUI package tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test`
 - Targeted reviewer parser tests pass:
