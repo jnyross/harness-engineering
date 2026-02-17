@@ -3599,6 +3599,24 @@ to:
 
 **Result:** Session list dialog no longer applies stale async session-list state updates after disconnect.
 
+---
+
+### 202) agent interface send flow could continue after disconnect/session swap during async key/prompt hooks
+
+**Finding:** Agent interface `sendMessage()` awaited API-key reads and optional prompt hooks without invalidating stale in-flight sends, allowing late editor/session mutation after component disconnect or session replacement.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/AgentInterface.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- add send-sequence invalidation on disconnect and per-send invocation,
+- guard post-await send continuation paths against disconnect/session replacement.
+
+**Result:** Agent interface send flows now abort safely when superseded or detached, avoiding stale async message-send side effects.
+
 ## Validation Evidence
 
 - Root quality gate passes:

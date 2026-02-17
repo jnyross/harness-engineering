@@ -29,6 +29,7 @@
 - `StreamingMessageContainer` now tracks/cancels pending animation-frame batch updates on immediate clears and disconnects, preventing stale deferred render callbacks.
 - `AgentInterface.setInput()` now coalesces deferred editor-population frames and cancels pending callbacks on disconnect, preventing runaway frame scheduling when the editor is unavailable.
 - `AgentInterface.connectedCallback()` now aborts post-render listener setup when the component disconnects mid-await, preventing late observer/scroll listener attachment after teardown.
+- `AgentInterface.sendMessage()` now sequence-guards async API-key/prompt hooks across disconnect/session swaps, preventing stale async send flows from mutating detached or replaced sessions.
 - `ArtifactsPanel` now tracks/cancels deferred animation-frame DOM updates across disconnects and skips callbacks when detached, preventing late artifact DOM mutations after unmount.
 - `ConsoleRuntimeProvider` now replaces/cleans sandbox `error` and `unhandledrejection` listeners across executions, preventing listener accumulation between repeated HTML artifact runs.
 - `ConsoleRuntimeProvider.complete()` now cleans runtime error listeners in a `finally` block, ensuring listener teardown even when runtime message delivery fails.

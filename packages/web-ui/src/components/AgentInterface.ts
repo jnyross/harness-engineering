@@ -46,6 +46,7 @@ export class AgentInterface extends LitElement {
 	private _unsubscribeSession?: () => void;
 	private _pendingSetInputFrameId: number | undefined;
 	private _pendingSetInputValue: { text: string; attachments: Attachment[] } | undefined;
+	private _sendSequence = 0;
 
 	private _flushPendingInput = () => {
 		this._pendingSetInputFrameId = undefined;
@@ -131,6 +132,7 @@ export class AgentInterface extends LitElement {
 
 	override disconnectedCallback() {
 		super.disconnectedCallback();
+		this._sendSequence++;
 
 		// Clean up observers and listeners
 		if (this._resizeObserver) {
@@ -235,6 +237,7 @@ export class AgentInterface extends LitElement {
 
 	public async sendMessage(input: string, attachments?: Attachment[]) {
 		if ((!input.trim() && attachments?.length === 0) || this.session?.state.isStreaming) return;
+		const sendId = ++this._sendSequence;
 		const session = this.session;
 		if (!session) throw new Error("No session set on AgentInterface");
 		if (!session.state.model) throw new Error("No model set on AgentInterface");
@@ -242,6 +245,9 @@ export class AgentInterface extends LitElement {
 		// Check if API key exists for the provider (only needed in direct mode)
 		const provider = session.state.model.provider;
 		const apiKey = await getAppStorage().providerKeys.get(provider);
+		if (!this.isConnected || sendId !== this._sendSequence || this.session !== session) {
+			return;
+		}
 
 		// If no API key, prompt for it
 		if (!apiKey) {
@@ -251,6 +257,9 @@ export class AgentInterface extends LitElement {
 			}
 
 			const success = await this.onApiKeyRequired(provider);
+			if (!this.isConnected || sendId !== this._sendSequence || this.session !== session) {
+				return;
+			}
 
 			// If still no API key, abort the send
 			if (!success) {
@@ -261,6 +270,9 @@ export class AgentInterface extends LitElement {
 		// Call onBeforeSend hook before sending
 		if (this.onBeforeSend) {
 			await this.onBeforeSend();
+			if (!this.isConnected || sendId !== this._sendSequence || this.session !== session) {
+				return;
+			}
 		}
 
 		// Only clear editor after we know we can send
