@@ -20,6 +20,18 @@ export interface ReadToolDetails {
 	truncation?: TruncationResult;
 }
 
+function splitIntoLogicalLines(textContent: string): string[] {
+	if (textContent.length === 0) {
+		return [];
+	}
+
+	const lines = textContent.split("\n");
+	if (lines.length > 0 && lines[lines.length - 1] === "") {
+		lines.pop();
+	}
+	return lines;
+}
+
 /**
  * Pluggable operations for the read tool.
  * Override these to delegate file reading to remote systems (e.g., SSH).
@@ -139,7 +151,7 @@ export function createReadTool(cwd: string, options?: ReadToolOptions): AgentToo
 								// Read as text
 								const buffer = await ops.readFile(absolutePath);
 								const textContent = buffer.toString("utf-8");
-								const allLines = textContent.split("\n");
+								const allLines = splitIntoLogicalLines(textContent);
 								const totalFileLines = allLines.length;
 
 								// Apply offset if specified (1-indexed to 0-indexed)
@@ -147,7 +159,7 @@ export function createReadTool(cwd: string, options?: ReadToolOptions): AgentToo
 								const startLineDisplay = startLine + 1; // For display (1-indexed)
 
 								// Check if offset is out of bounds
-								if (startLine >= allLines.length) {
+								if (offset !== undefined && startLine >= allLines.length) {
 									throw new Error(`Offset ${offset} is beyond end of file (${allLines.length} lines total)`);
 								}
 

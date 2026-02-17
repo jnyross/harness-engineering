@@ -92,6 +92,7 @@
 - `sleep(ms, signal)` now cleans up abort listeners on resolve/reject and avoids double-settlement paths during abort timing races.
 - Write tool now uses single-settlement abort cleanup during async filesystem operations, preventing duplicate settle races and ensuring consistent cancellation behavior.
 - Read tool now uses single-settlement abort cleanup during async filesystem operations, ensuring deterministic cancellation/error settlement behavior.
+- Read tool text line counting now treats trailing newlines correctly and enforces exact offset bounds, preventing false extra-line offsets (for example offset `2` on `hello\n`).
 - Edit tool now uses single-settlement abort cleanup across validation/read/write branches, ensuring deterministic cancellation/error settlement behavior.
 - Package-manager command execution now uses single-settlement handling for spawn `error`/`close` races and reports clearer startup/signal failures.
 - Package-manager async command failures now include the full invoked command line in startup/signal/non-zero diagnostics for easier troubleshooting.
