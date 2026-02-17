@@ -14,5 +14,6 @@ describe("parseProviderSelection", () => {
 		expect(parseProviderSelection("2provider", 4)).toBeUndefined();
 		expect(parseProviderSelection("-1", 4)).toBeUndefined();
 		expect(parseProviderSelection("", 4)).toBeUndefined();
+		expect(parseProviderSelection("9007199254740993", 4)).toBeUndefined();
 	});
 });

@@ -5,7 +5,7 @@ export function parseProviderSelection(choice: string, providerCount: number): n
 	}
 
 	const parsed = Number.parseInt(trimmed, 10);
-	if (!Number.isFinite(parsed) || parsed < 1 || parsed > providerCount) {
+	if (!Number.isSafeInteger(parsed) || parsed < 1 || parsed > providerCount) {
 		return undefined;
 	}
 

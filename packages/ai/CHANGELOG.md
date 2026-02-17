@@ -28,6 +28,7 @@
 - Google Gemini CLI and Antigravity OAuth manual input parsing now accepts hash-fragment redirect URL formats (e.g. `#code=...&state=...`) in addition to query-string redirect URLs.
 - OAuth manual-input parsing for Anthropic/Codex/Gemini/Antigravity is now centralized in a shared helper, reducing parser drift across providers.
 - AI CLI provider selection now validates interactive numeric input strictly (rejecting mixed values like `1foo` instead of truncating via `parseInt`).
+- AI CLI provider selection now also rejects unsafe integer values (greater than `Number.MAX_SAFE_INTEGER`) instead of accepting rounded coercions.
 - Gemini CLI retry-delay parsing now ignores malformed `x-ratelimit-reset` header values and malformed decimal retry fields instead of partially coercing them, correctly falling back to other delay hints.
 - Gemini CLI retry-delay parsing now also rejects non-decimal numeric header formats (`Retry-After`, `x-ratelimit-reset-after`) instead of accepting broad numeric coercions.
 - Gemini CLI retry-delay parsing now rejects unsafe integer `x-ratelimit-reset` values (greater than `Number.MAX_SAFE_INTEGER`) instead of accepting rounded coercions.
