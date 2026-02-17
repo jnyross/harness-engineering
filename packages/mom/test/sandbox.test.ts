@@ -191,6 +191,14 @@ describe("createExecutor", () => {
 		const executor = createExecutor({ type: "host" });
 		const result = await executor.exec("kill -TERM $$");
 		assert.equal(result.code, 1);
+		assert.match(result.stderr, /terminated by signal SIGTERM/);
+	});
+
+	it("adds fallback stderr diagnostics for non-zero host exits without stderr", async () => {
+		const executor = createExecutor({ type: "host" });
+		const result = await executor.exec("exit 23");
+		assert.equal(result.code, 23);
+		assert.match(result.stderr, /failed \(exit code 23\)/);
 	});
 
 	it("includes startup command context when docker executor cannot spawn command binary", async () => {

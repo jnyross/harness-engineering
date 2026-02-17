@@ -21,6 +21,7 @@
 - Sandbox Windows process-tree cleanup now handles async `taskkill` spawn errors, preventing uncaught child-process errors during best-effort termination.
 - Docker sandbox preflight command failures now report explicit command + signal/exit diagnostics, improving `validateSandbox()` error clarity when docker invocations terminate unexpectedly.
 - Sandbox command startup failures now include full command context (`command + args`) in `execSimple`/executor error paths, improving diagnostics when `docker`/shell binaries cannot be spawned.
+- Sandbox executor results now include fallback stderr diagnostics for signal/unknown/non-zero command exits when subprocesses fail silently, improving downstream tool error clarity.
 
 ### Changed
 

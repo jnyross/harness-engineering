@@ -288,7 +288,19 @@ function execWithSpawn(command: string, args: string[], options?: ExecOptions): 
 				return;
 			}
 
-			resolveOnce({ stdout, stderr, code: normalizeSandboxExitCode(code, signal) });
+			const normalizedCode = normalizeSandboxExitCode(code, signal);
+			const stderrWithFallback =
+				stderr ||
+				(normalizedCode !== 0
+					? getSandboxCommandExitError({
+							command,
+							args,
+							code,
+							signal,
+							stderr,
+						}) || stderr
+					: stderr);
+			resolveOnce({ stdout, stderr: stderrWithFallback, code: normalizedCode });
 		});
 	});
 }
