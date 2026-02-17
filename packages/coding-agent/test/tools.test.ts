@@ -578,6 +578,24 @@ describe("Coding Agent Tools", () => {
 	});
 
 	describe("find tool", () => {
+		it("should reject non-integer or out-of-range limit values", async () => {
+			await expect(
+				findTool.execute("test-call-find-invalid-limit-1", {
+					pattern: "**/*.txt",
+					path: testDir,
+					limit: 0,
+				}),
+			).rejects.toThrow("Parameter 'limit' must be a positive integer.");
+
+			await expect(
+				findTool.execute("test-call-find-invalid-limit-2", {
+					pattern: "**/*.txt",
+					path: testDir,
+					limit: 2.5,
+				}),
+			).rejects.toThrow("Parameter 'limit' must be a positive integer.");
+		});
+
 		it("should include hidden files that are not gitignored", async () => {
 			const hiddenDir = join(testDir, ".secret");
 			mkdirSync(hiddenDir);

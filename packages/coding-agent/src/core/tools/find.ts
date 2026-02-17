@@ -14,7 +14,7 @@ const findSchema = Type.Object({
 		description: "Glob pattern to match files, e.g. '*.ts', '**/*.json', or 'src/**/*.spec.ts'",
 	}),
 	path: Type.Optional(Type.String({ description: "Directory to search in (default: current directory)" })),
-	limit: Type.Optional(Type.Number({ description: "Maximum number of results (default: 1000)" })),
+	limit: Type.Optional(Type.Integer({ minimum: 1, description: "Maximum number of results (default: 1000)" })),
 });
 
 export type FindToolInput = Static<typeof findSchema>;
@@ -25,6 +25,16 @@ const DEFAULT_FD_TIMEOUT_MS = 30000;
 export interface FindToolDetails {
 	truncation?: TruncationResult;
 	resultLimitReached?: number;
+}
+
+function parseLimitValue(limit: number | undefined): number {
+	if (limit === undefined) {
+		return DEFAULT_LIMIT;
+	}
+	if (!Number.isInteger(limit) || limit < 1) {
+		throw new Error("Parameter 'limit' must be a positive integer.");
+	}
+	return limit;
 }
 
 /**
@@ -72,6 +82,7 @@ export function createFindTool(cwd: string, options?: FindToolOptions): AgentToo
 			{ pattern, path: searchDir, limit }: { pattern: string; path?: string; limit?: number },
 			signal?: AbortSignal,
 		) => {
+			const effectiveLimit = parseLimitValue(limit);
 			return new Promise((resolve, reject) => {
 				if (signal?.aborted) {
 					reject(new Error("Operation aborted"));
@@ -97,7 +108,6 @@ export function createFindTool(cwd: string, options?: FindToolOptions): AgentToo
 				(async () => {
 					try {
 						const searchPath = resolveToCwd(searchDir || ".", cwd);
-						const effectiveLimit = limit ?? DEFAULT_LIMIT;
 
 						// If custom operations provided with glob, use that
 						if (customOps?.glob) {
