@@ -1267,6 +1267,22 @@ to export share payloads to a unique temp filename per invocation (`pi-session-s
 
 **Result:** `/share` temp export flow now avoids fixed-path collisions and stale temp-file reuse.
 
+---
+
+### 74) command-arg parser escaped Windows path backslashes incorrectly
+
+**Finding:** Shared command argument parsing treated any backslash as an escape marker, which could strip backslashes from Windows-style paths (e.g. `C:\Users\...`) when characters after `\` were not intended escapes.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/utils/parse-command-args.ts`
+- `packages/coding-agent/test/parse-command-args.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to only treat backslashes as escapes for supported escaped characters (whitespace, quotes, backslash), preserving non-escape backslashes in normal and quoted path forms.
+
+**Result:** Windows-style path arguments are now preserved correctly while existing escaped-space/quote behavior remains intact.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1397,6 +1413,8 @@ to export share payloads to a unique temp filename per invocation (`pi-session-s
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/parse-command-args.test.ts test/interactive-mode-status.test.ts` (includes `/export "path with spaces"` argument parsing case)
 - coding-agent interactive share-flow regression check:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/interactive-mode-status.test.ts test/parse-command-args.test.ts`
+- coding-agent Windows-path parser coverage:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/parse-command-args.test.ts test/prompt-templates.test.ts` (includes `C:\Users\...` argument preservation cases)
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
