@@ -29,4 +29,10 @@ describe("promptConfirm", () => {
 		input.end();
 		await expect(resultPromise).resolves.toBe(false);
 	});
+
+	it("returns false when input is already closed before prompting", async () => {
+		const { input, output } = createPromptStreams();
+		input.end();
+		await expect(promptConfirm("Continue?", input, output)).resolves.toBe(false);
+	});
 });

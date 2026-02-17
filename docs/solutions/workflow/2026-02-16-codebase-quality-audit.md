@@ -3415,6 +3415,26 @@ to:
 
 **Result:** Runtime router now only emits fallback responses for request-shaped messages, preserving deterministic request settlement without acknowledging non-request broadcasts.
 
+---
+
+### 192) coding-agent fork confirmation prompts did not explicitly handle already-closed readline interfaces
+
+**Finding:** Prompt-confirm helper handled close events during active prompts but did not short-circuit already-closed readline states or synchronous `question()` failures.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/cli/prompt-confirm.ts`
+- `packages/coding-agent/test/prompt-confirm.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- short-circuit settled `false` when readline is already closed,
+- guard `question()` calls with failure fallback settlement,
+- add regression coverage for pre-closed input streams.
+
+**Result:** Fork-confirm prompt handling now settles deterministically across active-close and already-closed readline edge cases.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -3432,7 +3452,7 @@ to:
 - coding-agent piped-stdin helper regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/read-piped-stdin.test.ts` (includes TTY short-circuit, trimmed piped content, stdin error rejection, and close-before-end settlement coverage)
 - coding-agent prompt-confirm helper regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-confirm.test.ts test/read-piped-stdin.test.ts` (includes yes/no parsing and early stdin-close settlement)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-confirm.test.ts test/read-piped-stdin.test.ts` (includes yes/no parsing, early stdin-close settlement, and pre-closed prompt handling)
 - coding-agent antigravity image SSE parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/antigravity-image-gen.test.ts` (includes terminal `data:` chunk without trailing newline and text+image ordering coverage)
 - coding-agent sleep helper regression tests pass:

@@ -1,4 +1,4 @@
-import { createInterface } from "readline";
+import { createInterface, type Interface } from "readline";
 
 /**
  * Prompt for yes/no confirmation. Returns false when input closes before an answer.
@@ -29,11 +29,20 @@ export async function promptConfirm(
 			resolveOnce(false);
 		};
 
+		if ((rl as Interface & { closed?: boolean }).closed) {
+			resolveOnce(false);
+			return;
+		}
+
 		rl.on("close", onClose);
-		rl.question(`${message} [y/N] `, (answer) => {
-			const normalized = answer.trim().toLowerCase();
-			resolveOnce(normalized === "y" || normalized === "yes");
-			rl.close();
-		});
+		try {
+			rl.question(`${message} [y/N] `, (answer) => {
+				const normalized = answer.trim().toLowerCase();
+				resolveOnce(normalized === "y" || normalized === "yes");
+				rl.close();
+			});
+		} catch {
+			resolveOnce(false);
+		}
 	});
 }
