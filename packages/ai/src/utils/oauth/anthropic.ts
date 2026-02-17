@@ -12,6 +12,12 @@ const TOKEN_URL = "https://console.anthropic.com/v1/oauth/token";
 const REDIRECT_URI = "https://console.anthropic.com/oauth/code/callback";
 const SCOPES = "org:create_api_key user:profile user:inference";
 
+function assertNotAborted(signal?: AbortSignal): void {
+	if (signal?.aborted) {
+		throw new Error("Login cancelled");
+	}
+}
+
 /**
  * Login with Anthropic OAuth (device code flow)
  *
@@ -21,7 +27,9 @@ const SCOPES = "org:create_api_key user:profile user:inference";
 export async function loginAnthropic(
 	onAuthUrl: (url: string) => void,
 	onPromptCode: () => Promise<string>,
+	signal?: AbortSignal,
 ): Promise<OAuthCredentials> {
+	assertNotAborted(signal);
 	const { verifier, challenge } = await generatePKCE();
 
 	// Build authorization URL
@@ -42,7 +50,9 @@ export async function loginAnthropic(
 	onAuthUrl(authUrl);
 
 	// Wait for user to paste authorization code (format: code#state)
+	assertNotAborted(signal);
 	const authCode = await onPromptCode();
+	assertNotAborted(signal);
 	const splits = authCode.split("#");
 	const code = splits[0];
 	const state = splits[1];
@@ -50,6 +60,7 @@ export async function loginAnthropic(
 	// Exchange code for tokens
 	const tokenResponse = await fetch(TOKEN_URL, {
 		method: "POST",
+		signal,
 		headers: {
 			"Content-Type": "application/json",
 		},
@@ -125,6 +136,7 @@ export const anthropicOAuthProvider: OAuthProviderInterface = {
 		return loginAnthropic(
 			(url) => callbacks.onAuth({ url }),
 			() => callbacks.onPrompt({ message: "Paste the authorization code:" }),
+			callbacks.signal,
 		);
 	},
 
