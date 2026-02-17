@@ -3,6 +3,32 @@ import koffi from "koffi";
 import { setKittyProtocolActive } from "./keys.js";
 import { StdinBuffer } from "./stdin-buffer.js";
 
+const DEFAULT_DRAIN_MAX_MS = 1000;
+const DEFAULT_DRAIN_IDLE_MS = 50;
+const MAX_TIMEOUT_MS = 2_147_483_647;
+
+function normalizeDurationMs(value: number | undefined, fallback: number): number {
+	if (value === undefined) {
+		return fallback;
+	}
+	if (!Number.isFinite(value) || value <= 0) {
+		return fallback;
+	}
+	return value > MAX_TIMEOUT_MS ? MAX_TIMEOUT_MS : value;
+}
+
+export function normalizeDrainInputDurations(
+	maxMs: number | undefined,
+	idleMs: number | undefined,
+): {
+	maxMs: number;
+	idleMs: number;
+} {
+	const normalizedMaxMs = normalizeDurationMs(maxMs, DEFAULT_DRAIN_MAX_MS);
+	const normalizedIdleMs = Math.min(normalizeDurationMs(idleMs, DEFAULT_DRAIN_IDLE_MS), normalizedMaxMs);
+	return { maxMs: normalizedMaxMs, idleMs: normalizedIdleMs };
+}
+
 /**
  * Minimal terminal interface for TUI
  */
@@ -190,7 +216,9 @@ export class ProcessTerminal implements Terminal {
 		}
 	}
 
-	async drainInput(maxMs = 1000, idleMs = 50): Promise<void> {
+	async drainInput(maxMs = DEFAULT_DRAIN_MAX_MS, idleMs = DEFAULT_DRAIN_IDLE_MS): Promise<void> {
+		const normalizedDurations = normalizeDrainInputDurations(maxMs, idleMs);
+
 		if (this._kittyProtocolActive) {
 			// Disable Kitty keyboard protocol first so any late key releases
 			// do not generate new Kitty escape sequences.
@@ -208,15 +236,15 @@ export class ProcessTerminal implements Terminal {
 		};
 
 		process.stdin.on("data", onData);
-		const endTime = Date.now() + maxMs;
+		const endTime = Date.now() + normalizedDurations.maxMs;
 
 		try {
 			while (true) {
 				const now = Date.now();
 				const timeLeft = endTime - now;
 				if (timeLeft <= 0) break;
-				if (now - lastDataTime >= idleMs) break;
-				await new Promise((resolve) => setTimeout(resolve, Math.min(idleMs, timeLeft)));
+				if (now - lastDataTime >= normalizedDurations.idleMs) break;
+				await new Promise((resolve) => setTimeout(resolve, Math.min(normalizedDurations.idleMs, timeLeft)));
 			}
 		} finally {
 			process.stdin.removeListener("data", onData);
