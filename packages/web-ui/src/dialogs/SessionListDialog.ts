@@ -16,6 +16,7 @@ export class SessionListDialog extends DialogBase {
 	private onDeleteCallback?: (sessionId: string) => void;
 	private deletedSessions = new Set<string>();
 	private closedViaSelection = false;
+	private loadSeq = 0;
 
 	protected modalWidth = "min(600px, 90vw)";
 	protected modalHeight = "min(700px, 90vh)";
@@ -28,16 +29,31 @@ export class SessionListDialog extends DialogBase {
 		await dialog.loadSessions();
 	}
 
+	override disconnectedCallback(): void {
+		super.disconnectedCallback();
+		this.loadSeq++;
+	}
+
 	private async loadSessions() {
+		const loadId = ++this.loadSeq;
 		this.loading = true;
 		try {
 			const storage = getAppStorage();
-			this.sessions = await storage.sessions.getAllMetadata();
+			const sessions = await storage.sessions.getAllMetadata();
+			if (!this.isConnected || loadId !== this.loadSeq) {
+				return;
+			}
+			this.sessions = sessions;
 		} catch (err) {
+			if (!this.isConnected || loadId !== this.loadSeq) {
+				return;
+			}
 			console.error("Failed to load sessions:", err);
 			this.sessions = [];
 		} finally {
-			this.loading = false;
+			if (this.isConnected && loadId === this.loadSeq) {
+				this.loading = false;
+			}
 		}
 	}
 

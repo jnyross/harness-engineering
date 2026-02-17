@@ -3581,6 +3581,24 @@ to:
 
 **Result:** Custom provider dialog no longer updates detached component state or executes stale callback/close paths from obsolete async operations.
 
+---
+
+### 201) session list dialog could apply stale async session loads after unmount
+
+**Finding:** Session list dialog loaded metadata asynchronously without invalidating stale in-flight reads during close/unmount races.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/dialogs/SessionListDialog.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- add sequence-based invalidation for async session metadata loads,
+- guard success/error/finalization state writes against detached or superseded loads.
+
+**Result:** Session list dialog no longer applies stale async session-list state updates after disconnect.
+
 ## Validation Evidence
 
 - Root quality gate passes:
