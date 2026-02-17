@@ -6,11 +6,13 @@ import { describe, it } from "node:test";
 import {
 	extractHostFromSshCommand,
 	getScpExitError,
+	getSshStreamExitError,
 	parseShellCommand,
 	parseSshCommand,
 	scpFile,
 	sshExec,
 	sshExecStream,
+	sshExecStreamDetailed,
 } from "../src/ssh.js";
 
 describe("parseShellCommand", () => {
@@ -127,6 +129,35 @@ describe("sshExecStream", () => {
 	it("returns non-zero when ssh binary cannot be spawned", async () => {
 		const exitCode = await sshExecStream("/definitely/missing/ssh user@host", "echo test", { silent: true });
 		assert.equal(exitCode, 1);
+	});
+});
+
+describe("sshExecStreamDetailed", () => {
+	it("returns parse diagnostics when ssh command is invalid", async () => {
+		const result = await sshExecStreamDetailed("bash -lc 'echo hi'", "echo test", { silent: true });
+		assert.equal(result.exitCode, 1);
+		assert.match(result.error ?? "", /expected ssh binary/);
+	});
+
+	it("returns signal diagnostics for signal-terminated ssh streams", async () => {
+		const dir = mkdtempSync(join(tmpdir(), "pi-pods-ssh-stream-detailed-signal-"));
+		const sshPath = join(dir, "ssh");
+		try {
+			writeFileSync(sshPath, "#!/bin/sh\nkill -TERM $$\n", { mode: 0o755 });
+			chmodSync(sshPath, 0o755);
+
+			const result = await sshExecStreamDetailed(`${sshPath} user@host`, "echo test", { silent: true });
+			assert.equal(result.exitCode, 1);
+			assert.equal(result.error, "SSH process terminated by signal SIGTERM");
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
+	});
+});
+
+describe("getSshStreamExitError", () => {
+	it("reports unknown null/null exits", () => {
+		assert.equal(getSshStreamExitError(null, null), "SSH process exited with unknown status");
 	});
 });
 

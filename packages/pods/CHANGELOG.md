@@ -60,4 +60,5 @@
 - SSH helper wrappers (`sshExec`, `sshExecStream`) now reuse shared child-exit normalization so unknown `code=null`/`signal=null` subprocess exits are treated as non-zero failures.
 - Model startup/log streaming now treats non-zero SSH tail stream exits as explicit failures (unless user-interrupted), surfacing clear diagnostics instead of silently reporting that streams merely ended.
 - SCP setup-script copy now forwards compatible SSH options (e.g. identity/config/port) into `scp` invocation and surfaces explicit parse/startup/signal/unknown-status diagnostics instead of a generic copy-failed message during `pods setup`.
+- Streaming SSH command execution now exposes parse/startup/signal/unknown-status diagnostics to CLI/setup callers, so `pi ssh` and `pods setup` surface explicit failure causes before exiting non-zero.
 

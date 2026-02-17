@@ -1,5 +1,5 @@
 import { type SpawnOptions, spawn } from "child_process";
-import { normalizeChildExitCode } from "./child-exit-status.js";
+import { getSignalTerminationMessage, normalizeChildExitCode } from "./child-exit-status.js";
 
 export interface SSHResult {
 	stdout: string;
@@ -9,6 +9,11 @@ export interface SSHResult {
 
 export interface ScpResult {
 	ok: boolean;
+	error?: string;
+}
+
+export interface SSHStreamResult {
+	exitCode: number;
 	error?: string;
 }
 
@@ -267,19 +272,32 @@ export const sshExec = async (
 /**
  * Execute an SSH command with streaming output to console
  */
-export const sshExecStream = async (
+export function getSshStreamExitError(code: number | null, signal: NodeJS.Signals | null): string | undefined {
+	if (signal) {
+		return getSignalTerminationMessage("SSH process", signal);
+	}
+	if (code === null) {
+		return "SSH process exited with unknown status";
+	}
+	if (code !== 0) {
+		return `SSH process exited with code ${code}`;
+	}
+	return undefined;
+}
+
+export const sshExecStreamDetailed = async (
 	sshCmd: string,
 	command: string,
 	options?: { silent?: boolean; forceTTY?: boolean; keepAlive?: boolean },
-): Promise<number> => {
+): Promise<SSHStreamResult> => {
 	return new Promise((resolve) => {
 		let settled = false;
-		const resolveOnce = (exitCode: number) => {
+		const resolveOnce = (result: SSHStreamResult) => {
 			if (settled) {
 				return;
 			}
 			settled = true;
-			resolve(exitCode);
+			resolve(result);
 		};
 
 		let sshBinary: string;
@@ -288,8 +306,11 @@ export const sshExecStream = async (
 			const parsed = parseSshCommand(sshCmd);
 			sshBinary = parsed.sshBinary;
 			sshArgs = [...parsed.sshArgs];
-		} catch {
-			resolve(1);
+		} catch (error) {
+			resolveOnce({
+				exitCode: 1,
+				error: error instanceof Error ? error.message : String(error),
+			});
 			return;
 		}
 
@@ -314,13 +335,28 @@ export const sshExecStream = async (
 		const proc = spawn(sshBinary, sshArgs, spawnOptions);
 
 		proc.on("close", (code, signal) => {
-			resolveOnce(normalizeChildExitCode(code, signal));
+			resolveOnce({
+				exitCode: normalizeChildExitCode(code, signal),
+				error: getSshStreamExitError(code, signal),
+			});
 		});
 
-		proc.on("error", () => {
-			resolveOnce(1);
+		proc.on("error", (error) => {
+			resolveOnce({
+				exitCode: 1,
+				error: `Failed to start SSH process: ${error.message}`,
+			});
 		});
 	});
+};
+
+export const sshExecStream = async (
+	sshCmd: string,
+	command: string,
+	options?: { silent?: boolean; forceTTY?: boolean; keepAlive?: boolean },
+): Promise<number> => {
+	const result = await sshExecStreamDetailed(sshCmd, command, options);
+	return result.exitCode;
 };
 
 /**

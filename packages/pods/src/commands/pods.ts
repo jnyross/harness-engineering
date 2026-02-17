@@ -6,7 +6,7 @@ import { addPod, loadConfig, removePod, setActivePod } from "../config.js";
 import { extractModelsPathFromMountCommand } from "../mount-command.js";
 import { assertValidPodName } from "../pod-name.js";
 import { shellQuote } from "../shell-quote.js";
-import { scpFile, sshExec, sshExecStream } from "../ssh.js";
+import { scpFile, sshExec, sshExecStreamDetailed } from "../ssh.js";
 import type { GPU, Pod } from "../types.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -135,8 +135,11 @@ export const setupPod = async (
 	console.log("");
 
 	// Use forceTTY to preserve colors from apt, pip, etc.
-	const exitCode = await sshExecStream(sshCmd, setupCmd, { forceTTY: true });
-	if (exitCode !== 0) {
+	const setupResult = await sshExecStreamDetailed(sshCmd, setupCmd, { forceTTY: true });
+	if (setupResult.exitCode !== 0) {
+		if (setupResult.error) {
+			console.error(chalk.red(setupResult.error));
+		}
 		console.error(chalk.red("\nSetup failed. Check the output above for errors."));
 		process.exit(1);
 	}

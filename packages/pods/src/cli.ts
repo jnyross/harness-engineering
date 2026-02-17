@@ -14,7 +14,7 @@ import { getActivePod, loadConfig } from "./config.js";
 import { normalizeContextOption, normalizeMemoryOption } from "./model-options.js";
 import { extractModelsPathFromMountCommand } from "./mount-command.js";
 import { assertValidPodName } from "./pod-name.js";
-import { parseSshCommand, sshExecStream } from "./ssh.js";
+import { parseSshCommand, sshExecStreamDetailed } from "./ssh.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -274,8 +274,11 @@ try {
 				console.log(chalk.gray(`Running on pod '${podInfo.name}': ${sshCommand}`));
 
 				// Execute command and stream output
-				const exitCode = await sshExecStream(podInfo.pod.ssh, sshCommand);
-				process.exit(exitCode);
+				const sshResult = await sshExecStreamDetailed(podInfo.pod.ssh, sshCommand);
+				if (sshResult.error) {
+					console.error(chalk.red(sshResult.error));
+				}
+				process.exit(sshResult.exitCode);
 				break;
 			}
 			case "start": {
