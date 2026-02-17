@@ -58,6 +58,7 @@ export class ArtifactsPanel extends LitElement {
 	// Programmatically managed artifact elements
 	private artifactElements = new Map<string, ArtifactElement>();
 	private contentRef: Ref<HTMLDivElement> = createRef();
+	private pendingAnimationFrames = new Set<number>();
 
 	// Agent reference (needed to get attachments for HTML artifacts)
 	@property({ attribute: false }) agent?: Agent;
@@ -104,12 +105,24 @@ export class ArtifactsPanel extends LitElement {
 		return this; // light DOM for shared styles
 	}
 
+	private scheduleAnimationFrame(callback: () => void) {
+		const frameId = requestAnimationFrame(() => {
+			this.pendingAnimationFrames.delete(frameId);
+			if (!this.isConnected) {
+				return;
+			}
+			callback();
+		});
+		this.pendingAnimationFrames.add(frameId);
+		return frameId;
+	}
+
 	override connectedCallback(): void {
 		super.connectedCallback();
 		this.style.display = "block";
 		this.style.height = "100%";
 		// Reattach existing artifact elements when panel is re-inserted into the DOM
-		requestAnimationFrame(() => {
+		this.scheduleAnimationFrame(() => {
 			const container = this.contentRef.value;
 			if (!container) return;
 			// Ensure we have an active filename
@@ -125,6 +138,10 @@ export class ArtifactsPanel extends LitElement {
 
 	override disconnectedCallback() {
 		super.disconnectedCallback();
+		for (const frameId of this.pendingAnimationFrames) {
+			cancelAnimationFrame(frameId);
+		}
+		this.pendingAnimationFrames.clear();
 		// Do not tear down artifact elements; keep them to restore on next mount
 	}
 
@@ -219,7 +236,7 @@ export class ArtifactsPanel extends LitElement {
 			if (this.contentRef.value) {
 				this.contentRef.value.appendChild(newElement);
 			} else {
-				requestAnimationFrame(() => {
+				this.scheduleAnimationFrame(() => {
 					if (this.contentRef.value && !newElement.parentElement) {
 						this.contentRef.value.appendChild(newElement);
 					}
@@ -239,7 +256,7 @@ export class ArtifactsPanel extends LitElement {
 	// Show/hide artifact elements
 	private showArtifact(filename: string) {
 		// Ensure the active element is in the DOM
-		requestAnimationFrame(() => {
+		this.scheduleAnimationFrame(() => {
 			this.artifactElements.forEach((element, name) => {
 				if (this.contentRef.value && !element.parentElement) {
 					this.contentRef.value.appendChild(element);
@@ -251,7 +268,7 @@ export class ArtifactsPanel extends LitElement {
 		this.requestUpdate(); // Only for tab bar update
 
 		// Scroll the active tab into view after render
-		requestAnimationFrame(() => {
+		this.scheduleAnimationFrame(() => {
 			const activeButton = this.querySelector(`button[data-filename="${filename}"]`);
 			if (activeButton) {
 				activeButton.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });

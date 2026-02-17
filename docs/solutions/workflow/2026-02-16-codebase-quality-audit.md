@@ -3454,6 +3454,25 @@ to:
 
 **Result:** CLI piped-stdin handling now avoids unnecessary listener wiring and resolves immediately on pre-closed stream handles.
 
+---
+
+### 194) artifacts panel deferred animation-frame callbacks could run after detach
+
+**Finding:** Artifacts panel used multiple `requestAnimationFrame` callbacks for DOM reattachment/show/scroll flows without tracking/canceling them on disconnect, allowing late callbacks to mutate detached trees.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/tools/artifacts/artifacts.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- add centralized animation-frame scheduling with `isConnected` gating,
+- track/cancel pending frame IDs in `disconnectedCallback()`,
+- route panel reattach/show/scroll deferred work through the tracked scheduler.
+
+**Result:** Artifact panel now avoids stale frame-driven DOM mutations after rapid unmount/remount sequences.
+
 ## Validation Evidence
 
 - Root quality gate passes:
