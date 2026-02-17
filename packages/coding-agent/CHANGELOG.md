@@ -60,6 +60,7 @@
 - interactive and extension-editor external-editor launch flows now share normalized `spawnSync` status handling for startup failures, signal exits, unknown null-status exits, and non-zero exits, with explicit keep-current-content messaging.
 - extension-editor external-editor failures now include full invoked command context, and non-zero editor exits include stderr/stdout details when available.
 - external-editor startup diagnostics now preserve original command casing in command-context messages (instead of lowercasing paths/arguments).
+- ANSI export HTML conversion now rejects malformed SGR parameter tokens instead of partially coercing numeric prefixes (for example `1x` no longer maps to bold).
 - session delete fallback diagnostics now normalize `trash` spawn outcomes (startup failures, timeouts, signal exits, and non-zero statuses) into explicit error hints when unlink fallback also fails.
 - session delete fallback diagnostics now also classify rare `spawnSync` null/null trash exits as explicit `unknown status` hints instead of dropping that failure context.
 - Extension loader shortcut registration now uses a top-level `ExtensionContext` type import (instead of inline `import("./types").ExtensionContext`), aligning with static type-import conventions.
