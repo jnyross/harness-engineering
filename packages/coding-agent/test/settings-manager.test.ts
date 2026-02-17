@@ -427,4 +427,40 @@ describe("SettingsManager", () => {
 			expect(manager.getShowHardwareCursor()).toBe(true);
 		});
 	});
+
+	describe("enum settings normalization", () => {
+		it("falls back to defaults for malformed enum settings values", () => {
+			const malformed = JSON.parse(`{
+				"defaultThinkingLevel": "ultra",
+				"steeringMode": "parallel",
+				"followUpMode": "batch",
+				"transport": "ws",
+				"doubleEscapeAction": "quit"
+			}`) as Partial<Settings>;
+
+			const manager = SettingsManager.inMemory(malformed);
+
+			expect(manager.getDefaultThinkingLevel()).toBeUndefined();
+			expect(manager.getSteeringMode()).toBe("one-at-a-time");
+			expect(manager.getFollowUpMode()).toBe("one-at-a-time");
+			expect(manager.getTransport()).toBe("sse");
+			expect(manager.getDoubleEscapeAction()).toBe("tree");
+		});
+
+		it("preserves valid enum settings values", () => {
+			const manager = SettingsManager.inMemory({
+				defaultThinkingLevel: "high",
+				steeringMode: "all",
+				followUpMode: "all",
+				transport: "websocket",
+				doubleEscapeAction: "none",
+			});
+
+			expect(manager.getDefaultThinkingLevel()).toBe("high");
+			expect(manager.getSteeringMode()).toBe("all");
+			expect(manager.getFollowUpMode()).toBe("all");
+			expect(manager.getTransport()).toBe("websocket");
+			expect(manager.getDoubleEscapeAction()).toBe("none");
+		});
+	});
 });

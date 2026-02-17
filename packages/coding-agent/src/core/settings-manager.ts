@@ -153,6 +153,41 @@ function normalizeBoolean(value: boolean | undefined, fallback: boolean): boolea
 	return typeof value === "boolean" ? value : fallback;
 }
 
+function normalizeDefaultThinkingLevel(
+	value: Settings["defaultThinkingLevel"] | undefined,
+): Settings["defaultThinkingLevel"] | undefined {
+	if (value === undefined) {
+		return undefined;
+	}
+	switch (value) {
+		case "off":
+		case "minimal":
+		case "low":
+		case "medium":
+		case "high":
+		case "xhigh":
+			return value;
+		default:
+			return undefined;
+	}
+}
+
+function normalizeSteeringMode(value: Settings["steeringMode"] | undefined): "all" | "one-at-a-time" {
+	return value === "all" || value === "one-at-a-time" ? value : "one-at-a-time";
+}
+
+function normalizeFollowUpMode(value: Settings["followUpMode"] | undefined): "all" | "one-at-a-time" {
+	return value === "all" || value === "one-at-a-time" ? value : "one-at-a-time";
+}
+
+function normalizeTransport(value: Settings["transport"] | undefined): TransportSetting {
+	return value === "sse" || value === "websocket" || value === "auto" ? value : "sse";
+}
+
+function normalizeDoubleEscapeAction(value: Settings["doubleEscapeAction"] | undefined): "fork" | "tree" | "none" {
+	return value === "fork" || value === "tree" || value === "none" ? value : "tree";
+}
+
 function normalizeThinkingBudgetValue(value: number | undefined): number | undefined {
 	if (value === undefined || Number.isNaN(value)) {
 		return undefined;
@@ -500,7 +535,7 @@ export class SettingsManager {
 	}
 
 	getSteeringMode(): "all" | "one-at-a-time" {
-		return this.settings.steeringMode || "one-at-a-time";
+		return normalizeSteeringMode(this.settings.steeringMode);
 	}
 
 	setSteeringMode(mode: "all" | "one-at-a-time"): void {
@@ -510,7 +545,7 @@ export class SettingsManager {
 	}
 
 	getFollowUpMode(): "all" | "one-at-a-time" {
-		return this.settings.followUpMode || "one-at-a-time";
+		return normalizeFollowUpMode(this.settings.followUpMode);
 	}
 
 	setFollowUpMode(mode: "all" | "one-at-a-time"): void {
@@ -530,7 +565,7 @@ export class SettingsManager {
 	}
 
 	getDefaultThinkingLevel(): "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | undefined {
-		return this.settings.defaultThinkingLevel;
+		return normalizeDefaultThinkingLevel(this.settings.defaultThinkingLevel);
 	}
 
 	setDefaultThinkingLevel(level: "off" | "minimal" | "low" | "medium" | "high" | "xhigh"): void {
@@ -540,7 +575,7 @@ export class SettingsManager {
 	}
 
 	getTransport(): TransportSetting {
-		return this.settings.transport ?? "sse";
+		return normalizeTransport(this.settings.transport);
 	}
 
 	setTransport(transport: TransportSetting): void {
@@ -822,7 +857,7 @@ export class SettingsManager {
 	}
 
 	getDoubleEscapeAction(): "fork" | "tree" | "none" {
-		return this.settings.doubleEscapeAction ?? "tree";
+		return normalizeDoubleEscapeAction(this.settings.doubleEscapeAction);
 	}
 
 	setDoubleEscapeAction(action: "fork" | "tree" | "none"): void {
