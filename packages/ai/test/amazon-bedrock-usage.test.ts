@@ -58,6 +58,25 @@ describe("extractBedrockUsageMetadata", () => {
 		});
 	});
 
+	it("ignores malformed and negative usage values", () => {
+		expect(
+			extractBedrockUsageMetadata({
+				inputTokens: "4.8",
+				outputTokens: -3,
+				cacheReadInputTokens: "bad",
+				cacheWriteInputTokens: "-2",
+				totalTokens: "invalid",
+			}),
+		).toEqual({
+			input: 4,
+			output: 0,
+			cacheRead: 0,
+			cacheWrite: 0,
+			totalTokens: 4,
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+		});
+	});
+
 	it("returns undefined for invalid payloads", () => {
 		expect(extractBedrockUsageMetadata(null)).toBeUndefined();
 		expect(extractBedrockUsageMetadata("invalid")).toBeUndefined();

@@ -73,6 +73,24 @@ describe("extractOpenAIResponsesUsage", () => {
 		});
 	});
 
+	it("ignores malformed and negative token fields", () => {
+		expect(
+			extractOpenAIResponsesUsage({
+				prompt_tokens: "12.4",
+				completion_tokens: -2,
+				prompt_tokens_details: { cached_tokens: "3.7" },
+				total_tokens: "broken",
+			}),
+		).toEqual({
+			input: 9,
+			output: 0,
+			cacheRead: 3,
+			cacheWrite: 0,
+			totalTokens: 12,
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+		});
+	});
+
 	it("returns undefined for non-object payloads", () => {
 		expect(extractOpenAIResponsesUsage(null)).toBeUndefined();
 		expect(extractOpenAIResponsesUsage("not-usage")).toBeUndefined();

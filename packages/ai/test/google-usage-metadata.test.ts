@@ -58,6 +58,25 @@ describe("extractGoogleUsageMetadata", () => {
 		});
 	});
 
+	it("ignores malformed and negative usage values", () => {
+		expect(
+			extractGoogleUsageMetadata({
+				promptTokenCount: -4,
+				candidatesTokenCount: "2.9",
+				thoughtsTokenCount: "nope",
+				cachedContentTokenCount: "-1",
+				totalTokenCount: "bad",
+			}),
+		).toEqual({
+			input: 0,
+			output: 2,
+			cacheRead: 0,
+			cacheWrite: 0,
+			totalTokens: 2,
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+		});
+	});
+
 	it("returns undefined for non-object usage payloads", () => {
 		expect(extractGoogleUsageMetadata(null)).toBeUndefined();
 		expect(extractGoogleUsageMetadata("invalid")).toBeUndefined();

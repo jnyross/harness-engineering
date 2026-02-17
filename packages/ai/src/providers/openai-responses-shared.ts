@@ -80,11 +80,11 @@ interface OpenAIResponsesUsageShape {
 
 function asNumber(value: unknown): number | undefined {
 	if (typeof value === "number") {
-		return Number.isFinite(value) ? value : undefined;
+		return Number.isFinite(value) && value >= 0 ? Math.trunc(value) : undefined;
 	}
 	if (typeof value === "string" && value.trim().length > 0) {
 		const parsed = Number(value);
-		return Number.isFinite(parsed) ? parsed : undefined;
+		return Number.isFinite(parsed) && parsed >= 0 ? Math.trunc(parsed) : undefined;
 	}
 	return undefined;
 }
