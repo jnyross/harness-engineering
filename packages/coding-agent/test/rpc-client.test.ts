@@ -9,6 +9,8 @@ describe("RpcClient.start", () => {
 		});
 
 		await expect(client.start()).rejects.toThrow("Failed to start agent process");
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		expect((client as any).processExitListener).toBeNull();
 		await expect(client.stop()).resolves.toBeUndefined();
 	});
 
@@ -18,6 +20,8 @@ describe("RpcClient.start", () => {
 		});
 
 		await expect(client.start()).rejects.toThrow("Agent process exited before initialization");
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		expect((client as any).processExitListener).toBeNull();
 		await expect(client.stop()).resolves.toBeUndefined();
 	});
 
@@ -78,6 +82,9 @@ describe("RpcClient.start", () => {
 		expect((client as any).pendingRequests.size).toBe(0);
 		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
 		expect((client as any).process).toBeNull();
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		expect((client as any).processExitListener).toBeNull();
+		expect(fakeProcess.listenerCount("exit")).toBe(0);
 	});
 
 	it("cleans up pending request when stdin write throws", async () => {

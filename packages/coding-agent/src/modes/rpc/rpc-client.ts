@@ -89,31 +89,26 @@ export class RpcClient {
 			env: { ...process.env, ...this.options.env },
 			stdio: ["pipe", "pipe", "pipe"],
 		});
+		const startupProcess = this.process;
 
 		// Collect stderr for debugging
-		this.process.stderr?.on("data", (data) => {
+		startupProcess.stderr?.on("data", (data) => {
 			this.stderr += data.toString();
 		});
 
 		// Set up line reader for stdout
 		this.rl = readline.createInterface({
-			input: this.process.stdout!,
+			input: startupProcess.stdout!,
 			terminal: false,
 		});
 
 		this.rl.on("line", (line) => {
 			this.handleLine(line);
 		});
-		this.attachProcessExitListener(this.process);
+		this.attachProcessExitListener(startupProcess);
 
 		try {
 			await new Promise<void>((resolve, reject) => {
-				const startupProcess = this.process;
-				if (!startupProcess) {
-					reject(new Error("Agent process failed to initialize"));
-					return;
-				}
-
 				let settled = false;
 				const startupDelayMs = 100;
 				let startupTimer: ReturnType<typeof setTimeout> | undefined;
@@ -171,9 +166,7 @@ export class RpcClient {
 				}, startupDelayMs);
 			});
 		} catch (error) {
-			if (this.process) {
-				this.detachProcessExitListener(this.process);
-			}
+			this.detachProcessExitListener(startupProcess);
 			this.rl?.close();
 			this.process = null;
 			this.rl = null;
@@ -535,6 +528,7 @@ export class RpcClient {
 
 	private attachProcessExitListener(process: ChildProcess): void {
 		this.processExitListener = (code, signal) => {
+			this.processExitListener = null;
 			const exitReason = signal ? `signal ${signal}` : `code ${code ?? "unknown"}`;
 			this.rejectPendingRequests(
 				new Error(`RPC client process exited before response was received (${exitReason})`),
@@ -545,7 +539,7 @@ export class RpcClient {
 				this.process = null;
 			}
 		};
-		process.on("exit", this.processExitListener);
+		process.once("exit", this.processExitListener);
 	}
 
 	private detachProcessExitListener(process: ChildProcess): void {
