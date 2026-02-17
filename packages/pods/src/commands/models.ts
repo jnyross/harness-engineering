@@ -350,6 +350,7 @@ WRAPPER
 
 	// Build the full args array for spawn
 	const fullArgs = [...sshArgs, tailCmd];
+	const startupLogCommand = [sshCommand, ...fullArgs].join(" ");
 
 	const logProcess = spawn(sshCommand, fullArgs, {
 		stdio: ["inherit", "pipe", "pipe"], // capture stdout and stderr
@@ -414,7 +415,7 @@ WRAPPER
 	process.removeListener("SIGINT", sigintHandler);
 	if (!startupComplete && !startupFailed) {
 		const streamError = getLogStreamExitError({
-			processLabel: "startup log stream",
+			processLabel: `startup log stream (${startupLogCommand})`,
 			result: logResult,
 			interrupted,
 		});
@@ -752,6 +753,7 @@ export const viewLogs = async (name: string, options: { pod?: string }) => {
 		process.exit(1);
 	}
 	const tailCmd = `tail -f ~/.vllm_logs/${name}.log`;
+	const logStreamCommand = [sshCommand, ...sshArgs, tailCmd].join(" ");
 
 	const logProcess = spawn(sshCommand, [...sshArgs, tailCmd], {
 		stdio: "inherit",
@@ -771,7 +773,7 @@ export const viewLogs = async (name: string, options: { pod?: string }) => {
 	const logResult = await logResultPromise;
 	process.removeListener("SIGINT", sigintHandler);
 	const streamError = getLogStreamExitError({
-		processLabel: "model log stream",
+		processLabel: `model log stream (${logStreamCommand})`,
 		result: logResult,
 		interrupted,
 	});
