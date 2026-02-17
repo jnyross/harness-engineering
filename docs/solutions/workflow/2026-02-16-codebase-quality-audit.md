@@ -5964,6 +5964,27 @@ to:
 
 **Result:** channel-store last-timestamp reads now fail safely on malformed log entries instead of forwarding invalid timestamp values.
 
+---
+
+### 319) pods built-in model-config loading accepted malformed `models.json` entry shapes
+
+**Finding:** `packages/pods/src/model-configs.ts` parsed `models.json` directly and assumed schema shape at runtime; malformed model/config entry types could propagate incompatible launch-config values into model selection logic.
+
+**Action:** Updated:
+
+- `packages/pods/src/model-configs.ts`
+- `packages/pods/test/model-configs.test.ts` (new)
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- normalize parsed models data to validated model/config records,
+- drop malformed model/config entries (including malformed args/env/gpuTypes),
+- safely return an empty model map for malformed JSON/root shapes,
+- add regression coverage for malformed JSON handling and normalized-entry preservation behavior.
+
+**Result:** built-in model configuration loading now fails safely on malformed `models.json` content instead of propagating incompatible runtime launch-config values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6041,6 +6062,8 @@ to:
   - `npm --workspace "@mariozechner/pi" test -- test/pods-gpu-output.test.ts`
 - pods config normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/config.test.ts`
+- pods model-config normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi" test -- test/model-configs.test.ts test/config.test.ts`
 - pods required-option smoke checks pass:
   - `npx tsx packages/pods/src/cli.ts start demo-model --name demo --memory`
   - `npx tsx packages/pods/src/cli.ts pods setup demo "ssh host" --vllm`
