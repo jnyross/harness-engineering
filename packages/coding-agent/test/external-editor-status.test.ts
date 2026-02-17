@@ -21,6 +21,13 @@ describe("getExternalEditorError", () => {
 		expect(getExternalEditorError(result)).toBe("Failed to start external editor: spawn ENOENT");
 	});
 
+	it("includes command context for startup failures when provided", () => {
+		const result = createResult({ status: null, error: new Error("spawn ENOENT") });
+		expect(getExternalEditorError(result, { invokedCommand: "code --wait /tmp/editor.md" })).toBe(
+			"Failed to start external editor command 'code --wait /tmp/editor.md': spawn ENOENT",
+		);
+	});
+
 	it("reports signal exits", () => {
 		const result = createResult({ status: null, signal: "SIGTERM" });
 		expect(getExternalEditorError(result)).toBe("External editor terminated by signal SIGTERM");
@@ -34,6 +41,13 @@ describe("getExternalEditorError", () => {
 	it("reports non-zero exits", () => {
 		const result = createResult({ status: 2 });
 		expect(getExternalEditorError(result)).toBe("External editor exited with code 2");
+	});
+
+	it("includes stderr details for non-zero exits when available", () => {
+		const result = createResult({ status: 1, stderr: "permission denied\n" });
+		expect(getExternalEditorError(result, { invokedCommand: "vim /tmp/editor.md" })).toBe(
+			"External editor command 'vim /tmp/editor.md' exited with code 1: permission denied",
+		);
 	});
 
 	it("returns undefined for successful exits", () => {

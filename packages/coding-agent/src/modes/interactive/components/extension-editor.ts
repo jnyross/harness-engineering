@@ -143,12 +143,13 @@ export class ExtensionEditorComponent extends Container {
 		try {
 			fs.writeFileSync(tmpFile, currentText, "utf-8");
 			this.tui.stop();
+			const editorInvocation = [invocation.binary, ...invocation.args, tmpFile].join(" ");
 
 			const result = spawnSync(invocation.binary, [...invocation.args, tmpFile], {
 				stdio: "inherit",
 			});
 
-			const editorError = getExternalEditorError(result);
+			const editorError = getExternalEditorError(result, { invokedCommand: editorInvocation });
 			if (editorError) {
 				console.error(`${editorError}. Keeping current content.`);
 				return;
