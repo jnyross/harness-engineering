@@ -31,14 +31,34 @@ function sshExec(remote: string, command: string): Promise<Buffer> {
 		const child = spawn("ssh", [remote, command], { stdio: ["ignore", "pipe", "pipe"] });
 		const chunks: Buffer[] = [];
 		const errChunks: Buffer[] = [];
+		let settled = false;
+
+		const resolveOnce = (value: Buffer) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			resolve(value);
+		};
+
+		const rejectOnce = (error: Error) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			reject(error);
+		};
+
 		child.stdout.on("data", (data) => chunks.push(data));
 		child.stderr.on("data", (data) => errChunks.push(data));
-		child.on("error", reject);
-		child.on("close", (code) => {
-			if (code !== 0) {
-				reject(new Error(`SSH failed (${code}): ${Buffer.concat(errChunks).toString()}`));
+		child.on("error", (error) => rejectOnce(error));
+		child.on("close", (code, closeSignal) => {
+			const normalizedCode = code ?? (closeSignal ? 1 : 0);
+			if (normalizedCode !== 0) {
+				const reason = closeSignal ? `signal ${closeSignal}` : String(normalizedCode);
+				rejectOnce(new Error(`SSH failed (${reason}): ${Buffer.concat(errChunks).toString()}`));
 			} else {
-				resolve(Buffer.concat(chunks));
+				resolveOnce(Buffer.concat(chunks));
 			}
 		});
 	});
@@ -86,26 +106,48 @@ function createRemoteBashOps(remote: string, remoteCwd: string, localCwd: string
 				const cmd = `cd ${JSON.stringify(toRemote(cwd))} && ${command}`;
 				const child = spawn("ssh", [remote, cmd], { stdio: ["ignore", "pipe", "pipe"] });
 				let timedOut = false;
+				let settled = false;
 				const timer = timeout
 					? setTimeout(() => {
 							timedOut = true;
 							child.kill();
 						}, timeout * 1000)
 					: undefined;
+
+				const cleanup = () => {
+					if (timer) clearTimeout(timer);
+					signal?.removeEventListener("abort", onAbort);
+				};
+
+				const resolveOnce = (value: { exitCode: number | null }) => {
+					if (settled) {
+						return;
+					}
+					settled = true;
+					cleanup();
+					resolve(value);
+				};
+
+				const rejectOnce = (error: Error) => {
+					if (settled) {
+						return;
+					}
+					settled = true;
+					cleanup();
+					reject(error);
+				};
+
 				child.stdout.on("data", onData);
 				child.stderr.on("data", onData);
 				child.on("error", (e) => {
-					if (timer) clearTimeout(timer);
-					reject(e);
+					rejectOnce(e);
 				});
 				const onAbort = () => child.kill();
 				signal?.addEventListener("abort", onAbort, { once: true });
-				child.on("close", (code) => {
-					if (timer) clearTimeout(timer);
-					signal?.removeEventListener("abort", onAbort);
-					if (signal?.aborted) reject(new Error("aborted"));
-					else if (timedOut) reject(new Error(`timeout:${timeout}`));
-					else resolve({ exitCode: code });
+				child.on("close", (code, closeSignal) => {
+					if (signal?.aborted) rejectOnce(new Error("aborted"));
+					else if (timedOut) rejectOnce(new Error(`timeout:${timeout}`));
+					else resolveOnce({ exitCode: code ?? (closeSignal ? 1 : 0) });
 				});
 			}),
 	};

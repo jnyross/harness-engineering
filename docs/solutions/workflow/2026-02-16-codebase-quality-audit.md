@@ -2486,6 +2486,25 @@ to:
 
 **Result:** Sandbox example command execution now settles deterministically across subprocess edge cases and aligns with hardened process-exit semantics used elsewhere in the codebase.
 
+---
+
+### 142) SSH extension example had racey subprocess settlement and null-exit passthrough
+
+**Finding:** The SSH extension example used raw `error`/`close` promise settlement in both `sshExec()` and remote bash execution paths, with potential duplicate settlement attempts and direct passthrough of signal/null exits.
+
+**Action:** Updated:
+
+- `packages/coding-agent/examples/extensions/ssh.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- add single-settlement helpers in SSH command and remote bash execution promises,
+- normalize signal/null close exits to non-zero semantics,
+- centralize timer/signal listener cleanup on all settle paths.
+
+**Result:** SSH extension example subprocess handling is now deterministic and cleanup-safe, consistent with hardened process-lifecycle patterns applied across the codebase.
+
 ## Validation Evidence
 
 - Root quality gate passes:
