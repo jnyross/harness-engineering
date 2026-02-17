@@ -5269,6 +5269,26 @@ to:
 
 **Result:** coding-agent bash timeout parsing now rejects oversized timeout values deterministically instead of relying on implicit runtime timer clamping.
 
+---
+
+### 285) mom bash tool accepted timeout values beyond Node timer range
+
+**Finding:** `packages/mom/src/tools/bash.ts` only validated timeout values as positive finite numbers; oversized timeout seconds could exceed Node timer bounds and lead to implicit runtime clamping behavior.
+
+**Action:** Updated:
+
+- `packages/mom/src/tools/bash.ts`
+- `packages/mom/test/bash-tool.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- enforce Node timer upper-bound validation during timeout parsing,
+- reject oversized timeout seconds before command execution,
+- add regression coverage for oversized timeout rejection.
+
+**Result:** mom bash timeout parsing now rejects oversized timeout values explicitly, preventing implicit timer clamping edge cases.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5359,6 +5379,8 @@ to:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/cli-args.test.ts test/agent-model.test.ts`
 - mom CLI args parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/cli-args.test.ts`
+- mom bash oversized-timeout regression tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/bash-tool.test.ts`
 - mom read-tool line-count regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/read-tool.test.ts`
 - mom bash timeout validation regression tests pass:
