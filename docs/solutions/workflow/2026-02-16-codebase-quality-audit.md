@@ -1507,6 +1507,22 @@ to add a shared `waitForProcessExit()` helper handling both `exit` and `error`, 
 
 **Result:** Pods model log monitoring now handles spawn failures deterministically and exits with actionable errors instead of waiting indefinitely.
 
+---
+
+### 89) pods interactive `shell` command lacked spawn startup error handling
+
+**Finding:** `pi shell` launched SSH with an exit-only listener. SSH spawn startup failures were not surfaced through explicit error handling, risking unhandled child-process failures.
+
+**Action:** Updated:
+
+- `packages/pods/src/cli.ts`
+- `packages/pods/test/cli-shell.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to handle SSH process `error` events explicitly in interactive shell mode and added regression coverage validating clean error messaging on missing SSH binaries.
+
+**Result:** `pi shell` now reports SSH startup failures deterministically with user-facing diagnostics and exits cleanly.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1523,6 +1539,8 @@ to add a shared `waitForProcessExit()` helper handling both `exit` and `error`, 
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts test/interactive-mode-status.test.ts`
 - pods process-exit helper regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/process-exit.test.ts`
+- pods interactive shell spawn-error regression tests pass:
+  - `npm --workspace "@mariozechner/pi" test -- test/process-exit.test.ts test/cli-shell.test.ts`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes docker-missing spawn-error handling case)
 - Agent package tests pass:
