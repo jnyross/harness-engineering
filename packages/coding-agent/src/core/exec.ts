@@ -5,6 +5,8 @@
 import { spawn } from "node:child_process";
 import { normalizeProcessExitCode } from "./process-exit-status.js";
 
+const MAX_TIMEOUT_MS = 2_147_483_647;
+
 /**
  * Options for executing shell commands.
  */
@@ -27,6 +29,16 @@ export interface ExecResult {
 	stderr: string;
 	code: number;
 	killed: boolean;
+}
+
+function parseTimeoutMs(timeout: number | undefined): number | undefined {
+	if (timeout === undefined) {
+		return undefined;
+	}
+	if (!Number.isFinite(timeout) || timeout <= 0 || timeout > MAX_TIMEOUT_MS) {
+		return undefined;
+	}
+	return timeout;
 }
 
 export function getExecCommandCloseError(options: {
@@ -59,6 +71,7 @@ export async function execCommand(
 	cwd: string,
 	options?: ExecOptions,
 ): Promise<ExecResult> {
+	const normalizedTimeout = parseTimeoutMs(options?.timeout);
 	if (options?.signal?.aborted) {
 		return { stdout: "", stderr: "Command aborted", code: 1, killed: true };
 	}
@@ -123,10 +136,10 @@ export async function execCommand(
 		}
 
 		// Handle timeout
-		if (options?.timeout && options.timeout > 0) {
+		if (normalizedTimeout !== undefined) {
 			timeoutId = setTimeout(() => {
 				killProcess();
-			}, options.timeout);
+			}, normalizedTimeout);
 		}
 
 		proc.stdout?.on("data", (data) => {

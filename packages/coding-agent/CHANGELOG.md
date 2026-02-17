@@ -21,6 +21,7 @@
 - RPC mode now finalizes pending extension UI requests and exits when stdin closes, uses single-settlement guards for dialog/editor RPC responses (including response-parse failures), and still exits cleanly if `session_shutdown` extension handlers throw.
 - RPC mode now preserves request IDs in unknown-command error responses, improving correlation for clients sending unsupported command types.
 - Shared `execCommand()` now short-circuits pre-aborted signals, preserves non-zero exit status for canceled subprocesses, and reports spawn errors in stderr for clearer extension runtime diagnostics.
+- Shared `execCommand()` now ignores oversized timeout values above Node.js timer limits, avoiding implicit runtime timer clamping that could prematurely kill subprocesses.
 - Shared `execCommand()` now also treats signal-terminated subprocess exits as non-zero failures when not caller-cancelled, avoiding false success on externally terminated commands.
 - Shared `execCommand()` now escalates timeout/abort termination to forced `SIGKILL` after a grace period when child processes ignore `SIGTERM`, preventing lingering subprocesses.
 - Shared `execCommand()` now adds fallback stderr diagnostics for signal/unknown/non-zero close statuses when subprocesses fail silently, and startup failures now include full invoked-command context.

@@ -94,6 +94,20 @@ describe("execCommand", () => {
 		expect(result.code).toBe(1);
 	});
 
+	it("ignores oversized timeout values beyond Node timer range", async () => {
+		const result = await execCommand(
+			process.execPath,
+			["-e", "setTimeout(() => process.exit(0), 25);"],
+			process.cwd(),
+			{
+				timeout: Number.MAX_SAFE_INTEGER,
+			},
+		);
+
+		expect(result.killed).toBe(false);
+		expect(result.code).toBe(0);
+	});
+
 	it("treats signal-terminated subprocess exits as failures", async () => {
 		const result = await execCommand(
 			process.execPath,
