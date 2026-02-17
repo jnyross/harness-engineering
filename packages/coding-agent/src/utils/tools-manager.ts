@@ -63,7 +63,7 @@ const TOOLS: Record<string, ToolConfig> = {
 // Check if a command exists in PATH by trying to run it
 function commandExists(cmd: string): boolean {
 	try {
-		const result = spawnSync(cmd, ["--version"], { stdio: "pipe" });
+		const result = spawnSync(cmd, ["--version"], { stdio: "pipe", timeout: 5000 });
 		if (result.error || result.signal || result.status === null) {
 			return false;
 		}
@@ -160,9 +160,9 @@ async function downloadTool(tool: "fd" | "rg"): Promise<string> {
 		// which handles both formats, avoiding the need for `unzip` (not available
 		// on Windows by default).
 		const extractResult = assetName.endsWith(".tar.gz")
-			? spawnSync("tar", ["xzf", archivePath, "-C", extractDir], { stdio: "pipe" })
+			? spawnSync("tar", ["xzf", archivePath, "-C", extractDir], { stdio: "pipe", timeout: 120000 })
 			: assetName.endsWith(".zip")
-				? spawnSync("tar", ["xf", archivePath, "-C", extractDir], { stdio: "pipe" })
+				? spawnSync("tar", ["xf", archivePath, "-C", extractDir], { stdio: "pipe", timeout: 120000 })
 				: null;
 
 		if (!extractResult) {
