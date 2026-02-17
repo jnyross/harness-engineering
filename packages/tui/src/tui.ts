@@ -96,11 +96,23 @@ export interface OverlayMargin {
 export type SizeValue = number | `${number}%`;
 
 function parsePercentageFraction(value: string): number | undefined {
-	const match = value.match(/^(\d+(?:\.\d+)?)%$/);
+	const match = value.match(/^(\d+)(?:\.(\d+))?%$/);
 	if (!match) {
 		return undefined;
 	}
-	const parsed = Number.parseFloat(match[1]);
+	const wholePart = match[1];
+	const fractionalPart = match[2] ?? "";
+	if (!wholePart) {
+		return undefined;
+	}
+	const whole = BigInt(wholePart);
+	if (whole > 100n) {
+		return undefined;
+	}
+	if (whole === 100n && /[1-9]/.test(fractionalPart)) {
+		return undefined;
+	}
+	const parsed = Number(fractionalPart.length > 0 ? `${wholePart}.${fractionalPart}` : wholePart);
 	if (!Number.isFinite(parsed) || parsed < 0 || parsed > 100) {
 		return undefined;
 	}

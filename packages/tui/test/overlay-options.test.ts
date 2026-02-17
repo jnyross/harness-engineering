@@ -211,6 +211,20 @@ describe("TUI overlay options", () => {
 			assert.strictEqual(overlay.requestedWidth, 80);
 			tui.stop();
 		});
+
+		it("should reject precision-rounded overflow width percentages", async () => {
+			const terminal = new VirtualTerminal(100, 24);
+			const tui = new TUI(terminal);
+			const overlay = new StaticOverlay(["test"]);
+
+			tui.addChild(new EmptyContent());
+			tui.showOverlay(overlay, { width: "100.0000000000000000001%" });
+			tui.start();
+			await renderAndFlush(tui, terminal);
+
+			assert.strictEqual(overlay.requestedWidth, 80);
+			tui.stop();
+		});
 	});
 
 	describe("anchor positioning", () => {
@@ -425,6 +439,29 @@ describe("TUI overlay options", () => {
 			let foundRow = -1;
 			for (let i = 0; i < viewport.length; i++) {
 				if (viewport[i]?.includes("CENTER-FALLBACK")) {
+					foundRow = i;
+					break;
+				}
+			}
+
+			assert.ok(foundRow >= 10 && foundRow <= 13, `Expected centered row fallback, got ${foundRow}`);
+			tui.stop();
+		});
+
+		it("should reject precision-rounded overflow row percentages and fall back to center", async () => {
+			const terminal = new VirtualTerminal(80, 24);
+			const tui = new TUI(terminal);
+			const overlay = new StaticOverlay(["CENTER-PRECISION-FALLBACK"]);
+
+			tui.addChild(new EmptyContent());
+			tui.showOverlay(overlay, { width: 30, row: "100.0000000000000000001%" });
+			tui.start();
+			await renderAndFlush(tui, terminal);
+
+			const viewport = terminal.getViewport();
+			let foundRow = -1;
+			for (let i = 0; i < viewport.length; i++) {
+				if (viewport[i]?.includes("CENTER-PRECISION-FALLBACK")) {
 					foundRow = i;
 					break;
 				}

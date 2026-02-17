@@ -10,6 +10,7 @@
 - Keyboard Kitty CSI-u parsing now rejects unsafe integer modifier/codepoint fields before key-id synthesis, preventing oversized modifier payloads from being bitmasked into false modifier combinations.
 - ANSI wrap style tracking now rejects malformed/unsafe SGR color payloads before carrying style state across wrapped lines, preventing invalid oversized color codes from being re-emitted in continuation segments.
 - Overlay percentage sizing/positioning now rejects numeric-overflow percentage inputs, falling back to default/anchor layout behavior instead of coercing overflow values via `parseFloat`.
+- Overlay percentage parsing now rejects precision-rounded values slightly above 100% (for example `100.0000000000000000001%`) before float conversion, preventing accidental acceptance as exactly `100%`.
 - Terminal cell-size response parsing now rejects unsafe integer width/height payloads before applying image cell dimensions, preventing oversized response coercion from malformed terminal replies.
 
 ## [0.52.12] - 2026-02-13
