@@ -18,19 +18,39 @@ function parseGpuQueryLine(line: string): GPU | undefined {
 		return undefined;
 	}
 
-	const parts = trimmed.split(",");
-	if (parts.length < 3) {
+	const firstCommaIndex = trimmed.indexOf(",");
+	if (firstCommaIndex === -1) {
 		return undefined;
 	}
-	const idRaw = parts[0]?.trim();
-	const memoryRaw = parts[parts.length - 1]?.trim();
-	const nameRaw = parts.slice(1, -1).join(",").trim();
+
+	const idRaw = trimmed.slice(0, firstCommaIndex).trim();
 	if (!idRaw || !/^\d+$/.test(idRaw)) {
 		return undefined;
 	}
 	const parsedId = Number.parseInt(idRaw, 10);
 	if (!Number.isSafeInteger(parsedId) || parsedId < 0) {
 		return undefined;
+	}
+
+	const remainder = trimmed.slice(firstCommaIndex + 1).trim();
+	if (!remainder) {
+		return undefined;
+	}
+
+	let nameRaw: string | undefined;
+	let memoryRaw: string | undefined;
+
+	const memoryWithUnitMatch = remainder.match(/^(.*?),\s*((?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d+)?\s*[A-Za-z]+)$/);
+	if (memoryWithUnitMatch) {
+		nameRaw = memoryWithUnitMatch[1]?.trim();
+		memoryRaw = memoryWithUnitMatch[2]?.trim();
+	} else {
+		const lastCommaIndex = remainder.lastIndexOf(",");
+		if (lastCommaIndex === -1) {
+			return undefined;
+		}
+		nameRaw = remainder.slice(0, lastCommaIndex).trim();
+		memoryRaw = remainder.slice(lastCommaIndex + 1).trim();
 	}
 
 	return {

@@ -26,6 +26,12 @@ describe("parseGpuQueryOutput", () => {
 		assert.deepEqual(parsed.skippedLines, []);
 	});
 
+	it("parses memory fields that contain thousands separators", () => {
+		const parsed = parseGpuQueryOutput("0, NVIDIA H100, 80,000 MiB\n");
+		assert.deepEqual(parsed.gpus, [{ id: 0, name: "NVIDIA H100", memory: "80,000 MiB" }]);
+		assert.deepEqual(parsed.skippedLines, []);
+	});
+
 	it("rejects unsafe integer gpu ids", () => {
 		const parsed = parseGpuQueryOutput("9007199254740993, NVIDIA H100, 81559 MiB\n");
 		assert.deepEqual(parsed.gpus, []);
