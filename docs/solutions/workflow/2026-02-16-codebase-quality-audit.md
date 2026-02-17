@@ -2875,6 +2875,26 @@ to:
 
 **Result:** OAuth login browser launch now avoids shell interpolation and remains cross-platform with deterministic invocation behavior.
 
+---
+
+### 163) login dialog cancellation/prompt replacement could leave duplicate completion or dangling input waits
+
+**Finding:** Login dialog tracked prompt resolvers as single mutable handlers without rejecting superseded prompts; repeated cancel paths could also invoke completion callbacks multiple times.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/components/login-dialog.ts`
+- `packages/coding-agent/test/login-dialog.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- centralize one-time completion signaling for cancel flows,
+- reject prior pending prompt/input promises when a new manual prompt replaces them,
+- add regression coverage for repeated cancellation and prompt replacement behavior.
+
+**Result:** Login dialog now settles cancel completion exactly once and no longer leaves stale manual-input promises unresolved when prompt handlers are replaced.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2887,6 +2907,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures, pending-request rejection on stop and unexpected exit, stop timeout forced-kill cleanup, send timeout/write-error cleanup, closed-stdin send handling, and exit-listener cleanup assertions)
 - coding-agent login dialog browser-invocation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/login-dialog-url-open.test.ts` (includes macOS/Windows/Linux command invocation mapping)
+- coding-agent login dialog lifecycle regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/login-dialog.test.ts test/login-dialog-url-open.test.ts` (includes single-settlement cancel behavior and prompt-replacement rejection coverage)
 - coding-agent antigravity image SSE parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/antigravity-image-gen.test.ts` (includes terminal `data:` chunk without trailing newline and text+image ordering coverage)
 - coding-agent sleep helper regression tests pass:

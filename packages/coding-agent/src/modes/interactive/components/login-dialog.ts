@@ -27,6 +27,7 @@ export class LoginDialogComponent extends Container implements Focusable {
 	private input: Input;
 	private tui: TUI;
 	private abortController = new AbortController();
+	private completed = false;
 	private inputResolver?: (value: string) => void;
 	private inputRejecter?: (error: Error) => void;
 
@@ -82,14 +83,26 @@ export class LoginDialogComponent extends Container implements Focusable {
 		return this.abortController.signal;
 	}
 
+	private rejectPendingInput(message: string): void {
+		if (this.inputRejecter) {
+			this.inputRejecter(new Error(message));
+		}
+		this.inputResolver = undefined;
+		this.inputRejecter = undefined;
+	}
+
+	private completeOnce(success: boolean, message?: string): void {
+		if (this.completed) {
+			return;
+		}
+		this.completed = true;
+		this.onComplete(success, message);
+	}
+
 	private cancel(): void {
 		this.abortController.abort();
-		if (this.inputRejecter) {
-			this.inputRejecter(new Error("Login cancelled"));
-			this.inputResolver = undefined;
-			this.inputRejecter = undefined;
-		}
-		this.onComplete(false, "Login cancelled");
+		this.rejectPendingInput("Login cancelled");
+		this.completeOnce(false, "Login cancelled");
 	}
 
 	/**
@@ -135,6 +148,7 @@ export class LoginDialogComponent extends Container implements Focusable {
 		this.tui.requestRender();
 
 		return new Promise((resolve, reject) => {
+			this.rejectPendingInput("Login prompt replaced before input was submitted");
 			this.inputResolver = resolve;
 			this.inputRejecter = reject;
 		});
@@ -159,6 +173,7 @@ export class LoginDialogComponent extends Container implements Focusable {
 		this.tui.requestRender();
 
 		return new Promise((resolve, reject) => {
+			this.rejectPendingInput("Login prompt replaced before input was submitted");
 			this.inputResolver = resolve;
 			this.inputRejecter = reject;
 		});
