@@ -2,6 +2,7 @@
  * Anthropic OAuth flow (Claude Pro/Max)
  */
 
+import { parseFlexibleAuthorizationInput } from "./authorization-input.js";
 import { generatePKCE } from "./pkce.js";
 import type { OAuthCredentials, OAuthLoginCallbacks, OAuthProviderInterface } from "./types.js";
 
@@ -16,56 +17,6 @@ function assertNotAborted(signal?: AbortSignal): void {
 	if (signal?.aborted) {
 		throw new Error("Login cancelled");
 	}
-}
-
-function parseAuthorizationInput(input: string): { code?: string; state?: string } {
-	const value = input.trim();
-	if (!value) {
-		return {};
-	}
-
-	try {
-		const url = new URL(value);
-		const queryCode = url.searchParams.get("code") ?? undefined;
-		const queryState = url.searchParams.get("state") ?? undefined;
-		if (queryCode || queryState) {
-			return {
-				code: queryCode,
-				state: queryState,
-			};
-		}
-
-		const hash = url.hash.startsWith("#") ? url.hash.slice(1) : url.hash;
-		if (hash) {
-			const hashParams = new URLSearchParams(hash);
-			return {
-				code: hashParams.get("code") ?? undefined,
-				state: hashParams.get("state") ?? undefined,
-			};
-		}
-
-		return {};
-	} catch {
-		// Not a URL, continue with legacy code#state parsing.
-	}
-
-	if (value.includes("#")) {
-		const [code, state] = value.split("#", 2);
-		return {
-			code: code || undefined,
-			state: state || undefined,
-		};
-	}
-
-	if (value.includes("code=")) {
-		const params = new URLSearchParams(value);
-		return {
-			code: params.get("code") ?? undefined,
-			state: params.get("state") ?? undefined,
-		};
-	}
-
-	return { code: value };
 }
 
 /**
@@ -103,7 +54,7 @@ export async function loginAnthropic(
 	assertNotAborted(signal);
 	const authCode = await onPromptCode();
 	assertNotAborted(signal);
-	const { code, state } = parseAuthorizationInput(authCode);
+	const { code, state } = parseFlexibleAuthorizationInput(authCode);
 
 	if (state && state !== verifier) {
 		throw new Error("OAuth state mismatch - possible CSRF attack");

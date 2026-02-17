@@ -19,6 +19,7 @@ if (typeof process !== "undefined" && (process.versions?.node || process.version
 	});
 }
 
+import { parseFlexibleAuthorizationInput } from "./authorization-input.js";
 import { generatePKCE } from "./pkce.js";
 import type { OAuthCredentials, OAuthLoginCallbacks, OAuthPrompt, OAuthProviderInterface } from "./types.js";
 
@@ -114,54 +115,6 @@ function parseJwtPayload(token: string): JwtPayload | null {
 
 function decodeJwt(token: string): JwtPayload | null {
 	return parseJwtPayload(token);
-}
-
-function parseAuthorizationInput(input: string): { code?: string; state?: string } {
-	const value = input.trim();
-	if (!value) return {};
-
-	try {
-		const url = new URL(value);
-		const queryCode = url.searchParams.get("code") ?? undefined;
-		const queryState = url.searchParams.get("state") ?? undefined;
-		if (queryCode || queryState) {
-			return {
-				code: queryCode,
-				state: queryState,
-			};
-		}
-
-		const hash = url.hash.startsWith("#") ? url.hash.slice(1) : url.hash;
-		if (hash) {
-			const hashParams = new URLSearchParams(hash);
-			return {
-				code: hashParams.get("code") ?? undefined,
-				state: hashParams.get("state") ?? undefined,
-			};
-		}
-
-		return {};
-	} catch {
-		// not a URL
-	}
-
-	if (value.includes("#")) {
-		const [code, state] = value.split("#", 2);
-		return {
-			code,
-			state,
-		};
-	}
-
-	if (value.includes("code=")) {
-		const params = new URLSearchParams(value);
-		return {
-			code: params.get("code") ?? undefined,
-			state: params.get("state") ?? undefined,
-		};
-	}
-
-	return { code: value };
 }
 
 async function exchangeAuthorizationCode(
@@ -417,7 +370,7 @@ export async function loginOpenAICodex(options: {
 				code = result.code;
 			} else if (manualCode) {
 				// Manual input won (or callback timed out and user had entered code)
-				const parsed = parseAuthorizationInput(manualCode);
+				const parsed = parseFlexibleAuthorizationInput(manualCode);
 				if (parsed.state && parsed.state !== state) {
 					throw new Error("State mismatch");
 				}
@@ -433,7 +386,7 @@ export async function loginOpenAICodex(options: {
 					throw manualError;
 				}
 				if (manualCode) {
-					const parsed = parseAuthorizationInput(manualCode);
+					const parsed = parseFlexibleAuthorizationInput(manualCode);
 					if (parsed.state && parsed.state !== state) {
 						throw new Error("State mismatch");
 					}
@@ -456,7 +409,7 @@ export async function loginOpenAICodex(options: {
 				message: "Paste the authorization code (or full redirect URL):",
 			});
 			assertNotAborted(options.signal);
-			const parsed = parseAuthorizationInput(input);
+			const parsed = parseFlexibleAuthorizationInput(input);
 			if (parsed.state && parsed.state !== state) {
 				throw new Error("State mismatch");
 			}

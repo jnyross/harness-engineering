@@ -8,6 +8,7 @@
 
 import type { Server } from "node:http";
 import { abortableSleep } from "../abortable-sleep.js";
+import { parseManualRedirectCodeOrThrow } from "./authorization-input.js";
 import { generatePKCE } from "./pkce.js";
 import type { OAuthCredentials, OAuthLoginCallbacks, OAuthProviderInterface } from "./types.js";
 
@@ -117,51 +118,6 @@ async function startCallbackServer(): Promise<CallbackServerInfo> {
 			});
 		});
 	});
-}
-
-/**
- * Parse redirect URL to extract code and state
- */
-function parseRedirectUrl(input: string): { code?: string; state?: string } {
-	const value = input.trim();
-	if (!value) return {};
-
-	try {
-		const url = new URL(value);
-		const queryCode = url.searchParams.get("code") ?? undefined;
-		const queryState = url.searchParams.get("state") ?? undefined;
-		if (queryCode || queryState) {
-			return {
-				code: queryCode,
-				state: queryState,
-			};
-		}
-
-		const hash = url.hash.startsWith("#") ? url.hash.slice(1) : url.hash;
-		if (hash) {
-			const hashParams = new URLSearchParams(hash);
-			return {
-				code: hashParams.get("code") ?? undefined,
-				state: hashParams.get("state") ?? undefined,
-			};
-		}
-
-		return {};
-	} catch {
-		// Not a URL; this provider expects full redirect URLs.
-		return {};
-	}
-}
-
-function parseManualRedirectUrlOrThrow(input: string, expectedState: string): string {
-	const parsed = parseRedirectUrl(input);
-	if (!parsed.code || !parsed.state) {
-		throw new Error("Manual input must be a full redirect URL containing both code and state parameters.");
-	}
-	if (parsed.state !== expectedState) {
-		throw new Error("OAuth state mismatch - possible CSRF attack");
-	}
-	return parsed.code;
 }
 
 interface LoadCodeAssistPayload {
@@ -529,7 +485,7 @@ export async function loginGeminiCli(
 				code = result.code;
 			} else if (manualInput) {
 				// Manual input won
-				code = parseManualRedirectUrlOrThrow(manualInput, verifier);
+				code = parseManualRedirectCodeOrThrow(manualInput, verifier);
 			}
 
 			// If still no code, wait for manual promise and try that
@@ -541,7 +497,7 @@ export async function loginGeminiCli(
 					throw manualError;
 				}
 				if (manualInput) {
-					code = parseManualRedirectUrlOrThrow(manualInput, verifier);
+					code = parseManualRedirectCodeOrThrow(manualInput, verifier);
 				}
 			}
 		} else {
