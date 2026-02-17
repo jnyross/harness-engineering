@@ -25,6 +25,7 @@
 - Built-in bash tool now short-circuits pre-aborted signals before shell spawn, preventing canceled calls from starting subprocesses.
 - Built-in bash tool execution now uses single-settlement cleanup and reports signal-terminated subprocesses as non-zero exits instead of false success.
 - Grep tool now registers abort handling before asynchronous tool resolution so cancellations during startup reliably stop execution instead of racing into ripgrep spawn.
+- Grep tool now also short-circuits during post-ripgrep async match formatting when cancellation arrives late, avoiding stale success results after abort.
 - Find/ls tools now use single-settlement abort cleanup and early cancellation checks during async startup/listing paths, reducing abort-related race/leak behavior.
 - RPC client `stop()` now rejects pending in-flight requests immediately, preventing callers from hanging on responses that will never arrive after shutdown.
 - RPC client request sending now uses single-settlement handling for timeout/write-error paths, cleaning pending request state deterministically on startup/write failures.

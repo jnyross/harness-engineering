@@ -192,7 +192,6 @@ export function createGrepTool(cwd: string, options?: GrepToolOptions): AgentToo
 
 						const cleanup = () => {
 							rl.close();
-							signal?.removeEventListener("abort", onAbort);
 						};
 
 						const stopChild = (dueToLimit: boolean = false) => {
@@ -299,7 +298,15 @@ export function createGrepTool(cwd: string, options?: GrepToolOptions): AgentToo
 
 							// Format matches (async to support remote file reading)
 							for (const match of matches) {
+								if (aborted) {
+									settle(() => reject(new Error("Operation aborted")));
+									return;
+								}
 								const block = await formatBlock(match.filePath, match.lineNumber);
+								if (aborted) {
+									settle(() => reject(new Error("Operation aborted")));
+									return;
+								}
 								outputLines.push(...block);
 							}
 

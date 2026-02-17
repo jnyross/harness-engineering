@@ -453,6 +453,34 @@ describe("Coding Agent Tools", () => {
 			await expect(run).rejects.toThrow(/Operation aborted/);
 			delayedEnsureTool.mockRestore();
 		});
+
+		it("should abort while formatting matches after ripgrep closes", async () => {
+			const testFile = join(testDir, "grep-abort-after-close.txt");
+			const content = "line one\nline match\nline three\n";
+			writeFileSync(testFile, content);
+
+			const controller = new AbortController();
+			const grepWithSlowRead = createGrepTool(testDir, {
+				operations: {
+					isDirectory: () => false,
+					readFile: async () => {
+						controller.abort();
+						return content;
+					},
+				},
+			});
+
+			await expect(
+				grepWithSlowRead.execute(
+					"test-call-grep-abort-after-close",
+					{
+						pattern: "match",
+						path: testFile,
+					},
+					controller.signal,
+				),
+			).rejects.toThrow(/Operation aborted/);
+		});
 	});
 
 	describe("find tool", () => {

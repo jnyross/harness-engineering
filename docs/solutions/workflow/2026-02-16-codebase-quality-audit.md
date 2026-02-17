@@ -2352,6 +2352,26 @@ to:
 
 **Result:** Subagent example process lifecycle is now deterministic and cleanup-safe, matching the hardened cancellation/error semantics used elsewhere in the codebase.
 
+---
+
+### 135) grep tool could report success when cancellation arrived during post-process formatting
+
+**Finding:** `grep` could receive cancellation after ripgrep exited but before async context-line formatting completed. Because the abort listener was removed at process-close time, late cancellation could be ignored and the tool could still resolve success.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/grep.ts`
+- `packages/coding-agent/test/tools.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- keep abort listener active through the full async formatting phase,
+- add explicit abort checks before/after each awaited formatting block,
+- add a regression test that aborts during formatting and verifies deterministic rejection.
+
+**Result:** `grep` now respects cancellation consistently even in late post-ripgrep formatting windows, avoiding stale successful results after abort.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2427,7 +2447,7 @@ to:
 - mom sandbox signal-exit regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes signal-terminated host command case)
 - coding-agent tools regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes bash/grep/find/ls cancellation coverage)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes bash/grep/find/ls cancellation coverage, including grep late-abort during post-process formatting)
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes docker-missing spawn-error handling case)
 - Agent package tests pass:
