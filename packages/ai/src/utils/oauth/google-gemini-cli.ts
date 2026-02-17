@@ -153,6 +153,17 @@ function parseRedirectUrl(input: string): { code?: string; state?: string } {
 	}
 }
 
+function parseManualRedirectUrlOrThrow(input: string, expectedState: string): string {
+	const parsed = parseRedirectUrl(input);
+	if (!parsed.code || !parsed.state) {
+		throw new Error("Manual input must be a full redirect URL containing both code and state parameters.");
+	}
+	if (parsed.state !== expectedState) {
+		throw new Error("OAuth state mismatch - possible CSRF attack");
+	}
+	return parsed.code;
+}
+
 interface LoadCodeAssistPayload {
 	cloudaicompanionProject?: string;
 	currentTier?: { id?: string };
@@ -518,11 +529,7 @@ export async function loginGeminiCli(
 				code = result.code;
 			} else if (manualInput) {
 				// Manual input won
-				const parsed = parseRedirectUrl(manualInput);
-				if (parsed.state && parsed.state !== verifier) {
-					throw new Error("OAuth state mismatch - possible CSRF attack");
-				}
-				code = parsed.code;
+				code = parseManualRedirectUrlOrThrow(manualInput, verifier);
 			}
 
 			// If still no code, wait for manual promise and try that
@@ -534,11 +541,7 @@ export async function loginGeminiCli(
 					throw manualError;
 				}
 				if (manualInput) {
-					const parsed = parseRedirectUrl(manualInput);
-					if (parsed.state && parsed.state !== verifier) {
-						throw new Error("OAuth state mismatch - possible CSRF attack");
-					}
-					code = parsed.code;
+					code = parseManualRedirectUrlOrThrow(manualInput, verifier);
 				}
 			}
 		} else {

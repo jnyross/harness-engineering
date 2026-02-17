@@ -57,7 +57,7 @@ describe("google-antigravity oauth login", () => {
 				undefined,
 				async () => "manual-code#state",
 			),
-		).rejects.toThrow("No authorization code received");
+		).rejects.toThrow("Manual input must be a full redirect URL");
 		expect(fetchMock).not.toHaveBeenCalled();
 	});
 });
