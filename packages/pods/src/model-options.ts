@@ -26,7 +26,7 @@ export function normalizeMemoryOption(memory: string): string {
 		throw new Error('Invalid --memory value. Use a percentage between 0 and 100 (for example: "50%" or "75").');
 	}
 
-	const normalized = Number.isInteger(value) ? String(value) : String(value);
+	const normalized = String(value);
 	return `${normalized}%`;
 }
 

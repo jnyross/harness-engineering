@@ -6,6 +6,7 @@ describe("normalizeMemoryOption", () => {
 	it("normalizes valid percent values", () => {
 		assert.equal(normalizeMemoryOption("50"), "50%");
 		assert.equal(normalizeMemoryOption("50%"), "50%");
+		assert.equal(normalizeMemoryOption("50.0%"), "50%");
 		assert.equal(normalizeMemoryOption(" 12.5% "), "12.5%");
 	});
 
