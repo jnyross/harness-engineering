@@ -5737,6 +5737,27 @@ to:
 
 **Result:** retry scheduling now uses deterministic, bounded numeric settings even when settings files contain malformed retry values.
 
+---
+
+### 308) coding-agent editor layout settings accepted malformed numeric values from settings files
+
+**Finding:** `packages/coding-agent/src/core/settings-manager.ts` returned `editorPaddingX` / `autocompleteMaxVisible` directly from settings files; malformed/non-finite or out-of-range manual edits could propagate invalid layout values into interactive rendering.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/settings-manager.ts`
+- `packages/coding-agent/test/settings-manager.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize `editorPaddingX` and `autocompleteMaxVisible` values from settings reads,
+- clamp in-range numeric values to supported bounds (`0-3` and `3-20` respectively),
+- fall back to defaults for malformed/non-finite values,
+- add regression coverage for oversized, decimal/negative, and malformed value cases.
+
+**Result:** interactive editor layout settings now remain deterministic and within supported bounds even with malformed manual settings-file edits.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5885,7 +5906,7 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/gh-auth-status.test.ts` (includes missing gh spawn failure, signal interruption, non-zero auth status, and success cases)
 - coding-agent countdown timer regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/countdown-timer.test.ts` (includes normal expiry, manual dispose stop, onTick-throw safety coverage, and timeout normalization coverage including positive-infinite clamping)
-- coding-agent settings manager retry normalization regression tests pass:
+- coding-agent settings manager numeric-normalization regression tests pass (retry + editor layout settings):
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/settings-manager.test.ts`
 - coding-agent extension dialog callback regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extension-dialog-callbacks.test.ts` (includes throwing selector/input/editor callback safety and post-dispose callback suppression across selector/input/editor dialogs)
