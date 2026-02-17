@@ -5923,6 +5923,27 @@ to:
 
 **Result:** markdown code-block indentation settings now remain deterministic for malformed settings-file edits instead of forwarding incompatible runtime values.
 
+---
+
+### 317) pods config loading accepted malformed persisted JSON shapes
+
+**Finding:** `packages/pods/src/config.ts` returned parsed `pods.json` data directly; malformed root/object shapes and invalid pod/model/GPU entries could propagate incompatible runtime values into active-pod selection and downstream command flows.
+
+**Action:** Updated:
+
+- `packages/pods/src/config.ts`
+- `packages/pods/test/config.test.ts` (new)
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- normalize parsed config root/pods/active fields before runtime use,
+- normalize pod/model/GPU entries to validated shapes (dropping malformed entries),
+- only preserve `active` when it points to a normalized existing pod,
+- add regression coverage for invalid root handling, entry normalization, and invalid-active fallback behavior.
+
+**Result:** malformed persisted pods configuration now fails safely with normalized subsets/defaults instead of forwarding incompatible runtime config values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5996,6 +6017,8 @@ to:
   - `npm --workspace "@mariozechner/pi" test -- test/process-identifiers.test.ts`
 - pods GPU CSV parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/pods-gpu-output.test.ts`
+- pods config normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi" test -- test/config.test.ts`
 - pods required-option smoke checks pass:
   - `npx tsx packages/pods/src/cli.ts start demo-model --name demo --memory`
   - `npx tsx packages/pods/src/cli.ts pods setup demo "ssh host" --vllm`
