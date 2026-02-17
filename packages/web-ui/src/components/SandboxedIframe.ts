@@ -45,6 +45,15 @@ function escapeScriptContent(code: string): string {
 	return code.replace(/<\/script/gi, "<\\/script");
 }
 
+// Chrome extension contexts can inject default body styles into iframe documents
+// (e.g. body { font-size: 75% }). We always reset root/body font-size so sandbox
+// rendering matches authored content instead of host-extension CSS defaults.
+const SANDBOX_IFRAME_BASE_STYLE = `
+html, body {
+	font-size: initial;
+}
+`;
+
 @customElement("sandbox-iframe")
 export class SandboxIframe extends LitElement {
 	private iframe?: HTMLIFrameElement;
@@ -618,11 +627,6 @@ export class SandboxIframe extends LitElement {
 			})
 			.join("\n");
 
-		// TODO the font-size is needed, as chrome seems to inject a stylesheet into iframes
-		// found in an extension context like sidepanel, setting body { font-size: 75% }. It's
-		// definitely not our code doing that.
-		// See  https://stackoverflow.com/questions/71480433/chrome-is-injecting-some-stylesheet-in-popup-ui-which-reduces-the-font-size-to-7
-
 		// Navigation interceptor (only if NOT standalone)
 		const navigationInterceptor = isStandalone
 			? ""
@@ -667,11 +671,7 @@ export class SandboxIframe extends LitElement {
 })();
 `;
 
-		return `<style>
-html, body {
-	font-size: initial;
-}
-</style>
+		return `<style>${SANDBOX_IFRAME_BASE_STYLE}</style>
 <script>
 window.sandboxId = ${JSON.stringify(sandboxId)};
 ${dataInjection}
