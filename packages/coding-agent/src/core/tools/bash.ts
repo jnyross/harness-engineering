@@ -78,9 +78,43 @@ const defaultBashOperations: BashOperations = {
 			});
 
 			let timedOut = false;
+			let settled = false;
+			let timeoutHandle: NodeJS.Timeout | undefined;
+
+			const cleanup = () => {
+				if (timeoutHandle) {
+					clearTimeout(timeoutHandle);
+				}
+				if (signal) {
+					signal.removeEventListener("abort", onAbort);
+				}
+			};
+
+			const resolveOnce = (result: { exitCode: number | null }) => {
+				if (settled) {
+					return;
+				}
+				settled = true;
+				cleanup();
+				resolve(result);
+			};
+
+			const rejectOnce = (error: Error) => {
+				if (settled) {
+					return;
+				}
+				settled = true;
+				cleanup();
+				reject(error);
+			};
+
+			function onAbort() {
+				if (child.pid) {
+					killProcessTree(child.pid);
+				}
+			}
 
 			// Set timeout if provided
-			let timeoutHandle: NodeJS.Timeout | undefined;
 			if (timeout !== undefined && timeout > 0) {
 				timeoutHandle = setTimeout(() => {
 					timedOut = true;
@@ -100,17 +134,8 @@ const defaultBashOperations: BashOperations = {
 
 			// Handle shell spawn errors
 			child.on("error", (err) => {
-				if (timeoutHandle) clearTimeout(timeoutHandle);
-				if (signal) signal.removeEventListener("abort", onAbort);
-				reject(err);
+				rejectOnce(err);
 			});
-
-			// Handle abort signal - kill entire process tree
-			const onAbort = () => {
-				if (child.pid) {
-					killProcessTree(child.pid);
-				}
-			};
 
 			if (signal) {
 				if (signal.aborted) {
@@ -121,21 +146,18 @@ const defaultBashOperations: BashOperations = {
 			}
 
 			// Handle process exit
-			child.on("close", (code) => {
-				if (timeoutHandle) clearTimeout(timeoutHandle);
-				if (signal) signal.removeEventListener("abort", onAbort);
-
+			child.on("close", (code, closeSignal) => {
 				if (signal?.aborted) {
-					reject(new Error("aborted"));
+					rejectOnce(new Error("aborted"));
 					return;
 				}
 
 				if (timedOut) {
-					reject(new Error(`timeout:${timeout}`));
+					rejectOnce(new Error(`timeout:${timeout}`));
 					return;
 				}
 
-				resolve({ exitCode: code });
+				resolveOnce({ exitCode: code ?? (closeSignal ? 1 : 0) });
 			});
 		});
 	},

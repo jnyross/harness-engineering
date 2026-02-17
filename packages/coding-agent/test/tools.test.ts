@@ -320,6 +320,12 @@ describe("Coding Agent Tools", () => {
 			);
 		});
 
+		it("should report signal-terminated commands as failures", async () => {
+			await expect(bashTool.execute("test-call-9b", { command: "kill -TERM $$" })).rejects.toThrow(
+				/Command exited with code 1/,
+			);
+		});
+
 		it("should respect timeout", async () => {
 			await expect(bashTool.execute("test-call-10", { command: "sleep 5", timeout: 1 })).rejects.toThrow(
 				/timed out/i,
