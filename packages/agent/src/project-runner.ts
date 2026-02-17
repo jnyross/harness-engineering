@@ -7,6 +7,7 @@
 
 import type { Message } from "@mariozechner/pi-ai";
 import { getModel } from "@mariozechner/pi-ai";
+import { parsePositiveIntegerOption } from "./cli-number.js";
 import { projectLoop } from "./project-loop.js";
 import type { AgentLoopConfig, AgentMessage } from "./types.js";
 
@@ -24,12 +25,35 @@ function parseArgs(): { goal: string; iterations: number; maxTasks: number; prov
 	let providerOverride: string | undefined;
 	const rest: string[] = [];
 	for (let i = 0; i < args.length; i++) {
-		if (args[i] === "--iterations" && args[i + 1]) {
-			iterations = parseInt(args[++i], 10) || 1;
-		} else if (args[i] === "--max-tasks" && args[i + 1]) {
-			maxTasks = parseInt(args[++i], 10) || 20;
-		} else if (args[i] === "--provider" && args[i + 1]) {
-			providerOverride = args[++i];
+		if (args[i] === "--iterations") {
+			const optionValue = args[i + 1];
+			if (optionValue === undefined) {
+				throw new Error("--iterations requires a value");
+			}
+			iterations = parsePositiveIntegerOption({
+				value: optionValue,
+				fallback: 1,
+				optionName: "--iterations",
+			});
+			i++;
+		} else if (args[i] === "--max-tasks") {
+			const optionValue = args[i + 1];
+			if (optionValue === undefined) {
+				throw new Error("--max-tasks requires a value");
+			}
+			maxTasks = parsePositiveIntegerOption({
+				value: optionValue,
+				fallback: 20,
+				optionName: "--max-tasks",
+			});
+			i++;
+		} else if (args[i] === "--provider") {
+			const optionValue = args[i + 1];
+			if (optionValue === undefined) {
+				throw new Error("--provider requires a value");
+			}
+			providerOverride = optionValue;
+			i++;
 		} else {
 			rest.push(args[i]);
 		}
@@ -39,7 +63,20 @@ function parseArgs(): { goal: string; iterations: number; maxTasks: number; prov
 }
 
 function main(): void {
-	const { goal, iterations, maxTasks, providerOverride } = parseArgs();
+	let goal = "";
+	let iterations = 1;
+	let maxTasks = 20;
+	let providerOverride: string | undefined;
+	try {
+		const parsed = parseArgs();
+		goal = parsed.goal;
+		iterations = parsed.iterations;
+		maxTasks = parsed.maxTasks;
+		providerOverride = parsed.providerOverride;
+	} catch (error) {
+		console.error(error instanceof Error ? error.message : String(error));
+		process.exit(1);
+	}
 	if (!goal) {
 		console.error('Usage: project-runner.ts [--iterations N] [--max-tasks N] [--provider <name>] "<goal>"');
 		process.exit(1);

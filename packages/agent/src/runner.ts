@@ -7,12 +7,12 @@
 
 import type { Message } from "@mariozechner/pi-ai";
 import { getModel } from "@mariozechner/pi-ai";
+import { parsePositiveIntegerOption } from "./cli-number.js";
 import { tddLoop } from "./tdd-loop.js";
 import type { AgentLoopConfig, AgentMessage } from "./types.js";
 
 const provider = process.env.PI_PROVIDER ?? "minimax";
 const modelId = process.env.PI_MODEL ?? "MiniMax-M2.5";
-const maxRedoRounds = parseInt(process.env.PI_MAX_REDO_ROUNDS ?? "1", 10);
 
 function identityConvert(messages: AgentMessage[]): Message[] {
 	return messages.filter((m): m is Message => m.role === "user" || m.role === "assistant" || m.role === "toolResult");
@@ -23,6 +23,17 @@ function main(): void {
 	const taskDescription = args.join(" ").trim();
 	if (!taskDescription) {
 		console.error('Usage: runner.ts "<task description>"');
+		process.exit(1);
+	}
+	let maxRedoRounds = 1;
+	try {
+		maxRedoRounds = parsePositiveIntegerOption({
+			value: process.env.PI_MAX_REDO_ROUNDS,
+			fallback: 1,
+			optionName: "PI_MAX_REDO_ROUNDS",
+		});
+	} catch (error) {
+		console.error(error instanceof Error ? error.message : String(error));
 		process.exit(1);
 	}
 
