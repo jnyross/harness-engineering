@@ -9,6 +9,9 @@ export function getTrashCommandErrorHint(result: SpawnSyncReturns<string>): stri
 	if (result.signal) {
 		parts.push(`terminated by signal ${result.signal}`);
 	}
+	if (result.status === null && !result.signal && !result.error) {
+		parts.push("exited with unknown status");
+	}
 	if (result.status !== null && result.status !== 0) {
 		parts.push(`exited with code ${result.status}`);
 	}

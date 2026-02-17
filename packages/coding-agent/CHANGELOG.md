@@ -56,6 +56,7 @@
 - managed-tool command detection and archive extraction now use bounded spawn timeouts, preventing indefinite hangs when `--version`/`tar` subprocesses stall.
 - interactive and extension-editor external-editor launch flows now share normalized `spawnSync` status handling for startup failures, signal exits, unknown null-status exits, and non-zero exits, with explicit keep-current-content messaging.
 - session delete fallback diagnostics now normalize `trash` spawn outcomes (startup failures, timeouts, signal exits, and non-zero statuses) into explicit error hints when unlink fallback also fails.
+- session delete fallback diagnostics now also classify rare `spawnSync` null/null trash exits as explicit `unknown status` hints instead of dropping that failure context.
 - shell bash-path lookup now centralizes `spawnSync` result parsing (including signal/error/null-status handling) and validates multi-path lookup output deterministically.
 - grep tool ripgrep-close handling now normalizes signal/null-status exits with explicit diagnostics (while preserving intentional match-limit termination as success).
 - find tool fd-close handling now centralizes spawn/signal/null-status diagnostics and preserves non-zero exits with partial stdout while surfacing hard failures.

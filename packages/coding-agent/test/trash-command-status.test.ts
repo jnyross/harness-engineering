@@ -47,4 +47,9 @@ describe("getTrashCommandErrorHint", () => {
 		const hint = getTrashCommandErrorHint(createResult({ status: 2 }));
 		expect(hint).toBe("trash: exited with code 2");
 	});
+
+	it("includes unknown-status hint for null/null exits", () => {
+		const hint = getTrashCommandErrorHint(createResult({ status: null, signal: null, error: undefined }));
+		expect(hint).toBe("trash: exited with unknown status");
+	});
 });
