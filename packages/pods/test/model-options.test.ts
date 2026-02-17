@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { normalizeContextOption, normalizeMemoryOption } from "../src/model-options.js";
+import { normalizeContextOption, normalizeGpuCountOption, normalizeMemoryOption } from "../src/model-options.js";
 
 describe("normalizeMemoryOption", () => {
 	it("normalizes valid percent values", () => {
@@ -33,5 +33,19 @@ describe("normalizeContextOption", () => {
 		assert.throws(() => normalizeContextOption("none"), /Invalid --context value/);
 		assert.throws(() => normalizeContextOption("4096tokens"), /Invalid --context value/);
 		assert.throws(() => normalizeContextOption("16k-extra"), /Invalid --context value/);
+	});
+});
+
+describe("normalizeGpuCountOption", () => {
+	it("accepts positive integer GPU counts", () => {
+		assert.equal(normalizeGpuCountOption("1"), 1);
+		assert.equal(normalizeGpuCountOption(" 4 "), 4);
+	});
+
+	it("rejects invalid GPU count values", () => {
+		assert.throws(() => normalizeGpuCountOption("0"), /Invalid --gpus value/);
+		assert.throws(() => normalizeGpuCountOption("-1"), /Invalid --gpus value/);
+		assert.throws(() => normalizeGpuCountOption("2gpu"), /Invalid --gpus value/);
+		assert.throws(() => normalizeGpuCountOption("abc"), /Invalid --gpus value/);
 	});
 });

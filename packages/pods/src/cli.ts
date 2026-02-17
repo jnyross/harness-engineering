@@ -11,7 +11,7 @@ import { listModels, showKnownModels, startModel, stopAllModels, stopModel, view
 import { listPods, removePodCommand, setupPod, switchActivePod } from "./commands/pods.js";
 import { promptModel } from "./commands/prompt.js";
 import { getActivePod, loadConfig } from "./config.js";
-import { normalizeContextOption, normalizeMemoryOption } from "./model-options.js";
+import { normalizeContextOption, normalizeGpuCountOption, normalizeMemoryOption } from "./model-options.js";
 import { extractModelsPathFromMountCommand } from "./mount-command.js";
 import { assertValidPodName } from "./pod-name.js";
 import { getSshStreamExitError, parseSshCommand, sshExecStreamDetailed } from "./ssh.js";
@@ -326,9 +326,10 @@ try {
 						}
 						i++;
 					} else if (commandArgs[i] === "--gpus" && i + 1 < commandArgs.length) {
-						gpus = parseInt(commandArgs[i + 1], 10);
-						if (Number.isNaN(gpus) || gpus < 1) {
-							console.error(chalk.red("--gpus must be a positive number"));
+						try {
+							gpus = normalizeGpuCountOption(commandArgs[i + 1]);
+						} catch (error) {
+							console.error(chalk.red(error instanceof Error ? error.message : String(error)));
 							process.exit(1);
 						}
 						i++;

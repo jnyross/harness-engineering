@@ -32,3 +32,17 @@ export function normalizeContextOption(context: string): string {
 
 	return String(numeric);
 }
+
+export function normalizeGpuCountOption(gpuCount: string): number {
+	const trimmed = gpuCount.trim();
+	if (!/^\d+$/.test(trimmed)) {
+		throw new Error("Invalid --gpus value. Use a positive integer.");
+	}
+
+	const numeric = Number.parseInt(trimmed, 10);
+	if (!Number.isFinite(numeric) || numeric < 1) {
+		throw new Error("Invalid --gpus value. Use a positive integer.");
+	}
+
+	return numeric;
+}
