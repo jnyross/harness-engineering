@@ -5617,6 +5617,26 @@ to:
 
 **Result:** malformed blank-only `--tools` inputs now produce explicit warnings and no longer silently alter tool activation behavior.
 
+---
+
+### 302) coding-agent RPC dialog timeout normalization treated `Infinity` as disabled timeout
+
+**Finding:** `packages/coding-agent/src/modes/rpc/rpc-mode.ts` normalized dialog timeout values by rejecting all non-finite numbers; a positive-infinite timeout would be treated as `undefined` (disabled timeout) instead of being bounded like other oversized timeout inputs.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/rpc/rpc-mode.ts`
+- `packages/coding-agent/test/rpc-mode-timeout.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- treat `NaN` and non-positive values as invalid,
+- clamp positive-infinite and other oversized values to Node timer bounds,
+- add explicit regression coverage for `Infinity` timeout normalization behavior.
+
+**Result:** RPC dialog timeout normalization now consistently bounds oversized values (including `Infinity`) instead of accidentally disabling timeout enforcement.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5711,7 +5731,7 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - coding-agent shared sleep oversized-timeout regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/sleep.test.ts`
-- coding-agent RPC dialog timeout normalization tests pass:
+- coding-agent RPC dialog timeout normalization tests pass (including positive-infinite timeout clamping):
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-mode-timeout.test.ts`
 - coding-agent RPC client timeout normalization tests pass (including invalid non-positive fallback behavior):
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client-timeout.test.ts`
