@@ -5349,6 +5349,46 @@ to:
 
 **Result:** mom sandbox command execution now handles oversized timeout inputs safely and avoids runtime timer clamp side effects.
 
+---
+
+### 289) coding-agent shared sleep helper accepted oversized timer values
+
+**Finding:** `packages/coding-agent/src/utils/sleep.ts` forwarded sleep durations directly to `setTimeout(...)`; oversized values beyond Node timer limits could be runtime-clamped and resolve far earlier than intended.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/utils/sleep.ts`
+- `packages/coding-agent/test/sleep.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- clamp oversized sleep durations to Node timer bounds before scheduling timers,
+- preserve abort semantics for oversized durations,
+- add regression coverage proving oversized sleeps no longer resolve before abort.
+
+**Result:** coding-agent shared sleep now handles oversized durations deterministically and avoids early-resolution timer clamp behavior.
+
+---
+
+### 290) ai shared abortable sleep helper accepted oversized timer values
+
+**Finding:** `packages/ai/src/utils/abortable-sleep.ts` passed raw delay values to `setTimeout(...)`; oversized values beyond Node timer limits could be runtime-clamped and resolve much earlier than intended retry/polling delays.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/abortable-sleep.ts`
+- `packages/ai/test/abortable-sleep.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- clamp oversized abortable sleep durations to Node timer bounds,
+- preserve cancellation behavior for oversized delays,
+- add regression coverage proving oversized delays remain pending until aborted.
+
+**Result:** shared AI abortable sleep now avoids implicit timer-clamp early completion for oversized durations.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5431,8 +5471,12 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
 - coding-agent shared exec oversized-timeout regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
+- coding-agent shared sleep oversized-timeout regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/sleep.test.ts`
 - agent spawnScript oversized-timeout regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts`
+- ai abortable sleep oversized-timeout regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/abortable-sleep.test.ts`
 - coding-agent find limit validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
 - coding-agent ls limit validation regression tests pass:
