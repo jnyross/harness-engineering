@@ -2091,6 +2091,26 @@ across manual-input validation branches.
 
 **Result:** OAuth state mismatch diagnostics are now consistent and explicit across providers, improving security-context clarity for manual login failures.
 
+---
+
+### 122) pods SSH wrappers could race-settle on spawn/close event overlap
+
+**Finding:** `sshExec`, `sshExecStream`, and `scpFile` in `packages/pods/src/ssh.ts` resolved promises from both `error` and `close` paths without explicit single-settlement guards. Under spawn/exit edge cases this can create duplicate settle attempts and nondeterministic outcomes.
+
+**Action:** Updated:
+
+- `packages/pods/src/ssh.ts`
+- `packages/pods/test/ssh-parse.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- add `resolveOnce(...)` single-settlement guards for SSH/SCP promise wrappers,
+- keep existing exit-code semantics intact,
+- add regression tests for missing-ssh-binary spawn-error paths in both `sshExec` and `sshExecStream`.
+
+**Result:** Pods SSH execution wrappers now settle deterministically across spawn/close races and report missing-binary failures reliably.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2159,6 +2179,8 @@ across manual-input validation branches.
   - `npm --workspace "@mariozechner/pi" test -- test/ssh-parse.test.ts test/process-exit.test.ts test/cli-shell.test.ts`
 - pods SSH signal-exit semantics regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/ssh-parse.test.ts test/cli-shell.test.ts test/process-exit.test.ts`
+- pods SSH single-settlement spawn-error regression tests pass:
+  - `npm --workspace "@mariozechner/pi" test -- test/ssh-parse.test.ts`
 - coding-agent tools regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted bash + grep startup-abort race coverage)
 - mom sandbox signal-exit regression tests pass:
