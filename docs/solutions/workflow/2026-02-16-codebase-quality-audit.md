@@ -5064,6 +5064,26 @@ to:
 
 **Result:** AI usage accounting now rejects unsafe oversized token counters instead of accepting rounded coercions.
 
+---
+
+### 275) coding-agent export theme overrides did not resolve variable references consistently
+
+**Finding:** `getThemeExportColors(...)` resolved `export.pageBg/cardBg/infoBg` variables only when prefixed with `$`, while theme schema/docs allow plain variable references; unresolved var names could leak directly into HTML export CSS color values.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/theme/theme.ts`
+- `packages/coding-agent/test/theme-export-colors.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- resolve export colors from plain variable names and legacy `$var` notation,
+- support nested variable references and numeric palette variable conversion,
+- add regression coverage for export variable resolution semantics.
+
+**Result:** HTML export theme override colors now resolve variable references deterministically instead of emitting unresolved variable tokens.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5093,6 +5113,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-hex-validation.test.ts test/theme-colorfgbg.test.ts`
 - coding-agent COLORFGBG range regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-colorfgbg.test.ts`
+- coding-agent export theme color resolution regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-export-colors.test.ts test/theme-hex-validation.test.ts test/theme-colorfgbg.test.ts`
 - ai usage metadata regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts`
 - ai Gemini retry-delay (including safe-millisecond bounds) regression tests pass:
