@@ -1523,6 +1523,22 @@ to handle SSH process `error` events explicitly in interactive shell mode and ad
 
 **Result:** `pi shell` now reports SSH startup failures deterministically with user-facing diagnostics and exits cleanly.
 
+---
+
+### 90) coding-agent bash executor did unnecessary work for pre-aborted signals
+
+**Finding:** `executeBash()` and `executeBashWithOperations()` still initialized subprocess/operation execution paths even when provided `AbortSignal` was already aborted.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/bash-executor.ts`
+- `packages/coding-agent/test/bash-executor.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to short-circuit pre-aborted signals before spawning subprocesses or invoking delegated operations, and added regression tests for both local and delegated execution paths.
+
+**Result:** Bash execution helpers now honor cancellation preconditions immediately, avoiding unnecessary process startup and remote operation calls.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1541,6 +1557,8 @@ to handle SSH process `error` events explicitly in interactive shell mode and ad
   - `npm --workspace "@mariozechner/pi" test -- test/process-exit.test.ts`
 - pods interactive shell spawn-error regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/process-exit.test.ts test/cli-shell.test.ts`
+- coding-agent bash executor pre-abort regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/bash-executor.test.ts`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes docker-missing spawn-error handling case)
 - Agent package tests pass:
