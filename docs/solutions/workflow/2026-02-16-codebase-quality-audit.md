@@ -5944,6 +5944,26 @@ to:
 
 **Result:** malformed persisted pods configuration now fails safely with normalized subsets/defaults instead of forwarding incompatible runtime config values.
 
+---
+
+### 318) mom channel-store last-timestamp lookup accepted malformed timestamp payloads
+
+**Finding:** `packages/mom/src/store.ts` parsed the last `log.jsonl` entry and returned `message.ts` via a broad cast; malformed last-line payloads (missing/non-string/blank `ts`) could leak invalid timestamp values instead of safely returning no timestamp.
+
+**Action:** Updated:
+
+- `packages/mom/src/store.ts`
+- `packages/mom/test/store.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- parse/validate last-line timestamp payloads as non-empty strings,
+- return `null` for malformed last-line timestamp shapes,
+- add regression coverage for non-string/blank timestamp payload behavior.
+
+**Result:** channel-store last-timestamp reads now fail safely on malformed log entries instead of forwarding invalid timestamp values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5956,6 +5976,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/azure-openai-responses-deployment-map.test.ts`
 - mom slack timestamp normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts`
+- mom channel-store timestamp parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/store.test.ts`
 - web-ui model discovery + archive-index numeric parsing regression tests pass:
   - `cd packages/web-ui && npx tsx --test test/model-discovery.test.ts test/archive-index.test.ts`
 - tui kitty CSI-u + overlay percentage parsing regression tests pass:
