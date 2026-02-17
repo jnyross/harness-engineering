@@ -1961,6 +1961,27 @@ to:
 
 **Result:** OAuth login cancellation semantics are now consistent across providers and fail fast on user-cancelled flows, with targeted regression coverage for pre-aborted signal handling.
 
+---
+
+### 116) anthropic OAuth login trusted unvalidated pasted state/code input
+
+**Finding:** `loginAnthropic(...)` accepted raw pasted input with simple `code#state` splitting and no local state verification against the generated verifier. It also did not parse full redirect URLs, making manual login input more error-prone.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/anthropic.ts`
+- `packages/ai/test/anthropic-oauth-abort.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- parse manual input as either full redirect URL (`?code=...&state=...`), legacy `code#state`, or bare code,
+- reject state mismatches before token exchange (`OAuth state mismatch - possible CSRF attack`),
+- keep token exchange state tied to the generated verifier,
+- add regression tests for state-mismatch rejection and full redirect URL parsing.
+
+**Result:** Anthropic manual OAuth input handling is now safer and more robust for headless/manual flows, with explicit CSRF-state validation and URL parsing support.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1979,6 +2000,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/abortable-sleep.test.ts test/github-copilot-anthropic.test.ts`
 - ai oauth cancellation regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts test/openai-codex-oauth-abort.test.ts test/google-antigravity-oauth-abort.test.ts test/google-gemini-cli-oauth-abort.test.ts`
+- ai anthropic oauth parsing/state-validation regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts`
 - coding-agent tools regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted write coverage)
 - coding-agent tools regression tests pass:
