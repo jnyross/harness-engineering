@@ -1364,6 +1364,22 @@ to use first-whitespace detection for extension command names and added regressi
 
 **Result:** Interactive extension-command detection now handles tab-separated and space-separated forms consistently.
 
+---
+
+### 80) mom docker sandbox selector accepted unsafe container-name characters
+
+**Finding:** Mom docker sandbox selection accepted arbitrary container-name text, which later flowed into shell-composed `docker exec` command invocation and allowed unsafe characters in container identifiers.
+
+**Action:** Updated:
+
+- `packages/mom/src/sandbox.ts`
+- `packages/mom/test/sandbox.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to validate docker container names against a safe pattern (`[A-Za-z0-9][A-Za-z0-9_.-]*`) and reject invalid names before command execution.
+
+**Result:** Docker sandbox mode now rejects invalid/unsafe container names early, preventing unsafe shell interpolation in sandbox command execution.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1506,6 +1522,8 @@ to use first-whitespace detection for extension command names and added regressi
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-templates.test.ts` (includes `/tmpl\t...` invocation case)
 - coding-agent tab-separated extension-command detection coverage:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/interactive-mode-status.test.ts` (includes `/demo\targ` extension-command detection case)
+- mom sandbox container-name validation coverage:
+  - `cd packages/mom && npx tsx --test test/sandbox.test.ts`
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
