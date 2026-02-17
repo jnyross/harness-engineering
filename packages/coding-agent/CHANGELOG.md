@@ -53,6 +53,7 @@
 - tools bootstrap checks now treat `spawnSync` signal/null-status exits as missing commands and tar extraction failures now report signal/code diagnostics instead of ambiguous unknown-error messages.
 - interactive and extension-editor external-editor launch flows now share normalized `spawnSync` status handling for startup failures, signal exits, unknown null-status exits, and non-zero exits, with explicit keep-current-content messaging.
 - session delete fallback diagnostics now normalize `trash` spawn outcomes (startup failures, signal exits, and non-zero statuses) into explicit error hints when unlink fallback also fails.
+- shell bash-path lookup now centralizes `spawnSync` result parsing (including signal/error/null-status handling) and validates multi-path lookup output deterministically.
 - Bash executor helpers (`executeBash`, `executeBashWithOperations`) now short-circuit pre-aborted signals, avoiding unnecessary subprocess/remote execution when cancellation is already requested.
 - Bash executor helpers now preserve non-zero semantics for signal/null exits when execution was not canceled by caller signals, avoiding false cancelled/success outcomes.
 - Bash executor local process handling now uses single-settlement guards across child `error`/`close` events, preventing duplicate resolve/reject races during spawn failures.

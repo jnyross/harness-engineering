@@ -3,6 +3,7 @@ import { delimiter } from "node:path";
 import { spawn, spawnSync } from "child_process";
 import { getBinDir, getSettingsPath } from "../config.js";
 import { SettingsManager } from "../core/settings-manager.js";
+import { getCommandPathFromLookup } from "./shell-command-path.js";
 
 let cachedShellConfig: { shell: string; args: string[] } | null = null;
 
@@ -14,12 +15,8 @@ function findBashOnPath(): string | null {
 		// Windows: Use 'where' and verify file exists (where can return non-existent paths)
 		try {
 			const result = spawnSync("where", ["bash.exe"], { encoding: "utf-8", timeout: 5000 });
-			if (result.status === 0 && result.stdout) {
-				const firstMatch = result.stdout.trim().split(/\r?\n/)[0];
-				if (firstMatch && existsSync(firstMatch)) {
-					return firstMatch;
-				}
-			}
+			const firstMatch = getCommandPathFromLookup(result, { validatePath: existsSync });
+			if (firstMatch) return firstMatch;
 		} catch {
 			// Ignore errors
 		}
@@ -29,12 +26,8 @@ function findBashOnPath(): string | null {
 	// Unix: Use 'which' and trust its output (handles Termux and special filesystems)
 	try {
 		const result = spawnSync("which", ["bash"], { encoding: "utf-8", timeout: 5000 });
-		if (result.status === 0 && result.stdout) {
-			const firstMatch = result.stdout.trim().split(/\r?\n/)[0];
-			if (firstMatch) {
-				return firstMatch;
-			}
-		}
+		const firstMatch = getCommandPathFromLookup(result);
+		if (firstMatch) return firstMatch;
 	} catch {
 		// Ignore errors
 	}
