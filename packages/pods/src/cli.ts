@@ -211,8 +211,8 @@ try {
 						process.exit(1);
 					});
 
-					sshProcess.on("exit", (code) => {
-						process.exit(code || 0);
+					sshProcess.on("exit", (code, signal) => {
+						process.exit(code ?? (signal ? 1 : 0));
 					});
 				} catch (error) {
 					const message = error instanceof Error ? error.message : String(error);

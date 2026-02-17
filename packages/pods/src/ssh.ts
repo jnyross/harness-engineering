@@ -213,11 +213,11 @@ export const sshExec = async (
 			stderr += data.toString();
 		});
 
-		proc.on("close", (code) => {
+		proc.on("close", (code, signal) => {
 			resolve({
 				stdout,
 				stderr,
-				exitCode: code || 0,
+				exitCode: code ?? (signal ? 1 : 0),
 			});
 		});
 
@@ -271,8 +271,8 @@ export const sshExecStream = async (
 
 		const proc = spawn(sshBinary, sshArgs, spawnOptions);
 
-		proc.on("close", (code) => {
-			resolve(code || 0);
+		proc.on("close", (code, signal) => {
+			resolve(code ?? (signal ? 1 : 0));
 		});
 
 		proc.on("error", () => {

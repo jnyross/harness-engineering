@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
+import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, it } from "node:test";
-import { extractHostFromSshCommand, parseShellCommand, parseSshCommand, sshExec } from "../src/ssh.js";
+import { extractHostFromSshCommand, parseShellCommand, parseSshCommand, sshExec, sshExecStream } from "../src/ssh.js";
 
 describe("parseShellCommand", () => {
 	it("parses simple ssh commands", () => {
@@ -76,5 +79,35 @@ describe("sshExec", () => {
 		const result = await sshExec("bash -lc 'echo hi'", "echo test");
 		assert.equal(result.exitCode, 1);
 		assert.match(result.stderr, /expected ssh binary/);
+	});
+
+	it("reports non-zero exit code when ssh process exits via signal", async () => {
+		const dir = mkdtempSync(join(tmpdir(), "pi-pods-ssh-signal-"));
+		const sshPath = join(dir, "ssh");
+		try {
+			writeFileSync(sshPath, "#!/bin/sh\nkill -TERM $$\n", { mode: 0o755 });
+			chmodSync(sshPath, 0o755);
+
+			const result = await sshExec(`${sshPath} user@host`, "echo test");
+			assert.equal(result.exitCode, 1);
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
+	});
+});
+
+describe("sshExecStream", () => {
+	it("reports non-zero exit code when ssh process exits via signal", async () => {
+		const dir = mkdtempSync(join(tmpdir(), "pi-pods-ssh-stream-signal-"));
+		const sshPath = join(dir, "ssh");
+		try {
+			writeFileSync(sshPath, "#!/bin/sh\nkill -TERM $$\n", { mode: 0o755 });
+			chmodSync(sshPath, 0o755);
+
+			const exitCode = await sshExecStream(`${sshPath} user@host`, "echo test", { silent: true });
+			assert.equal(exitCode, 1);
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
 	});
 });
