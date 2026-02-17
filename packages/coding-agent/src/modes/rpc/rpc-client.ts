@@ -182,20 +182,38 @@ export class RpcClient {
 	async stop(): Promise<void> {
 		if (!this.process) return;
 
+		const runningProcess = this.process;
 		this.rl?.close();
-		this.process.kill("SIGTERM");
+		runningProcess.kill("SIGTERM");
 
 		// Wait for process to exit
 		await new Promise<void>((resolve) => {
-			const timeout = setTimeout(() => {
-				this.process?.kill("SIGKILL");
+			let settled = false;
+			let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+			const cleanup = () => {
+				if (timeoutHandle) {
+					clearTimeout(timeoutHandle);
+				}
+				runningProcess.removeListener("exit", onExit);
+			};
+			const resolveOnce = () => {
+				if (settled) {
+					return;
+				}
+				settled = true;
+				cleanup();
 				resolve();
+			};
+			const onExit = () => {
+				resolveOnce();
+			};
+
+			timeoutHandle = setTimeout(() => {
+				runningProcess.kill("SIGKILL");
+				resolveOnce();
 			}, 1000);
 
-			this.process?.on("exit", () => {
-				clearTimeout(timeout);
-				resolve();
-			});
+			runningProcess.on("exit", onExit);
 		});
 
 		this.process = null;

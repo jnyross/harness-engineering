@@ -131,4 +131,35 @@ describe("RpcClient.start", () => {
 			vi.useRealTimers();
 		}
 	});
+
+	it("forces SIGKILL when process does not exit after SIGTERM", async () => {
+		vi.useFakeTimers();
+		try {
+			const client = new RpcClient();
+			const signals: string[] = [];
+
+			const fakeProcess = new EventEmitter() as EventEmitter & {
+				kill: (signal?: string) => boolean;
+			};
+			fakeProcess.kill = (signal?: string) => {
+				signals.push(signal ?? "SIGTERM");
+				if (signal === "SIGKILL") {
+					setImmediate(() => fakeProcess.emit("exit", 0));
+				}
+				return true;
+			};
+
+			// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+			(client as any).process = fakeProcess;
+
+			const stopPromise = client.stop();
+			await vi.advanceTimersByTimeAsync(1000);
+			await stopPromise;
+
+			expect(signals).toEqual(["SIGTERM", "SIGKILL"]);
+			expect(fakeProcess.listenerCount("exit")).toBe(0);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
 });
