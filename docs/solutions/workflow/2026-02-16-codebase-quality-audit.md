@@ -2979,6 +2979,26 @@ to:
 
 **Result:** AI CLI interactive prompting now settles deterministically even when readline closes before user input arrives.
 
+---
+
+### 168) web-ui permission dialogs could run duplicate resolve paths across success/deny/close transitions
+
+**Finding:** `ApiKeyPromptDialog` and `PersistentStorageDialog` used separate success/deny/close resolution paths without centralized settlement guards, allowing duplicate completion attempts when dialogs closed after explicit outcome handling.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/dialogs/ApiKeyPromptDialog.ts`
+- `packages/web-ui/src/dialogs/PersistentStorageDialog.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- introduce one-time settlement helpers for dialog completion promises,
+- clear pending resolver references on settlement,
+- ensure close-path fallback resolution cannot override prior success/deny outcomes.
+
+**Result:** web-ui permission dialogs now resolve promise outcomes deterministically once across success, deny, and close transitions.
+
 ## Validation Evidence
 
 - Root quality gate passes:

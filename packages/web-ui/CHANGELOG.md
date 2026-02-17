@@ -10,6 +10,7 @@
 - `SandboxedIframe` now unregisters failed sandboxes and performs full cleanup on HTML validation failures in `execute()`, preventing stale router/listener state after early rejects.
 - `SandboxedIframe.execute()` now removes pending `sandbox-ready`/`sandbox-error` window listeners during cleanup, preventing listener leaks when executions abort/timeout before sandbox bootstrap completes.
 - `SandboxedIframe` now tracks and clears window-level sandbox handlers (`open-external-url` and bootstrap listeners) across reload/disconnect paths to prevent listener accumulation between loads.
+- `ApiKeyPromptDialog` and `PersistentStorageDialog` now use single-settlement close handling for promise resolution, preventing duplicate completion paths when dialogs close after success/deny flows.
 
 ## [0.52.12] - 2026-02-13
 

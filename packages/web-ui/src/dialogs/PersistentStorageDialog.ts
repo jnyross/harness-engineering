@@ -10,6 +10,7 @@ export class PersistentStorageDialog extends DialogBase {
 	@state() private requesting = false;
 
 	private resolvePromise?: (persistGranted: boolean) => void;
+	private settled = false;
 
 	protected modalWidth = "min(500px, 90vw)";
 	protected modalHeight = "auto";
@@ -52,16 +53,10 @@ export class PersistentStorageDialog extends DialogBase {
 			} else {
 				console.warn("⚠ Browser denied persistent storage - sessions may be lost under storage pressure");
 			}
-			if (this.resolvePromise) {
-				this.resolvePromise(granted);
-				this.resolvePromise = undefined;
-			}
+			this.settle(granted);
 		} catch (error) {
 			console.error("Failed to request persistent storage:", error);
-			if (this.resolvePromise) {
-				this.resolvePromise(false);
-				this.resolvePromise = undefined;
-			}
+			this.settle(false);
 		} finally {
 			this.requesting = false;
 			this.close();
@@ -69,19 +64,24 @@ export class PersistentStorageDialog extends DialogBase {
 	}
 
 	private handleDeny() {
-		if (this.resolvePromise) {
-			this.resolvePromise(false);
-			this.resolvePromise = undefined;
-		}
+		this.settle(false);
 		console.warn("⚠ User declined persistent storage - sessions may be lost");
 		this.close();
 	}
 
+	private settle(persistGranted: boolean): void {
+		if (this.settled) {
+			return;
+		}
+		this.settled = true;
+		const resolve = this.resolvePromise;
+		this.resolvePromise = undefined;
+		resolve?.(persistGranted);
+	}
+
 	override close() {
 		super.close();
-		if (this.resolvePromise) {
-			this.resolvePromise(false);
-		}
+		this.settle(false);
 	}
 
 	protected override renderContent() {

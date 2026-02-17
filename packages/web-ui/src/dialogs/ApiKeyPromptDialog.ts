@@ -12,6 +12,7 @@ export class ApiKeyPromptDialog extends DialogBase {
 
 	private resolvePromise?: (success: boolean) => void;
 	private unsubscribe?: () => void;
+	private settled = false;
 
 	protected modalWidth = "min(500px, 90vw)";
 	protected modalHeight = "auto";
@@ -34,10 +35,7 @@ export class ApiKeyPromptDialog extends DialogBase {
 			const hasKey = !!(await getAppStorage().providerKeys.get(this.provider));
 			if (hasKey) {
 				clearInterval(checkInterval);
-				if (this.resolvePromise) {
-					this.resolvePromise(true);
-					this.resolvePromise = undefined;
-				}
+				this.settle(true);
 				this.close();
 			}
 		}, 500);
@@ -53,11 +51,23 @@ export class ApiKeyPromptDialog extends DialogBase {
 		}
 	}
 
-	override close() {
-		super.close();
-		if (this.resolvePromise) {
-			this.resolvePromise(false);
+	private settle(success: boolean): void {
+		if (this.settled) {
+			return;
 		}
+		this.settled = true;
+		const resolve = this.resolvePromise;
+		this.resolvePromise = undefined;
+		resolve?.(success);
+	}
+
+	override close() {
+		if (this.unsubscribe) {
+			this.unsubscribe();
+			this.unsubscribe = undefined;
+		}
+		super.close();
+		this.settle(false);
 	}
 
 	protected override renderContent() {
