@@ -25,4 +25,10 @@ describe("parseGpuQueryOutput", () => {
 		assert.deepEqual(parsed.gpus, [{ id: 0, name: "NVIDIA RTX, 6000 Ada Generation", memory: "49140 MiB" }]);
 		assert.deepEqual(parsed.skippedLines, []);
 	});
+
+	it("rejects unsafe integer gpu ids", () => {
+		const parsed = parseGpuQueryOutput("9007199254740993, NVIDIA H100, 81559 MiB\n");
+		assert.deepEqual(parsed.gpus, []);
+		assert.deepEqual(parsed.skippedLines, ["9007199254740993, NVIDIA H100, 81559 MiB"]);
+	});
 });

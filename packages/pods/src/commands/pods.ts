@@ -28,9 +28,13 @@ function parseGpuQueryLine(line: string): GPU | undefined {
 	if (!idRaw || !/^\d+$/.test(idRaw)) {
 		return undefined;
 	}
+	const parsedId = Number.parseInt(idRaw, 10);
+	if (!Number.isSafeInteger(parsedId) || parsedId < 0) {
+		return undefined;
+	}
 
 	return {
-		id: Number.parseInt(idRaw, 10),
+		id: parsedId,
 		name: nameRaw || "Unknown",
 		memory: memoryRaw || "Unknown",
 	};
