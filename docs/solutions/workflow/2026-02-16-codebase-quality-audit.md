@@ -5329,6 +5329,26 @@ to:
 
 **Result:** `spawnScript(...)` now handles oversized timeout inputs predictably and avoids premature timer-clamped abort behavior.
 
+---
+
+### 288) mom sandbox executor timeout accepted oversized timer values
+
+**Finding:** `packages/mom/src/sandbox.ts` forwarded `ExecOptions.timeout` directly to `setTimeout(...)`; oversized timeout values beyond Node timer limits could be runtime-clamped and prematurely terminate sandboxed commands.
+
+**Action:** Updated:
+
+- `packages/mom/src/sandbox.ts`
+- `packages/mom/test/sandbox.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- normalize sandbox timeout seconds against Node timer-range bounds before scheduling timers,
+- ignore oversized/invalid timeout values instead of forwarding runtime-clamped timers,
+- add regression coverage proving oversized timeout inputs no longer force premature sandbox command termination.
+
+**Result:** mom sandbox command execution now handles oversized timeout inputs safely and avoids runtime timer clamp side effects.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5425,6 +5445,8 @@ to:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/cli-args.test.ts`
 - mom bash oversized-timeout regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/bash-tool.test.ts`
+- mom sandbox oversized-timeout regression tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
 - mom read-tool line-count regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/read-tool.test.ts`
 - mom bash timeout validation regression tests pass:
