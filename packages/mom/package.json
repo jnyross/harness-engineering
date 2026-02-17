@@ -16,6 +16,7 @@
 		"clean": "rm -rf dist",
 		"build": "tsgo -p tsconfig.build.json && chmod +x dist/main.js",
 		"dev": "tsgo -p tsconfig.build.json --watch --preserveWatchOutput",
+		"test": "tsx --test",
 		"prepublishOnly": "npm run clean && npm run build"
 	},
 	"dependencies": {

@@ -14,6 +14,10 @@
 - `--sandbox=docker:<name>` now validates docker container names before execution to reject unsafe shell-interpolated values.
 - Docker sandbox execution now invokes `docker exec` via argv (`spawn`) instead of shell-composed command strings, reducing shell interpolation risk.
 
+### Changed
+
+- Added a package-level `npm test` script (`tsx --test`) for focused regression runs in `@mariozechner/pi-mom`.
+
 ## [0.52.12] - 2026-02-13
 
 ## [0.52.11] - 2026-02-13
