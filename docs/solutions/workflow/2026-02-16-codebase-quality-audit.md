@@ -2601,6 +2601,25 @@ to:
 
 **Result:** Find tool now preserves deterministic failure semantics for interrupted `fd` executions and no longer reports stale partial results as successful output.
 
+---
+
+### 148) RPC mode could remain orphaned after stdin stream closure
+
+**Finding:** RPC mode waited indefinitely even when stdin was closed, and pending extension UI dialog promises were not finalized during shutdown paths.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/rpc/rpc-mode.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- finalize pending extension UI requests with shutdown errors before exit,
+- trigger deterministic shutdown when stdin/readline closes,
+- keep shutdown idempotent across command-driven and stream-close shutdown paths.
+
+**Result:** RPC mode now terminates cleanly when input streams end, avoiding orphaned headless processes and pending request leaks.
+
 ## Validation Evidence
 
 - Root quality gate passes:

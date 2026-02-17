@@ -71,6 +71,18 @@ export async function runRpcMode(session: AgentSession): Promise<never> {
 
 	// Shutdown request flag
 	let shutdownRequested = false;
+	let shutdownInProgress = false;
+
+	const rejectPendingExtensionRequests = (message: string) => {
+		for (const pending of pendingExtensionRequests.values()) {
+			try {
+				pending.reject(new Error(message));
+			} catch {
+				// Ignore downstream promise-consumer errors during shutdown.
+			}
+		}
+		pendingExtensionRequests.clear();
+	};
 
 	/** Helper for dialog methods with signal/timeout support */
 	function createDialogPromise<T>(
@@ -590,6 +602,15 @@ export async function runRpcMode(session: AgentSession): Promise<never> {
 	 */
 	async function checkShutdownRequested(): Promise<void> {
 		if (!shutdownRequested) return;
+		await performShutdown("extension requested shutdown");
+	}
+
+	async function performShutdown(reason: string): Promise<void> {
+		if (shutdownInProgress) {
+			return;
+		}
+		shutdownInProgress = true;
+		rejectPendingExtensionRequests(`RPC mode shutting down: ${reason}`);
 
 		const currentRunner = session.extensionRunner;
 		if (currentRunner?.hasHandlers("session_shutdown")) {
@@ -634,6 +655,11 @@ export async function runRpcMode(session: AgentSession): Promise<never> {
 		} catch (e: any) {
 			output(error(undefined, "parse", `Failed to parse command: ${e.message}`));
 		}
+	});
+
+	rl.on("close", () => {
+		shutdownRequested = true;
+		void performShutdown("stdin closed");
 	});
 
 	// Keep process alive forever
