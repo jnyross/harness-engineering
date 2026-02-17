@@ -5657,6 +5657,26 @@ to:
 
 **Result:** interactive extension countdown timers now keep timeout enforcement for `Infinity` inputs by clamping them instead of disabling the timer path.
 
+---
+
+### 304) tui stdin-buffer timeout normalization treated `Infinity` as default short timeout
+
+**Finding:** `packages/tui/src/stdin-buffer.ts` normalized buffer timeout values by rejecting all non-finite numbers; positive-infinite timeout values were treated as invalid and fell back to the default short timeout, which could prematurely flush partial escape-sequence buffers.
+
+**Action:** Updated:
+
+- `packages/tui/src/stdin-buffer.ts`
+- `packages/tui/test/stdin-buffer.test.ts`
+- `packages/tui/CHANGELOG.md`
+
+to:
+
+- reject only `NaN` and non-positive timeout inputs,
+- clamp positive-infinite and other oversized timeout values to Node timer bounds,
+- add regression coverage for positive-infinite timeout normalization behavior.
+
+**Result:** stdin buffering now keeps long-timeout semantics for oversized/`Infinity` inputs by clamping instead of silently falling back to an immediate/default flush window.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5682,7 +5702,7 @@ to:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/wrap-ansi.test.ts`
 - tui cell-size response parsing regression tests pass:
   - `cd packages/tui && node --test --import tsx test/tui-cell-size-response.test.ts`
-- tui stdin-buffer timeout normalization regression tests pass:
+- tui stdin-buffer timeout normalization regression tests pass (including positive-infinite timeout clamping):
   - `npm --workspace "@mariozechner/pi-tui" test -- test/stdin-buffer.test.ts`
 - tui terminal drain-input timeout normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/terminal-timeouts.test.ts`
