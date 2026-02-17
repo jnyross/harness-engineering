@@ -4908,6 +4908,32 @@ to:
 
 **Result:** retry-delay extraction now rejects oversized unsafe millisecond delays instead of returning rounded coercions.
 
+---
+
+### 268) coding-agent tool numeric parameters accepted unsafe integers
+
+**Finding:** execution-plan/read/ls/find/grep parameter validation accepted `Number.isInteger(...)` values, allowing unsafe integers (`> Number.MAX_SAFE_INTEGER`) to pass task-index/limit/context/offset checks via rounded coercion.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/execution-plan.ts`
+- `packages/coding-agent/src/core/tools/read.ts`
+- `packages/coding-agent/src/core/tools/ls.ts`
+- `packages/coding-agent/src/core/tools/find.ts`
+- `packages/coding-agent/src/core/tools/grep.ts`
+- `packages/coding-agent/test/execution-plan.test.ts`
+- `packages/coding-agent/test/read-tool.test.ts`
+- `packages/coding-agent/test/tool-numeric-parameter-safety.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require safe-integer validation for task-index and read/ls/find/grep numeric parameters,
+- reject oversized integer inputs with existing deterministic parameter errors,
+- add focused regression coverage for unsafe task-index/offset/limit/context inputs.
+
+**Result:** coding-agent tool parameter parsing now rejects unsafe integers instead of accepting rounded coercions.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4925,6 +4951,8 @@ to:
   - `cd packages/tui && node --test --import tsx test/tui-cell-size-response.test.ts`
 - coding-agent changelog/export-color parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/changelog-utils.test.ts test/export-html-color-parsing.test.ts`
+- coding-agent tool numeric-parameter safety regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/execution-plan.test.ts test/read-tool.test.ts test/tool-numeric-parameter-safety.test.ts`
 - ai usage metadata regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts`
 - ai Gemini retry-delay (including safe-millisecond bounds) regression tests pass:
