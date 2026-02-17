@@ -4278,6 +4278,25 @@ to:
 
 **Result:** mom CLI now rejects incomplete option invocations deterministically instead of silently ignoring missing required values.
 
+---
+
+### 237) mom required-option parsing still accepted single-dash option tokens as values
+
+**Finding:** mom required-option parsing rejected `--option`-style tokens as missing values but still accepted single-dash option-like tokens (for example `--sandbox -h`) as literal values.
+
+**Action:** Updated:
+
+- `packages/mom/src/cli-args.ts`
+- `packages/mom/test/cli-args.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- treat any leading-dash token as option-like for required option values,
+- add regression coverage for single-dash token rejection.
+
+**Result:** mom required-option parsing now rejects both single-dash and double-dash option-like tokens as missing values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4297,6 +4316,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/args.test.ts`
 - mom CLI args/model regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/cli-args.test.ts test/agent-model.test.ts`
+- mom CLI args parser regression tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/cli-args.test.ts`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
 - pods SSH/SCP parser regression tests pass:
