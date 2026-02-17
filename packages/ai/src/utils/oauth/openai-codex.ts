@@ -372,7 +372,7 @@ export async function loginOpenAICodex(options: {
 				// Manual input won (or callback timed out and user had entered code)
 				const parsed = parseFlexibleAuthorizationInput(manualCode);
 				if (parsed.state && parsed.state !== state) {
-					throw new Error("State mismatch");
+					throw new Error("OAuth state mismatch - possible CSRF attack");
 				}
 				code = parsed.code;
 			}
@@ -388,7 +388,7 @@ export async function loginOpenAICodex(options: {
 				if (manualCode) {
 					const parsed = parseFlexibleAuthorizationInput(manualCode);
 					if (parsed.state && parsed.state !== state) {
-						throw new Error("State mismatch");
+						throw new Error("OAuth state mismatch - possible CSRF attack");
 					}
 					code = parsed.code;
 				}
@@ -411,7 +411,7 @@ export async function loginOpenAICodex(options: {
 			assertNotAborted(options.signal);
 			const parsed = parseFlexibleAuthorizationInput(input);
 			if (parsed.state && parsed.state !== state) {
-				throw new Error("State mismatch");
+				throw new Error("OAuth state mismatch - possible CSRF attack");
 			}
 			code = parsed.code;
 		}

@@ -67,7 +67,7 @@ describe("openai-codex oauth login", () => {
 				onPrompt,
 				onManualCodeInput: async () => "manual-code#wrong-state",
 			}),
-		).rejects.toThrow("State mismatch");
+		).rejects.toThrow("OAuth state mismatch");
 		expect(fetchMock).not.toHaveBeenCalled();
 		expect(onPrompt).not.toHaveBeenCalled();
 	});
