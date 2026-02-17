@@ -1571,6 +1571,25 @@ to short-circuit pre-aborted signals before shell spawn and added regression cov
 
 **Result:** Built-in bash tool now honors cancellation preconditions before command startup, reducing unnecessary subprocess execution under cancelled runs.
 
+---
+
+### 93) pods shell/log flows bypassed centralized SSH-binary validation
+
+**Finding:** `pi shell` and model log streaming paths (`start` startup tail + `logs`) manually tokenized SSH commands and did not reuse the SSH-binary validation gate used in SSH helpers.
+
+**Action:** Updated:
+
+- `packages/pods/src/ssh.ts`
+- `packages/pods/src/cli.ts`
+- `packages/pods/src/commands/models.ts`
+- `packages/pods/test/ssh-parse.test.ts`
+- `packages/pods/test/cli-shell.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to export/reuse validated SSH command parsing (`parseSshCommand`) across interactive shell and model-log command paths, with regression tests covering validation behavior.
+
+**Result:** Pods shell and model log execution now consistently enforce SSH-binary validation before process launch, aligning command safety behavior across all SSH entry points.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1595,6 +1614,8 @@ to short-circuit pre-aborted signals before shell spawn and added regression cov
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes pre-aborted host executor case)
 - coding-agent tools regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted bash tool signal case)
+- pods SSH validation + spawn handling regression tests pass:
+  - `npm --workspace "@mariozechner/pi" test -- test/ssh-parse.test.ts test/process-exit.test.ts test/cli-shell.test.ts`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes docker-missing spawn-error handling case)
 - Agent package tests pass:
