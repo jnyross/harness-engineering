@@ -1033,8 +1033,8 @@ export class InteractiveMode {
 					}
 
 					// Clear UI state
-					this.chatContainer.clear();
-					this.pendingMessagesContainer.clear();
+					this.clearContainerWithDispose(this.chatContainer);
+					this.clearContainerWithDispose(this.pendingMessagesContainer);
 					this.compactionQueuedMessages = [];
 					this.streamingComponent = undefined;
 					this.streamingMessage = undefined;
@@ -1052,7 +1052,7 @@ export class InteractiveMode {
 						return { cancelled: true };
 					}
 
-					this.chatContainer.clear();
+					this.clearContainerWithDispose(this.chatContainer);
 					this.renderInitialMessages();
 					this.editor.setText(result.selectedText);
 					this.showStatus("Forked to new session");
@@ -1070,7 +1070,7 @@ export class InteractiveMode {
 						return { cancelled: true };
 					}
 
-					this.chatContainer.clear();
+					this.clearContainerWithDispose(this.chatContainer);
 					this.renderInitialMessages();
 					if (result.editorText && !this.editor.getText().trim()) {
 						this.editor.setText(result.editorText);
@@ -2300,7 +2300,7 @@ export class InteractiveMode {
 					this.showStatus("Auto-compaction cancelled");
 				} else if (event.result) {
 					// Rebuild chat to show compacted state
-					this.chatContainer.clear();
+					this.clearContainerWithDispose(this.chatContainer);
 					this.rebuildChatFromMessages();
 					// Add compaction component at bottom so user sees it without scrolling
 					this.addMessageToChat({
@@ -2582,7 +2582,7 @@ export class InteractiveMode {
 	}
 
 	private rebuildChatFromMessages(): void {
-		this.chatContainer.clear();
+		this.clearContainerWithDispose(this.chatContainer);
 		const context = this.sessionManager.buildSessionContext();
 		this.renderSessionContext(context);
 	}
@@ -2756,7 +2756,7 @@ export class InteractiveMode {
 		this.settingsManager.setHideThinkingBlock(this.hideThinkingBlock);
 
 		// Rebuild chat from session messages
-		this.chatContainer.clear();
+		this.clearContainerWithDispose(this.chatContainer);
 		this.rebuildChatFromMessages();
 
 		// If streaming, re-add the streaming component with updated visibility and re-render
@@ -2910,7 +2910,7 @@ export class InteractiveMode {
 	}
 
 	private updatePendingMessagesDisplay(): void {
-		this.pendingMessagesContainer.clear();
+		this.clearContainerWithDispose(this.pendingMessagesContainer);
 		const { steering: steeringMessages, followUp: followUpMessages } = this.getAllQueuedMessages();
 		if (steeringMessages.length > 0 || followUpMessages.length > 0) {
 			this.pendingMessagesContainer.addChild(new Spacer(1));
@@ -3054,6 +3054,15 @@ export class InteractiveMode {
 		this.pendingBashComponents = [];
 	}
 
+	private clearContainerWithDispose(container: Container): void {
+		for (const child of container.children) {
+			if (isDisposable(child)) {
+				child.dispose();
+			}
+		}
+		container.clear();
+	}
+
 	// =========================================================================
 	// Selectors
 	// =========================================================================
@@ -3170,7 +3179,7 @@ export class InteractiveMode {
 								child.setHideThinkingBlock(hidden);
 							}
 						}
-						this.chatContainer.clear();
+						this.clearContainerWithDispose(this.chatContainer);
 						this.rebuildChatFromMessages();
 					},
 					onCollapseChangelogChange: (collapsed) => {
@@ -3455,7 +3464,7 @@ export class InteractiveMode {
 						return;
 					}
 
-					this.chatContainer.clear();
+					this.clearContainerWithDispose(this.chatContainer);
 					this.renderInitialMessages();
 					this.editor.setText(result.selectedText);
 					done();
@@ -3563,7 +3572,7 @@ export class InteractiveMode {
 						}
 
 						// Update UI
-						this.chatContainer.clear();
+						this.clearContainerWithDispose(this.chatContainer);
 						this.renderInitialMessages();
 						if (result.editorText && !this.editor.getText().trim()) {
 							this.editor.setText(result.editorText);
@@ -3637,7 +3646,7 @@ export class InteractiveMode {
 		this.statusContainer.clear();
 
 		// Clear UI state
-		this.pendingMessagesContainer.clear();
+		this.clearContainerWithDispose(this.pendingMessagesContainer);
 		this.compactionQueuedMessages = [];
 		this.streamingComponent = undefined;
 		this.streamingMessage = undefined;
@@ -3647,7 +3656,7 @@ export class InteractiveMode {
 		await this.session.switchSession(sessionPath);
 
 		// Clear and re-render the chat
-		this.chatContainer.clear();
+		this.clearContainerWithDispose(this.chatContainer);
 		this.renderInitialMessages();
 		this.showStatus("Resumed session");
 	}
@@ -4207,8 +4216,8 @@ export class InteractiveMode {
 		await this.session.newSession();
 
 		// Clear UI state
-		this.chatContainer.clear();
-		this.pendingMessagesContainer.clear();
+		this.clearContainerWithDispose(this.chatContainer);
+		this.clearContainerWithDispose(this.pendingMessagesContainer);
 		this.compactionQueuedMessages = [];
 		this.streamingComponent = undefined;
 		this.streamingMessage = undefined;

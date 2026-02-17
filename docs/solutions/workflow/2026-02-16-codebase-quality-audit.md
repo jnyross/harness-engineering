@@ -4003,6 +4003,25 @@ to:
 
 **Result:** Provider key input no longer carries stale loading indicators across detach/remount cycles.
 
+---
+
+### 223) interactive chat/pending container clears could orphan disposable child components
+
+**Finding:** Interactive mode cleared chat/pending containers directly, which removed children without disposing disposable components and risked leaking timers/listeners from detached transient UI components.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/interactive-mode.ts`
+- `packages/coding-agent/test/interactive-mode-container-dispose.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- route chat/pending container clears through disposal-aware cleanup helper,
+- add regression coverage verifying disposable children are disposed before container clear.
+
+**Result:** Interactive mode now disposes disposable transient components before container clears, preventing stale background activity after UI teardown.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4035,6 +4054,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/session-selector-path-delete.test.ts test/extension-dialog-callbacks.test.ts` (includes stale-load suppression after selector dispose)
 - coding-agent selector auto-cancel disposal regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/selector-autocancel-dispose.test.ts test/tree-selector.test.ts` (includes tree/user-message empty-state auto-cancel suppression after dispose)
+- coding-agent interactive container-disposal regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/interactive-mode-container-dispose.test.ts` (verifies disposable children are disposed before container clear)
 - coding-agent antigravity image SSE parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/antigravity-image-gen.test.ts` (includes terminal `data:` chunk without trailing newline and text+image ordering coverage)
 - coding-agent sleep helper regression tests pass:
