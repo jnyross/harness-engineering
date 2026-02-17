@@ -1,7 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { anthropicOAuthProvider, loginAnthropic } from "../src/utils/oauth/anthropic.js";
 
-describe("anthropic oauth abort handling", () => {
+describe("anthropic oauth login", () => {
+	afterEach(() => {
+		vi.unstubAllGlobals();
+		vi.restoreAllMocks();
+	});
+
 	it("rejects immediately when login signal is pre-aborted", async () => {
 		const controller = new AbortController();
 		const onAuth = vi.fn();
@@ -26,5 +31,57 @@ describe("anthropic oauth abort handling", () => {
 			}),
 		).rejects.toThrow("Login cancelled");
 		expect(onAuth).not.toHaveBeenCalled();
+	});
+
+	it("rejects when pasted state does not match verifier", async () => {
+		const onAuth = vi.fn();
+		const fetchMock = vi.fn(async (_input: unknown, _init?: RequestInit) => new Response(""));
+		vi.stubGlobal("fetch", fetchMock);
+
+		await expect(loginAnthropic(onAuth, async () => "auth-code#wrong-state")).rejects.toThrow("OAuth state mismatch");
+		expect(fetchMock).not.toHaveBeenCalled();
+	});
+
+	it("parses full redirect urls and exchanges parsed code", async () => {
+		let verifierState: string | null = null;
+		const onAuth = (url: string) => {
+			verifierState = new URL(url).searchParams.get("state");
+		};
+
+		const fetchMock = vi.fn(
+			async (_input: unknown, _init?: RequestInit) =>
+				new Response(
+					JSON.stringify({
+						access_token: "access-token",
+						refresh_token: "refresh-token",
+						expires_in: 3600,
+					}),
+					{
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					},
+				),
+		);
+		vi.stubGlobal("fetch", fetchMock);
+
+		const credentials = await loginAnthropic(
+			onAuth,
+			async () => `https://console.anthropic.com/oauth/code/callback?code=parsed-code&state=${verifierState}`,
+		);
+
+		expect(credentials.access).toBe("access-token");
+		expect(credentials.refresh).toBe("refresh-token");
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		const firstCall = fetchMock.mock.calls[0];
+		expect(firstCall).toBeDefined();
+		if (!firstCall) {
+			throw new Error("Expected fetch to be called once");
+		}
+		const requestInit = firstCall[1];
+		expect(requestInit).toMatchObject({
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+		});
+		expect(String(requestInit?.body)).toContain('"code":"parsed-code"');
 	});
 });

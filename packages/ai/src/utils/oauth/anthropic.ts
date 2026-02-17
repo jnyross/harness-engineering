@@ -18,6 +18,30 @@ function assertNotAborted(signal?: AbortSignal): void {
 	}
 }
 
+function parseAuthorizationInput(input: string): { code?: string; state?: string } {
+	const value = input.trim();
+	if (!value) {
+		return {};
+	}
+
+	try {
+		const url = new URL(value);
+		return {
+			code: url.searchParams.get("code") ?? undefined,
+			state: url.searchParams.get("state") ?? undefined,
+		};
+	} catch {
+		// Not a URL, continue with legacy code#state parsing.
+	}
+
+	if (value.includes("#")) {
+		const [code, state] = value.split("#", 2);
+		return { code: code || undefined, state: state || undefined };
+	}
+
+	return { code: value };
+}
+
 /**
  * Login with Anthropic OAuth (device code flow)
  *
@@ -53,9 +77,14 @@ export async function loginAnthropic(
 	assertNotAborted(signal);
 	const authCode = await onPromptCode();
 	assertNotAborted(signal);
-	const splits = authCode.split("#");
-	const code = splits[0];
-	const state = splits[1];
+	const { code, state } = parseAuthorizationInput(authCode);
+
+	if (state && state !== verifier) {
+		throw new Error("OAuth state mismatch - possible CSRF attack");
+	}
+	if (!code) {
+		throw new Error("Missing authorization code");
+	}
 
 	// Exchange code for tokens
 	const tokenResponse = await fetch(TOKEN_URL, {
@@ -67,8 +96,8 @@ export async function loginAnthropic(
 		body: JSON.stringify({
 			grant_type: "authorization_code",
 			client_id: CLIENT_ID,
-			code: code,
-			state: state,
+			code,
+			state: verifier,
 			redirect_uri: REDIRECT_URI,
 			code_verifier: verifier,
 		}),
