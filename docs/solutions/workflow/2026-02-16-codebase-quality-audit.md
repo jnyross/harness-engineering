@@ -1539,6 +1539,22 @@ to short-circuit pre-aborted signals before spawning subprocesses or invoking de
 
 **Result:** Bash execution helpers now honor cancellation preconditions immediately, avoiding unnecessary process startup and remote operation calls.
 
+---
+
+### 91) mom sandbox executors still spawned commands for pre-aborted signals
+
+**Finding:** Mom sandbox executor path accepted pre-aborted signals but still proceeded into subprocess spawn setup before eventually surfacing abort handling.
+
+**Action:** Updated:
+
+- `packages/mom/src/sandbox.ts`
+- `packages/mom/test/sandbox.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to short-circuit pre-aborted execution signals before subprocess spawn and added regression coverage ensuring no command side effects occur when cancellation is already requested.
+
+**Result:** Mom sandbox command execution now respects cancellation preconditions immediately and avoids unnecessary subprocess startup.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1559,6 +1575,8 @@ to short-circuit pre-aborted signals before spawning subprocesses or invoking de
   - `npm --workspace "@mariozechner/pi" test -- test/process-exit.test.ts test/cli-shell.test.ts`
 - coding-agent bash executor pre-abort regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/bash-executor.test.ts`
+- mom sandbox pre-abort executor regression tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes pre-aborted host executor case)
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes docker-missing spawn-error handling case)
 - Agent package tests pass:
