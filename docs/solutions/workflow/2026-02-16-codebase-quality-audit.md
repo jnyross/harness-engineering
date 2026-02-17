@@ -2232,6 +2232,25 @@ to:
 
 **Result:** Package-manager sync command diagnostics now distinguish startup failures from command exit failures with clearer error context.
 
+---
+
+### 129) package-manager signal-exit diagnostics lacked direct regression coverage
+
+**Finding:** After adding signal-aware async/sync command diagnostics in package-manager helpers, there was no direct regression test proving signal-terminated command paths continue reporting signal context.
+
+**Action:** Updated:
+
+- `packages/coding-agent/test/package-manager.test.ts`
+
+to add targeted signal-exit coverage for both:
+
+- async `runCommand(...)` signal rejection,
+- sync `runCommandSync(...)` signal rejection,
+
+with platform-safe skipping on Windows.
+
+**Result:** Package-manager signal-exit diagnostics are now protected by explicit regression tests.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2319,7 +2338,7 @@ to:
 - coding-agent package tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test`
 - coding-agent package-manager command-settlement regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes async settlement coverage and sync spawn-start failure diagnostics)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes async settlement coverage, sync spawn-start failure diagnostics, and signal-exit rejection diagnostics)
 - TUI package tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test`
 - Targeted reviewer parser tests pass:
