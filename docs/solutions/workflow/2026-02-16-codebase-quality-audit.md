@@ -1608,6 +1608,22 @@ to treat signal-terminated SSH child processes as non-zero exits and added regre
 
 **Result:** Interrupted/terminated SSH subprocesses now propagate failure semantics correctly instead of being misreported as success.
 
+---
+
+### 95) coding-agent grep tool could miss aborts during async startup
+
+**Finding:** Grep tool abort listener was attached only after async startup work (`ensureTool`/path checks). Abort requests arriving during that window could be missed and still progress toward ripgrep spawn.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/grep.ts`
+- `packages/coding-agent/test/tools.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to register abort handling before async startup, short-circuit pre-spawn when cancellation already occurred, and add regression coverage for cancellation during delayed startup.
+
+**Result:** Grep tool now honors cancellation requests reliably across startup and execution phases, preventing startup-time abort races.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1636,6 +1652,8 @@ to treat signal-terminated SSH child processes as non-zero exits and added regre
   - `npm --workspace "@mariozechner/pi" test -- test/ssh-parse.test.ts test/process-exit.test.ts test/cli-shell.test.ts`
 - pods SSH signal-exit semantics regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/ssh-parse.test.ts test/cli-shell.test.ts test/process-exit.test.ts`
+- coding-agent tools regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted bash + grep startup-abort race coverage)
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes docker-missing spawn-error handling case)
 - Agent package tests pass:
