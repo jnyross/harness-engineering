@@ -17,6 +17,7 @@ export class SessionListDialog extends DialogBase {
 	private deletedSessions = new Set<string>();
 	private closedViaSelection = false;
 	private loadSeq = 0;
+	private deleteCallbacksNotified = false;
 
 	protected modalWidth = "min(600px, 90vw)";
 	protected modalHeight = "min(700px, 90vh)";
@@ -81,12 +82,19 @@ export class SessionListDialog extends DialogBase {
 	override close() {
 		super.close();
 
+		if (this.deleteCallbacksNotified) {
+			return;
+		}
+		this.deleteCallbacksNotified = true;
+
 		// Only notify about deleted sessions if dialog wasn't closed via selection
 		if (!this.closedViaSelection && this.onDeleteCallback && this.deletedSessions.size > 0) {
 			for (const sessionId of this.deletedSessions) {
 				this.onDeleteCallback(sessionId);
 			}
 		}
+		this.deletedSessions.clear();
+		this.onDeleteCallback = undefined;
 	}
 
 	private handleSelect(sessionId: string) {

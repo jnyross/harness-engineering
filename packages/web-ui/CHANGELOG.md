@@ -40,6 +40,7 @@
 - `ProvidersModelsTab` now sequence-guards custom-provider/status async loads across disconnects, preventing stale provider/status state writes after settings tab unmount/remount races.
 - `CustomProviderDialog` now invalidates stale async test/save completions across disconnects, preventing detached dialog state updates and stale callback/close paths after unmount races.
 - `SessionListDialog` now invalidates stale async session-list loads across disconnects, preventing detached dialog state updates from in-flight storage reads.
+- `SessionListDialog.close()` now guards one-time delete-callback notification and clears callback state after close, preventing duplicate delete notifications on repeated close paths.
 - `MessageEditor` now coalesces/cancels deferred model-selector open animation frames on disconnect, preventing stale post-detach selector opens.
 - `MessageEditor` now sequence-guards async attachment ingestion (paste/file-select/drag-drop) across disconnects, preventing stale detached state updates from in-flight file processing.
 

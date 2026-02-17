@@ -3711,6 +3711,24 @@ to:
 
 **Result:** Pods SCP helper now explicitly reports interrupted transfer processes as failures with regression coverage for signal-exit behavior.
 
+---
+
+### 208) session list dialog close path could notify deletion callbacks multiple times
+
+**Finding:** Session list dialog invoked deletion callbacks in `close()` without one-time guarding/cleanup, allowing duplicate delete notifications if close was triggered more than once.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/dialogs/SessionListDialog.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- gate delete-callback notification to a single close path,
+- clear tracked deleted-session/callback state after close notification.
+
+**Result:** Session list dialog now emits delete notifications at most once per dialog lifecycle.
+
 ## Validation Evidence
 
 - Root quality gate passes:
