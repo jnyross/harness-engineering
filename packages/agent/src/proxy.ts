@@ -149,8 +149,11 @@ export function streamProxy(model: Model<Api>, context: Context, options: ProxyS
 				}
 				throw new Error(errorMessage);
 			}
+			if (!response.body) {
+				throw new Error("Proxy error: response stream body is empty");
+			}
 
-			reader = response.body!.getReader();
+			reader = response.body.getReader();
 			const decoder = new TextDecoder();
 			let buffer = "";
 			const processDataLine = (line: string) => {
