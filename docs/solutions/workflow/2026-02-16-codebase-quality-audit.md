@@ -5428,6 +5428,26 @@ to:
 
 **Result:** RPC client wait-timeout helpers now avoid early timer-clamped timeout failures for oversized timeout inputs.
 
+---
+
+### 293) mom one-shot event scheduler accepted invalid/oversized timer inputs
+
+**Finding:** `packages/mom/src/events.ts` scheduled one-shot events with direct `setTimeout(delay)` from parsed timestamps; invalid timestamps (`NaN`) or delays above Node timer limits could be runtime-clamped and execute immediately instead of waiting/deleting safely.
+
+**Action:** Updated:
+
+- `packages/mom/src/events.ts`
+- `packages/mom/test/events-scheduling.test.ts` (new)
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- validate one-shot timestamp parsing before scheduling,
+- normalize one-shot delays and chunk scheduling when delay exceeds Node timer bounds,
+- add regression tests for timestamp parsing and delay normalization edge cases.
+
+**Result:** one-shot events now avoid immediate execution from malformed timestamps or oversized delays and schedule safely across Node timer limits.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5534,6 +5554,8 @@ to:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/bash-tool.test.ts`
 - mom sandbox oversized-timeout regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
+- mom one-shot scheduling helper tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/events-scheduling.test.ts`
 - mom read-tool line-count regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/read-tool.test.ts`
 - mom bash timeout validation regression tests pass:
