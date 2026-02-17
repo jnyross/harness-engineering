@@ -1,9 +1,23 @@
 import { getOAuthProviders } from "@mariozechner/pi-ai";
 import { Container, type Focusable, getEditorKeybindings, Input, Spacer, Text, type TUI } from "@mariozechner/pi-tui";
-import { exec } from "child_process";
+import { spawn } from "child_process";
 import { theme } from "../theme/theme.js";
 import { DynamicBorder } from "./dynamic-border.js";
 import { keyHint } from "./keybinding-hints.js";
+
+export function getOpenUrlInvocation(
+	url: string,
+	platform: NodeJS.Platform = process.platform,
+): { command: string; args: string[] } {
+	switch (platform) {
+		case "darwin":
+			return { command: "open", args: [url] };
+		case "win32":
+			return { command: "explorer", args: [url] };
+		default:
+			return { command: "xdg-open", args: [url] };
+	}
+}
 
 /**
  * Login dialog component - replaces editor during OAuth login flow
@@ -96,8 +110,16 @@ export class LoginDialogComponent extends Container implements Focusable {
 		}
 
 		// Try to open browser
-		const openCmd = process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
-		exec(`${openCmd} "${url}"`);
+		const { command, args } = getOpenUrlInvocation(url);
+		const openProcess = spawn(command, args, {
+			detached: true,
+			stdio: "ignore",
+			windowsHide: true,
+		});
+		openProcess.on("error", () => {
+			// Ignore browser-launch errors: user can still open URL manually.
+		});
+		openProcess.unref();
 
 		this.tui.requestRender();
 	}

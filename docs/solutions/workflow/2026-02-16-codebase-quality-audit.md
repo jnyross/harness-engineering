@@ -2855,6 +2855,26 @@ to:
 
 **Result:** Regression coverage now enforces full-invocation error context in package-manager async command failures.
 
+---
+
+### 162) login dialog browser launch used shell-composed command strings
+
+**Finding:** Interactive OAuth login dialog launched browser URLs via `exec("${openCmd} \"${url}\"")`, which unnecessarily routed auth URLs through shell command parsing and increased command-injection risk for malformed URL payloads.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/components/login-dialog.ts`
+- `packages/coding-agent/test/login-dialog-url-open.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- switch browser launch to argument-safe `spawn(command, args)` invocations,
+- ignore launch errors safely while preserving manual URL fallback behavior,
+- add regression tests for platform-specific open-command selection.
+
+**Result:** OAuth login browser launch now avoids shell interpolation and remains cross-platform with deterministic invocation behavior.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2865,6 +2885,8 @@ to:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts` (includes signal-exit non-zero semantics and forced-kill fallback for SIGTERM-resistant children)
 - coding-agent RPC startup/shutdown regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures, pending-request rejection on stop and unexpected exit, stop timeout forced-kill cleanup, send timeout/write-error cleanup, closed-stdin send handling, and exit-listener cleanup assertions)
+- coding-agent login dialog browser-invocation regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/login-dialog-url-open.test.ts` (includes macOS/Windows/Linux command invocation mapping)
 - coding-agent antigravity image SSE parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/antigravity-image-gen.test.ts` (includes terminal `data:` chunk without trailing newline and text+image ordering coverage)
 - coding-agent sleep helper regression tests pass:
