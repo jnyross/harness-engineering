@@ -144,6 +144,32 @@ function createSandboxedBashOps(): BashOperations {
 
 				let timedOut = false;
 				let timeoutHandle: NodeJS.Timeout | undefined;
+				let settled = false;
+
+				const cleanup = () => {
+					if (timeoutHandle) {
+						clearTimeout(timeoutHandle);
+					}
+					signal?.removeEventListener("abort", onAbort);
+				};
+
+				const resolveOnce = (value: { exitCode: number | null }) => {
+					if (settled) {
+						return;
+					}
+					settled = true;
+					cleanup();
+					resolve(value);
+				};
+
+				const rejectOnce = (error: Error) => {
+					if (settled) {
+						return;
+					}
+					settled = true;
+					cleanup();
+					reject(error);
+				};
 
 				if (timeout !== undefined && timeout > 0) {
 					timeoutHandle = setTimeout(() => {
@@ -162,8 +188,7 @@ function createSandboxedBashOps(): BashOperations {
 				child.stderr?.on("data", onData);
 
 				child.on("error", (err) => {
-					if (timeoutHandle) clearTimeout(timeoutHandle);
-					reject(err);
+					rejectOnce(err);
 				});
 
 				const onAbort = () => {
@@ -178,16 +203,13 @@ function createSandboxedBashOps(): BashOperations {
 
 				signal?.addEventListener("abort", onAbort, { once: true });
 
-				child.on("close", (code) => {
-					if (timeoutHandle) clearTimeout(timeoutHandle);
-					signal?.removeEventListener("abort", onAbort);
-
+				child.on("close", (code, closeSignal) => {
 					if (signal?.aborted) {
-						reject(new Error("aborted"));
+						rejectOnce(new Error("aborted"));
 					} else if (timedOut) {
-						reject(new Error(`timeout:${timeout}`));
+						rejectOnce(new Error(`timeout:${timeout}`));
 					} else {
-						resolve({ exitCode: code });
+						resolveOnce({ exitCode: code ?? (closeSignal ? 1 : 0) });
 					}
 				});
 			});

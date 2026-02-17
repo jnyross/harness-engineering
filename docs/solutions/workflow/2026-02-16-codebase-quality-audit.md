@@ -2467,6 +2467,25 @@ to:
 
 **Result:** Clipboard copy fallback now suppresses uncaught spawn-error bubbling in degraded environments while preserving existing best-effort behavior.
 
+---
+
+### 141) sandbox extension example bash operations could race-settle on `error`/`close`
+
+**Finding:** The sandbox extension example’s custom bash operations used separate `error`/`close` handlers without single-settlement guards, with cleanup spread across branches and raw `code` passthrough for signal exits.
+
+**Action:** Updated:
+
+- `packages/coding-agent/examples/extensions/sandbox/index.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- add single-settlement resolve/reject helpers,
+- centralize timeout/abort-listener cleanup,
+- normalize signal/null close exits to non-zero semantics.
+
+**Result:** Sandbox example command execution now settles deterministically across subprocess edge cases and aligns with hardened process-exit semantics used elsewhere in the codebase.
+
 ## Validation Evidence
 
 - Root quality gate passes:
