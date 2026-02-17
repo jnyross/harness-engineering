@@ -338,6 +338,10 @@ try {
 						inVllmArgs = true;
 					}
 				}
+				if (inVllmArgs && vllmArgs.length === 0) {
+					console.error(chalk.red("Option --vllm requires at least one argument."));
+					process.exit(1);
+				}
 
 				if (!name) {
 					console.error("--name is required");
