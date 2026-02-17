@@ -1624,6 +1624,22 @@ to register abort handling before async startup, short-circuit pre-spawn when ca
 
 **Result:** Grep tool now honors cancellation requests reliably across startup and execution phases, preventing startup-time abort races.
 
+---
+
+### 96) mom sandbox executor treated signal-terminated commands as success
+
+**Finding:** Sandbox command execution path resolved `code ?? 0`, causing signal-terminated child processes (`code === null`) to be reported as success.
+
+**Action:** Updated:
+
+- `packages/mom/src/sandbox.ts`
+- `packages/mom/test/sandbox.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to map signal-terminated child exits to non-zero command results and added regression coverage for host executor signal-exit behavior.
+
+**Result:** Signal-terminated sandbox commands now propagate failure semantics correctly instead of false success.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1654,6 +1670,8 @@ to register abort handling before async startup, short-circuit pre-spawn when ca
   - `npm --workspace "@mariozechner/pi" test -- test/ssh-parse.test.ts test/cli-shell.test.ts test/process-exit.test.ts`
 - coding-agent tools regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted bash + grep startup-abort race coverage)
+- mom sandbox signal-exit regression tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes signal-terminated host command case)
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes docker-missing spawn-error handling case)
 - Agent package tests pass:
