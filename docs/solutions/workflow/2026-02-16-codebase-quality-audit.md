@@ -2131,6 +2131,26 @@ to:
 
 **Result:** Package-manager command execution now settles deterministically and reports command startup/exit failures with clearer context.
 
+---
+
+### 124) coding-agent rpc send path could race-settle timeout/write errors
+
+**Finding:** `RpcClient.send(...)` maintained pending-request state with separate timeout/write-error branches but no explicit single-settlement guard, leaving room for duplicate reject attempts and stale pending map entries under edge-case timing.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/rpc/rpc-client.ts`
+- `packages/coding-agent/test/rpc-client.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- use single-settlement resolve/reject helpers per request,
+- clear pending-request entries deterministically on timeout and write errors,
+- add regression tests for write-throw cleanup and timeout cleanup behavior.
+
+**Result:** RPC request sending now handles timeout/write-failure races deterministically and cleans pending request state reliably.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2140,7 +2160,7 @@ to:
 - agent spawnScript regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts`
 - coding-agent RPC startup/shutdown regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures + pending-request rejection on stop)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures, pending-request rejection on stop, and send timeout/write-error cleanup)
 - coding-agent sleep helper regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/sleep.test.ts` (includes listener cleanup on resolve + abort paths)
 - ai abortable sleep + retry stream regression tests pass:
