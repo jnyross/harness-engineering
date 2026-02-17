@@ -912,18 +912,20 @@ export function getThemeExportColors(themeName?: string): {
 			const prefixedVariable = value.startsWith("$");
 			const variableName = prefixedVariable ? value.slice(1) : value;
 			if (!(variableName in vars)) {
-				if (prefixedVariable) {
-					return undefined;
-				}
-				return value;
+				return undefined;
 			}
 
-			const resolved = resolveVarRefs(vars[variableName], vars);
+			let resolved: string | number;
+			try {
+				resolved = resolveVarRefs(vars[variableName], vars);
+			} catch {
+				return undefined;
+			}
 			if (typeof resolved === "number") return ansi256ToHex(resolved);
 			if (resolved.startsWith("#")) {
 				return isHexColor(resolved) ? resolved : undefined;
 			}
-			return resolved;
+			return resolved === "" ? resolved : undefined;
 		};
 
 		return {

@@ -72,6 +72,26 @@ describe("getThemeExportColors", () => {
 		);
 	});
 
+	it("returns undefined for missing plain export variable references", () => {
+		withTempTheme(
+			(theme) => {
+				theme.name = "export-missing-plain-var-theme";
+				theme.export = {
+					pageBg: "missingPlainVar",
+					cardBg: "#112233",
+				};
+			},
+			(themePath) => {
+				setRegisteredThemes([loadThemeFromPath(themePath)]);
+				expect(getThemeExportColors("export-missing-plain-var-theme")).toEqual({
+					pageBg: undefined,
+					cardBg: "#112233",
+					infoBg: undefined,
+				});
+			},
+		);
+	});
+
 	it("returns undefined for malformed export hex values", () => {
 		withTempTheme(
 			(theme) => {
