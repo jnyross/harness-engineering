@@ -2,6 +2,7 @@
 
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { createInterface } from "readline";
+import { parseProviderSelection } from "./cli-selection.js";
 import { getOAuthProvider, getOAuthProviders } from "./utils/oauth/index.js";
 import type { OAuthCredentials, OAuthProviderId } from "./utils/oauth/types.js";
 import { promptWithCloseFallback } from "./utils/readline-prompt.js";
@@ -104,8 +105,8 @@ Examples:
 			const choice = await prompt(rl, `Enter number (1-${PROVIDERS.length}): `);
 			rl.close();
 
-			const index = parseInt(choice, 10) - 1;
-			if (index < 0 || index >= PROVIDERS.length) {
+			const index = parseProviderSelection(choice, PROVIDERS.length);
+			if (index === undefined) {
 				console.error("Invalid selection");
 				process.exit(1);
 			}
