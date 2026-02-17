@@ -4482,6 +4482,28 @@ to:
 
 **Result:** mom read-tool now rejects malformed read ranges deterministically and preserves clear caller diagnostics.
 
+---
+
+### 247) AI OpenAI Completions/Anthropic streams still accepted negative/fractional usage values
+
+**Finding:** OpenAI Completions and Anthropic stream usage normalization accepted any finite numeric value, allowing malformed provider payloads to produce negative or fractional token accounting.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/openai-completions.ts`
+- `packages/ai/src/providers/anthropic.ts`
+- `packages/ai/test/openai-completions-tool-choice.test.ts`
+- `packages/ai/test/github-copilot-anthropic.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- normalize usage counters to non-negative integers (`Math.trunc` + lower-bound guard),
+- ignore malformed/negative values by falling back to safe computed totals,
+- add regression tests for malformed/fractional/negative usage payloads in both OpenAI Completions and Anthropic stream paths.
+
+**Result:** OpenAI Completions and Anthropic usage accounting now avoids negative/fractional drift under malformed metadata and remains consistent with integer token semantics.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4490,6 +4512,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts`
 - ai shared usage parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts test/amazon-bedrock-usage.test.ts test/openai-responses-shared-usage.test.ts`
+- ai OpenAI/Anthropic usage parser regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts`
 - mom model/key resolution regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/agent-model.test.ts`
 - pods required-option parser regression tests pass:
