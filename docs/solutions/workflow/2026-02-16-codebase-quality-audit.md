@@ -3237,6 +3237,25 @@ to:
 
 **Result:** Sandbox console runtime now avoids repeated global error-listener accumulation between executions.
 
+---
+
+### 182) ModelSelector custom-provider discovery could apply stale async results after dialog teardown
+
+**Finding:** Model selector kicked off async custom-provider discovery without invalidating in-flight loads on disconnect, allowing stale load completions to mutate state after dialog close/remount races.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/dialogs/ModelSelector.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- track discovery load sequence IDs,
+- invalidate pending loads in `disconnectedCallback()`,
+- apply discovery results only when the latest load is still active and component remains connected.
+
+**Result:** Model selector custom-provider discovery now ignores stale async completions after teardown/reopen cycles.
+
 ## Validation Evidence
 
 - Root quality gate passes:

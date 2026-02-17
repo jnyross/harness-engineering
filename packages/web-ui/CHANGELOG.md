@@ -22,6 +22,7 @@
 - `StreamingMessageContainer` now tracks/cancels pending animation-frame batch updates on immediate clears and disconnects, preventing stale deferred render callbacks.
 - `AgentInterface.setInput()` now coalesces deferred editor-population frames and cancels pending callbacks on disconnect, preventing runaway frame scheduling when the editor is unavailable.
 - `ConsoleRuntimeProvider` now replaces/cleans sandbox `error` and `unhandledrejection` listeners across executions, preventing listener accumulation between repeated HTML artifact runs.
+- `ModelSelector` now invalidates in-flight custom-provider discovery when disconnected, preventing stale async completion updates after dialog close/remount races.
 
 ## [0.52.12] - 2026-02-13
 

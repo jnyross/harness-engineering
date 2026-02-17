@@ -30,6 +30,7 @@ export class ModelSelector extends DialogBase {
 	private scrollContainerRef = createRef<HTMLDivElement>();
 	private searchInputRef = createRef<HTMLInputElement>();
 	private lastMousePosition = { x: 0, y: 0 };
+	private customProviderLoadSeq = 0;
 
 	protected override modalWidth = "min(400px, 90vw)";
 
@@ -96,7 +97,13 @@ export class ModelSelector extends DialogBase {
 		});
 	}
 
+	override disconnectedCallback(): void {
+		super.disconnectedCallback();
+		this.customProviderLoadSeq++;
+	}
+
 	private async loadCustomProviders() {
+		const loadSeq = ++this.customProviderLoadSeq;
 		this.customProvidersLoading = true;
 		const allCustomModels: Model<Api>[] = [];
 
@@ -137,9 +144,11 @@ export class ModelSelector extends DialogBase {
 		} catch (error) {
 			console.error("Failed to load custom providers:", error);
 		} finally {
-			this.customProviderModels = allCustomModels;
-			this.customProvidersLoading = false;
-			this.requestUpdate();
+			if (loadSeq === this.customProviderLoadSeq && this.isConnected) {
+				this.customProviderModels = allCustomModels;
+				this.customProvidersLoading = false;
+				this.requestUpdate();
+			}
 		}
 	}
 
