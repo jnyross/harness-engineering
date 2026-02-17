@@ -3327,6 +3327,23 @@ to:
 
 **Result:** User-script runtime messaging now has explicit request correlation and deterministic `sendMessage` completion semantics.
 
+---
+
+### 187) TUI loader could start duplicate spinner intervals on repeated start calls
+
+**Finding:** `Loader.start()` created a new interval each invocation without first clearing existing timers, allowing duplicate spinner loops when start was called reentrantly.
+
+**Action:** Updated:
+
+- `packages/tui/src/components/loader.ts`
+- `packages/tui/CHANGELOG.md`
+
+to:
+
+- clear any existing interval before starting a new spinner timer.
+
+**Result:** TUI loader now maintains a single spinner interval across repeated `start()` calls.
+
 ## Validation Evidence
 
 - Root quality gate passes:

@@ -26,6 +26,7 @@ export class Loader extends Text {
 	}
 
 	start() {
+		this.stop();
 		this.updateDisplay();
 		this.intervalId = setInterval(() => {
 			this.currentFrame = (this.currentFrame + 1) % this.frames.length;

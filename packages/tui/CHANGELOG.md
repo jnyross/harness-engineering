@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `Loader.start()` now clears any existing spinner interval before starting a new one, preventing duplicate animation timers when start is called repeatedly.
+
 ## [0.52.12] - 2026-02-13
 
 ## [0.52.11] - 2026-02-13
