@@ -20,6 +20,10 @@ describe("parseSlackTimestampToMilliseconds", () => {
 		assert.equal(parseSlackTimestampToMilliseconds("1700000000"), 1700000000000);
 	});
 
+	it("treats integer timestamps with leading zeros as seconds when magnitude indicates seconds", () => {
+		assert.equal(parseSlackTimestampToMilliseconds("0001700000000"), 1700000000000);
+	});
+
 	it("rejects malformed timestamp values", () => {
 		assert.equal(parseSlackTimestampToMilliseconds("1700000000oops"), undefined);
 		assert.equal(parseSlackTimestampToMilliseconds("-1"), undefined);
