@@ -38,4 +38,10 @@ describe("readPipedStdin", () => {
 		(input as unknown as PassThrough).emit("close");
 		await expect(resultPromise).resolves.toBe("partial");
 	});
+
+	it("returns undefined when stream is already ended before reading", async () => {
+		const input = createInputStream(false);
+		(input as unknown as PassThrough).end();
+		await expect(readPipedStdin(input)).resolves.toBeUndefined();
+	});
 });

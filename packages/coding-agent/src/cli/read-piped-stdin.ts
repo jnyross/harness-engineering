@@ -6,6 +6,10 @@ export async function readPipedStdin(input: NodeJS.ReadStream = process.stdin): 
 	if (input.isTTY) {
 		return undefined;
 	}
+	const streamState = input as NodeJS.ReadStream & { destroyed?: boolean; readableEnded?: boolean };
+	if (streamState.destroyed || streamState.readableEnded) {
+		return undefined;
+	}
 
 	return new Promise((resolve, reject) => {
 		let data = "";

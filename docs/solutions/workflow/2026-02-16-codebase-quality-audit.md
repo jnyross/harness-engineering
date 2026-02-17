@@ -3435,6 +3435,25 @@ to:
 
 **Result:** Fork-confirm prompt handling now settles deterministically across active-close and already-closed readline edge cases.
 
+---
+
+### 193) piped-stdin helper did not short-circuit pre-closed streams
+
+**Finding:** `readPipedStdin()` handled active `end`/`close` events but still attached listeners/resumed streams when stdin was already ended/destroyed before invocation.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/cli/read-piped-stdin.ts`
+- `packages/coding-agent/test/read-piped-stdin.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- return early for already-ended/destroyed streams before listener registration,
+- add regression coverage for pre-ended stream input.
+
+**Result:** CLI piped-stdin handling now avoids unnecessary listener wiring and resolves immediately on pre-closed stream handles.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -3451,8 +3470,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/login-dialog.test.ts test/login-dialog-url-open.test.ts` (includes single-settlement cancel behavior and prompt-replacement rejection coverage)
 - coding-agent piped-stdin helper regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/read-piped-stdin.test.ts` (includes TTY short-circuit, trimmed piped content, stdin error rejection, and close-before-end settlement coverage)
-- coding-agent prompt-confirm helper regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-confirm.test.ts test/read-piped-stdin.test.ts` (includes yes/no parsing, early stdin-close settlement, and pre-closed prompt handling)
+- coding-agent prompt-confirm/read-piped-stdin helper regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-confirm.test.ts test/read-piped-stdin.test.ts` (includes yes/no parsing, early stdin-close settlement, pre-closed prompt handling, and pre-ended piped-stdin coverage)
 - coding-agent antigravity image SSE parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/antigravity-image-gen.test.ts` (includes terminal `data:` chunk without trailing newline and text+image ordering coverage)
 - coding-agent sleep helper regression tests pass:
