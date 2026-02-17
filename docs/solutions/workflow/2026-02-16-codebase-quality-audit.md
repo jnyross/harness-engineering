@@ -3563,6 +3563,24 @@ to:
 
 **Result:** Persistent storage dialog now avoids stale async state mutations and dangling request promises when dialogs are removed during in-flight permission checks.
 
+---
+
+### 200) custom provider dialog could apply stale async test/save completions after unmount
+
+**Finding:** Custom provider dialog ran async model-discovery/save operations without invalidating stale completions when the dialog closed/disconnected mid-request.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/dialogs/CustomProviderDialog.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- add operation-sequence invalidation across disconnects,
+- guard async test/save completion paths against detached/superseded operations.
+
+**Result:** Custom provider dialog no longer updates detached component state or executes stale callback/close paths from obsolete async operations.
+
 ## Validation Evidence
 
 - Root quality gate passes:

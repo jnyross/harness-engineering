@@ -15,6 +15,7 @@ export class CustomProviderDialog extends DialogBase {
 	private provider?: CustomProvider;
 	private initialType?: CustomProviderType;
 	private onSaveCallback?: () => void;
+	private operationSeq = 0;
 
 	@state() private name = "";
 	@state() private type: CustomProviderType = "openai-completions";
@@ -81,8 +82,14 @@ export class CustomProviderDialog extends DialogBase {
 		return this.type === "ollama" || this.type === "llama.cpp" || this.type === "vllm" || this.type === "lmstudio";
 	}
 
+	override disconnectedCallback(): void {
+		super.disconnectedCallback();
+		this.operationSeq++;
+	}
+
 	private async testConnection() {
 		if (!this.isAutoDiscoveryType()) return;
+		const operationId = ++this.operationSeq;
 
 		this.testing = true;
 		this.testError = "";
@@ -94,6 +101,9 @@ export class CustomProviderDialog extends DialogBase {
 				this.baseUrl,
 				this.apiKey || undefined,
 			);
+			if (!this.isConnected || operationId !== this.operationSeq) {
+				return;
+			}
 
 			this.discoveredModels = models.map((model) => ({
 				...model,
@@ -102,11 +112,16 @@ export class CustomProviderDialog extends DialogBase {
 
 			this.testError = "";
 		} catch (error) {
+			if (!this.isConnected || operationId !== this.operationSeq) {
+				return;
+			}
 			this.testError = error instanceof Error ? error.message : String(error);
 			this.discoveredModels = [];
 		} finally {
-			this.testing = false;
-			this.requestUpdate();
+			if (this.isConnected && operationId === this.operationSeq) {
+				this.testing = false;
+				this.requestUpdate();
+			}
 		}
 	}
 
@@ -115,6 +130,7 @@ export class CustomProviderDialog extends DialogBase {
 			alert(i18n("Please fill in all required fields"));
 			return;
 		}
+		const operationId = ++this.operationSeq;
 
 		try {
 			const storage = getAppStorage();
@@ -129,6 +145,9 @@ export class CustomProviderDialog extends DialogBase {
 			};
 
 			await storage.customProviders.set(provider);
+			if (!this.isConnected || operationId !== this.operationSeq) {
+				return;
+			}
 
 			if (this.onSaveCallback) {
 				this.onSaveCallback();
