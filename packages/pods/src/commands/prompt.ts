@@ -166,6 +166,7 @@ Current working directory: ${process.cwd()}`;
 			? [localCli, ...args]
 			: ["--yes", "--package", "@mariozechner/pi-coding-agent", "pi", ...args];
 	const childEnv = { ...process.env, [PODS_AGENT_API_KEY_ENV]: resolvedApiKey };
+	const invokedCommand = [command, ...commandArgs].join(" ");
 	try {
 		await new Promise<void>((resolve, reject) => {
 			let settled = false;
@@ -190,18 +191,15 @@ Current working directory: ${process.cwd()}`;
 			});
 
 			child.on("error", (error) =>
-				rejectOnce(new Error(`Failed to start agent command '${command}': ${error.message}`)),
+				rejectOnce(new Error(`Failed to start agent command '${invokedCommand}': ${error.message}`)),
 			);
 			child.on("close", (code, signal) => {
-				if (signal) {
-					rejectOnce(new Error(`Agent process exited due to signal ${signal}`));
-					return;
-				}
-				if (code === 0) {
+				const exitError = getPromptAgentExitError(code, signal);
+				if (!exitError) {
 					resolveOnce();
 					return;
 				}
-				rejectOnce(new Error(`Agent process exited with code ${code}`));
+				rejectOnce(new Error(exitError));
 			});
 		});
 	} catch (err: unknown) {
@@ -217,4 +215,17 @@ Current working directory: ${process.cwd()}`;
 			rmSync(tempExtensionDir, { recursive: true, force: true });
 		}
 	}
+}
+
+export function getPromptAgentExitError(code: number | null, signal: NodeJS.Signals | null): string | undefined {
+	if (signal) {
+		return `Agent process exited due to signal ${signal}`;
+	}
+	if (code === null) {
+		return "Agent process exited with unknown status";
+	}
+	if (code !== 0) {
+		return `Agent process exited with code ${code}`;
+	}
+	return undefined;
 }

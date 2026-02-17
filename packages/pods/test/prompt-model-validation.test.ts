@@ -80,6 +80,9 @@ describe("promptModel validation", () => {
 		process.env.PI_API_KEY = "test-key";
 		process.env.PATH = "";
 
-		await assert.rejects(() => promptModel("demo-model", ["--help"]), /Failed to start agent command 'npx'/i);
+		await assert.rejects(
+			() => promptModel("demo-model", ["--help"]),
+			/Failed to start agent command 'npx[\s\S]*': spawn npx ENOENT/i,
+		);
 	});
 });
