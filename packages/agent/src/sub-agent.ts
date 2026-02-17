@@ -150,8 +150,8 @@ export function spawnScript(
 		child.on("error", (err) => {
 			rejectOnce(err);
 		});
-		child.on("close", (code, _sig) => {
-			resolveOnce({ stdout, stderr, exitCode: code });
+		child.on("close", (code, closeSignal) => {
+			resolveOnce({ stdout, stderr, exitCode: code ?? (closeSignal ? 1 : 0) });
 		});
 	});
 }

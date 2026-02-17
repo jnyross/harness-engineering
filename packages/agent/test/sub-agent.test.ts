@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { spawnScript } from "../src/sub-agent.js";
 
+const signalAwareIt = process.platform === "win32" ? it.skip : it;
+
 describe("spawnScript", () => {
 	it("returns stdout, stderr, and exit code on success", async () => {
 		const result = await spawnScript(process.execPath, [
@@ -37,5 +39,14 @@ describe("spawnScript", () => {
 		await expect(
 			spawnScript(process.execPath, ["-e", "setTimeout(() => {}, 5000);"], { timeoutMs: 25 }),
 		).rejects.toThrow("Script timed out after 25ms");
+	});
+
+	signalAwareIt("returns non-zero exit code when child exits by signal", async () => {
+		const result = await spawnScript(process.execPath, [
+			"-e",
+			"setTimeout(() => process.kill(process.pid, 'SIGTERM'), 10); setTimeout(() => {}, 2000);",
+		]);
+
+		expect(result.exitCode).toBe(1);
 	});
 });

@@ -2312,6 +2312,26 @@ to:
 
 **Result:** The RPC extension example now reports startup/termination failures with accurate process semantics, aligning demo behavior with hardened runtime conventions used in production paths.
 
+---
+
+### 133) `spawnScript()` signal exits surfaced as ambiguous `null` status
+
+**Finding:** `spawnScript()` in `packages/agent/src/sub-agent.ts` returned `exitCode: null` for signal-terminated children, leaving callers to infer failure semantics manually.
+
+**Action:** Updated:
+
+- `packages/agent/src/sub-agent.ts`
+- `packages/agent/test/sub-agent.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to:
+
+- map `close(code=null, signal!=null)` to `exitCode: 1`,
+- add a regression test covering child self-termination via `SIGTERM` (non-Windows),
+- document the behavior in the agent changelog.
+
+**Result:** `spawnScript()` now reports deterministic non-zero exit codes for signal terminations, aligning subprocess failure semantics with the rest of the monorepo hardening work.
+
 ## Validation Evidence
 
 - Root quality gate passes:
