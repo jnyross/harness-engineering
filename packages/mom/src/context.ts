@@ -165,6 +165,96 @@ export interface MomSettings {
 	retry?: Partial<MomRetrySettings>;
 }
 
+function normalizeBoolean(value: unknown, fallback: boolean): boolean {
+	return typeof value === "boolean" ? value : fallback;
+}
+
+function normalizePositiveSafeInteger(value: unknown, fallback: number): number {
+	if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) {
+		return fallback;
+	}
+	return value;
+}
+
+function normalizeOptionalNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function normalizeThinkingLevel(value: unknown): MomSettings["defaultThinkingLevel"] | undefined {
+	switch (value) {
+		case "off":
+		case "minimal":
+		case "low":
+		case "medium":
+		case "high":
+			return value;
+		default:
+			return undefined;
+	}
+}
+
+function normalizeMomSettings(value: unknown): MomSettings {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return {};
+	}
+	const record = value as Record<string, unknown>;
+	const normalized: MomSettings = {};
+
+	const defaultProvider = normalizeOptionalNonEmptyString(record.defaultProvider);
+	if (defaultProvider) {
+		normalized.defaultProvider = defaultProvider;
+	}
+	const defaultModel = normalizeOptionalNonEmptyString(record.defaultModel);
+	if (defaultModel) {
+		normalized.defaultModel = defaultModel;
+	}
+
+	const thinkingLevel = normalizeThinkingLevel(record.defaultThinkingLevel);
+	if (thinkingLevel) {
+		normalized.defaultThinkingLevel = thinkingLevel;
+	}
+
+	if (record.compaction && typeof record.compaction === "object" && !Array.isArray(record.compaction)) {
+		const compactionRecord = record.compaction as Record<string, unknown>;
+		const compaction: Partial<MomCompactionSettings> = {};
+		if (typeof compactionRecord.enabled === "boolean") {
+			compaction.enabled = compactionRecord.enabled;
+		}
+		if (typeof compactionRecord.reserveTokens === "number") {
+			compaction.reserveTokens = compactionRecord.reserveTokens;
+		}
+		if (typeof compactionRecord.keepRecentTokens === "number") {
+			compaction.keepRecentTokens = compactionRecord.keepRecentTokens;
+		}
+		if (Object.keys(compaction).length > 0) {
+			normalized.compaction = compaction;
+		}
+	}
+
+	if (record.retry && typeof record.retry === "object" && !Array.isArray(record.retry)) {
+		const retryRecord = record.retry as Record<string, unknown>;
+		const retry: Partial<MomRetrySettings> = {};
+		if (typeof retryRecord.enabled === "boolean") {
+			retry.enabled = retryRecord.enabled;
+		}
+		if (typeof retryRecord.maxRetries === "number") {
+			retry.maxRetries = retryRecord.maxRetries;
+		}
+		if (typeof retryRecord.baseDelayMs === "number") {
+			retry.baseDelayMs = retryRecord.baseDelayMs;
+		}
+		if (Object.keys(retry).length > 0) {
+			normalized.retry = retry;
+		}
+	}
+
+	return normalized;
+}
+
 const DEFAULT_COMPACTION: MomCompactionSettings = {
 	enabled: true,
 	reserveTokens: 16384,
@@ -197,7 +287,7 @@ export class MomSettingsManager {
 
 		try {
 			const content = readFileSync(this.settingsPath, "utf-8");
-			return JSON.parse(content);
+			return normalizeMomSettings(JSON.parse(content));
 		} catch {
 			return {};
 		}
@@ -216,9 +306,14 @@ export class MomSettingsManager {
 	}
 
 	getCompactionSettings(): MomCompactionSettings {
+		const compaction = this.settings.compaction;
 		return {
-			...DEFAULT_COMPACTION,
-			...this.settings.compaction,
+			enabled: normalizeBoolean(compaction?.enabled, DEFAULT_COMPACTION.enabled),
+			reserveTokens: normalizePositiveSafeInteger(compaction?.reserveTokens, DEFAULT_COMPACTION.reserveTokens),
+			keepRecentTokens: normalizePositiveSafeInteger(
+				compaction?.keepRecentTokens,
+				DEFAULT_COMPACTION.keepRecentTokens,
+			),
 		};
 	}
 
@@ -232,9 +327,11 @@ export class MomSettingsManager {
 	}
 
 	getRetrySettings(): MomRetrySettings {
+		const retry = this.settings.retry;
 		return {
-			...DEFAULT_RETRY,
-			...this.settings.retry,
+			enabled: normalizeBoolean(retry?.enabled, DEFAULT_RETRY.enabled),
+			maxRetries: normalizePositiveSafeInteger(retry?.maxRetries, DEFAULT_RETRY.maxRetries),
+			baseDelayMs: normalizePositiveSafeInteger(retry?.baseDelayMs, DEFAULT_RETRY.baseDelayMs),
 		};
 	}
 
@@ -248,11 +345,11 @@ export class MomSettingsManager {
 	}
 
 	getDefaultModel(): string | undefined {
-		return this.settings.defaultModel;
+		return normalizeOptionalNonEmptyString(this.settings.defaultModel);
 	}
 
 	getDefaultProvider(): string | undefined {
-		return this.settings.defaultProvider;
+		return normalizeOptionalNonEmptyString(this.settings.defaultProvider);
 	}
 
 	setDefaultModelAndProvider(provider: string, modelId: string): void {
@@ -262,11 +359,11 @@ export class MomSettingsManager {
 	}
 
 	getDefaultThinkingLevel(): string {
-		return this.settings.defaultThinkingLevel || "off";
+		return normalizeThinkingLevel(this.settings.defaultThinkingLevel) ?? "off";
 	}
 
 	setDefaultThinkingLevel(level: string): void {
-		this.settings.defaultThinkingLevel = level as MomSettings["defaultThinkingLevel"];
+		this.settings.defaultThinkingLevel = normalizeThinkingLevel(level) ?? "off";
 		this.save();
 	}
 
