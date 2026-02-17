@@ -235,6 +235,7 @@ export const sshExec = async (
 		}
 
 		sshArgs.push(command);
+		const invokedCommand = [sshBinary, ...sshArgs].join(" ");
 
 		const proc = spawn(sshBinary, sshArgs, {
 			stdio: ["ignore", "pipe", "pipe"],
@@ -252,17 +253,21 @@ export const sshExec = async (
 		});
 
 		proc.on("close", (code, signal) => {
+			const exitCode = normalizeChildExitCode(code, signal);
+			const stderrMessage =
+				stderr ||
+				(exitCode !== 0 ? getSshStreamExitError(code, signal) || `SSH process exited with code ${exitCode}` : "");
 			resolveOnce({
 				stdout,
-				stderr,
-				exitCode: normalizeChildExitCode(code, signal),
+				stderr: stderrMessage,
+				exitCode,
 			});
 		});
 
 		proc.on("error", (err) => {
 			resolveOnce({
 				stdout,
-				stderr: err.message,
+				stderr: `Failed to start SSH command '${invokedCommand}': ${err.message}`,
 				exitCode: 1,
 			});
 		});

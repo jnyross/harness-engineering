@@ -94,6 +94,7 @@ describe("sshExec", () => {
 	it("returns non-zero when ssh binary cannot be spawned", async () => {
 		const result = await sshExec("/definitely/missing/ssh user@host", "echo test");
 		assert.equal(result.exitCode, 1);
+		assert.match(result.stderr, /Failed to start SSH command/);
 	});
 
 	it("reports non-zero exit code when ssh process exits via signal", async () => {
@@ -105,6 +106,22 @@ describe("sshExec", () => {
 
 			const result = await sshExec(`${sshPath} user@host`, "echo test");
 			assert.equal(result.exitCode, 1);
+			assert.equal(result.stderr, "SSH process terminated by signal SIGTERM");
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
+	});
+
+	it("adds fallback stderr when ssh exits non-zero without stderr output", async () => {
+		const dir = mkdtempSync(join(tmpdir(), "pi-pods-ssh-exitcode-"));
+		const sshPath = join(dir, "ssh");
+		try {
+			writeFileSync(sshPath, "#!/bin/sh\nexit 17\n", { mode: 0o755 });
+			chmodSync(sshPath, 0o755);
+
+			const result = await sshExec(`${sshPath} user@host`, "echo test");
+			assert.equal(result.exitCode, 17);
+			assert.equal(result.stderr, "SSH process exited with code 17");
 		} finally {
 			rmSync(dir, { recursive: true, force: true });
 		}
