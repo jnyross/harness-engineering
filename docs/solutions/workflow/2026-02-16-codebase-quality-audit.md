@@ -3183,6 +3183,24 @@ to:
 
 **Result:** Chat panel now avoids stale deferred resize callbacks after unmount.
 
+---
+
+### 179) StreamingMessageContainer deferred batch updates were not canceled on disconnect/immediate clear
+
+**Finding:** Streaming message batching scheduled animation-frame updates without tracking/canceling pending callbacks when immediate clear paths or component unmounts occurred.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/StreamingMessageContainer.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- track pending animation-frame IDs,
+- cancel pending frame callbacks on immediate clear and `disconnectedCallback()`.
+
+**Result:** Streaming message batch updates now avoid stale deferred callbacks after clear/unmount transitions.
+
 ## Validation Evidence
 
 - Root quality gate passes:

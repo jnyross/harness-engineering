@@ -19,6 +19,7 @@
 - `ConsoleBlock` now clears copy-feedback reset timers on repeated copy/disconnect paths, preventing stale timeout callbacks after component unmount.
 - `AttachmentOverlay` now removes global keydown listeners and cancels in-flight preview loading in `disconnectedCallback()`, preventing listener/task leaks if the overlay is removed externally.
 - `ChatPanel` now cancels its deferred initial resize `requestAnimationFrame` callback on disconnect, preventing stale update callbacks after rapid mount/unmount cycles.
+- `StreamingMessageContainer` now tracks/cancels pending animation-frame batch updates on immediate clears and disconnects, preventing stale deferred render callbacks.
 
 ## [0.52.12] - 2026-02-13
 

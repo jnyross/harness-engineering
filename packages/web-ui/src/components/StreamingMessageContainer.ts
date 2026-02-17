@@ -14,6 +14,7 @@ export class StreamingMessageContainer extends LitElement {
 	private _pendingMessage: AgentMessage | null = null;
 	private _updateScheduled = false;
 	private _immediateUpdate = false;
+	private _updateFrameId: number | undefined;
 
 	protected override createRenderRoot(): HTMLElement | DocumentFragment {
 		return this;
@@ -24,6 +25,14 @@ export class StreamingMessageContainer extends LitElement {
 		this.style.display = "block";
 	}
 
+	override disconnectedCallback(): void {
+		super.disconnectedCallback();
+		if (this._updateFrameId !== undefined) {
+			cancelAnimationFrame(this._updateFrameId);
+			this._updateFrameId = undefined;
+		}
+	}
+
 	// Public method to update the message with batching for performance
 	public setMessage(message: AgentMessage | null, immediate = false) {
 		// Store the latest message
@@ -31,6 +40,10 @@ export class StreamingMessageContainer extends LitElement {
 
 		// If this is an immediate update (like clearing), apply it right away
 		if (immediate || message === null) {
+			if (this._updateFrameId !== undefined) {
+				cancelAnimationFrame(this._updateFrameId);
+				this._updateFrameId = undefined;
+			}
 			this._immediateUpdate = true;
 			this._message = message;
 			this.requestUpdate();
@@ -44,7 +57,8 @@ export class StreamingMessageContainer extends LitElement {
 		if (!this._updateScheduled) {
 			this._updateScheduled = true;
 
-			requestAnimationFrame(async () => {
+			this._updateFrameId = requestAnimationFrame(() => {
+				this._updateFrameId = undefined;
 				// Only apply the update if we haven't been cleared
 				if (!this._immediateUpdate && this._pendingMessage !== null) {
 					// Deep clone the message to ensure Lit detects changes in nested properties
