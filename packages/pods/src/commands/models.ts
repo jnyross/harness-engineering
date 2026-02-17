@@ -17,6 +17,45 @@ import type { SSHResult } from "../ssh.js";
 import { extractHostFromSshCommand, parseSshCommand, sshExec } from "../ssh.js";
 import type { Pod } from "../types.js";
 
+const CONTEXT_SIZE_ALIASES: Record<string, number> = {
+	"4k": 4096,
+	"8k": 8192,
+	"16k": 16384,
+	"32k": 32768,
+	"64k": 65536,
+	"128k": 131072,
+};
+
+export function parseModelRunnerPid(rawPid: string): number | undefined {
+	const trimmed = rawPid.trim();
+	if (!/^\d+$/.test(trimmed)) {
+		return undefined;
+	}
+
+	const parsedPid = Number.parseInt(trimmed, 10);
+	if (!isValidPid(parsedPid)) {
+		return undefined;
+	}
+
+	return parsedPid;
+}
+
+export function resolveModelContextTokens(contextValue: string): number | undefined {
+	const trimmed = contextValue.trim();
+	const normalized = trimmed.toLowerCase();
+	const aliasMatch = CONTEXT_SIZE_ALIASES[normalized];
+	if (aliasMatch) {
+		return aliasMatch;
+	}
+
+	if (!/^\d+$/.test(trimmed)) {
+		return undefined;
+	}
+
+	const parsed = Number.parseInt(trimmed, 10);
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+}
+
 /**
  * Get the pod to use (active or override)
  */
@@ -214,15 +253,11 @@ export const startModel = async (
 			vllmArgs.push("--gpu-memory-utilization", String(fraction));
 		}
 		if (options.context) {
-			const contextSizes: Record<string, number> = {
-				"4k": 4096,
-				"8k": 8192,
-				"16k": 16384,
-				"32k": 32768,
-				"64k": 65536,
-				"128k": 131072,
-			};
-			const maxTokens = contextSizes[options.context.toLowerCase()] || parseInt(options.context, 10);
+			const maxTokens = resolveModelContextTokens(options.context);
+			if (!maxTokens) {
+				console.error(chalk.red("Error: invalid context value. Use 4k/8k/16k/32k/64k/128k or positive integer."));
+				process.exit(1);
+			}
 			vllmArgs = vllmArgs.filter((arg) => !arg.includes("max-model-len"));
 			vllmArgs.push("--max-model-len", String(maxTokens));
 		}
@@ -315,7 +350,7 @@ WRAPPER
 		process.exit(1);
 	}
 
-	const pid = parseInt(pidResult.stdout.trim(), 10);
+	const pid = parseModelRunnerPid(pidResult.stdout);
 	if (!pid) {
 		const startOutput = pidResult.stdout.trim();
 		const detail = pidResult.stderr.trim() || startOutput || "remote command did not return a valid PID";

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { getModelSshCommandError } from "../src/commands/models.js";
+import { getModelSshCommandError, parseModelRunnerPid, resolveModelContextTokens } from "../src/commands/models.js";
 
 describe("getModelSshCommandError", () => {
 	it("returns undefined for successful SSH results", () => {
@@ -41,5 +41,37 @@ describe("getModelSshCommandError", () => {
 			}),
 			"Uploading startup script failed: SSH command exited with code 17",
 		);
+	});
+});
+
+describe("parseModelRunnerPid", () => {
+	it("parses strict positive integer pid output", () => {
+		assert.equal(parseModelRunnerPid("12345"), 12345);
+		assert.equal(parseModelRunnerPid(" 987 \n"), 987);
+	});
+
+	it("rejects malformed or out-of-range pid output", () => {
+		assert.equal(parseModelRunnerPid("123abc"), undefined);
+		assert.equal(parseModelRunnerPid(""), undefined);
+		assert.equal(parseModelRunnerPid("0"), undefined);
+		assert.equal(parseModelRunnerPid("3000000000"), undefined);
+	});
+});
+
+describe("resolveModelContextTokens", () => {
+	it("resolves known context aliases", () => {
+		assert.equal(resolveModelContextTokens("4k"), 4096);
+		assert.equal(resolveModelContextTokens("64K"), 65536);
+	});
+
+	it("resolves explicit positive token counts", () => {
+		assert.equal(resolveModelContextTokens("32768"), 32768);
+		assert.equal(resolveModelContextTokens(" 4096 "), 4096);
+	});
+
+	it("rejects malformed context values", () => {
+		assert.equal(resolveModelContextTokens("16k-extra"), undefined);
+		assert.equal(resolveModelContextTokens("4096tokens"), undefined);
+		assert.equal(resolveModelContextTokens("0"), undefined);
 	});
 });
