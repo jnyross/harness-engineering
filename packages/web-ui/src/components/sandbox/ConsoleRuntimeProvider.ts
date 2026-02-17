@@ -99,29 +99,54 @@ export class ConsoleRuntimeProvider implements SandboxRuntimeProvider {
 
 			// Track errors for HTML artifacts
 			let lastError: { message: string; stack: string } | null = null;
+			// biome-ignore lint/suspicious/noExplicitAny: migration
+			const runtimeWindow = window as any;
+
+			// Remove previous execution listeners (if any) to avoid accumulation
+			if (runtimeWindow.__piErrorListener) {
+				window.removeEventListener("error", runtimeWindow.__piErrorListener);
+			}
+			if (runtimeWindow.__piUnhandledRejectionListener) {
+				window.removeEventListener("unhandledrejection", runtimeWindow.__piUnhandledRejectionListener);
+			}
 
 			// Error handlers - track errors but don't log them
 			// (they'll be shown via execution-error message)
-			window.addEventListener("error", (e) => {
+			const onWindowError = (e: ErrorEvent) => {
 				const text = `${e.error?.stack || e.message || String(e)} at line ${e.lineno || "?"}:${e.colno || "?"}`;
 
 				lastError = {
 					message: e.error?.message || e.message || String(e),
 					stack: e.error?.stack || text,
 				};
-			});
+			};
 
-			window.addEventListener("unhandledrejection", (e) => {
+			const onUnhandledRejection = (e: PromiseRejectionEvent) => {
 				const text = `Unhandled promise rejection: ${e.reason?.message || e.reason || "Unknown error"}`;
 
 				lastError = {
 					message: e.reason?.message || String(e.reason) || "Unhandled promise rejection",
 					stack: e.reason?.stack || text,
 				};
-			});
+			};
+
+			runtimeWindow.__piErrorListener = onWindowError;
+			runtimeWindow.__piUnhandledRejectionListener = onUnhandledRejection;
+			window.addEventListener("error", onWindowError);
+			window.addEventListener("unhandledrejection", onUnhandledRejection);
 
 			// Expose complete() method for user code to call
 			let completionSent = false;
+			const cleanupRuntimeErrorListeners = () => {
+				if (runtimeWindow.__piErrorListener) {
+					window.removeEventListener("error", runtimeWindow.__piErrorListener);
+					delete runtimeWindow.__piErrorListener;
+				}
+				if (runtimeWindow.__piUnhandledRejectionListener) {
+					window.removeEventListener("unhandledrejection", runtimeWindow.__piUnhandledRejectionListener);
+					delete runtimeWindow.__piUnhandledRejectionListener;
+				}
+			};
 			// biome-ignore lint/suspicious/noExplicitAny: migration
 			(window as any).complete = async (error?: { message: string; stack: string }, returnValue?: any) => {
 				if (completionSent) return;
@@ -145,6 +170,7 @@ export class ConsoleRuntimeProvider implements SandboxRuntimeProvider {
 						});
 					}
 				}
+				cleanupRuntimeErrorListeners();
 			};
 		};
 	}

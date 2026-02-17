@@ -3219,6 +3219,24 @@ to:
 
 **Result:** Agent interface input prefill now avoids runaway deferred frame retries and stale callbacks across disconnect cycles.
 
+---
+
+### 181) ConsoleRuntimeProvider accumulated global error listeners across repeated sandbox executions
+
+**Finding:** Console runtime injection registered `window.error`/`window.unhandledrejection` listeners on every execution without removing prior handlers, causing listener accumulation across repeated HTML artifact runs in the same sandbox.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/sandbox/ConsoleRuntimeProvider.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- remove prior runtime error listeners before adding new ones,
+- clean up active runtime listeners after execution completion.
+
+**Result:** Sandbox console runtime now avoids repeated global error-listener accumulation between executions.
+
 ## Validation Evidence
 
 - Root quality gate passes:
