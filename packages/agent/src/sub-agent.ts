@@ -6,6 +6,7 @@
 
 import { spawn as nodeSpawn } from "node:child_process";
 import { agentLoop } from "./agent-loop.js";
+import { normalizeChildExitCode } from "./child-exit-status.js";
 import type { AgentDefinition } from "./skill-registry.js";
 import type { AgentContext, AgentLoopConfig, AgentMessage } from "./types.js";
 
@@ -177,7 +178,7 @@ export function spawnScript(
 		});
 		child.on("close", (code, closeSignal) => {
 			clearForceKill();
-			resolveOnce({ stdout, stderr, exitCode: code ?? (closeSignal ? 1 : 0) });
+			resolveOnce({ stdout, stderr, exitCode: normalizeChildExitCode(code, closeSignal) });
 		});
 	});
 }

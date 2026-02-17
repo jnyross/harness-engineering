@@ -21,6 +21,7 @@
 - `spawnScript()` now handles pre-aborted signals and single-settlement cleanup for abort/timeout/error paths, preventing double-settlement races during subprocess teardown.
 - `spawnScript()` now maps signal-terminated child exits to non-zero exit codes, avoiding ambiguous `null` exit semantics in subprocess result handling.
 - `spawnScript()` now schedules forced `SIGKILL` fallback after abort/timeout `SIGTERM` requests, preventing lingering child processes when scripts ignore termination signals.
+- `spawnScript()` now treats unknown `close(code=null, signal=null)` child-process exits as non-zero failures instead of ambiguous success semantics.
 - `writeState()` now creates parent directories via `dirname(path)` for clearer, cross-platform-safe nested state-file writes.
 - Added local Vitest aliasing for `@mariozechner/pi-ai` so agent package tests run from source without requiring prebuilt internal package artifacts.
 - Implemented actual LLM-backed review execution in `ExecutionEngine` (instead of placeholder rejection), wiring reviewer prompt output through the shared review parser.
