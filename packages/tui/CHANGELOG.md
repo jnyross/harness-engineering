@@ -8,6 +8,7 @@
 - `CombinedAutocompleteProvider` now accepts an injectable `fd` runner and explicitly treats `spawnSync` error/signal exits as empty result sets, avoiding ambiguous handling when `fd` invocations terminate unexpectedly.
 - Editor Kitty CSI-u printable-key parsing now rejects unsafe integer codepoint/modifier fields, preventing malformed oversized modifier payloads from being misinterpreted as valid printable input.
 - Keyboard Kitty CSI-u parsing now rejects unsafe integer modifier/codepoint fields before key-id synthesis, preventing oversized modifier payloads from being bitmasked into false modifier combinations.
+- ANSI wrap style tracking now rejects malformed/unsafe SGR color payloads before carrying style state across wrapped lines, preventing invalid oversized color codes from being re-emitted in continuation segments.
 - Overlay percentage sizing/positioning now rejects numeric-overflow percentage inputs, falling back to default/anchor layout behavior instead of coercing overflow values via `parseFloat`.
 - Terminal cell-size response parsing now rejects unsafe integer width/height payloads before applying image cell dimensions, preventing oversized response coercion from malformed terminal replies.
 

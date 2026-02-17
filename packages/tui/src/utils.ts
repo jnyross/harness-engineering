@@ -177,6 +177,18 @@ export function extractAnsiCode(str: string, pos: number): { code: string; lengt
 	return null;
 }
 
+function parseAnsiSgrIntegerToken(token: string | undefined): number | undefined {
+	if (!token || !/^\d+$/.test(token)) {
+		return undefined;
+	}
+	const parsed = Number.parseInt(token, 10);
+	return Number.isSafeInteger(parsed) ? parsed : undefined;
+}
+
+function isAnsiByteValue(value: number | undefined): value is number {
+	return value !== undefined && value >= 0 && value <= 255;
+}
+
 /**
  * Track active ANSI SGR codes to preserve styling across line breaks.
  */
@@ -213,29 +225,42 @@ class AnsiCodeTracker {
 		const parts = params.split(";");
 		let i = 0;
 		while (i < parts.length) {
-			const code = Number.parseInt(parts[i], 10);
+			const code = parseAnsiSgrIntegerToken(parts[i]);
+			if (code === undefined) {
+				i++;
+				continue;
+			}
 
 			// Handle 256-color and RGB codes which consume multiple parameters
 			if (code === 38 || code === 48) {
+				const colorMode = parseAnsiSgrIntegerToken(parts[i + 1]);
 				// 38;5;N (256 color fg) or 38;2;R;G;B (RGB fg)
 				// 48;5;N (256 color bg) or 48;2;R;G;B (RGB bg)
-				if (parts[i + 1] === "5" && parts[i + 2] !== undefined) {
+				if (colorMode === 5 && parts[i + 2] !== undefined) {
 					// 256 color: 38;5;N or 48;5;N
-					const colorCode = `${parts[i]};${parts[i + 1]};${parts[i + 2]}`;
-					if (code === 38) {
-						this.fgColor = colorCode;
-					} else {
-						this.bgColor = colorCode;
+					const colorValue = parseAnsiSgrIntegerToken(parts[i + 2]);
+					if (isAnsiByteValue(colorValue)) {
+						const colorCode = `${code};${colorMode};${colorValue}`;
+						if (code === 38) {
+							this.fgColor = colorCode;
+						} else {
+							this.bgColor = colorCode;
+						}
 					}
 					i += 3;
 					continue;
-				} else if (parts[i + 1] === "2" && parts[i + 4] !== undefined) {
+				} else if (colorMode === 2 && parts[i + 4] !== undefined) {
 					// RGB color: 38;2;R;G;B or 48;2;R;G;B
-					const colorCode = `${parts[i]};${parts[i + 1]};${parts[i + 2]};${parts[i + 3]};${parts[i + 4]}`;
-					if (code === 38) {
-						this.fgColor = colorCode;
-					} else {
-						this.bgColor = colorCode;
+					const red = parseAnsiSgrIntegerToken(parts[i + 2]);
+					const green = parseAnsiSgrIntegerToken(parts[i + 3]);
+					const blue = parseAnsiSgrIntegerToken(parts[i + 4]);
+					if (isAnsiByteValue(red) && isAnsiByteValue(green) && isAnsiByteValue(blue)) {
+						const colorCode = `${code};${colorMode};${red};${green};${blue}`;
+						if (code === 38) {
+							this.fgColor = colorCode;
+						} else {
+							this.bgColor = colorCode;
+						}
 					}
 					i += 5;
 					continue;

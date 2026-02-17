@@ -133,5 +133,23 @@ describe("wrapTextWithAnsi", () => {
 				assert.strictEqual(wrapped[i].endsWith("\x1b[0m"), false);
 			}
 		});
+
+		it("should ignore malformed 256-color SGR values across wraps", () => {
+			const text = "\x1b[38;5;12xmhello world wrapped\x1b[0m";
+			const wrapped = wrapTextWithAnsi(text, 6);
+			for (let i = 1; i < wrapped.length; i++) {
+				const line = wrapped[i];
+				assert.strictEqual(line.includes("38;5;12"), false);
+			}
+		});
+
+		it("should ignore unsafe integer 256-color SGR values across wraps", () => {
+			const text = "\x1b[38;5;9007199254740993mhello world wrapped\x1b[0m";
+			const wrapped = wrapTextWithAnsi(text, 6);
+			for (let i = 1; i < wrapped.length; i++) {
+				const line = wrapped[i];
+				assert.strictEqual(line.includes("38;5;9007199254740993"), false);
+			}
+		});
 	});
 });
