@@ -45,7 +45,7 @@ function parseLineCountOutput(output: string, filePath: string): number {
 	}
 
 	const parsedCount = Number.parseInt(trimmed, 10);
-	if (!Number.isFinite(parsedCount) || parsedCount < 0) {
+	if (!Number.isSafeInteger(parsedCount) || parsedCount < 0) {
 		throw new Error(`Failed to parse line count for file '${filePath}': ${trimmed}`);
 	}
 
@@ -59,7 +59,7 @@ function parsePositiveIntegerParameter(
 	if (value === undefined) {
 		return undefined;
 	}
-	if (!Number.isInteger(value) || value <= 0) {
+	if (!Number.isSafeInteger(value) || value <= 0) {
 		throw new Error(`Parameter '${parameterName}' must be a positive integer.`);
 	}
 	return value;

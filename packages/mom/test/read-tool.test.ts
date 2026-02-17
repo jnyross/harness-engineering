@@ -28,6 +28,21 @@ describe("createReadTool line count parsing", () => {
 		);
 	});
 
+	it("rejects unsafe-integer line-count output", async () => {
+		const executor = createMockExecutor(async (command) => {
+			if (command.startsWith("sed -n '$=' ")) {
+				return { stdout: "9007199254740993\n", stderr: "", code: 0 };
+			}
+			return { stdout: "hello", stderr: "", code: 0 };
+		});
+		const tool = createReadTool(executor);
+
+		await assert.rejects(
+			() => tool.execute("tool-unsafe-line-count", { label: "read", path: "file.txt" }, undefined),
+			/Failed to parse line count for file 'file.txt': 9007199254740993/,
+		);
+	});
+
 	it("accepts valid line-count output and returns content", async () => {
 		const executor = createMockExecutor(async (command) => {
 			if (command.startsWith("sed -n '$=' ")) {
@@ -100,6 +115,14 @@ describe("createReadTool line count parsing", () => {
 		);
 		await assert.rejects(
 			() => tool.execute("tool-7", { label: "read", path: "file.txt", limit: -1 }, undefined),
+			/Parameter 'limit' must be a positive integer\./,
+		);
+		await assert.rejects(
+			() => tool.execute("tool-8", { label: "read", path: "file.txt", offset: 9007199254740992 }, undefined),
+			/Parameter 'offset' must be a positive integer\./,
+		);
+		await assert.rejects(
+			() => tool.execute("tool-9", { label: "read", path: "file.txt", limit: 9007199254740992 }, undefined),
 			/Parameter 'limit' must be a positive integer\./,
 		);
 	});

@@ -32,6 +32,7 @@
 - Read-tool line counting now validates `wc -l` output strictly and throws explicit parse errors for malformed output instead of continuing with `NaN`-derived offsets/line ranges.
 - Read-tool line counting now uses exact line counts (`sed -n '$='`) and enforces offset bounds correctly, preventing false extra-line allowance when files end with trailing newlines.
 - Read-tool now rejects non-positive/non-integer `offset`/`limit` values instead of silently coercing them.
+- Read-tool line-count and `offset`/`limit` parsing now also rejects unsafe integers (greater than `Number.MAX_SAFE_INTEGER`) instead of accepting rounded numeric coercions.
 - Bash tool now rejects non-positive timeout values instead of silently disabling timeout behavior.
 - MOM agent API key resolution now follows the configured model provider (instead of always requesting Anthropic credentials), and model env overrides now trim/ignore blank values before validation.
 - CLI argument parsing now rejects missing `--sandbox`/`--download` option values (including option-like tokens) with explicit diagnostics instead of silently falling back.
