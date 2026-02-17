@@ -903,13 +903,18 @@ export function getThemeExportColors(themeName?: string): {
 		const resolve = (value: string | number | undefined): string | undefined => {
 			if (value === undefined) return undefined;
 			if (typeof value === "number") return ansi256ToHex(value);
-			if (value.startsWith("$")) {
-				const resolved = vars[value];
-				if (resolved === undefined) return undefined;
-				if (typeof resolved === "number") return ansi256ToHex(resolved);
-				return resolved;
+			if (value === "" || value.startsWith("#")) {
+				return value;
 			}
-			return value;
+
+			const variableName = value.startsWith("$") ? value.slice(1) : value;
+			if (!(variableName in vars)) {
+				return value;
+			}
+
+			const resolved = resolveVarRefs(vars[variableName], vars);
+			if (typeof resolved === "number") return ansi256ToHex(resolved);
+			return resolved;
 		};
 
 		return {
