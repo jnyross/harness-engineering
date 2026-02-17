@@ -381,6 +381,24 @@ async function* parseSSE(response: Response): AsyncGenerator<Record<string, unkn
 	const reader = response.body.getReader();
 	const decoder = new TextDecoder();
 	let buffer = "";
+	const parseChunk = (chunk: string): Record<string, unknown> | null => {
+		const dataLines = chunk
+			.split("\n")
+			.filter((l) => l.startsWith("data:"))
+			.map((l) => l.slice(5).trim());
+		if (dataLines.length === 0) {
+			return null;
+		}
+		const data = dataLines.join("\n").trim();
+		if (!data || data === "[DONE]") {
+			return null;
+		}
+		try {
+			return JSON.parse(data) as Record<string, unknown>;
+		} catch {
+			return null;
+		}
+	};
 
 	while (true) {
 		const { done, value } = await reader.read();
@@ -391,21 +409,17 @@ async function* parseSSE(response: Response): AsyncGenerator<Record<string, unkn
 		while (idx !== -1) {
 			const chunk = buffer.slice(0, idx);
 			buffer = buffer.slice(idx + 2);
-
-			const dataLines = chunk
-				.split("\n")
-				.filter((l) => l.startsWith("data:"))
-				.map((l) => l.slice(5).trim());
-			if (dataLines.length > 0) {
-				const data = dataLines.join("\n").trim();
-				if (data && data !== "[DONE]") {
-					try {
-						yield JSON.parse(data);
-					} catch {}
-				}
+			const parsed = parseChunk(chunk);
+			if (parsed) {
+				yield parsed;
 			}
 			idx = buffer.indexOf("\n\n");
 		}
+	}
+
+	const trailing = parseChunk(buffer);
+	if (trailing) {
+		yield trailing;
 	}
 }
 
