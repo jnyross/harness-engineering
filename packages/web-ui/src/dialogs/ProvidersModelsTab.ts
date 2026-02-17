@@ -22,16 +22,27 @@ export class ProvidersModelsTab extends SettingsTab {
 		string,
 		{ modelCount: number; status: "connected" | "disconnected" | "checking" }
 	> = new Map();
+	private customProvidersLoadSeq = 0;
 
 	override async connectedCallback() {
 		super.connectedCallback();
 		await this.loadCustomProviders();
 	}
 
+	override disconnectedCallback(): void {
+		super.disconnectedCallback();
+		this.customProvidersLoadSeq++;
+	}
+
 	private async loadCustomProviders() {
+		const loadSeq = ++this.customProvidersLoadSeq;
 		try {
 			const storage = getAppStorage();
-			this.customProviders = await storage.customProviders.getAll();
+			const providers = await storage.customProviders.getAll();
+			if (!this.isConnected || loadSeq !== this.customProvidersLoadSeq) {
+				return;
+			}
+			this.customProviders = providers;
 
 			// Check status for auto-discovery providers
 			for (const provider of this.customProviders) {
@@ -41,7 +52,7 @@ export class ProvidersModelsTab extends SettingsTab {
 					provider.type === "vllm" ||
 					provider.type === "lmstudio";
 				if (isAutoDiscovery) {
-					this.checkProviderStatus(provider);
+					void this.checkProviderStatus(provider, loadSeq);
 				}
 			}
 		} catch (error) {
@@ -53,7 +64,10 @@ export class ProvidersModelsTab extends SettingsTab {
 		return "Providers & Models";
 	}
 
-	private async checkProviderStatus(provider: CustomProvider) {
+	private async checkProviderStatus(provider: CustomProvider, loadSeq: number = this.customProvidersLoadSeq) {
+		if (!this.isConnected || loadSeq !== this.customProvidersLoadSeq) {
+			return;
+		}
 		this.providerStatus.set(provider.id, { modelCount: 0, status: "checking" });
 		this.requestUpdate();
 
@@ -63,9 +77,15 @@ export class ProvidersModelsTab extends SettingsTab {
 				provider.baseUrl,
 				provider.apiKey,
 			);
+			if (!this.isConnected || loadSeq !== this.customProvidersLoadSeq) {
+				return;
+			}
 
 			this.providerStatus.set(provider.id, { modelCount: models.length, status: "connected" });
 		} catch (_error) {
+			if (!this.isConnected || loadSeq !== this.customProvidersLoadSeq) {
+				return;
+			}
 			this.providerStatus.set(provider.id, { modelCount: 0, status: "disconnected" });
 		}
 		this.requestUpdate();

@@ -3490,6 +3490,24 @@ to:
 
 **Result:** Proxy settings tab no longer mutates component state from stale async loads after disconnect races.
 
+---
+
+### 196) providers/models tab could apply stale async provider/status loads after disconnect
+
+**Finding:** Providers/models settings tab loaded custom providers and kicked off async status checks without invalidating stale completions when the tab disconnected or was remounted quickly.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/dialogs/ProvidersModelsTab.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- add sequence-based invalidation for custom-provider loads and provider-status checks,
+- bail out from async completions when the component is disconnected or a newer load supersedes the in-flight one.
+
+**Result:** Providers/models tab now avoids stale provider/status state mutations across disconnect/remount races.
+
 ## Validation Evidence
 
 - Root quality gate passes:
