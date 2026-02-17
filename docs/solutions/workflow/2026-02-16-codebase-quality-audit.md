@@ -1722,6 +1722,22 @@ to reuse shared `abortableSleep(...)` with explicit `"Login cancelled"` abort me
 
 **Result:** Copilot OAuth polling now shares deterministic abort-listener cleanup semantics with other AI retry/backoff paths.
 
+---
+
+### 102) coding-agent write tool had multi-branch abort settlement paths
+
+**Finding:** Write tool cancellation and completion paths each handled listener cleanup/rejection independently, increasing race risk around duplicate settle attempts during async filesystem operations.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/write.ts`
+- `packages/coding-agent/test/tools.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to use single-settlement abort cleanup and added pre-aborted write regression coverage.
+
+**Result:** Write tool now settles deterministically under abort timing races and preserves consistent cancellation semantics.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1738,6 +1754,8 @@ to reuse shared `abortableSleep(...)` with explicit `"Login cancelled"` abort me
   - `npm --workspace "@mariozechner/pi-ai" test -- test/abortable-sleep.test.ts test/google-gemini-cli-retry-delay.test.ts test/openai-codex-stream.test.ts`
 - ai copilot/oauth-related regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/abortable-sleep.test.ts test/github-copilot-anthropic.test.ts`
+- coding-agent tools regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted write coverage)
 - coding-agent execCommand regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - coding-agent interactive status tests pass after share flow command-exec refactor:
