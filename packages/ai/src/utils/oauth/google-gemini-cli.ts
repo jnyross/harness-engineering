@@ -7,6 +7,7 @@
  */
 
 import type { Server } from "node:http";
+import { abortableSleep } from "../abortable-sleep.js";
 import { generatePKCE } from "./pkce.js";
 import type { OAuthCredentials, OAuthLoginCallbacks, OAuthProviderInterface } from "./types.js";
 
@@ -168,8 +169,10 @@ interface GoogleRpcErrorResponse {
 /**
  * Wait helper for onboarding retries
  */
-function wait(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
+function assertNotAborted(signal?: AbortSignal): void {
+	if (signal?.aborted) {
+		throw new Error("Login cancelled");
+	}
 }
 
 /**
@@ -196,17 +199,20 @@ async function pollOperation(
 	operationName: string,
 	headers: Record<string, string>,
 	onProgress?: (message: string) => void,
+	signal?: AbortSignal,
 ): Promise<LongRunningOperationResponse> {
 	let attempt = 0;
 	while (true) {
+		assertNotAborted(signal);
 		if (attempt > 0) {
 			onProgress?.(`Waiting for project provisioning (attempt ${attempt + 1})...`);
-			await wait(5000);
+			await abortableSleep(5000, signal, "Login cancelled");
 		}
 
 		const response = await fetch(`${CODE_ASSIST_ENDPOINT}/v1internal/${operationName}`, {
 			method: "GET",
 			headers,
+			signal,
 		});
 
 		if (!response.ok) {
@@ -225,7 +231,12 @@ async function pollOperation(
 /**
  * Discover or provision a Google Cloud project for the user
  */
-async function discoverProject(accessToken: string, onProgress?: (message: string) => void): Promise<string> {
+async function discoverProject(
+	accessToken: string,
+	onProgress?: (message: string) => void,
+	signal?: AbortSignal,
+): Promise<string> {
+	assertNotAborted(signal);
 	// Check for user-provided project ID via environment variable
 	const envProjectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT_ID;
 
@@ -241,6 +252,7 @@ async function discoverProject(accessToken: string, onProgress?: (message: strin
 	const loadResponse = await fetch(`${CODE_ASSIST_ENDPOINT}/v1internal:loadCodeAssist`, {
 		method: "POST",
 		headers,
+		signal,
 		body: JSON.stringify({
 			cloudaicompanionProject: envProjectId,
 			metadata: {
@@ -332,7 +344,7 @@ async function discoverProject(accessToken: string, onProgress?: (message: strin
 
 	// If the operation isn't done yet, poll until completion
 	if (!lroData.done && lroData.name) {
-		lroData = await pollOperation(lroData.name, headers, onProgress);
+		lroData = await pollOperation(lroData.name, headers, onProgress, signal);
 	}
 
 	// Try to get project ID from the response
@@ -356,12 +368,13 @@ async function discoverProject(accessToken: string, onProgress?: (message: strin
 /**
  * Get user email from the access token
  */
-async function getUserEmail(accessToken: string): Promise<string | undefined> {
+async function getUserEmail(accessToken: string, signal?: AbortSignal): Promise<string | undefined> {
 	try {
 		const response = await fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
 			headers: {
 				Authorization: `Bearer ${accessToken}`,
 			},
+			signal,
 		});
 
 		if (response.ok) {
@@ -420,12 +433,18 @@ export async function loginGeminiCli(
 	onAuth: (info: { url: string; instructions?: string }) => void,
 	onProgress?: (message: string) => void,
 	onManualCodeInput?: () => Promise<string>,
+	signal?: AbortSignal,
 ): Promise<OAuthCredentials> {
+	assertNotAborted(signal);
 	const { verifier, challenge } = await generatePKCE();
 
 	// Start local server for callback
 	onProgress?.("Starting local server for OAuth callback...");
 	const server = await startCallbackServer();
+	const onAbort = () => {
+		server.cancelWait();
+	};
+	signal?.addEventListener("abort", onAbort, { once: true });
 
 	let code: string | undefined;
 
@@ -469,6 +488,7 @@ export async function loginGeminiCli(
 				});
 
 			const result = await server.waitForCode();
+			assertNotAborted(signal);
 
 			// If manual input was cancelled, throw that error
 			if (manualError) {
@@ -492,7 +512,9 @@ export async function loginGeminiCli(
 
 			// If still no code, wait for manual promise and try that
 			if (!code) {
+				assertNotAborted(signal);
 				await manualPromise;
+				assertNotAborted(signal);
 				if (manualError) {
 					throw manualError;
 				}
@@ -507,6 +529,7 @@ export async function loginGeminiCli(
 		} else {
 			// Original flow: just wait for callback
 			const result = await server.waitForCode();
+			assertNotAborted(signal);
 			if (result?.code) {
 				if (result.state !== verifier) {
 					throw new Error("OAuth state mismatch - possible CSRF attack");
@@ -518,11 +541,13 @@ export async function loginGeminiCli(
 		if (!code) {
 			throw new Error("No authorization code received");
 		}
+		assertNotAborted(signal);
 
 		// Exchange code for tokens
 		onProgress?.("Exchanging authorization code for tokens...");
 		const tokenResponse = await fetch(TOKEN_URL, {
 			method: "POST",
+			signal,
 			headers: {
 				"Content-Type": "application/x-www-form-urlencoded",
 			},
@@ -553,10 +578,10 @@ export async function loginGeminiCli(
 
 		// Get user email
 		onProgress?.("Getting user info...");
-		const email = await getUserEmail(tokenData.access_token);
+		const email = await getUserEmail(tokenData.access_token, signal);
 
 		// Discover project
-		const projectId = await discoverProject(tokenData.access_token, onProgress);
+		const projectId = await discoverProject(tokenData.access_token, onProgress, signal);
 
 		// Calculate expiry time (current time + expires_in seconds - 5 min buffer)
 		const expiresAt = Date.now() + tokenData.expires_in * 1000 - 5 * 60 * 1000;
@@ -571,6 +596,7 @@ export async function loginGeminiCli(
 
 		return credentials;
 	} finally {
+		signal?.removeEventListener("abort", onAbort);
 		server.server.close();
 	}
 }
@@ -581,7 +607,7 @@ export const geminiCliOAuthProvider: OAuthProviderInterface = {
 	usesCallbackServer: true,
 
 	async login(callbacks: OAuthLoginCallbacks): Promise<OAuthCredentials> {
-		return loginGeminiCli(callbacks.onAuth, callbacks.onProgress, callbacks.onManualCodeInput);
+		return loginGeminiCli(callbacks.onAuth, callbacks.onProgress, callbacks.onManualCodeInput, callbacks.signal);
 	},
 
 	async refreshToken(credentials: OAuthCredentials): Promise<OAuthCredentials> {
