@@ -4441,6 +4441,47 @@ to:
 
 **Result:** shared AI usage accounting now avoids negative/fractional token drift and remains stable when compatible providers emit malformed token metadata.
 
+---
+
+### 245) coding-agent read-tool accepted non-integer/non-positive offset and limit values
+
+**Finding:** coding-agent read-tool accepted arbitrary numeric `offset`/`limit` values and silently coerced them during slicing, allowing malformed ranges (for example `offset=0`, `offset=1.2`, `limit=-3`) to produce ambiguous read behavior.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/read.ts`
+- `packages/coding-agent/test/tools.test.ts`
+- `packages/coding-agent/test/read-tool.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- constrain read schema `offset`/`limit` fields to positive integers,
+- validate range parameters at runtime with explicit errors for malformed values,
+- add regression tests for non-positive/non-integer offset/limit inputs.
+
+**Result:** coding-agent read-tool now fails fast on malformed range inputs instead of silently coercing invalid numeric values.
+
+---
+
+### 246) mom read-tool accepted non-integer/non-positive offset and limit values
+
+**Finding:** mom read-tool accepted arbitrary numeric `offset`/`limit` values and coerced them in range logic, allowing malformed values to produce unpredictable slices.
+
+**Action:** Updated:
+
+- `packages/mom/src/tools/read.ts`
+- `packages/mom/test/read-tool.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- constrain read schema `offset`/`limit` fields to positive integers,
+- validate optional range parameters with explicit parse errors before command execution,
+- add regression coverage for non-positive/non-integer values.
+
+**Result:** mom read-tool now rejects malformed read ranges deterministically and preserves clear caller diagnostics.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4462,6 +4503,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/args.test.ts`
 - coding-agent read-tool line-count regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/read-tool.test.ts`
+- coding-agent read-tool range validation regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/read-tool.test.ts test/tools.test.ts`
 - mom CLI args/model regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/cli-args.test.ts test/agent-model.test.ts`
 - mom CLI args parser regression tests pass:
