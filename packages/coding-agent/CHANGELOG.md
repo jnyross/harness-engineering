@@ -88,6 +88,7 @@
 - RPC extension TUI example now also uses single-settlement process exit handling across `error`/`exit` events to avoid duplicate shutdown paths.
 - Subagent extension example now uses single-settlement process handling with abort-listener cleanup and non-zero signal-exit mapping to avoid stale listeners and false success exits.
 - Interactive-shell extension example now classifies `spawnSync` startup/signal/unknown-status outcomes explicitly, treating rare `status=null/signal=null` closes as failures instead of false success.
+- RPC extension TUI example now reports `exit(code=null, signal=null)` as `unknown status` instead of the ambiguous `code null` reason string, while still normalizing the process exit to non-zero.
 
 ## [0.52.12] - 2026-02-13
 

@@ -19,6 +19,7 @@ import { dirname, join } from "node:path";
 import * as readline from "node:readline";
 import { fileURLToPath } from "node:url";
 import { type Component, Container, Input, matchesKey, ProcessTerminal, SelectList, TUI } from "@mariozechner/pi-tui";
+import { getRpcExtensionExitReason, normalizeRpcExtensionExitCode } from "./rpc-extension-exit-status.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -34,13 +35,6 @@ const RED = "\x1b[31m";
 const DIM = "\x1b[2m";
 const BOLD = "\x1b[1m";
 const RESET = "\x1b[0m";
-
-function normalizeExitCode(code: number | null, signal: NodeJS.Signals | null): number {
-	if (signal) {
-		return 1;
-	}
-	return code ?? 1;
-}
 
 // ============================================================================
 // Extension UI request type (subset of rpc-types.ts)
@@ -635,8 +629,8 @@ async function main() {
 	});
 
 	agent.on("exit", (code, signal) => {
-		const exitCode = normalizeExitCode(code, signal);
-		const reason = signal ? `signal ${signal}` : `code ${code}`;
+		const exitCode = normalizeRpcExtensionExitCode(code, signal);
+		const reason = getRpcExtensionExitReason(code, signal);
 		settleAndExit(exitCode, `Agent exited with ${reason}`);
 	});
 
