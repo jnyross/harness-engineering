@@ -5903,6 +5903,26 @@ to:
 
 **Result:** malformed keybindings JSON now fails safely (with defaults/valid subset preserved) instead of propagating incompatible runtime keybinding values.
 
+---
+
+### 316) coding-agent markdown settings read accepted malformed non-string indent values
+
+**Finding:** `packages/coding-agent/src/core/settings-manager.ts` returned `markdown.codeBlockIndent` directly from parsed settings; malformed non-string values could propagate into interactive markdown formatting settings.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/settings-manager.ts`
+- `packages/coding-agent/test/settings-manager.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize `markdown.codeBlockIndent` to string-only values,
+- fall back to default indentation when settings-file values are malformed non-strings,
+- add regression coverage for malformed fallback and valid string preservation.
+
+**Result:** markdown code-block indentation settings now remain deterministic for malformed settings-file edits instead of forwarding incompatible runtime values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
