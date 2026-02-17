@@ -149,6 +149,41 @@ function normalizePositiveSafeInteger(value: number | undefined, fallback: numbe
 	return value;
 }
 
+function normalizeThinkingBudgetValue(value: number | undefined): number | undefined {
+	if (value === undefined || Number.isNaN(value)) {
+		return undefined;
+	}
+	if (!Number.isSafeInteger(value) || value < 0) {
+		return undefined;
+	}
+	return value;
+}
+
+function normalizeThinkingBudgets(budgets: ThinkingBudgetsSettings | undefined): ThinkingBudgetsSettings | undefined {
+	if (!budgets) {
+		return undefined;
+	}
+	const normalized: ThinkingBudgetsSettings = {};
+	const minimal = normalizeThinkingBudgetValue(budgets.minimal);
+	if (minimal !== undefined) {
+		normalized.minimal = minimal;
+	}
+	const low = normalizeThinkingBudgetValue(budgets.low);
+	if (low !== undefined) {
+		normalized.low = low;
+	}
+	const medium = normalizeThinkingBudgetValue(budgets.medium);
+	if (medium !== undefined) {
+		normalized.medium = medium;
+	}
+	const high = normalizeThinkingBudgetValue(budgets.high);
+	if (high !== undefined) {
+		normalized.high = high;
+	}
+
+	return Object.keys(normalized).length > 0 ? normalized : undefined;
+}
+
 /** Deep merge settings: project/overrides take precedence, nested objects merge recursively */
 function deepMergeSettings(base: Settings, overrides: Settings): Settings {
 	const result: Settings = { ...base };
@@ -713,7 +748,7 @@ export class SettingsManager {
 	}
 
 	getThinkingBudgets(): ThinkingBudgetsSettings | undefined {
-		return this.settings.thinkingBudgets;
+		return normalizeThinkingBudgets(this.settings.thinkingBudgets);
 	}
 
 	getShowImages(): boolean {

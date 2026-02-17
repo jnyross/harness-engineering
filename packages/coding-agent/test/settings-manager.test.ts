@@ -328,4 +328,37 @@ describe("SettingsManager", () => {
 			expect(manager.getBranchSummarySettings()).toEqual({ reserveTokens: 9000 });
 		});
 	});
+
+	describe("thinking budget settings normalization", () => {
+		it("drops malformed thinking budget values from settings", () => {
+			const manager = SettingsManager.inMemory({
+				thinkingBudgets: {
+					minimal: Number.NaN,
+					low: -1,
+					medium: Number.POSITIVE_INFINITY,
+					high: Number.MAX_SAFE_INTEGER + 1,
+				},
+			});
+
+			expect(manager.getThinkingBudgets()).toBeUndefined();
+		});
+
+		it("preserves valid non-negative safe integer thinking budget values", () => {
+			const manager = SettingsManager.inMemory({
+				thinkingBudgets: {
+					minimal: 0,
+					low: 1024,
+					medium: 2048,
+					high: 4096,
+				},
+			});
+
+			expect(manager.getThinkingBudgets()).toEqual({
+				minimal: 0,
+				low: 1024,
+				medium: 2048,
+				high: 4096,
+			});
+		});
+	});
 });
