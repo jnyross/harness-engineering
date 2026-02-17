@@ -82,6 +82,7 @@
 - Package-manager async command failures now include the full invoked command line in startup/signal/non-zero diagnostics for easier troubleshooting.
 - Package-manager synchronous command execution now reports explicit startup failures when binaries cannot be spawned.
 - Package-manager synchronous command execution now distinguishes signal exits from unknown null-status exits, surfacing explicit unknown-status diagnostics instead of ambiguous `signal unknown` errors.
+- Package-manager async command execution now also distinguishes signal exits from unknown null-status exits, avoiding ambiguous `failed with code null` diagnostics on rare process-close edge cases.
 - RPC extension TUI example now handles agent spawn failures explicitly and maps signal-terminated agent exits to non-zero process exits.
 - RPC extension TUI example now also uses single-settlement process exit handling across `error`/`exit` events to avoid duplicate shutdown paths.
 - Subagent extension example now uses single-settlement process handling with abort-listener cleanup and non-zero signal-exit mapping to avoid stale listeners and false success exits.

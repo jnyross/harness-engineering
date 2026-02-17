@@ -26,3 +26,23 @@ export function getPackageManagerSyncCommandError(
 
 	return undefined;
 }
+
+export function getPackageManagerAsyncCloseError(options: {
+	invokedCommand: string;
+	code: number | null;
+	signal: NodeJS.Signals | null;
+}): string | undefined {
+	if (options.signal) {
+		return `${options.invokedCommand} exited due to signal ${options.signal}`;
+	}
+
+	if (options.code === null) {
+		return `${options.invokedCommand} exited with unknown status`;
+	}
+
+	if (options.code !== 0) {
+		return `${options.invokedCommand} failed with code ${options.code}`;
+	}
+
+	return undefined;
+}

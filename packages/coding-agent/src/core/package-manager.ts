@@ -7,7 +7,7 @@ import ignore from "ignore";
 import { minimatch } from "minimatch";
 import { CONFIG_DIR_NAME } from "../config.js";
 import { type GitSource, parseGitUrl } from "../utils/git.js";
-import { getPackageManagerSyncCommandError } from "./package-manager-sync-status.js";
+import { getPackageManagerAsyncCloseError, getPackageManagerSyncCommandError } from "./package-manager-sync-status.js";
 import type { PackageSource, SettingsManager } from "./settings-manager.js";
 
 export interface PathMetadata {
@@ -1726,14 +1726,15 @@ export class DefaultPackageManager implements PackageManager {
 				rejectOnce(new Error(`Failed to start ${invokedCommand}: ${error.message}`));
 			});
 			child.on("close", (code, signal) => {
-				if (signal) {
-					rejectOnce(new Error(`${invokedCommand} exited due to signal ${signal}`));
-					return;
-				}
-				if (code === 0) {
+				const closeError = getPackageManagerAsyncCloseError({
+					invokedCommand,
+					code,
+					signal,
+				});
+				if (!closeError) {
 					resolveOnce();
 				} else {
-					rejectOnce(new Error(`${invokedCommand} failed with code ${code}`));
+					rejectOnce(new Error(closeError));
 				}
 			});
 		});

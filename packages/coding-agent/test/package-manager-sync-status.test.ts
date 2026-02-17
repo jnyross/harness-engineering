@@ -1,6 +1,9 @@
 import type { SpawnSyncReturns } from "node:child_process";
 import { describe, expect, it } from "vitest";
-import { getPackageManagerSyncCommandError } from "../src/core/package-manager-sync-status.js";
+import {
+	getPackageManagerAsyncCloseError,
+	getPackageManagerSyncCommandError,
+} from "../src/core/package-manager-sync-status.js";
 
 function createResult(overrides: Partial<SpawnSyncReturns<string>>): SpawnSyncReturns<string> {
 	return {
@@ -63,5 +66,47 @@ describe("getPackageManagerSyncCommandError", () => {
 				invokedCommand: "npm root -g",
 			}),
 		).toBe("Failed to run npm root -g: permission denied\n");
+	});
+});
+
+describe("getPackageManagerAsyncCloseError", () => {
+	it("returns undefined for successful exits", () => {
+		expect(
+			getPackageManagerAsyncCloseError({
+				invokedCommand: "npm install foo",
+				code: 0,
+				signal: null,
+			}),
+		).toBeUndefined();
+	});
+
+	it("reports signal exits", () => {
+		expect(
+			getPackageManagerAsyncCloseError({
+				invokedCommand: "npm install foo",
+				code: null,
+				signal: "SIGTERM",
+			}),
+		).toBe("npm install foo exited due to signal SIGTERM");
+	});
+
+	it("reports unknown null/null exits", () => {
+		expect(
+			getPackageManagerAsyncCloseError({
+				invokedCommand: "npm install foo",
+				code: null,
+				signal: null,
+			}),
+		).toBe("npm install foo exited with unknown status");
+	});
+
+	it("reports non-zero exit codes", () => {
+		expect(
+			getPackageManagerAsyncCloseError({
+				invokedCommand: "npm install foo",
+				code: 9,
+				signal: null,
+			}),
+		).toBe("npm install foo failed with code 9");
 	});
 });
