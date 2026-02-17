@@ -170,6 +170,12 @@ describe("sshExecStreamDetailed", () => {
 			rmSync(dir, { recursive: true, force: true });
 		}
 	});
+
+	it("reports startup failures with full invoked command context", async () => {
+		const result = await sshExecStreamDetailed("/definitely/missing/ssh user@host", "echo test", { silent: true });
+		assert.equal(result.exitCode, 1);
+		assert.match(result.error ?? "", /Failed to start SSH process '\/definitely\/missing\/ssh user@host echo test'/);
+	});
 });
 
 describe("getSshStreamExitError", () => {

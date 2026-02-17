@@ -336,6 +336,7 @@ export const sshExecStreamDetailed = async (
 		}
 
 		sshArgs.push(command);
+		const invokedCommand = [sshBinary, ...sshArgs].join(" ");
 
 		const spawnOptions: SpawnOptions = options?.silent
 			? { stdio: ["ignore", "ignore", "ignore"] }
@@ -353,7 +354,7 @@ export const sshExecStreamDetailed = async (
 		proc.on("error", (error) => {
 			resolveOnce({
 				exitCode: 1,
-				error: `Failed to start SSH process: ${error.message}`,
+				error: `Failed to start SSH process '${invokedCommand}': ${error.message}`,
 			});
 		});
 	});
