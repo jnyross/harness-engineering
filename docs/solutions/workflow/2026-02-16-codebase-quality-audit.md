@@ -1998,9 +1998,10 @@ to:
 
 - explicitly await lazy import promises before using crypto/http helpers (`getNodeRandomBytes`, `getNodeHttp`),
 - make OAuth state generation and callback-server startup use those awaited helpers,
+- add cancellation checkpoints immediately after auth-flow initialization so post-start aborts fail before prompt fallback,
 - add regression tests for manual login paths (state mismatch rejection + successful manual code exchange/account extraction).
 
-**Result:** Codex OAuth startup is now deterministic regardless of lazy-import timing, and manual-input parsing paths are covered by targeted tests.
+**Result:** Codex OAuth startup is now deterministic regardless of lazy-import timing, and both manual-input parsing and post-start cancellation paths are covered by targeted tests.
 
 ## Validation Evidence
 
@@ -2022,7 +2023,7 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts test/openai-codex-oauth-abort.test.ts test/google-antigravity-oauth-abort.test.ts test/google-gemini-cli-oauth-abort.test.ts`
 - ai anthropic oauth parsing/state-validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts`
-- ai openai-codex oauth startup/manual-flow regression tests pass:
+- ai openai-codex oauth startup/manual-flow/cancellation regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-oauth-abort.test.ts`
 - coding-agent tools regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted write coverage)
