@@ -254,6 +254,10 @@ function normalizePackageSources(value: unknown): PackageSource[] {
 	return normalized;
 }
 
+function normalizeCodeBlockIndent(value: unknown): string | undefined {
+	return typeof value === "string" ? value : undefined;
+}
+
 function normalizeThinkingBudgetValue(value: number | undefined): number | undefined {
 	if (value === undefined || Number.isNaN(value)) {
 		return undefined;
@@ -967,6 +971,6 @@ export class SettingsManager {
 	}
 
 	getCodeBlockIndent(): string {
-		return this.settings.markdown?.codeBlockIndent ?? "  ";
+		return normalizeCodeBlockIndent(this.settings.markdown?.codeBlockIndent) ?? "  ";
 	}
 }

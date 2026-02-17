@@ -529,4 +529,23 @@ describe("SettingsManager", () => {
 			expect(manager.getEnabledModels()).toEqual(["openai/gpt-5", "anthropic/claude-sonnet"]);
 		});
 	});
+
+	describe("markdown settings normalization", () => {
+		it("falls back to default code-block indent for malformed values", () => {
+			const malformed = JSON.parse(`{
+				"markdown": { "codeBlockIndent": 2 }
+			}`) as Partial<Settings>;
+
+			const manager = SettingsManager.inMemory(malformed);
+			expect(manager.getCodeBlockIndent()).toBe("  ");
+		});
+
+		it("preserves valid string code-block indent values", () => {
+			const manager = SettingsManager.inMemory({
+				markdown: { codeBlockIndent: "\t" },
+			});
+
+			expect(manager.getCodeBlockIndent()).toBe("\t");
+		});
+	});
 });
