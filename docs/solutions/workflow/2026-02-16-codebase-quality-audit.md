@@ -2525,6 +2525,26 @@ to:
 
 **Result:** Antigravity image generation now reliably processes final SSE payload chunks even when streams end without newline terminators.
 
+---
+
+### 144) Windows process-tree cleanup paths could emit uncaught async `taskkill` spawn errors
+
+**Finding:** Windows kill-tree helpers in coding-agent and mom launched `taskkill` as best-effort cleanup but did not attach child-process `error` listeners. Async spawn failures can bypass surrounding `try/catch` and surface as uncaught process errors.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/utils/shell.ts`
+- `packages/mom/src/sandbox.ts`
+- `packages/coding-agent/CHANGELOG.md`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- attach no-op async `error` listeners to spawned `taskkill` children,
+- unref detached `taskkill` processes in these best-effort cleanup paths.
+
+**Result:** Windows process-tree cleanup is now safer in degraded environments, avoiding uncaught async spawn-error bubbling during best-effort termination.
+
 ## Validation Evidence
 
 - Root quality gate passes:

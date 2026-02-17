@@ -16,6 +16,7 @@
 - Sandbox command runners now handle process spawn failures (`ENOENT`, etc.) via explicit `error` listeners instead of relying on uncaught process-level errors.
 - Sandbox executors now short-circuit pre-aborted signals before spawning subprocesses, preventing unnecessary command startup when cancellation was already requested.
 - Sandbox command execution now treats signal-terminated child processes as non-zero exits instead of reporting false success.
+- Sandbox Windows process-tree cleanup now handles async `taskkill` spawn errors, preventing uncaught child-process errors during best-effort termination.
 
 ### Changed
 

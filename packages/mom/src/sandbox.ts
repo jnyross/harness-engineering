@@ -259,10 +259,14 @@ class DockerExecutor implements Executor {
 function killProcessTree(pid: number): void {
 	if (process.platform === "win32") {
 		try {
-			spawn("taskkill", ["/F", "/T", "/PID", String(pid)], {
+			const taskkill = spawn("taskkill", ["/F", "/T", "/PID", String(pid)], {
 				stdio: "ignore",
 				detached: true,
 			});
+			taskkill.on("error", () => {
+				// Ignore async spawn failures in best-effort cleanup path.
+			});
+			taskkill.unref();
 		} catch {
 			// Ignore errors
 		}
