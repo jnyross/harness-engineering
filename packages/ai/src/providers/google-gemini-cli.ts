@@ -168,13 +168,21 @@ const CLAUDE_THINKING_BETA_HEADER = "interleaved-thinking-2025-05-14";
  */
 export function extractRetryDelay(errorText: string, response?: Response | Headers): number | undefined {
 	const normalizeDelay = (ms: number): number | undefined => (ms > 0 ? Math.ceil(ms + 1000) : undefined);
+	const parseNonNegativeDecimal = (value: string): number | undefined => {
+		const trimmed = value.trim();
+		if (!/^\d+(?:\.\d+)?$/.test(trimmed)) {
+			return undefined;
+		}
+		const parsed = Number(trimmed);
+		return Number.isFinite(parsed) ? parsed : undefined;
+	};
 
 	const headers = response instanceof Headers ? response : response?.headers;
 	if (headers) {
 		const retryAfter = headers.get("retry-after");
 		if (retryAfter) {
-			const retryAfterSeconds = Number(retryAfter);
-			if (Number.isFinite(retryAfterSeconds)) {
+			const retryAfterSeconds = parseNonNegativeDecimal(retryAfter);
+			if (retryAfterSeconds !== undefined) {
 				const delay = normalizeDelay(retryAfterSeconds * 1000);
 				if (delay !== undefined) {
 					return delay;
@@ -204,8 +212,8 @@ export function extractRetryDelay(errorText: string, response?: Response | Heade
 
 		const rateLimitResetAfter = headers.get("x-ratelimit-reset-after");
 		if (rateLimitResetAfter) {
-			const resetAfterSeconds = Number(rateLimitResetAfter);
-			if (Number.isFinite(resetAfterSeconds)) {
+			const resetAfterSeconds = parseNonNegativeDecimal(rateLimitResetAfter);
+			if (resetAfterSeconds !== undefined) {
 				const delay = normalizeDelay(resetAfterSeconds * 1000);
 				if (delay !== undefined) {
 					return delay;
