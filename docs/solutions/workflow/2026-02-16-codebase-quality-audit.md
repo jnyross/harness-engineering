@@ -4375,6 +4375,27 @@ to:
 
 **Result:** pods pod-override parsing now enforces identical value validation semantics across both flag syntaxes.
 
+---
+
+### 242) mom read-tool line counting overestimated files with trailing newlines
+
+**Finding:** mom read-tool estimated total line counts as `wc -l + 1`, which overcounted files that end with trailing newlines and allowed out-of-range offsets (for example offset `2` on a one-line file).
+
+**Action:** Updated:
+
+- `packages/mom/src/tools/read.ts`
+- `packages/mom/test/read-tool.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- switch to exact line counting via `sed -n '$='`,
+- treat empty line-count output as zero lines,
+- enforce offset-bounds checks against exact line counts while still allowing offset-less empty-file reads,
+- add regression tests for empty files and trailing-newline offset bounds.
+
+**Result:** read-tool now reports/enforces correct line boundaries and no longer accepts false extra-line offsets caused by newline-count approximation.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4396,6 +4417,8 @@ to:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/cli-args.test.ts test/agent-model.test.ts`
 - mom CLI args parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/cli-args.test.ts`
+- mom read-tool line-count regression tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/read-tool.test.ts`
 - agent project-runner args regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/project-runner.test.ts`
 - mom sandbox regression tests pass:
