@@ -4954,6 +4954,26 @@ to:
 
 **Result:** malformed oversized Kitty numeric fields are now rejected before key matching/parsing, preventing false synthesized modifier combinations from unsafe integer coercion.
 
+---
+
+### 270) coding-agent settings-selector numeric options accepted permissive integer coercion
+
+**Finding:** `packages/coding-agent/src/modes/interactive/components/settings-selector.ts` parsed `editor-padding` and `autocomplete-max-visible` values with direct `parseInt(...)`, which could forward malformed or unsafe integer coercions into settings callbacks.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/components/settings-selector.ts`
+- `packages/coding-agent/test/settings-selector.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- centralize numeric option parsing via strict decimal safe-integer validation,
+- reject malformed/unsafe values before invoking settings callbacks,
+- add regression coverage for valid and malformed/unsafe numeric option values.
+
+**Result:** settings-selector numeric options now reject malformed/unsafe integer payloads instead of forwarding permissive numeric coercions.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4975,6 +4995,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/changelog-utils.test.ts test/export-html-color-parsing.test.ts`
 - coding-agent tool numeric-parameter safety regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/execution-plan.test.ts test/read-tool.test.ts test/tool-numeric-parameter-safety.test.ts`
+- coding-agent settings-selector numeric parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/settings-selector.test.ts`
 - ai usage metadata regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts`
 - ai Gemini retry-delay (including safe-millisecond bounds) regression tests pass:
