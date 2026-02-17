@@ -236,6 +236,18 @@ exit 0
 		assert.equal(result.error, "Unsupported SSH option for SCP: -W");
 	});
 
+	it("reports scp startup failures with invoked command context", async () => {
+		const originalPath = process.env.PATH;
+		try {
+			process.env.PATH = "";
+			const result = await scpFile("ssh user@host", "/tmp/local.txt", "/tmp/remote.txt");
+			assert.equal(result.ok, false);
+			assert.match(result.error ?? "", /Failed to start scp command 'scp .*': spawn scp ENOENT/);
+		} finally {
+			process.env.PATH = originalPath;
+		}
+	});
+
 	it("returns failure result when scp process exits via signal", async () => {
 		const dir = mkdtempSync(join(tmpdir(), "pi-pods-scp-signal-"));
 		const scpPath = join(dir, "scp");

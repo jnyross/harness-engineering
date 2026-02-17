@@ -476,6 +476,7 @@ export const scpFile = async (sshCmd: string, localPath: string, remotePath: str
 
 	// Build SCP command
 	const scpArgs = [...scpOptionsResult.options, localPath, `${scpOptionsResult.host}:${remotePath}`];
+	const invokedCommand = ["scp", ...scpArgs].join(" ");
 
 	return new Promise((resolve) => {
 		let settled = false;
@@ -497,7 +498,7 @@ export const scpFile = async (sshCmd: string, localPath: string, remotePath: str
 		proc.on("error", (error) => {
 			resolveOnce({
 				ok: false,
-				error: `Failed to start scp command: ${error.message}`,
+				error: `Failed to start scp command '${invokedCommand}': ${error.message}`,
 			});
 		});
 	});
