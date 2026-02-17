@@ -138,6 +138,9 @@ export class RuntimeMessageRouter {
 				if (!context) {
 					return;
 				}
+				if (context.iframe?.contentWindow && e.source !== context.iframe.contentWindow) {
+					return;
+				}
 				const sourceWindow = e.source && "postMessage" in e.source ? (e.source as WindowProxy) : null;
 
 				// Create respond() function for bidirectional communication

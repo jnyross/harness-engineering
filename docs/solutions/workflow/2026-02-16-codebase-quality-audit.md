@@ -3273,6 +3273,23 @@ to:
 
 **Result:** Sandbox console runtime listener teardown now remains deterministic even when completion-message delivery fails.
 
+---
+
+### 184) runtime message router accepted iframe messages without source-window identity checks
+
+**Finding:** Router sandbox message handling keyed only on `sandboxId`; when iframe references existed, cross-frame messages could be routed if they reused a known sandbox ID.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/sandbox/RuntimeMessageRouter.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- require incoming iframe message `source` to match the registered sandbox iframe window before routing.
+
+**Result:** Runtime routing now rejects spoofed cross-frame iframe messages that do not originate from the registered sandbox window.
+
 ## Validation Evidence
 
 - Root quality gate passes:
