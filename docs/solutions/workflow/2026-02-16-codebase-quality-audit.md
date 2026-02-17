@@ -2171,6 +2171,26 @@ to:
 
 **Result:** RPC send now fails fast on closed pipes and cleans pending request state deterministically across both synchronous and callback-based write failure modes.
 
+---
+
+### 126) rpc client stop path could race-settle exit vs forced-kill timeout
+
+**Finding:** `RpcClient.stop()` waited on both process `exit` and a forced-kill timeout without explicit single-settlement cleanup. In edge cases this can trigger duplicate resolve attempts and keep stale exit listeners attached after timeout resolution.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/rpc/rpc-client.ts`
+- `packages/coding-agent/test/rpc-client.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- add single-settlement stop handling (`resolveOnce`) with listener/timeouts cleanup,
+- ensure timeout-forced `SIGKILL` and natural `exit` paths share deterministic cleanup behavior,
+- add regression test proving forced-kill timeout path resolves cleanly and removes `exit` listeners.
+
+**Result:** RPC client shutdown now handles timeout/exit races deterministically with proper listener/timer cleanup.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2180,7 +2200,7 @@ to:
 - agent spawnScript regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts`
 - coding-agent RPC startup/shutdown regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures, pending-request rejection on stop, send timeout/write-error cleanup, and closed-stdin send handling)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures, pending-request rejection on stop, stop timeout forced-kill cleanup, send timeout/write-error cleanup, and closed-stdin send handling)
 - coding-agent sleep helper regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/sleep.test.ts` (includes listener cleanup on resolve + abort paths)
 - ai abortable sleep + retry stream regression tests pass:
