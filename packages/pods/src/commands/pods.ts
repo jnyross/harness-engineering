@@ -18,7 +18,13 @@ function parseGpuQueryLine(line: string): GPU | undefined {
 		return undefined;
 	}
 
-	const [idRaw, nameRaw, memoryRaw] = trimmed.split(",").map((value) => value.trim());
+	const parts = trimmed.split(",");
+	if (parts.length < 3) {
+		return undefined;
+	}
+	const idRaw = parts[0]?.trim();
+	const memoryRaw = parts[parts.length - 1]?.trim();
+	const nameRaw = parts.slice(1, -1).join(",").trim();
 	if (!idRaw || !/^\d+$/.test(idRaw)) {
 		return undefined;
 	}

@@ -75,6 +75,7 @@
 - `--context` normalization now rejects mixed alphanumeric inputs (for example `4096tokens`) instead of truncating via `parseInt`, ensuring only aliases or positive integer token counts are accepted.
 - `--gpus` option parsing now rejects mixed/non-numeric values (for example `2gpu`) instead of truncating via `parseInt`, ensuring only positive integer GPU counts are accepted.
 - Pod setup GPU detection now skips malformed `nvidia-smi` CSV lines (with warning) instead of persisting `NaN` GPU IDs from partially parseable output.
+- Pod setup GPU detection now parses names using first/last CSV fields (id/memory), preserving GPU names that contain commas.
 - Model start context/PID parsing now uses strict validation (`--context` alias/integer resolution + runner PID parsing) so malformed values like `4096tokens` / `123abc` are rejected instead of being partially coerced via `parseInt`.
 - Model start memory parsing now validates percentage values strictly (`0 < value <= 100`) so malformed inputs like `50percent` are rejected instead of being partially coerced.
 

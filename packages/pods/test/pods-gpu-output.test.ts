@@ -19,4 +19,10 @@ describe("parseGpuQueryOutput", () => {
 		assert.deepEqual(parsed.gpus, [{ id: 2, name: "NVIDIA H200", memory: "141312 MiB" }]);
 		assert.deepEqual(parsed.skippedLines, ["abc, NVIDIA H100, 81559 MiB", ", no id"]);
 	});
+
+	it("parses gpu names that contain commas", () => {
+		const parsed = parseGpuQueryOutput("0, NVIDIA RTX, 6000 Ada Generation, 49140 MiB\n");
+		assert.deepEqual(parsed.gpus, [{ id: 0, name: "NVIDIA RTX, 6000 Ada Generation", memory: "49140 MiB" }]);
+		assert.deepEqual(parsed.skippedLines, []);
+	});
 });
