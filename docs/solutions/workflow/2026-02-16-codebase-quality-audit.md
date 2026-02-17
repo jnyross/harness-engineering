@@ -1673,6 +1673,22 @@ to reject pending in-flight RPC requests during client shutdown and added regres
 
 **Result:** RPC clients now fail pending requests immediately on stop, avoiding shutdown-time request hangs.
 
+---
+
+### 99) coding-agent sleep helper leaked abort listeners after resolve
+
+**Finding:** `sleep(ms, signal)` attached abort listeners without cleanup on resolve/reject, allowing listener accumulation and redundant reject attempts when shared signals were reused.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/utils/sleep.ts`
+- `packages/coding-agent/test/sleep.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to use single-settlement resolve/reject paths with listener cleanup and added regression coverage for listener cleanup on both resolve and abort paths.
+
+**Result:** Sleep helper now cleans abort listeners deterministically and avoids double-settlement behavior under abort timing races.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1683,6 +1699,8 @@ to reject pending in-flight RPC requests during client shutdown and added regres
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts`
 - coding-agent RPC startup/shutdown regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures + pending-request rejection on stop)
+- coding-agent sleep helper regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/sleep.test.ts` (includes listener cleanup on resolve + abort paths)
 - coding-agent execCommand regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - coding-agent interactive status tests pass after share flow command-exec refactor:
