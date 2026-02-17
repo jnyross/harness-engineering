@@ -5819,6 +5819,27 @@ to:
 
 **Result:** editor layout setters now apply the same deterministic numeric normalization as settings-file reads, preventing malformed non-finite values from persisting through runtime mutator calls.
 
+---
+
+### 312) coding-agent boolean settings reads accepted malformed non-boolean values
+
+**Finding:** `packages/coding-agent/src/core/settings-manager.ts` boolean getters relied on nullish defaults without runtime type checks; malformed settings-file values (for example `"false"` string, numeric `0/1`) could bypass defaults via truthy/falsy coercion and alter toggle semantics unexpectedly.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/settings-manager.ts`
+- `packages/coding-agent/test/settings-manager.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize boolean settings reads via explicit runtime type checks,
+- apply defaults when values are present but non-boolean,
+- preserve valid boolean settings values unchanged,
+- add regression coverage for malformed-value fallback and valid-value preservation across compaction/retry/display/image/editor toggles.
+
+**Result:** malformed non-boolean toggle values from settings files now safely fall back to defaults instead of changing runtime behavior through implicit truthy/falsy coercion.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5967,7 +5988,7 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/gh-auth-status.test.ts` (includes missing gh spawn failure, signal interruption, non-zero auth status, and success cases)
 - coding-agent countdown timer regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/countdown-timer.test.ts` (includes normal expiry, manual dispose stop, onTick-throw safety coverage, and timeout normalization coverage including positive-infinite clamping)
-- coding-agent settings manager numeric-normalization regression tests pass (retry + editor layout read/write + token-budget + thinking-budget settings):
+- coding-agent settings manager normalization regression tests pass (numeric + boolean settings):
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/settings-manager.test.ts`
 - coding-agent extension dialog callback regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extension-dialog-callbacks.test.ts` (includes throwing selector/input/editor callback safety and post-dispose callback suppression across selector/input/editor dialogs)
