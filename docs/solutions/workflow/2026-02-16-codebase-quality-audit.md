@@ -1590,6 +1590,24 @@ to export/reuse validated SSH command parsing (`parseSshCommand`) across interac
 
 **Result:** Pods shell and model log execution now consistently enforce SSH-binary validation before process launch, aligning command safety behavior across all SSH entry points.
 
+---
+
+### 94) pods SSH wrappers treated signal-terminated sessions as success
+
+**Finding:** SSH helper/CLI shell wrappers collapsed `code === null` to `0`, causing signal-terminated SSH subprocesses to be reported as successful exits.
+
+**Action:** Updated:
+
+- `packages/pods/src/ssh.ts`
+- `packages/pods/src/cli.ts`
+- `packages/pods/test/ssh-parse.test.ts`
+- `packages/pods/test/cli-shell.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to treat signal-terminated SSH child processes as non-zero exits and added regression coverage for both helper and CLI-shell behavior.
+
+**Result:** Interrupted/terminated SSH subprocesses now propagate failure semantics correctly instead of being misreported as success.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1616,6 +1634,8 @@ to export/reuse validated SSH command parsing (`parseSshCommand`) across interac
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted bash tool signal case)
 - pods SSH validation + spawn handling regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/ssh-parse.test.ts test/process-exit.test.ts test/cli-shell.test.ts`
+- pods SSH signal-exit semantics regression tests pass:
+  - `npm --workspace "@mariozechner/pi" test -- test/ssh-parse.test.ts test/cli-shell.test.ts test/process-exit.test.ts`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes docker-missing spawn-error handling case)
 - Agent package tests pass:
