@@ -26,9 +26,19 @@ import { createMomTools, setUploadFunction } from "./tools/index.js";
 const DEFAULT_MODEL_PROVIDER = "anthropic";
 const DEFAULT_MODEL_ID = "claude-sonnet-4-5";
 
-function resolveMomModel(): Model<Api> {
-	const provider = process.env.PI_MOM_PROVIDER ?? process.env.MOM_MODEL_PROVIDER ?? DEFAULT_MODEL_PROVIDER;
-	const modelId = process.env.PI_MOM_MODEL ?? process.env.MOM_MODEL_ID ?? DEFAULT_MODEL_ID;
+function resolveConfiguredValue(values: Array<string | undefined>): string | undefined {
+	for (const value of values) {
+		const trimmed = value?.trim();
+		if (trimmed) {
+			return trimmed;
+		}
+	}
+	return undefined;
+}
+
+export function resolveMomModel(env: NodeJS.ProcessEnv = process.env): Model<Api> {
+	const provider = resolveConfiguredValue([env.PI_MOM_PROVIDER, env.MOM_MODEL_PROVIDER]) ?? DEFAULT_MODEL_PROVIDER;
+	const modelId = resolveConfiguredValue([env.PI_MOM_MODEL, env.MOM_MODEL_ID]) ?? DEFAULT_MODEL_ID;
 	const providers = getProviders();
 	const selectedProvider = providers.find((p) => p === provider);
 
@@ -67,12 +77,12 @@ export interface AgentRunner {
 	abort(): void;
 }
 
-async function getAnthropicApiKey(authStorage: AuthStorage): Promise<string> {
-	const key = await authStorage.getApiKey("anthropic");
+export async function getMomApiKey(authStorage: Pick<AuthStorage, "getApiKey">, providerId: string): Promise<string> {
+	const key = await authStorage.getApiKey(providerId);
 	if (!key) {
 		throw new Error(
-			"No API key found for anthropic.\n\n" +
-				"Set an API key environment variable, or use /login with Anthropic and link to auth.json from " +
+			`No API key found for provider "${providerId}".\n\n` +
+				`Set an API key environment variable for "${providerId}", or use /login and link to auth.json from ` +
 				join(homedir(), ".pi", "mom", "auth.json"),
 		);
 	}
@@ -465,7 +475,7 @@ function createRunner(sandboxConfig: SandboxConfig, channelId: string, channelDi
 			tools,
 		},
 		convertToLlm,
-		getApiKey: async () => getAnthropicApiKey(authStorage),
+		getApiKey: async () => getMomApiKey(authStorage, model.provider),
 	});
 
 	// Load existing messages
