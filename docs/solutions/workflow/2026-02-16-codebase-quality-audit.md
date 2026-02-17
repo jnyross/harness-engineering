@@ -5468,6 +5468,27 @@ to:
 
 **Result:** stdin buffering now handles malformed/oversized timeout options deterministically without relying on implicit Node timer clamping semantics.
 
+---
+
+### 295) pods GPU CSV parser could mis-split memory values with thousands separators
+
+**Finding:** `packages/pods/src/commands/pods.ts` parsed `nvidia-smi` CSV lines by splitting on commas and treating the last segment as memory; memory values formatted with thousands separators (for example `80,000 MiB`) were split into name/memory fragments and persisted incorrectly.
+
+**Action:** Updated:
+
+- `packages/pods/src/commands/pods.ts`
+- `packages/pods/test/pods-gpu-output.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- parse GPU id from the first CSV field deterministically,
+- parse trailing memory-with-units patterns (including grouped thousands separators) before fallback splitting,
+- preserve GPU names containing commas while correctly preserving memory fields like `80,000 MiB`,
+- add regression coverage for memory-thousands-separator parsing.
+
+**Result:** pod setup GPU detection now handles comma-formatted memory values without corrupting GPU name/memory fields.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5533,6 +5554,8 @@ to:
   - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts test/models-ssh-status.test.ts`
 - pods process-identifier safe-integer regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/process-identifiers.test.ts`
+- pods GPU CSV parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi" test -- test/pods-gpu-output.test.ts`
 - pods required-option smoke checks pass:
   - `npx tsx packages/pods/src/cli.ts start demo-model --name demo --memory`
   - `npx tsx packages/pods/src/cli.ts pods setup demo "ssh host" --vllm`
