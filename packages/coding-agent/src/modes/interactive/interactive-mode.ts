@@ -1587,20 +1587,30 @@ export class InteractiveMode {
 	 */
 	private showExtensionEditor(title: string, prefill?: string): Promise<string | undefined> {
 		return new Promise((resolve) => {
-			this.extensionEditor = new ExtensionEditorComponent(
+			let settled = false;
+			const editor = new ExtensionEditorComponent(
 				this.ui,
 				this.keybindings,
 				title,
 				prefill,
 				(value) => {
-					this.hideExtensionEditor();
+					if (settled) {
+						return;
+					}
+					settled = true;
+					this.hideExtensionEditor(editor);
 					resolve(value);
 				},
 				() => {
-					this.hideExtensionEditor();
+					if (settled) {
+						return;
+					}
+					settled = true;
+					this.hideExtensionEditor(editor);
 					resolve(undefined);
 				},
 			);
+			this.extensionEditor = editor;
 
 			this.editorContainer.clear();
 			this.editorContainer.addChild(this.extensionEditor);
@@ -1612,7 +1622,10 @@ export class InteractiveMode {
 	/**
 	 * Hide the extension editor.
 	 */
-	private hideExtensionEditor(): void {
+	private hideExtensionEditor(expected?: ExtensionEditorComponent): void {
+		if (expected && this.extensionEditor !== expected) {
+			return;
+		}
 		this.extensionEditor?.dispose?.();
 		this.editorContainer.clear();
 		this.editorContainer.addChild(this.editor);

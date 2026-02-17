@@ -3947,6 +3947,24 @@ to:
 
 **Result:** Extension selector/input callbacks are now reliably ignored after disposal, preventing stale callback execution during teardown races.
 
+---
+
+### 220) extension editor prompt completion lacked instance-aware single-settlement guarding
+
+**Finding:** Extension editor prompt flow resolved callbacks by directly hiding current editor instance, without instance-aware single-settlement guards, allowing stale callbacks to potentially tear down a newer editor instance.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/interactive-mode.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- enforce single-settlement completion for extension editor prompt callbacks,
+- route hide operations through instance-aware guards to suppress stale editor callback teardown.
+
+**Result:** Extension editor prompt completion now settles once and ignores stale callbacks targeting replaced editor instances.
+
 ## Validation Evidence
 
 - Root quality gate passes:
