@@ -90,6 +90,7 @@
 - Edit tool now uses single-settlement abort cleanup across validation/read/write branches, ensuring deterministic cancellation/error settlement behavior.
 - Package-manager command execution now uses single-settlement handling for spawn `error`/`close` races and reports clearer startup/signal failures.
 - Package-manager async command failures now include the full invoked command line in startup/signal/non-zero diagnostics for easier troubleshooting.
+- Package-manager sync/async status helpers now prefix failure diagnostics with `Command ...` wording, keeping command context explicit and consistent across timeout/signal/unknown/non-zero failure branches.
 - Package-manager synchronous command execution now reports explicit startup failures when binaries cannot be spawned.
 - Package-manager synchronous command execution now distinguishes signal exits from unknown null-status exits, surfacing explicit unknown-status diagnostics instead of ambiguous `signal unknown` errors.
 - Package-manager async command execution now also distinguishes signal exits from unknown null-status exits, avoiding ambiguous `failed with code null` diagnostics on rare process-close edge cases.

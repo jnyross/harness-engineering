@@ -30,7 +30,7 @@ describe("getPackageManagerSyncCommandError", () => {
 			getPackageManagerSyncCommandError(createResult({ status: null, error: new Error("spawn ENOENT") }), {
 				invokedCommand: "npm root -g",
 			}),
-		).toBe("Failed to start npm root -g: spawn ENOENT");
+		).toBe("Failed to start command npm root -g: spawn ENOENT");
 	});
 
 	it("reports timeout startup failures", () => {
@@ -41,7 +41,7 @@ describe("getPackageManagerSyncCommandError", () => {
 				invokedCommand: "npm root -g",
 				timeoutMs: 5000,
 			}),
-		).toBe("npm root -g timed out after 5000ms");
+		).toBe("Command npm root -g timed out after 5000ms");
 	});
 
 	it("reports signal exits", () => {
@@ -49,7 +49,7 @@ describe("getPackageManagerSyncCommandError", () => {
 			getPackageManagerSyncCommandError(createResult({ status: null, signal: "SIGTERM" }), {
 				invokedCommand: "npm root -g",
 			}),
-		).toBe("npm root -g exited due to signal SIGTERM");
+		).toBe("Command npm root -g exited due to signal SIGTERM");
 	});
 
 	it("reports unknown null/null exits", () => {
@@ -57,7 +57,7 @@ describe("getPackageManagerSyncCommandError", () => {
 			getPackageManagerSyncCommandError(createResult({ status: null, signal: null }), {
 				invokedCommand: "npm root -g",
 			}),
-		).toBe("npm root -g exited with unknown status");
+		).toBe("Command npm root -g exited with unknown status");
 	});
 
 	it("reports non-zero exits with stderr details", () => {
@@ -65,7 +65,7 @@ describe("getPackageManagerSyncCommandError", () => {
 			getPackageManagerSyncCommandError(createResult({ status: 2, stderr: "permission denied\n" }), {
 				invokedCommand: "npm root -g",
 			}),
-		).toBe("Failed to run npm root -g: permission denied\n");
+		).toBe("Failed to run command npm root -g: permission denied\n");
 	});
 });
 
@@ -87,7 +87,7 @@ describe("getPackageManagerAsyncCloseError", () => {
 				code: null,
 				signal: "SIGTERM",
 			}),
-		).toBe("npm install foo exited due to signal SIGTERM");
+		).toBe("Command npm install foo exited due to signal SIGTERM");
 	});
 
 	it("reports unknown null/null exits", () => {
@@ -97,7 +97,7 @@ describe("getPackageManagerAsyncCloseError", () => {
 				code: null,
 				signal: null,
 			}),
-		).toBe("npm install foo exited with unknown status");
+		).toBe("Command npm install foo exited with unknown status");
 	});
 
 	it("reports non-zero exit codes", () => {
@@ -107,6 +107,6 @@ describe("getPackageManagerAsyncCloseError", () => {
 				code: 9,
 				signal: null,
 			}),
-		).toBe("npm install foo failed with code 9");
+		).toBe("Command npm install foo failed with code 9");
 	});
 });
