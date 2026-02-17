@@ -49,7 +49,7 @@ export async function readPipedStdin(input: NodeJS.ReadStream = process.stdin): 
 		};
 
 		const onError = (error: Error) => {
-			rejectOnce(error);
+			rejectOnce(new Error(`Failed to read piped stdin: ${error.message}`));
 		};
 
 		const onClose = () => {

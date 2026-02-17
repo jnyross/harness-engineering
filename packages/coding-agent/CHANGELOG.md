@@ -41,6 +41,7 @@
 - CLI piped-stdin ingestion now uses a dedicated helper with one-time listener cleanup and explicit stream-error handling, preventing unresolved stdin reads on pipe failures.
 - CLI piped-stdin ingestion now also settles on stream `close` events (using buffered content), preventing hangs when stdin closes without an `end` event.
 - CLI piped-stdin ingestion now short-circuits already-ended/destroyed streams, avoiding unnecessary listener wiring on pre-closed stdin handles.
+- CLI piped-stdin stream errors now include explicit `Failed to read piped stdin: ...` context, improving diagnostics for broken pipe/stdin failure scenarios.
 - CLI yes/no fork confirmation prompts now use a dedicated helper with single-settlement close handling, preventing stuck prompts when stdin closes early.
 - CLI fork confirmation prompts now also short-circuit/settle safely when readline is already closed (or `question()` throws), preventing hangs in pre-closed stdin edge cases.
 - Linux clipboard copy fallback now attaches a `wl-copy` spawn-error handler, preventing uncaught child-process errors from bubbling during best-effort clipboard writes.

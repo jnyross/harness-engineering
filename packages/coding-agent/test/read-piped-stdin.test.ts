@@ -28,7 +28,7 @@ describe("readPipedStdin", () => {
 		const input = createInputStream(false);
 		const resultPromise = readPipedStdin(input);
 		(input as unknown as PassThrough).emit("error", new Error("stdin failed"));
-		await expect(resultPromise).rejects.toThrow("stdin failed");
+		await expect(resultPromise).rejects.toThrow("Failed to read piped stdin: stdin failed");
 	});
 
 	it("resolves with collected data when stream closes before end", async () => {
