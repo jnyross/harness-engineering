@@ -19,4 +19,10 @@ describe("initTheme COLORFGBG auto-detection", () => {
 		initTheme(undefined, false);
 		expect(theme.name).toBe("dark");
 	});
+
+	it("ignores out-of-range background index and falls back to dark", () => {
+		process.env.COLORFGBG = "0;999";
+		initTheme(undefined, false);
+		expect(theme.name).toBe("dark");
+	});
 });

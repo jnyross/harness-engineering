@@ -628,7 +628,7 @@ function parseColorFgbgBackgroundIndex(colorfgbg: string): number | undefined {
 		return undefined;
 	}
 	const background = Number.parseInt(backgroundRaw, 10);
-	return Number.isSafeInteger(background) ? background : undefined;
+	return Number.isSafeInteger(background) && background >= 0 && background <= 255 ? background : undefined;
 }
 
 function detectTerminalBackground(): "dark" | "light" {
