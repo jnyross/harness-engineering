@@ -39,6 +39,14 @@ function parseAuthorizationInput(input: string): { code?: string; state?: string
 		return { code: code || undefined, state: state || undefined };
 	}
 
+	if (value.includes("code=")) {
+		const params = new URLSearchParams(value);
+		return {
+			code: params.get("code") ?? undefined,
+			state: params.get("state") ?? undefined,
+		};
+	}
+
 	return { code: value };
 }
 

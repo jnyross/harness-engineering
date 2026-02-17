@@ -84,4 +84,38 @@ describe("anthropic oauth login", () => {
 		});
 		expect(String(requestInit?.body)).toContain('"code":"parsed-code"');
 	});
+
+	it("parses query-string formatted manual input", async () => {
+		let verifierState: string | null = null;
+		const onAuth = (url: string) => {
+			verifierState = new URL(url).searchParams.get("state");
+		};
+
+		const fetchMock = vi.fn(
+			async (_input: unknown, _init?: RequestInit) =>
+				new Response(
+					JSON.stringify({
+						access_token: "access-token-2",
+						refresh_token: "refresh-token-2",
+						expires_in: 3600,
+					}),
+					{
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					},
+				),
+		);
+		vi.stubGlobal("fetch", fetchMock);
+
+		const credentials = await loginAnthropic(onAuth, async () => `code=query-code&state=${verifierState}`);
+
+		expect(credentials.access).toBe("access-token-2");
+		expect(credentials.refresh).toBe("refresh-token-2");
+		const firstCall = fetchMock.mock.calls[0];
+		expect(firstCall).toBeDefined();
+		if (!firstCall) {
+			throw new Error("Expected fetch to be called once");
+		}
+		expect(String(firstCall[1]?.body)).toContain('"code":"query-code"');
+	});
 });
