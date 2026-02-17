@@ -20,6 +20,7 @@ const findSchema = Type.Object({
 export type FindToolInput = Static<typeof findSchema>;
 
 const DEFAULT_LIMIT = 1000;
+const DEFAULT_FD_TIMEOUT_MS = 30000;
 
 export interface FindToolDetails {
 	truncation?: TruncationResult;
@@ -49,6 +50,7 @@ const defaultFindOperations: FindOperations = {
 		spawnSync(fdPath, args, {
 			encoding: "utf-8",
 			maxBuffer: 10 * 1024 * 1024,
+			timeout: DEFAULT_FD_TIMEOUT_MS,
 		}),
 };
 

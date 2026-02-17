@@ -92,6 +92,7 @@ const defaultFdSpawn: FdSpawn = (fdPath, args) =>
 		encoding: "utf-8",
 		stdio: ["pipe", "pipe", "pipe"],
 		maxBuffer: 10 * 1024 * 1024,
+		timeout: 5000,
 	});
 
 function walkDirectoryWithFd(
