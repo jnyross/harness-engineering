@@ -1331,6 +1331,23 @@ to enforce strict quoted-argument parsing during template expansion and added re
 
 **Result:** Malformed quoted template arguments now fail fast with explicit parsing errors instead of silently producing incorrect expansions.
 
+---
+
+### 78) command-name parsing only recognized literal spaces as separators
+
+**Finding:** Prompt-template and slash-command name parsing in coding-agent used `indexOf(" ")`, so tab-separated command invocations could fail to resolve command/template names correctly.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/prompt-templates.ts`
+- `packages/coding-agent/src/core/agent-session.ts`
+- `packages/coding-agent/test/prompt-templates.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to detect the first whitespace separator using `search(/\s/)` and added regression coverage for tab-separated template invocation.
+
+**Result:** Slash-command and prompt-template parsing now handles space- and tab-separated command arguments consistently.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1469,6 +1486,8 @@ to enforce strict quoted-argument parsing during template expansion and added re
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (includes `C:\Tools\node.exe ...` command parse case)
 - coding-agent strict prompt-template argument validation coverage:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-templates.test.ts test/parse-command-args.test.ts` (includes unmatched-quote template invocation rejection)
+- coding-agent tab-separated command parsing coverage:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-templates.test.ts` (includes `/tmpl\t...` invocation case)
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
