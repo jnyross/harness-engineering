@@ -50,6 +50,12 @@ type JwtPayload = {
 	[key: string]: unknown;
 };
 
+function assertNotAborted(signal?: AbortSignal): void {
+	if (signal?.aborted) {
+		throw new Error("Login cancelled");
+	}
+}
+
 function createState(): string {
 	if (!_randomBytes) {
 		throw new Error("OpenAI Codex OAuth is only available in Node.js environments");
@@ -103,9 +109,11 @@ async function exchangeAuthorizationCode(
 	code: string,
 	verifier: string,
 	redirectUri: string = REDIRECT_URI,
+	signal?: AbortSignal,
 ): Promise<TokenResult> {
 	const response = await fetch(TOKEN_URL, {
 		method: "POST",
+		signal,
 		headers: { "Content-Type": "application/x-www-form-urlencoded" },
 		body: new URLSearchParams({
 			grant_type: "authorization_code",
@@ -308,9 +316,15 @@ export async function loginOpenAICodex(options: {
 	onProgress?: (message: string) => void;
 	onManualCodeInput?: () => Promise<string>;
 	originator?: string;
+	signal?: AbortSignal;
 }): Promise<OAuthCredentials> {
+	assertNotAborted(options.signal);
 	const { verifier, state, url } = await createAuthorizationFlow(options.originator);
 	const server = await startLocalOAuthServer(state);
+	const onAbort = () => {
+		server.cancelWait();
+	};
+	options.signal?.addEventListener("abort", onAbort, { once: true });
 
 	options.onAuth({ url, instructions: "A browser window should open. Complete login to finish." });
 
@@ -332,6 +346,7 @@ export async function loginOpenAICodex(options: {
 				});
 
 			const result = await server.waitForCode();
+			assertNotAborted(options.signal);
 
 			// If manual input was cancelled, throw that error
 			if (manualError) {
@@ -352,7 +367,9 @@ export async function loginOpenAICodex(options: {
 
 			// If still no code, wait for manual promise to complete and try that
 			if (!code) {
+				assertNotAborted(options.signal);
 				await manualPromise;
+				assertNotAborted(options.signal);
 				if (manualError) {
 					throw manualError;
 				}
@@ -367,6 +384,7 @@ export async function loginOpenAICodex(options: {
 		} else {
 			// Original flow: wait for callback, then prompt if needed
 			const result = await server.waitForCode();
+			assertNotAborted(options.signal);
 			if (result?.code) {
 				code = result.code;
 			}
@@ -374,9 +392,11 @@ export async function loginOpenAICodex(options: {
 
 		// Fallback to onPrompt if still no code
 		if (!code) {
+			assertNotAborted(options.signal);
 			const input = await options.onPrompt({
 				message: "Paste the authorization code (or full redirect URL):",
 			});
+			assertNotAborted(options.signal);
 			const parsed = parseAuthorizationInput(input);
 			if (parsed.state && parsed.state !== state) {
 				throw new Error("State mismatch");
@@ -387,8 +407,9 @@ export async function loginOpenAICodex(options: {
 		if (!code) {
 			throw new Error("Missing authorization code");
 		}
+		assertNotAborted(options.signal);
 
-		const tokenResult = await exchangeAuthorizationCode(code, verifier);
+		const tokenResult = await exchangeAuthorizationCode(code, verifier, REDIRECT_URI, options.signal);
 		if (tokenResult.type !== "success") {
 			throw new Error("Token exchange failed");
 		}
@@ -405,6 +426,7 @@ export async function loginOpenAICodex(options: {
 			accountId,
 		};
 	} finally {
+		options.signal?.removeEventListener("abort", onAbort);
 		server.close();
 	}
 }
@@ -442,6 +464,7 @@ export const openaiCodexOAuthProvider: OAuthProviderInterface = {
 			onPrompt: callbacks.onPrompt,
 			onProgress: callbacks.onProgress,
 			onManualCodeInput: callbacks.onManualCodeInput,
+			signal: callbacks.signal,
 		});
 	},
 
