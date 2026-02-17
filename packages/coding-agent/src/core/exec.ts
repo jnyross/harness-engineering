@@ -29,6 +29,26 @@ export interface ExecResult {
 	killed: boolean;
 }
 
+export function getExecCommandCloseError(options: {
+	command: string;
+	args: string[];
+	code: number | null;
+	signal: NodeJS.Signals | null;
+}): string | undefined {
+	if (options.code === 0 && !options.signal) {
+		return undefined;
+	}
+
+	const invokedCommand = [options.command, ...options.args].join(" ");
+	if (options.signal) {
+		return `Command '${invokedCommand}' terminated by signal ${options.signal}`;
+	}
+	if (options.code === null) {
+		return `Command '${invokedCommand}' exited with unknown status`;
+	}
+	return `Command '${invokedCommand}' exited with code ${options.code}`;
+}
+
 /**
  * Execute a shell command and return stdout/stderr/code.
  * Supports timeout and abort signal.
@@ -44,6 +64,7 @@ export async function execCommand(
 	}
 
 	return new Promise((resolve) => {
+		const invokedCommand = [command, ...args].join(" ");
 		const proc = spawn(command, args, {
 			cwd,
 			shell: false,
@@ -118,13 +139,23 @@ export async function execCommand(
 
 		proc.on("close", (code, signal) => {
 			const normalizedCode = killed ? 1 : normalizeProcessExitCode(code, signal);
+			const closeError =
+				killed || normalizedCode === 0
+					? undefined
+					: getExecCommandCloseError({
+							command,
+							args,
+							code,
+							signal,
+						});
+			if (closeError && !stderr.trim()) {
+				stderr = closeError;
+			}
 			resolveOnce({ stdout, stderr, code: normalizedCode, killed });
 		});
 
 		proc.on("error", (err) => {
-			if (!stderr.trim()) {
-				stderr = err.message;
-			}
+			stderr = `Failed to start command '${invokedCommand}': ${err.message}`;
 			resolveOnce({ stdout, stderr, code: 1, killed });
 		});
 	});

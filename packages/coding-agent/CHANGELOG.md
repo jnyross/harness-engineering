@@ -22,6 +22,7 @@
 - Shared `execCommand()` now short-circuits pre-aborted signals, preserves non-zero exit status for canceled subprocesses, and reports spawn errors in stderr for clearer extension runtime diagnostics.
 - Shared `execCommand()` now also treats signal-terminated subprocess exits as non-zero failures when not caller-cancelled, avoiding false success on externally terminated commands.
 - Shared `execCommand()` now escalates timeout/abort termination to forced `SIGKILL` after a grace period when child processes ignore `SIGTERM`, preventing lingering subprocesses.
+- Shared `execCommand()` now adds fallback stderr diagnostics for signal/unknown/non-zero close statuses when subprocesses fail silently, and startup failures now include full invoked-command context.
 - Interactive `/share` gist creation now uses shared `execCommand()` cancellation/error handling, preventing stuck loaders when `gh gist create` fails to spawn and preserving clean abort semantics.
 - Interactive `/share` now distinguishes missing/interrupted `gh auth status` checks from unauthenticated states, surfacing accurate install/interruption guidance before gist creation.
 - Interactive `/share` now runs `gh auth status` with a timeout and distinguishes ENOENT, timeout, generic spawn failures, signal exits, and unknown null-status exits before gist creation.

@@ -2,7 +2,7 @@ import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { execCommand } from "../src/core/exec.js";
+import { execCommand, getExecCommandCloseError } from "../src/core/exec.js";
 
 const signalAwareIt = process.platform === "win32" ? it.skip : it;
 
@@ -49,7 +49,15 @@ describe("execCommand", () => {
 
 		expect(result.code).toBe(1);
 		expect(result.killed).toBe(false);
-		expect(result.stderr.length).toBeGreaterThan(0);
+		expect(result.stderr).toContain("Failed to start command 'definitely-missing-binary'");
+	});
+
+	it("adds fallback stderr diagnostics for non-zero exits without stderr output", async () => {
+		const result = await execCommand(process.execPath, ["-e", "process.exit(17);"], process.cwd());
+
+		expect(result.code).toBe(17);
+		expect(result.killed).toBe(false);
+		expect(result.stderr).toContain(`Command '${process.execPath} -e process.exit(17);' exited with code 17`);
 	});
 
 	it("short-circuits pre-aborted signals before spawning", async () => {
@@ -95,6 +103,7 @@ describe("execCommand", () => {
 
 		expect(result.killed).toBe(false);
 		expect(result.code).toBe(1);
+		expect(result.stderr).toContain("terminated by signal SIGTERM");
 	});
 
 	signalAwareIt("force kills timeout-resistant processes that ignore SIGTERM", async () => {
@@ -140,5 +149,17 @@ describe("execCommand", () => {
 				rmSync(pidFile, { force: true });
 			}
 		}
+	});
+});
+
+describe("getExecCommandCloseError", () => {
+	it("returns undefined for successful exits", () => {
+		expect(getExecCommandCloseError({ command: "echo", args: ["ok"], code: 0, signal: null })).toBeUndefined();
+	});
+
+	it("classifies unknown null/null close statuses", () => {
+		expect(getExecCommandCloseError({ command: "echo", args: ["ok"], code: null, signal: null })).toBe(
+			"Command 'echo ok' exited with unknown status",
+		);
 	});
 });
