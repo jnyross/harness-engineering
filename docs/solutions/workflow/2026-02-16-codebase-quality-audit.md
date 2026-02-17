@@ -2043,9 +2043,11 @@ to:
 
 - parse manual input from full redirect URLs with query-string or hash-fragment `code`/`state`,
 - keep Google OAuth manual input contract URL-only (non-URL snippets like `code#state` are rejected),
-- add regression tests proving mismatched hash-fragment state is rejected before network calls.
+- add regression tests proving:
+  - mismatched hash-fragment state is rejected before network calls,
+  - non-URL snippets are rejected with explicit redirect-URL guidance.
 
-**Result:** Google OAuth manual-input parsing now supports hash-fragment callback variants while preserving the original redirect-URL-only manual input contract.
+**Result:** Google OAuth manual-input parsing now supports hash-fragment callback variants while preserving the original redirect-URL-only manual input contract with clearer invalid-input diagnostics.
 
 ## Validation Evidence
 
