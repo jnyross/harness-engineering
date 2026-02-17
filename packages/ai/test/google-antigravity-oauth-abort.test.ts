@@ -46,4 +46,18 @@ describe("google-antigravity oauth login", () => {
 		).rejects.toThrow("OAuth state mismatch");
 		expect(fetchMock).not.toHaveBeenCalled();
 	});
+
+	it("rejects non-url manual input to preserve redirect-url contract", async () => {
+		const fetchMock = vi.fn(async () => new Response(""));
+		vi.stubGlobal("fetch", fetchMock);
+
+		await expect(
+			loginAntigravity(
+				() => {},
+				undefined,
+				async () => "manual-code#state",
+			),
+		).rejects.toThrow("No authorization code received");
+		expect(fetchMock).not.toHaveBeenCalled();
+	});
 });

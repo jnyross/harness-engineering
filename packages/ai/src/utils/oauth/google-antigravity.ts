@@ -155,26 +155,9 @@ function parseRedirectUrl(input: string): { code?: string; state?: string } {
 
 		return {};
 	} catch {
-		// Not a URL, continue with fallback parsing.
+		// Not a URL; this provider expects full redirect URLs.
+		return {};
 	}
-
-	if (value.includes("#")) {
-		const [code, state] = value.split("#", 2);
-		return {
-			code: code || undefined,
-			state: state || undefined,
-		};
-	}
-
-	if (value.includes("code=")) {
-		const params = new URLSearchParams(value);
-		return {
-			code: params.get("code") ?? undefined,
-			state: params.get("state") ?? undefined,
-		};
-	}
-
-	return { code: value };
 }
 
 interface LoadCodeAssistPayload {
