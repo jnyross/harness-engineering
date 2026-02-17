@@ -4,6 +4,10 @@ export type SandboxConfig = { type: "host" } | { type: "docker"; container: stri
 
 const DOCKER_CONTAINER_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.-]*$/;
 
+function buildSandboxCommandText(command: string, args: string[]): string {
+	return `${command} ${args.join(" ")}`.trim();
+}
+
 export function normalizeSandboxExitCode(code: number | null, signal: NodeJS.Signals | null): number {
 	if (signal) {
 		return 1;
@@ -22,7 +26,7 @@ export function getSandboxCommandExitError(options: {
 		return undefined;
 	}
 
-	const commandText = `${options.command} ${options.args.join(" ")}`.trim();
+	const commandText = buildSandboxCommandText(options.command, options.args);
 	if (options.signal) {
 		return options.stderr || `Command ${commandText} failed (terminated by signal ${options.signal})`;
 	}
@@ -30,6 +34,11 @@ export function getSandboxCommandExitError(options: {
 		return options.stderr || `Command ${commandText} failed (unknown exit status)`;
 	}
 	return options.stderr || `Command ${commandText} failed (exit code ${options.code})`;
+}
+
+export function getSandboxCommandStartError(options: { command: string; args: string[]; error: Error }): string {
+	const commandText = buildSandboxCommandText(options.command, options.args);
+	return `Failed to start command '${commandText}': ${options.error.message}`;
 }
 
 export function parseSandboxArg(value: string): SandboxConfig {
@@ -114,7 +123,16 @@ function execSimple(cmd: string, args: string[]): Promise<string> {
 			stderr += d;
 		});
 		child.on("error", (error) => {
-			rejectOnce(error instanceof Error ? error : new Error(String(error)));
+			const startupError = error instanceof Error ? error : new Error(String(error));
+			rejectOnce(
+				new Error(
+					getSandboxCommandStartError({
+						command: cmd,
+						args,
+						error: startupError,
+					}),
+				),
+			);
 		});
 		child.on("close", (code, signal) => {
 			const exitError = getSandboxCommandExitError({
@@ -247,7 +265,16 @@ function execWithSpawn(command: string, args: string[], options?: ExecOptions): 
 		});
 
 		child.on("error", (error) => {
-			rejectOnce(error instanceof Error ? error : new Error(String(error)));
+			const startupError = error instanceof Error ? error : new Error(String(error));
+			rejectOnce(
+				new Error(
+					getSandboxCommandStartError({
+						command,
+						args,
+						error: startupError,
+					}),
+				),
+			);
 		});
 
 		child.on("close", (code, signal) => {

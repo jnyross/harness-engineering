@@ -20,6 +20,7 @@
 - Docker sandbox preflight command diagnostics now also distinguish unknown `code=null/signal=null` exits from ordinary non-zero codes, improving `validateSandbox()` failure clarity on rare close-status edge cases.
 - Sandbox Windows process-tree cleanup now handles async `taskkill` spawn errors, preventing uncaught child-process errors during best-effort termination.
 - Docker sandbox preflight command failures now report explicit command + signal/exit diagnostics, improving `validateSandbox()` error clarity when docker invocations terminate unexpectedly.
+- Sandbox command startup failures now include full command context (`command + args`) in `execSimple`/executor error paths, improving diagnostics when `docker`/shell binaries cannot be spawned.
 
 ### Changed
 

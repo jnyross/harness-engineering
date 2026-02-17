@@ -7,6 +7,7 @@ import {
 	buildDockerExecArgs,
 	createExecutor,
 	getSandboxCommandExitError,
+	getSandboxCommandStartError,
 	normalizeSandboxExitCode,
 	parseSandboxArg,
 	validateSandbox,
@@ -139,6 +140,19 @@ describe("getSandboxCommandExitError", () => {
 	});
 });
 
+describe("getSandboxCommandStartError", () => {
+	it("includes full command context and startup error details", () => {
+		assert.equal(
+			getSandboxCommandStartError({
+				command: "docker",
+				args: ["exec", "mom-sandbox", "sh", "-c", "echo hi"],
+				error: new Error("spawn docker ENOENT"),
+			}),
+			"Failed to start command 'docker exec mom-sandbox sh -c echo hi': spawn docker ENOENT",
+		);
+	});
+});
+
 describe("validateSandbox", () => {
 	it("exits gracefully when docker binary is unavailable", async () => {
 		process.exit = ((code?: number) => {
@@ -177,5 +191,14 @@ describe("createExecutor", () => {
 		const executor = createExecutor({ type: "host" });
 		const result = await executor.exec("kill -TERM $$");
 		assert.equal(result.code, 1);
+	});
+
+	it("includes startup command context when docker executor cannot spawn command binary", async () => {
+		process.env.PATH = "";
+		const executor = createExecutor({ type: "docker", container: "mom-sandbox" });
+		await assert.rejects(
+			() => executor.exec("echo test"),
+			/Failed to start command 'docker exec mom-sandbox sh -c echo test': spawn docker ENOENT/,
+		);
 	});
 });
