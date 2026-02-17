@@ -70,4 +70,14 @@ describe("extractRetryDelay header parsing", () => {
 
 		expect(delay).toBeUndefined();
 	});
+
+	it("parses decimal retryDelay JSON values", () => {
+		const delay = extractRetryDelay('{"retryDelay":"1.5s"}');
+		expect(delay).toBe(2500);
+	});
+
+	it("ignores malformed retry values with multiple decimals", () => {
+		const delay = extractRetryDelay("Please retry in 1.2.3s");
+		expect(delay).toBeUndefined();
+	});
 });

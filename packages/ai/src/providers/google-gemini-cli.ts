@@ -227,7 +227,7 @@ export function extractRetryDelay(errorText: string, response?: Response | Heade
 	}
 
 	// Pattern 2: "Please retry in X[ms|s]"
-	const retryInMatch = errorText.match(/Please retry in ([0-9.]+)(ms|s)/i);
+	const retryInMatch = errorText.match(/Please retry in ([0-9]+(?:\.[0-9]+)?)(ms|s)/i);
 	if (retryInMatch?.[1]) {
 		const value = parseFloat(retryInMatch[1]);
 		if (!Number.isNaN(value) && value > 0) {
@@ -240,7 +240,7 @@ export function extractRetryDelay(errorText: string, response?: Response | Heade
 	}
 
 	// Pattern 3: "retryDelay": "34.074824224s" (JSON field in error details)
-	const retryDelayMatch = errorText.match(/"retryDelay":\s*"([0-9.]+)(ms|s)"/i);
+	const retryDelayMatch = errorText.match(/"retryDelay":\s*"([0-9]+(?:\.[0-9]+)?)(ms|s)"/i);
 	if (retryDelayMatch?.[1]) {
 		const value = parseFloat(retryDelayMatch[1]);
 		if (!Number.isNaN(value) && value > 0) {
