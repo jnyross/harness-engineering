@@ -49,7 +49,7 @@
 - Overlay QA extension now handles stream-process spawn failures explicitly, surfacing errors in the overlay instead of risking uncaught child-process errors.
 - Interactive-shell extension now normalizes spawn/signal exit statuses and reports clearer failure reasons (startup failure, signal termination, or non-zero exit) instead of ambiguous `null` exit output.
 - Qwen CLI custom-provider example now honors abort signals across device-code/token requests and uses cleanup-safe abortable sleep handling during OAuth polling.
-- mac-system-theme example now clears prior polling intervals on repeated starts and serializes async theme polls, preventing overlapping `osascript` checks and interval accumulation.
+- mac-system-theme example now clears prior polling intervals on repeated starts, serializes async theme polls, and resets in-flight guards via `finally`, preventing overlapping `osascript` checks and poll-loop stalls after callback errors.
 - Bash executor helpers (`executeBash`, `executeBashWithOperations`) now short-circuit pre-aborted signals, avoiding unnecessary subprocess/remote execution when cancellation is already requested.
 - Bash executor helpers now preserve non-zero semantics for signal/null exits when execution was not canceled by caller signals, avoiding false cancelled/success outcomes.
 - Bash executor local process handling now uses single-settlement guards across child `error`/`close` events, preventing duplicate resolve/reject races during spawn failures.

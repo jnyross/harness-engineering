@@ -39,12 +39,17 @@ export default function (pi: ExtensionAPI) {
 				return;
 			}
 			pollInFlight = true;
-			const newTheme = (await isDarkMode()) ? "dark" : "light";
-			if (newTheme !== currentTheme) {
-				currentTheme = newTheme;
-				ctx.ui.setTheme(currentTheme);
+			try {
+				const newTheme = (await isDarkMode()) ? "dark" : "light";
+				if (newTheme !== currentTheme) {
+					currentTheme = newTheme;
+					ctx.ui.setTheme(currentTheme);
+				}
+			} catch (error) {
+				console.error("mac-system-theme poll failed:", error);
+			} finally {
+				pollInFlight = false;
 			}
-			pollInFlight = false;
 		}, 2000);
 	});
 

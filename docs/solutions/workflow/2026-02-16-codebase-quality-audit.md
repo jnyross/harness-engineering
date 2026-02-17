@@ -4041,6 +4041,24 @@ to:
 
 **Result:** mac-system-theme example now runs a single serialized theme poll loop per session lifecycle.
 
+---
+
+### 225) mac-system-theme poll loop could stall if UI theme application threw
+
+**Finding:** mac-system-theme poll loop used an in-flight guard but reset it only on happy-path completion, so unexpected callback errors could leave polling permanently stalled.
+
+**Action:** Updated:
+
+- `packages/coding-agent/examples/extensions/mac-system-theme.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- wrap poll body in `try/finally` so in-flight guard always resets,
+- log poll-loop failures without halting subsequent polling cycles.
+
+**Result:** mac-system-theme example poll loop now recovers from transient callback errors instead of stalling.
+
 ## Validation Evidence
 
 - Root quality gate passes:
