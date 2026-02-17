@@ -7,6 +7,7 @@ import ignore from "ignore";
 import { minimatch } from "minimatch";
 import { CONFIG_DIR_NAME } from "../config.js";
 import { type GitSource, parseGitUrl } from "../utils/git.js";
+import { getPackageManagerSyncCommandError } from "./package-manager-sync-status.js";
 import type { PackageSource, SettingsManager } from "./settings-manager.js";
 
 export interface PathMetadata {
@@ -1746,18 +1747,12 @@ export class DefaultPackageManager implements PackageManager {
 			shell: process.platform === "win32",
 			timeout: options?.timeoutMs,
 		});
-		if (result.error) {
-			const error = result.error as NodeJS.ErrnoException;
-			if (error.code === "ETIMEDOUT" && options?.timeoutMs) {
-				throw new Error(`${invokedCommand} timed out after ${options.timeoutMs}ms`);
-			}
-			throw new Error(`Failed to start ${invokedCommand}: ${result.error.message}`);
-		}
-		if (result.status === null) {
-			throw new Error(`${invokedCommand} exited due to signal ${result.signal ?? "unknown"}`);
-		}
-		if (result.status !== 0) {
-			throw new Error(`Failed to run ${invokedCommand}: ${result.stderr || result.stdout}`);
+		const commandError = getPackageManagerSyncCommandError(result, {
+			invokedCommand,
+			timeoutMs: options?.timeoutMs,
+		});
+		if (commandError) {
+			throw new Error(commandError);
 		}
 		return (result.stdout || result.stderr || "").trim();
 	}
