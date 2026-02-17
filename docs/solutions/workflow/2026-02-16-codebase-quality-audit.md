@@ -5552,6 +5552,28 @@ to:
 
 **Result:** comma-list CLI flags now parse deterministically without empty-token side effects in model scoping or tool warnings.
 
+---
+
+### 299) ai Azure deployment-name map parser accepted whitespace-only keys/values
+
+**Finding:** `packages/ai/src/providers/azure-openai-responses.ts` parsed `AZURE_OPENAI_DEPLOYMENT_NAME_MAP` entries by validating raw split segments before trim; mappings like `" =deployment"` / `"model= "` could pass initial checks and create empty-key or empty-value entries after trimming.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/azure-openai-responses.ts`
+- `packages/ai/test/azure-openai-responses-deployment-map.test.ts` (new)
+- `packages/ai/test/azure-utils.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- trim deployment-map model/deployment segments before validation,
+- skip entries with blank trimmed model IDs or deployment names,
+- keep test helper parsing behavior aligned with runtime provider parsing,
+- add regression coverage for valid mappings and whitespace-only entry rejection.
+
+**Result:** Azure deployment mapping now ignores whitespace-only key/value entries instead of persisting empty-string map entries from malformed environment configuration.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5560,6 +5582,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/cli-selection.test.ts`
 - ai model-generator numeric parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/generate-models.test.ts`
+- ai Azure deployment-map parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/azure-openai-responses-deployment-map.test.ts`
 - mom slack timestamp normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts`
 - web-ui model discovery + archive-index numeric parsing regression tests pass:
