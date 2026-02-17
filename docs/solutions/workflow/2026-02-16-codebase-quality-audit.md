@@ -5034,6 +5034,36 @@ to:
 
 **Result:** theme auto-detection now ignores malformed out-of-range `COLORFGBG` values instead of treating oversized palette indices as valid.
 
+---
+
+### 274) AI usage metadata parsers accepted unsafe integer token values
+
+**Finding:** OpenAI/Anthropic/Google/Bedrock usage normalization paths accepted finite numeric values without safe-integer bounds, allowing oversized token counters to be rounded and incorporated into usage totals.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/openai-completions.ts`
+- `packages/ai/src/providers/anthropic.ts`
+- `packages/ai/src/providers/openai-responses-shared.ts`
+- `packages/ai/src/providers/google-shared.ts`
+- `packages/ai/src/providers/google-gemini-cli.ts`
+- `packages/ai/src/providers/amazon-bedrock.ts`
+- `packages/ai/test/openai-completions-tool-choice.test.ts`
+- `packages/ai/test/github-copilot-anthropic.test.ts`
+- `packages/ai/test/openai-responses-shared-usage.test.ts`
+- `packages/ai/test/google-usage-metadata.test.ts`
+- `packages/ai/test/google-gemini-cli-usage-metadata.test.ts`
+- `packages/ai/test/amazon-bedrock-usage.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- validate truncated token counters as safe integers before acceptance,
+- ignore malformed oversized token counters in all shared usage parser paths,
+- add regression tests for unsafe integer token fields across provider usage metadata and stream usage events.
+
+**Result:** AI usage accounting now rejects unsafe oversized token counters instead of accepting rounded coercions.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5067,6 +5097,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts`
 - ai Gemini retry-delay (including safe-millisecond bounds) regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-retry-delay.test.ts`
+- ai usage safe-integer parser regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-responses-shared-usage.test.ts test/amazon-bedrock-usage.test.ts test/google-usage-metadata.test.ts test/google-gemini-cli-usage-metadata.test.ts test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts`
 - ai shared usage parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts test/amazon-bedrock-usage.test.ts test/openai-responses-shared-usage.test.ts`
 - ai OpenAI/Anthropic usage parser regression tests pass:
