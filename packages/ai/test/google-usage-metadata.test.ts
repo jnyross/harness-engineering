@@ -77,6 +77,25 @@ describe("extractGoogleUsageMetadata", () => {
 		});
 	});
 
+	it("ignores non-decimal numeric string formats", () => {
+		expect(
+			extractGoogleUsageMetadata({
+				promptTokenCount: "0x10",
+				candidatesTokenCount: "1e2",
+				thoughtsTokenCount: "2.2",
+				cachedContentTokenCount: "0x2",
+				totalTokenCount: "1e3",
+			}),
+		).toEqual({
+			input: 0,
+			output: 2,
+			cacheRead: 0,
+			cacheWrite: 0,
+			totalTokens: 2,
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+		});
+	});
+
 	it("returns undefined for non-object usage payloads", () => {
 		expect(extractGoogleUsageMetadata(null)).toBeUndefined();
 		expect(extractGoogleUsageMetadata("invalid")).toBeUndefined();

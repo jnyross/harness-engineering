@@ -83,7 +83,11 @@ function asNumber(value: unknown): number | undefined {
 		return Number.isFinite(value) && value >= 0 ? Math.trunc(value) : undefined;
 	}
 	if (typeof value === "string" && value.trim().length > 0) {
-		const parsed = Number(value);
+		const trimmed = value.trim();
+		if (!/^\d+(?:\.\d+)?$/.test(trimmed)) {
+			return undefined;
+		}
+		const parsed = Number(trimmed);
 		return Number.isFinite(parsed) && parsed >= 0 ? Math.trunc(parsed) : undefined;
 	}
 	return undefined;

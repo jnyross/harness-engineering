@@ -66,9 +66,9 @@ describe("extractCloudCodeAssistUsageMetadata", () => {
 	it("ignores malformed and negative usage values", () => {
 		expect(
 			extractCloudCodeAssistUsageMetadata({
-				promptTokenCount: "-5",
-				candidatesTokenCount: "3.8",
-				thoughtsTokenCount: "oops",
+				promptTokenCount: "0x10",
+				candidatesTokenCount: "1e2",
+				thoughtsTokenCount: "3.8",
 				cachedContentTokenCount: -2,
 				totalTokenCount: "-1",
 			}),

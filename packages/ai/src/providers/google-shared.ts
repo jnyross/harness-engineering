@@ -321,7 +321,11 @@ function parseUsageNumber(value: unknown): number | undefined {
 		return Math.trunc(value);
 	}
 	if (typeof value === "string" && value.trim().length > 0) {
-		const parsed = Number(value);
+		const trimmed = value.trim();
+		if (!/^\d+(?:\.\d+)?$/.test(trimmed)) {
+			return undefined;
+		}
+		const parsed = Number(trimmed);
 		if (Number.isFinite(parsed) && parsed >= 0) {
 			return Math.trunc(parsed);
 		}

@@ -7,6 +7,7 @@ const mockState = vi.hoisted(() => ({
 	streamParams: undefined as Record<string, unknown> | undefined,
 	useStringUsage: false,
 	useMalformedUsage: false,
+	useNonDecimalUsage: false,
 }));
 
 vi.mock("@anthropic-ai/sdk", () => {
@@ -16,6 +17,12 @@ vi.mock("@anthropic-ai/sdk", () => {
 				value: number,
 				options?: { malformed?: string; malformedNumber?: number },
 			): number | string => {
+				if (mockState.useNonDecimalUsage) {
+					if (options?.malformedNumber !== undefined) {
+						return String(options.malformedNumber);
+					}
+					return "0x10";
+				}
 				if (mockState.useMalformedUsage) {
 					if (options?.malformed !== undefined) {
 						return options.malformed;
@@ -76,6 +83,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 	it("uses Bearer auth, Copilot headers, and valid Anthropic Messages payload", async () => {
 		mockState.useStringUsage = false;
 		mockState.useMalformedUsage = false;
+		mockState.useNonDecimalUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		expect(model.api).toBe("anthropic-messages");
 
@@ -116,6 +124,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 	it("includes interleaved-thinking beta when reasoning is enabled", async () => {
 		mockState.useStringUsage = false;
 		mockState.useMalformedUsage = false;
+		mockState.useNonDecimalUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const s = streamAnthropic(model, context, {
@@ -133,6 +142,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 	it("normalizes numeric-string usage counters from Anthropic stream events", async () => {
 		mockState.useStringUsage = true;
 		mockState.useMalformedUsage = false;
+		mockState.useNonDecimalUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const result = await streamAnthropic(model, context, { apiKey: "tid_copilot_session_test_token" }).result();
@@ -147,6 +157,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 	it("ignores malformed and negative usage counters from Anthropic stream events", async () => {
 		mockState.useStringUsage = false;
 		mockState.useMalformedUsage = true;
+		mockState.useNonDecimalUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const result = await streamAnthropic(model, context, { apiKey: "tid_copilot_session_test_token" }).result();
@@ -156,5 +167,20 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		expect(result.usage.cacheRead).toBe(2);
 		expect(result.usage.cacheWrite).toBe(1);
 		expect(result.usage.totalTokens).toBe(5);
+	});
+
+	it("ignores non-decimal numeric string usage counters from Anthropic stream events", async () => {
+		mockState.useStringUsage = false;
+		mockState.useMalformedUsage = false;
+		mockState.useNonDecimalUsage = true;
+		const model = getModel("github-copilot", "claude-sonnet-4");
+		const { streamAnthropic } = await import("../src/providers/anthropic.js");
+		const result = await streamAnthropic(model, context, { apiKey: "tid_copilot_session_test_token" }).result();
+
+		expect(result.usage.input).toBe(0);
+		expect(result.usage.output).toBe(0);
+		expect(result.usage.cacheRead).toBe(0);
+		expect(result.usage.cacheWrite).toBe(0);
+		expect(result.usage.totalTokens).toBe(0);
 	});
 });
