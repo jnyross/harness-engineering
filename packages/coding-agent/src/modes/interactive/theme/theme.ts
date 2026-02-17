@@ -907,8 +907,12 @@ export function getThemeExportColors(themeName?: string): {
 				return value;
 			}
 
-			const variableName = value.startsWith("$") ? value.slice(1) : value;
+			const prefixedVariable = value.startsWith("$");
+			const variableName = prefixedVariable ? value.slice(1) : value;
 			if (!(variableName in vars)) {
+				if (prefixedVariable) {
+					return undefined;
+				}
 				return value;
 			}
 

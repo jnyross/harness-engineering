@@ -65,7 +65,7 @@
 - Theme auto-detection now also rejects unsafe integer `COLORFGBG` background indices (greater than `Number.MAX_SAFE_INTEGER`) instead of accepting rounded numeric coercions.
 - Theme auto-detection now rejects out-of-range `COLORFGBG` background indices (outside `0-255`) and falls back to default theme detection instead of treating malformed oversized palette indices as valid.
 - Theme hex-color parsing now rejects malformed 6-digit hex tokens containing invalid trailing characters (for example `#ff00f-`) instead of partially coercing them via permissive base-16 parsing.
-- HTML export theme color overrides now resolve `export.pageBg/cardBg/infoBg` variable references consistently (including `$var` legacy notation and numeric palette vars), preventing unresolved variable names from leaking into export color CSS values.
+- HTML export theme color overrides now resolve `export.pageBg/cardBg/infoBg` variable references consistently (including `$var` legacy notation and numeric palette vars), while invalid `$missingVar` references now resolve to undefined instead of leaking unresolved tokens into export color CSS values.
 - ANSI export HTML conversion now rejects malformed SGR parameter tokens instead of partially coercing numeric prefixes (for example `1x` no longer maps to bold).
 - ANSI export HTML conversion now ignores out-of-range and unsafe-integer SGR color parameters instead of emitting invalid CSS color values from oversized numeric coercions.
 - Interactive changelog parser now rejects unsafe integer version components in changelog headers and last-seen version state, preventing rounded version coercion in update-entry filtering.

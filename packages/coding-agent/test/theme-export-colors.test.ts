@@ -51,4 +51,24 @@ describe("getThemeExportColors", () => {
 			},
 		);
 	});
+
+	it("returns undefined for missing dollar-prefixed export variables", () => {
+		withTempTheme(
+			(theme) => {
+				theme.name = "export-missing-var-theme";
+				theme.export = {
+					pageBg: "$missingVar",
+					cardBg: "#112233",
+				};
+			},
+			(themePath) => {
+				setRegisteredThemes([loadThemeFromPath(themePath)]);
+				expect(getThemeExportColors("export-missing-var-theme")).toEqual({
+					pageBg: undefined,
+					cardBg: "#112233",
+					infoBg: undefined,
+				});
+			},
+		);
+	});
 });
