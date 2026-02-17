@@ -118,4 +118,41 @@ describe("anthropic oauth login", () => {
 		}
 		expect(String(firstCall[1]?.body)).toContain('"code":"query-code"');
 	});
+
+	it("parses redirect urls with hash-based code/state values", async () => {
+		let verifierState: string | null = null;
+		const onAuth = (url: string) => {
+			verifierState = new URL(url).searchParams.get("state");
+		};
+
+		const fetchMock = vi.fn(
+			async (_input: unknown, _init?: RequestInit) =>
+				new Response(
+					JSON.stringify({
+						access_token: "access-token-hash",
+						refresh_token: "refresh-token-hash",
+						expires_in: 3600,
+					}),
+					{
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					},
+				),
+		);
+		vi.stubGlobal("fetch", fetchMock);
+
+		const credentials = await loginAnthropic(
+			onAuth,
+			async () => `https://console.anthropic.com/oauth/code/callback#code=hash-code&state=${verifierState}`,
+		);
+
+		expect(credentials.access).toBe("access-token-hash");
+		expect(credentials.refresh).toBe("refresh-token-hash");
+		const firstCall = fetchMock.mock.calls[0];
+		expect(firstCall).toBeDefined();
+		if (!firstCall) {
+			throw new Error("Expected fetch to be called once");
+		}
+		expect(String(firstCall[1]?.body)).toContain('"code":"hash-code"');
+	});
 });

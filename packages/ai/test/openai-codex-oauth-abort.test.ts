@@ -137,6 +137,43 @@ describe("openai-codex oauth login", () => {
 		expect(credentials.accountId).toBe("acct_base64url");
 	});
 
+	it("parses manual redirect urls with hash-based code/state values", async () => {
+		let authState: string | null = null;
+		const token = createAccessToken("acct_hash_url");
+		const fetchMock = vi.fn(
+			async (_input: unknown, _init?: RequestInit) =>
+				new Response(
+					JSON.stringify({
+						access_token: token,
+						refresh_token: "refresh-token-hash-url",
+						expires_in: 3600,
+					}),
+					{
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					},
+				),
+		);
+		vi.stubGlobal("fetch", fetchMock);
+
+		const credentials = await loginOpenAICodex({
+			onAuth: ({ url }) => {
+				authState = new URL(url).searchParams.get("state");
+			},
+			onPrompt: async () => "",
+			onManualCodeInput: async () => `http://localhost:1455/auth/callback#code=hash-code&state=${authState}`,
+		});
+
+		expect(credentials.accountId).toBe("acct_hash_url");
+		expect(credentials.refresh).toBe("refresh-token-hash-url");
+		const firstCall = fetchMock.mock.calls[0];
+		expect(firstCall).toBeDefined();
+		if (!firstCall) {
+			throw new Error("Expected token exchange fetch call");
+		}
+		expect(String(firstCall[1]?.body)).toContain("hash-code");
+	});
+
 	it("rejects when signal aborts after auth URL is emitted", async () => {
 		const controller = new AbortController();
 		const onPrompt = vi.fn(async () => "manual-code");
