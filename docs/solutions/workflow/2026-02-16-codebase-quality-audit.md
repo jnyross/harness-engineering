@@ -1475,6 +1475,21 @@ to short-circuit pre-aborted signals, enforce non-zero exit status for killed/ca
 
 **Result:** Shared subprocess execution now reports cancellation/failure outcomes accurately and surfaces actionable spawn diagnostics for extension/runtime callers.
 
+---
+
+### 87) interactive `/share` gist flow could hang on spawn failures
+
+**Finding:** `/share` gist creation in interactive mode used a manual `spawn("gh", ...)` promise that only handled `close`. Spawn-time failures could leave the loader path waiting indefinitely instead of surfacing an actionable error.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/interactive-mode.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to route gist creation through shared `execCommand()` with abort-signal support, reusing hardened spawn/cancellation/error handling semantics.
+
+**Result:** `/share` gist execution now fails and cancels through the same deterministic subprocess path as other command execution, preventing loader hangs on spawn failures.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1487,6 +1502,8 @@ to short-circuit pre-aborted signals, enforce non-zero exit status for killed/ca
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts`
 - coding-agent execCommand regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
+- coding-agent interactive status tests pass after share flow command-exec refactor:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts test/interactive-mode-status.test.ts`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes docker-missing spawn-error handling case)
 - Agent package tests pass:
