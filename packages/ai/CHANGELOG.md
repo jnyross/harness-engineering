@@ -17,6 +17,7 @@
 - Bedrock stream usage parsing now accepts numeric-string usage metadata values and computes fallback totals when `totalTokens` is omitted, preserving stable usage accounting for compatible intermediary responses.
 - Updated Codex WebSocket header conversion to iterate with `Headers.forEach()`, avoiding type incompatibilities in consumer check flows that use non-DOM `Headers` typings.
 - Consolidated provider retry sleep into a shared abortable helper that removes abort listeners on resolve/reject, preventing listener leaks across retry backoff paths.
+- Shared abortable sleep now clamps oversized timeout values to Node.js timer limits, preventing implicit runtime timer clamping from resolving oversized waits prematurely.
 - GitHub Copilot OAuth polling now reuses the shared abortable sleep helper to avoid accumulating abort listeners across long-running device-flow polling loops.
 - Google Gemini CLI OAuth login now honors `AbortSignal` cancellation (including pre-aborted signals) across callback wait, token exchange, and project discovery flows.
 - Antigravity OAuth login now honors `AbortSignal` cancellation (including pre-aborted signals) across callback wait, token exchange, and project discovery flows.

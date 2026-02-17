@@ -14,6 +14,13 @@ describe("abortableSleep", () => {
 		await expect(abortableSleep(5, controller.signal)).rejects.toThrow("Request was aborted");
 	});
 
+	it("does not resolve early for oversized timeout values", async () => {
+		const controller = new AbortController();
+		const run = abortableSleep(Number.MAX_SAFE_INTEGER, controller.signal);
+		setTimeout(() => controller.abort(), 5);
+		await expect(run).rejects.toThrow("Request was aborted");
+	});
+
 	it("cleans up listeners after resolve", async () => {
 		const listeners = new Set<AbortListener>();
 		const signal = {
