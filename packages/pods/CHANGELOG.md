@@ -88,5 +88,6 @@
 - Pod setup GPU detection now rejects unsafe integer GPU IDs (greater than `Number.MAX_SAFE_INTEGER`) instead of accepting rounded numeric coercions.
 - Model start context/PID parsing now uses strict validation (`--context` alias/integer resolution + runner PID parsing) so malformed values like `4096tokens` / `123abc` are rejected instead of being partially coerced via `parseInt`.
 - Model start memory parsing now validates percentage values strictly (`0 < value <= 100`) so malformed inputs like `50percent` are rejected instead of being partially coerced.
+- Pods config loading now normalizes parsed JSON structure/content (`pods`, `active`, pod/model/GPU entries), ignoring malformed entries and preventing invalid persisted config shapes from propagating into runtime pod selection flows.
 - Model start memory parsing now also rejects non-decimal numeric formats (for example `1e2`, `0x10`, `.5`) instead of accepting them via broad numeric coercion.
 
