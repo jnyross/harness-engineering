@@ -2774,12 +2774,24 @@ export class InteractiveMode {
 				stdio: "inherit",
 			});
 
+			if (result.error) {
+				this.showWarning(`Failed to start external editor: ${result.error.message}`);
+				return;
+			}
+
 			// On successful exit (status 0), replace editor content
 			if (result.status === 0) {
 				const newContent = fs.readFileSync(tmpFile, "utf-8").replace(/\n$/, "");
 				this.editor.setText(newContent);
+				return;
 			}
-			// On non-zero exit, keep original text (no action needed)
+
+			if (result.signal) {
+				this.showWarning(`External editor terminated by signal ${result.signal}. Keeping current content.`);
+				return;
+			}
+
+			this.showWarning(`External editor exited with code ${result.status ?? "unknown"}. Keeping current content.`);
 		} finally {
 			// Clean up temp file
 			try {

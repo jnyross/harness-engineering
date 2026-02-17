@@ -2783,6 +2783,24 @@ to:
 
 **Result:** Package-manager async command failures now provide richer invocation context, improving troubleshooting of install/update command failures.
 
+---
+
+### 158) interactive external-editor failures were silent
+
+**Finding:** Interactive mode external-editor launch kept content unchanged on failure but did not surface startup/signal/non-zero editor exit diagnostics, leaving users without feedback when `$EDITOR` invocation failed.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/interactive-mode.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- surface warning messages for external-editor startup failures, signal terminations, and non-zero exits,
+- preserve current editor content on all failure paths.
+
+**Result:** Interactive external-editor workflow now provides clear failure diagnostics without losing current editor state.
+
 ## Validation Evidence
 
 - Root quality gate passes:
