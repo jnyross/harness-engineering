@@ -1754,6 +1754,22 @@ to use single-settlement abort cleanup and added pre-aborted read regression cov
 
 **Result:** Read tool now has deterministic cancellation/error settlement semantics with centralized abort-listener cleanup.
 
+---
+
+### 104) coding-agent edit tool had branch-local abort settlement handling
+
+**Finding:** Edit tool performed listener cleanup/reject logic independently across validation branches (`file not found`, match uniqueness checks, unchanged replacement), increasing complexity and race risk under cancellation timing.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/edit.ts`
+- `packages/coding-agent/test/tools.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to use a shared single-settlement abort cleanup path and added pre-aborted edit regression coverage.
+
+**Result:** Edit tool now handles cancellation/error settlement deterministically across all validation/read/write branches.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1774,6 +1790,8 @@ to use single-settlement abort cleanup and added pre-aborted read regression cov
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted write coverage)
 - coding-agent tools regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted read + write coverage)
+- coding-agent tools regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted read + write + edit coverage)
 - coding-agent execCommand regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - coding-agent interactive status tests pass after share flow command-exec refactor:
