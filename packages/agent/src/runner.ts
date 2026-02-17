@@ -5,6 +5,8 @@
  * Env: PI_TEST_COMMAND, PI_MAX_REDO_ROUNDS, PI_PROVIDER, PI_MODEL (optional).
  */
 
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { Message } from "@mariozechner/pi-ai";
 import { getModel } from "@mariozechner/pi-ai";
 import { parsePositiveIntegerOption } from "./cli-number.js";
@@ -18,9 +20,13 @@ function identityConvert(messages: AgentMessage[]): Message[] {
 	return messages.filter((m): m is Message => m.role === "user" || m.role === "assistant" || m.role === "toolResult");
 }
 
+export function parseRunnerArgs(args: string[]): { taskDescription: string } {
+	return { taskDescription: args.join(" ").trim() };
+}
+
 function main(): void {
-	const args = process.argv.slice(2);
-	const taskDescription = args.join(" ").trim();
+	const parsed = parseRunnerArgs(process.argv.slice(2));
+	const taskDescription = parsed.taskDescription;
 	if (!taskDescription) {
 		console.error('Usage: runner.ts "<task description>"');
 		process.exit(1);
@@ -76,4 +82,6 @@ function main(): void {
 		});
 }
 
-main();
+if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
+	main();
+}
