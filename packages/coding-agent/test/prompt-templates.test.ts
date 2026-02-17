@@ -152,6 +152,10 @@ describe("substituteArgs", () => {
 		expect(result).toBe(args.join(" "));
 	});
 
+	test("should ignore unsafe integer positional placeholders", () => {
+		expect(substituteArgs("$9007199254740993", ["a"])).toBe("");
+	});
+
 	test("should handle numbered placeholders with single digit", () => {
 		expect(substituteArgs("$1 $2 $3", ["a", "b", "c"])).toBe("a b c");
 	});
@@ -282,6 +286,11 @@ describe("substituteArgs - array slicing", () => {
 	test("should handle large slice lengths gracefully", () => {
 		const args = Array.from({ length: 10 }, (_, i) => `arg${i + 1}`);
 		expect(substituteArgs(`\${@:5:100}`, args)).toBe("arg5 arg6 arg7 arg8 arg9 arg10");
+	});
+
+	test("should ignore unsafe integer slice placeholders", () => {
+		expect(substituteArgs(`\${@:9007199254740993}`, ["a", "b"])).toBe("");
+		expect(substituteArgs(`\${@:1:9007199254740993}`, ["a", "b"])).toBe("");
 	});
 });
 

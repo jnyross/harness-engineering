@@ -18,6 +18,17 @@ export interface PromptTemplate {
 
 export { parseCommandArgs };
 
+function parseSafeTemplateInteger(value: string): number | undefined {
+	if (!/^\d+$/.test(value)) {
+		return undefined;
+	}
+	const parsed = Number.parseInt(value, 10);
+	if (!Number.isSafeInteger(parsed)) {
+		return undefined;
+	}
+	return parsed;
+}
+
 /**
  * Substitute argument placeholders in template content
  * Supports:
@@ -35,19 +46,30 @@ export function substituteArgs(content: string, args: string[]): string {
 	// Replace $1, $2, etc. with positional args FIRST (before wildcards)
 	// This prevents wildcard replacement values containing $<digit> patterns from being re-substituted
 	result = result.replace(/\$(\d+)/g, (_, num) => {
-		const index = parseInt(num, 10) - 1;
+		const position = parseSafeTemplateInteger(num);
+		if (position === undefined || position < 1) {
+			return "";
+		}
+		const index = position - 1;
 		return args[index] ?? "";
 	});
 
 	// Replace ${@:start} or ${@:start:length} with sliced args (bash-style)
 	// Process BEFORE simple $@ to avoid conflicts
 	result = result.replace(/\$\{@:(\d+)(?::(\d+))?\}/g, (_, startStr, lengthStr) => {
-		let start = parseInt(startStr, 10) - 1; // Convert to 0-indexed (user provides 1-indexed)
+		const startPosition = parseSafeTemplateInteger(startStr);
+		if (startPosition === undefined) {
+			return "";
+		}
+		let start = startPosition - 1; // Convert to 0-indexed (user provides 1-indexed)
 		// Treat 0 as 1 (bash convention: args start at 1)
 		if (start < 0) start = 0;
 
 		if (lengthStr) {
-			const length = parseInt(lengthStr, 10);
+			const length = parseSafeTemplateInteger(lengthStr);
+			if (length === undefined) {
+				return "";
+			}
 			return args.slice(start, start + length).join(" ");
 		}
 		return args.slice(start).join(" ");

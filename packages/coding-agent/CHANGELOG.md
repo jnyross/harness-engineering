@@ -99,6 +99,7 @@
 - Find tool now rejects non-integer/out-of-range `limit` values instead of silently coercing them.
 - Ls tool now rejects non-integer/out-of-range `limit` values instead of silently coercing them.
 - Execution-plan progress updates now reject non-integer task indices with explicit errors instead of failing later with ambiguous runtime exceptions.
+- Prompt-template numeric placeholders now reject unsafe integer values (greater than `Number.MAX_SAFE_INTEGER`) instead of relying on rounded numeric coercions during positional/slice argument substitution.
 - Edit tool now uses single-settlement abort cleanup across validation/read/write branches, ensuring deterministic cancellation/error settlement behavior.
 - Package-manager command execution now uses single-settlement handling for spawn `error`/`close` races and reports clearer startup/signal failures.
 - Package-manager async command failures now include the full invoked command line in startup/signal/non-zero diagnostics for easier troubleshooting.
