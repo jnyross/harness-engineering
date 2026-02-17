@@ -1315,6 +1315,22 @@ to preserve non-escape backslashes while still supporting escaped whitespace/quo
 
 **Result:** Mechanical gate command overrides now parse Windows-style binary paths reliably without losing backslashes.
 
+---
+
+### 77) prompt-template expansion silently accepted malformed quoted args
+
+**Finding:** Prompt-template expansion accepted malformed quoted argument syntax and continued with lenient parsing, which could silently mis-expand template arguments.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/prompt-templates.ts`
+- `packages/coding-agent/test/prompt-templates.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to enforce strict quoted-argument parsing during template expansion and added regression coverage for unmatched-quote rejection.
+
+**Result:** Malformed quoted template arguments now fail fast with explicit parsing errors instead of silently producing incorrect expansions.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1451,6 +1467,8 @@ to preserve non-escape backslashes while still supporting escaped whitespace/quo
   - `npm --workspace "@mariozechner/pi" test -- test/ssh-parse.test.ts` (includes `C:\Windows\...\ssh.exe` parse and host extraction cases)
 - agent gate Windows-backslash parser coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (includes `C:\Tools\node.exe ...` command parse case)
+- coding-agent strict prompt-template argument validation coverage:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-templates.test.ts test/parse-command-args.test.ts` (includes unmatched-quote template invocation rejection)
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
