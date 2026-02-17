@@ -3750,6 +3750,25 @@ to:
 
 **Result:** Interactive share preflight now surfaces accurate diagnostics for missing/interrupted GitHub CLI checks versus true authentication failures.
 
+---
+
+### 210) API key prompt polling could overlap async key reads and leak interval rejections
+
+**Finding:** API key prompt dialog used an async `setInterval` callback without serializing polls or catching storage-read failures, allowing overlapping key-read requests and possible unhandled interval promise rejections.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/dialogs/ApiKeyPromptDialog.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- serialize poll iterations with an in-flight guard,
+- catch/log storage-read failures inside the interval callback,
+- retain existing detach/settlement guards for stale poll callbacks.
+
+**Result:** API key prompt polling now runs deterministically (no overlapping reads) and avoids unhandled async interval rejections on transient storage errors.
+
 ## Validation Evidence
 
 - Root quality gate passes:

@@ -12,6 +12,7 @@
 - `SandboxedIframe` now tracks and clears window-level sandbox handlers (`open-external-url` and bootstrap listeners) across reload/disconnect paths to prevent listener accumulation between loads.
 - `ApiKeyPromptDialog` and `PersistentStorageDialog` now use single-settlement close handling for promise resolution, preventing duplicate completion paths when dialogs close after success/deny flows.
 - `ApiKeyPromptDialog` now also ignores stale in-flight key polling callbacks after disconnect and settles outstanding prompts on detach, preventing dangling prompt promises when dialogs are removed externally.
+- `ApiKeyPromptDialog` polling now serializes async key checks and catches storage-read failures, preventing overlapping poll requests and unhandled interval rejections when key storage access throws.
 - `PersistentStorageDialog` now invalidates stale in-flight permission requests on disconnect and settles outstanding prompts on detach, preventing stale async state updates and dangling request promises when dialogs are removed externally.
 - Sandboxed runtime bridge request/response promises now clear timeout handlers on early completion and guard single settlement, preventing 30s timeout timer buildup during rapid runtime messaging.
 - Sandboxed runtime bridge message handlers now ignore non-object postMessage payloads, preventing runtime handler crashes from unrelated window messages.

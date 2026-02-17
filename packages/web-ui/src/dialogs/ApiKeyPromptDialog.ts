@@ -29,20 +29,30 @@ export class ApiKeyPromptDialog extends DialogBase {
 
 	override async connectedCallback() {
 		super.connectedCallback();
+		let pollInFlight = false;
 
 		// Poll for key existence - when key is added, resolve and close
 		const checkInterval = setInterval(async () => {
-			if (!this.isConnected || this.settled) {
+			if (!this.isConnected || this.settled || pollInFlight) {
 				return;
 			}
-			const hasKey = !!(await getAppStorage().providerKeys.get(this.provider));
-			if (!this.isConnected || this.settled) {
-				return;
-			}
-			if (hasKey) {
-				clearInterval(checkInterval);
-				this.settle(true);
-				this.close();
+			pollInFlight = true;
+			try {
+				const hasKey = !!(await getAppStorage().providerKeys.get(this.provider));
+				if (!this.isConnected || this.settled) {
+					return;
+				}
+				if (hasKey) {
+					clearInterval(checkInterval);
+					this.settle(true);
+					this.close();
+				}
+			} catch (error) {
+				if (this.isConnected && !this.settled) {
+					console.error("Failed to poll provider key status:", error);
+				}
+			} finally {
+				pollInFlight = false;
 			}
 		}, 500);
 
