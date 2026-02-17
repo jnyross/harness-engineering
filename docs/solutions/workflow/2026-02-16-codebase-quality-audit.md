@@ -5228,12 +5228,35 @@ to:
 
 **Result:** overlay percentage parsing now rejects precision-rounded overflow inputs deterministically, preserving fallback layout behavior for invalid values.
 
+---
+
+### 283) ai model-catalog script accepted non-decimal pricing strings and auto-ran on import
+
+**Finding:** `packages/ai/scripts/generate-models.ts` parsed string pricing values with broad `Number(...)` coercion and executed `generateModels()` unconditionally at module load, allowing non-decimal string formats (`0x10`, `1e2`) and making safe test imports impossible without triggering network fetches.
+
+**Action:** Updated:
+
+- `packages/ai/scripts/generate-models.ts`
+- `packages/ai/test/generate-models.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- export and harden `parseNonNegativeNumericValue(...)` to accept only decimal numeric strings,
+- return safe `0` fallback for malformed/non-decimal pricing strings,
+- guard script execution behind an entrypoint check so imports do not auto-run fetch/generation side effects,
+- add regression tests for strict decimal parsing behavior.
+
+**Result:** model-catalog pricing parsing now rejects non-decimal coercions, and the generator module can be imported in tests without unintentionally executing network/model generation side effects.
+
 ## Validation Evidence
 
 - Root quality gate passes:
   - `npm run check`
 - ai CLI selection parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/cli-selection.test.ts`
+- ai model-generator numeric parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/generate-models.test.ts`
 - mom slack timestamp normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts`
 - web-ui model discovery + archive-index numeric parsing regression tests pass:
