@@ -2151,6 +2151,26 @@ to:
 
 **Result:** RPC request sending now handles timeout/write-failure races deterministically and cleans pending request state reliably.
 
+---
+
+### 125) rpc client send path could accept closed stdin and callback write errors
+
+**Finding:** Even after single-settlement timeout/write-throw handling, `RpcClient.send(...)` could still attempt writes against closed stdin and lacked explicit handling for asynchronous write-callback errors, risking ambiguous failures and pending-request map drift.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/rpc/rpc-client.ts`
+- `packages/coding-agent/test/rpc-client.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- reject immediately when stdin is already non-writable,
+- reject and cleanup pending request entries when write callbacks report errors,
+- add regression tests for closed-stdin and write-callback failure paths.
+
+**Result:** RPC send now fails fast on closed pipes and cleans pending request state deterministically across both synchronous and callback-based write failure modes.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2160,7 +2180,7 @@ to:
 - agent spawnScript regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts`
 - coding-agent RPC startup/shutdown regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures, pending-request rejection on stop, and send timeout/write-error cleanup)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures, pending-request rejection on stop, send timeout/write-error cleanup, and closed-stdin send handling)
 - coding-agent sleep helper regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/sleep.test.ts` (includes listener cleanup on resolve + abort paths)
 - ai abortable sleep + retry stream regression tests pass:
