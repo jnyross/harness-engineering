@@ -3842,6 +3842,26 @@ to:
 
 **Result:** Custom provider save flow now preserves deterministic close semantics and avoids stale detached alerts in asynchronous save races.
 
+---
+
+### 215) interactive countdown timer callback failures could leak/continue timer intervals
+
+**Finding:** Interactive countdown timer invoked external `onTick`/`onExpire` callbacks without exception isolation, allowing callback failures to propagate and potentially leave countdown interval behavior inconsistent.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/components/countdown-timer.ts`
+- `packages/coding-agent/test/countdown-timer.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- isolate callback exceptions with defensive logging,
+- stop timer progression safely on tick callback failure,
+- add regression coverage for normal expiration, explicit dispose, and throwing callback cases.
+
+**Result:** Interactive extension countdown timers now fail safely without leaking repeated interval-driven callback failures.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -3866,6 +3886,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-confirm.test.ts test/read-piped-stdin.test.ts` (includes yes/no parsing, early stdin-close settlement, pre-closed prompt handling, and pre-ended piped-stdin coverage)
 - coding-agent gh auth-status classification regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/gh-auth-status.test.ts` (includes missing gh spawn failure, signal interruption, non-zero auth status, and success cases)
+- coding-agent countdown timer regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/countdown-timer.test.ts` (includes normal expiry, manual dispose stop, and onTick-throw safety coverage)
 - coding-agent antigravity image SSE parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/antigravity-image-gen.test.ts` (includes terminal `data:` chunk without trailing newline and text+image ordering coverage)
 - coding-agent sleep helper regression tests pass:
