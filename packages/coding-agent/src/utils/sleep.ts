@@ -1,6 +1,12 @@
 /**
  * Sleep helper that respects abort signal.
  */
+const MAX_TIMEOUT_MS = 2_147_483_647;
+
+function normalizeSleepDurationMs(ms: number): number {
+	return ms > MAX_TIMEOUT_MS ? MAX_TIMEOUT_MS : ms;
+}
+
 export function sleep(ms: number, signal?: AbortSignal): Promise<void> {
 	return new Promise((resolve, reject) => {
 		if (signal?.aborted) {
@@ -33,7 +39,7 @@ export function sleep(ms: number, signal?: AbortSignal): Promise<void> {
 			reject(error);
 		};
 
-		const timeout = setTimeout(resolveOnce, ms);
+		const timeout = setTimeout(resolveOnce, normalizeSleepDurationMs(ms));
 
 		const onAbort = () => {
 			clearTimeout(timeout);

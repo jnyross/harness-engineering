@@ -14,6 +14,13 @@ describe("sleep", () => {
 		await expect(sleep(10, controller.signal)).rejects.toThrow("Aborted");
 	});
 
+	it("does not resolve early for oversized timeout values", async () => {
+		const controller = new AbortController();
+		const run = sleep(Number.MAX_SAFE_INTEGER, controller.signal);
+		setTimeout(() => controller.abort(), 5);
+		await expect(run).rejects.toThrow("Aborted");
+	});
+
 	it("cleans up abort listener after resolving", async () => {
 		const listeners = new Set<AbortListener>();
 		const signal = {
