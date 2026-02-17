@@ -194,6 +194,14 @@ describe("createExecutor", () => {
 		assert.match(result.stderr, /terminated by signal SIGTERM/);
 	});
 
+	it("ignores oversized timeout values beyond Node timer range", async () => {
+		const executor = createExecutor({ type: "host" });
+		const result = await executor.exec(`${process.execPath} -e "setTimeout(() => process.exit(0), 25)"`, {
+			timeout: Number.MAX_SAFE_INTEGER,
+		});
+		assert.equal(result.code, 0);
+	});
+
 	it("adds fallback stderr diagnostics for non-zero host exits without stderr", async () => {
 		const executor = createExecutor({ type: "host" });
 		const result = await executor.exec("exit 23");

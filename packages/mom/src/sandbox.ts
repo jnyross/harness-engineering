@@ -1,5 +1,7 @@
 import { spawn } from "child_process";
 
+const MAX_TIMEOUT_MS = 2_147_483_647;
+
 export type SandboxConfig = { type: "host" } | { type: "docker"; container: string };
 
 const DOCKER_CONTAINER_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.-]*$/;
@@ -186,6 +188,17 @@ export interface ExecResult {
 	code: number;
 }
 
+function parseExecTimeoutSeconds(timeout: number | undefined): number | undefined {
+	if (timeout === undefined) {
+		return undefined;
+	}
+	const timeoutMs = timeout * 1000;
+	if (!Number.isFinite(timeout) || timeout <= 0 || !Number.isFinite(timeoutMs) || timeoutMs > MAX_TIMEOUT_MS) {
+		return undefined;
+	}
+	return timeout;
+}
+
 export function buildDockerExecArgs(container: string, command: string): string[] {
 	return ["exec", container, "sh", "-c", command];
 }
@@ -205,13 +218,14 @@ function execWithSpawn(command: string, args: string[], options?: ExecOptions): 
 		let stderr = "";
 		let timedOut = false;
 		let settled = false;
+		const normalizedTimeoutSeconds = parseExecTimeoutSeconds(options?.timeout);
 
 		const timeoutHandle =
-			options?.timeout && options.timeout > 0
+			normalizedTimeoutSeconds !== undefined
 				? setTimeout(() => {
 						timedOut = true;
 						killProcessTree(child.pid!);
-					}, options.timeout * 1000)
+					}, normalizedTimeoutSeconds * 1000)
 				: undefined;
 
 		const rejectOnce = (error: Error) => {
@@ -284,7 +298,9 @@ function execWithSpawn(command: string, args: string[], options?: ExecOptions): 
 			}
 
 			if (timedOut) {
-				rejectOnce(new Error(`${stdout}\n${stderr}\nCommand timed out after ${options?.timeout} seconds`.trim()));
+				rejectOnce(
+					new Error(`${stdout}\n${stderr}\nCommand timed out after ${normalizedTimeoutSeconds} seconds`.trim()),
+				);
 				return;
 			}
 
