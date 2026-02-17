@@ -266,7 +266,7 @@ function buildRequest(prompt: string, model: string, projectId: string, aspectRa
 	};
 }
 
-async function parseSseForImage(
+export async function parseSseForImage(
 	response: Response,
 	signal?: AbortSignal,
 ): Promise<{ image: { data: string; mimeType: string }; text: string[] }> {
@@ -278,6 +278,40 @@ async function parseSseForImage(
 	const decoder = new TextDecoder();
 	let buffer = "";
 	const textParts: string[] = [];
+	let resolvedImage: { data: string; mimeType: string } | undefined;
+
+	const processLine = (line: string) => {
+		if (!line.startsWith("data:")) return;
+		const jsonStr = line.slice(5).trim();
+		if (!jsonStr) return;
+
+		let chunk: CloudCodeAssistResponseChunk;
+		try {
+			chunk = JSON.parse(jsonStr) as CloudCodeAssistResponseChunk;
+		} catch {
+			return;
+		}
+
+		const responseData = chunk.response;
+		if (!responseData?.candidates) return;
+
+		for (const candidate of responseData.candidates) {
+			const parts = candidate.content?.parts;
+			if (!parts) continue;
+			for (const part of parts) {
+				if (part.text) {
+					textParts.push(part.text);
+				}
+				if (part.inlineData?.data) {
+					resolvedImage = {
+						data: part.inlineData.data,
+						mimeType: part.inlineData.mimeType || "image/png",
+					};
+					return;
+				}
+			}
+		}
+	};
 
 	try {
 		while (true) {
@@ -293,40 +327,16 @@ async function parseSseForImage(
 			buffer = lines.pop() || "";
 
 			for (const line of lines) {
-				if (!line.startsWith("data:")) continue;
-				const jsonStr = line.slice(5).trim();
-				if (!jsonStr) continue;
-
-				let chunk: CloudCodeAssistResponseChunk;
-				try {
-					chunk = JSON.parse(jsonStr) as CloudCodeAssistResponseChunk;
-				} catch {
-					continue;
-				}
-
-				const responseData = chunk.response;
-				if (!responseData?.candidates) continue;
-
-				for (const candidate of responseData.candidates) {
-					const parts = candidate.content?.parts;
-					if (!parts) continue;
-					for (const part of parts) {
-						if (part.text) {
-							textParts.push(part.text);
-						}
-						if (part.inlineData?.data) {
-							await reader.cancel();
-							return {
-								image: {
-									data: part.inlineData.data,
-									mimeType: part.inlineData.mimeType || "image/png",
-								},
-								text: textParts,
-							};
-						}
-					}
+				processLine(line);
+				if (resolvedImage) {
+					await reader.cancel();
+					return { image: resolvedImage, text: textParts };
 				}
 			}
+		}
+		processLine(buffer);
+		if (resolvedImage) {
+			return { image: resolvedImage, text: textParts };
 		}
 	} finally {
 		reader.releaseLock();

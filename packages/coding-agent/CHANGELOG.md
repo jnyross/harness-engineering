@@ -25,6 +25,7 @@
 - Linux clipboard copy fallback now attaches a `wl-copy` spawn-error handler, preventing uncaught child-process errors from bubbling during best-effort clipboard writes.
 - Sandbox extension example now uses single-settlement `error`/`close` handling with abort-listener cleanup and signal-exit normalization, avoiding racey duplicate settles in sandboxed bash execution.
 - SSH extension example now uses single-settlement subprocess handling for SSH command and remote-bash execution paths, with signal/null exit normalization and deterministic abort/timeout cleanup.
+- Antigravity image-generation SSE parsing now flushes terminal buffered `data:` chunks without trailing newline delimiters, preventing dropped final image payloads.
 - Bash executor helpers (`executeBash`, `executeBashWithOperations`) now short-circuit pre-aborted signals, avoiding unnecessary subprocess/remote execution when cancellation is already requested.
 - Bash executor helpers now preserve non-zero semantics for signal/null exits when execution was not canceled by caller signals, avoiding false cancelled/success outcomes.
 - Built-in bash tool now short-circuits pre-aborted signals before shell spawn, preventing canceled calls from starting subprocesses.

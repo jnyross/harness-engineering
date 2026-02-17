@@ -2505,6 +2505,26 @@ to:
 
 **Result:** SSH extension example subprocess handling is now deterministic and cleanup-safe, consistent with hardened process-lifecycle patterns applied across the codebase.
 
+---
+
+### 143) Antigravity image SSE parsing could drop terminal chunk without trailing newline
+
+**Finding:** The Antigravity image-generation extension parsed only newline-terminated SSE lines, so a final `data:` chunk without trailing `\n` could be ignored, dropping final inline image payloads.
+
+**Action:** Updated:
+
+- `packages/coding-agent/examples/extensions/antigravity-image-gen.ts`
+- `packages/coding-agent/test/antigravity-image-gen.test.ts` (new)
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- factor SSE line processing through a shared parser function,
+- flush/process the remaining terminal buffer after stream completion,
+- add regression tests for newline-less terminal image chunks and preceding text preservation.
+
+**Result:** Antigravity image generation now reliably processes final SSE payload chunks even when streams end without newline terminators.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2515,6 +2535,8 @@ to:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts` (includes signal-exit non-zero semantics and forced-kill fallback for SIGTERM-resistant children)
 - coding-agent RPC startup/shutdown regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures, pending-request rejection on stop and unexpected exit, stop timeout forced-kill cleanup, send timeout/write-error cleanup, closed-stdin send handling, and exit-listener cleanup assertions)
+- coding-agent antigravity image SSE parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/antigravity-image-gen.test.ts` (includes terminal `data:` chunk without trailing newline and text+image ordering coverage)
 - coding-agent sleep helper regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/sleep.test.ts` (includes listener cleanup on resolve + abort paths)
 - ai abortable sleep + retry stream regression tests pass:
