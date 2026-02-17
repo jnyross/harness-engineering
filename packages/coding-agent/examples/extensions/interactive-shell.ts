@@ -153,6 +153,7 @@ export default function (pi: ExtensionAPI) {
 		}
 
 		// Use ctx.ui.custom() to get TUI access, then run the command
+		let failureReason: string | undefined;
 		const exitCode = await ctx.ui.custom<number | null>((tui, _theme, _kb, done) => {
 			// Stop TUI to release terminal
 			tui.stop();
@@ -166,13 +167,21 @@ export default function (pi: ExtensionAPI) {
 				stdio: "inherit",
 				env: process.env,
 			});
+			const normalizedExitCode = result.status ?? (result.signal || result.error ? 1 : 0);
+			if (result.error) {
+				failureReason = `failed to start shell: ${result.error.message}`;
+			} else if (result.signal) {
+				failureReason = `terminated by signal ${result.signal}`;
+			} else if (normalizedExitCode !== 0) {
+				failureReason = `exited with code ${normalizedExitCode}`;
+			}
 
 			// Restart TUI
 			tui.start();
 			tui.requestRender(true);
 
 			// Signal completion
-			done(result.status);
+			done(normalizedExitCode);
 
 			// Return empty component (immediately disposed since done() was called)
 			return { render: () => [], invalidate: () => {} };
@@ -182,7 +191,7 @@ export default function (pi: ExtensionAPI) {
 		const output =
 			exitCode === 0
 				? "(interactive command completed successfully)"
-				: `(interactive command exited with code ${exitCode})`;
+				: `(interactive command ${failureReason ?? `exited with code ${exitCode}`})`;
 
 		return {
 			result: {

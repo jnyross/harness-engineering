@@ -2638,6 +2638,24 @@ to:
 
 **Result:** RPC extension example now performs deterministic one-time teardown and process exit across child-process event races.
 
+---
+
+### 150) interactive-shell extension surfaced ambiguous `null` exit output on spawn/signal failures
+
+**Finding:** Interactive-shell extension reported `(interactive command exited with code null)` when shell startup failed or commands terminated by signal, obscuring the actual failure mode.
+
+**Action:** Updated:
+
+- `packages/coding-agent/examples/extensions/interactive-shell.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize spawn/signal outcomes to deterministic non-zero exit codes,
+- emit explicit failure reason text for startup failures, signal terminations, and non-zero exits.
+
+**Result:** Interactive-shell extension now reports clear, actionable failure diagnostics instead of ambiguous null-exit messaging.
+
 ## Validation Evidence
 
 - Root quality gate passes:
