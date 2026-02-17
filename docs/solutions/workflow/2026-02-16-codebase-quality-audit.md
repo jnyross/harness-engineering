@@ -1640,6 +1640,23 @@ to map signal-terminated child exits to non-zero command results and added regre
 
 **Result:** Signal-terminated sandbox commands now propagate failure semantics correctly instead of false success.
 
+---
+
+### 97) coding-agent find/ls tools had inconsistent abort-listener cleanup
+
+**Finding:** Find/ls tools registered abort listeners but resolved/rejected from multiple early-return branches without centralized settlement/cleanup, risking inconsistent abort listener lifecycle and startup cancellation races.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/find.ts`
+- `packages/coding-agent/src/core/tools/ls.ts`
+- `packages/coding-agent/test/tools.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to use single-settlement abort cleanup paths, add early cancellation checks during async startup/listing phases, and extend tool regression coverage for pre-aborted find/ls executions.
+
+**Result:** Find/ls tool execution now handles abort lifecycle deterministically with consistent listener cleanup and cancellation behavior.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1672,6 +1689,8 @@ to map signal-terminated child exits to non-zero command results and added regre
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted bash + grep startup-abort race coverage)
 - mom sandbox signal-exit regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes signal-terminated host command case)
+- coding-agent tools regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes bash/grep/find/ls cancellation coverage)
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes docker-missing spawn-error handling case)
 - Agent package tests pass:
