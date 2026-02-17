@@ -27,6 +27,7 @@
 - Grep tool now registers abort handling before asynchronous tool resolution so cancellations during startup reliably stop execution instead of racing into ripgrep spawn.
 - Find/ls tools now use single-settlement abort cleanup and early cancellation checks during async startup/listing paths, reducing abort-related race/leak behavior.
 - RPC client `stop()` now rejects pending in-flight requests immediately, preventing callers from hanging on responses that will never arrive after shutdown.
+- RPC client request sending now uses single-settlement handling for timeout/write-error paths, cleaning pending request state deterministically on startup/write failures.
 - `sleep(ms, signal)` now cleans up abort listeners on resolve/reject and avoids double-settlement paths during abort timing races.
 - Write tool now uses single-settlement abort cleanup during async filesystem operations, preventing duplicate settle races and ensuring consistent cancellation behavior.
 - Read tool now uses single-settlement abort cleanup during async filesystem operations, ensuring deterministic cancellation/error settlement behavior.

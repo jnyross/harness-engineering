@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { RpcClient } from "../src/modes/rpc/rpc-client.js";
 
 describe("RpcClient.start", () => {
@@ -48,5 +48,48 @@ describe("RpcClient.start", () => {
 		expect(rejectionError?.message).toContain("RPC client stopped before response was received");
 		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
 		expect((client as any).pendingRequests.size).toBe(0);
+	});
+
+	it("cleans up pending request when stdin write throws", async () => {
+		const client = new RpcClient();
+
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).process = {
+			stdin: {
+				write: () => {
+					throw new Error("stdin closed");
+				},
+			},
+		};
+
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		await expect((client as any).send({ type: "abort" })).rejects.toThrow("stdin closed");
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		expect((client as any).pendingRequests.size).toBe(0);
+	});
+
+	it("cleans up pending request on send timeout", async () => {
+		vi.useFakeTimers();
+		try {
+			const client = new RpcClient();
+
+			// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+			(client as any).process = {
+				stdin: {
+					write: () => true,
+				},
+			};
+
+			// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+			const sendPromise = (client as any).send({ type: "abort" });
+			const rejection = expect(sendPromise).rejects.toThrow("Timeout waiting for response to abort");
+			await vi.advanceTimersByTimeAsync(30000);
+			await rejection;
+
+			// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+			expect((client as any).pendingRequests.size).toBe(0);
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });

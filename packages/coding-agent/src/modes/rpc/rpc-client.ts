@@ -540,27 +540,46 @@ export class RpcClient {
 
 		const id = `req_${++this.requestId}`;
 		const fullCommand = { ...command, id } as RpcCommand;
+		const stdin = this.process.stdin;
 
 		return new Promise((resolve, reject) => {
-			this.pendingRequests.set(id, { resolve, reject });
+			let settled = false;
+			const clearPending = () => {
+				this.pendingRequests.delete(id);
+			};
+			const settleResolve = (response: RpcResponse) => {
+				if (settled) {
+					return;
+				}
+				settled = true;
+				clearPending();
+				clearTimeout(timeout);
+				resolve(response);
+			};
+			const settleReject = (error: Error) => {
+				if (settled) {
+					return;
+				}
+				settled = true;
+				clearPending();
+				clearTimeout(timeout);
+				reject(error);
+			};
 
 			const timeout = setTimeout(() => {
-				this.pendingRequests.delete(id);
-				reject(new Error(`Timeout waiting for response to ${command.type}. Stderr: ${this.stderr}`));
+				settleReject(new Error(`Timeout waiting for response to ${command.type}. Stderr: ${this.stderr}`));
 			}, 30000);
 
 			this.pendingRequests.set(id, {
-				resolve: (response) => {
-					clearTimeout(timeout);
-					resolve(response);
-				},
-				reject: (error) => {
-					clearTimeout(timeout);
-					reject(error);
-				},
+				resolve: settleResolve,
+				reject: settleReject,
 			});
 
-			this.process!.stdin!.write(`${JSON.stringify(fullCommand)}\n`);
+			try {
+				stdin.write(`${JSON.stringify(fullCommand)}\n`);
+			} catch (error) {
+				settleReject(error instanceof Error ? error : new Error(String(error)));
+			}
 		});
 	}
 
