@@ -2372,6 +2372,25 @@ to:
 
 **Result:** `grep` now respects cancellation consistently even in late post-ripgrep formatting windows, avoiding stale successful results after abort.
 
+---
+
+### 136) bash tool accepted ambiguous null exit statuses from custom executors
+
+**Finding:** `createBashTool()` treated `exitCode: null` from custom `operations.exec()` implementations as success, allowing ambiguous/unknown command terminations to pass as successful tool runs.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/bash.ts`
+- `packages/coding-agent/test/tools.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize null/unknown exit statuses to non-zero (`1`) before success/failure evaluation,
+- add regression coverage ensuring custom executors returning `null` are reported as failures.
+
+**Result:** Bash tool now preserves deterministic failure semantics across both built-in and custom execution backends when command termination status is ambiguous.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2447,7 +2466,7 @@ to:
 - mom sandbox signal-exit regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes signal-terminated host command case)
 - coding-agent tools regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes bash/grep/find/ls cancellation coverage, including grep late-abort during post-process formatting)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes bash/grep/find/ls cancellation coverage, grep late-abort during post-process formatting, and bash null-exit normalization coverage for custom executors)
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes docker-missing spawn-error handling case)
 - Agent package tests pass:

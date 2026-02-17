@@ -309,8 +309,10 @@ export function createBashTool(cwd: string, options?: BashToolOptions): AgentToo
 							}
 						}
 
-						if (exitCode !== 0 && exitCode !== null) {
-							outputText += `\n\nCommand exited with code ${exitCode}`;
+						const normalizedExitCode = exitCode ?? 1;
+
+						if (normalizedExitCode !== 0) {
+							outputText += `\n\nCommand exited with code ${normalizedExitCode}`;
 							reject(new Error(outputText));
 						} else {
 							resolve({ content: [{ type: "text", text: outputText }], details });

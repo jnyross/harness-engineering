@@ -24,6 +24,7 @@
 - Bash executor helpers now preserve non-zero semantics for signal/null exits when execution was not canceled by caller signals, avoiding false cancelled/success outcomes.
 - Built-in bash tool now short-circuits pre-aborted signals before shell spawn, preventing canceled calls from starting subprocesses.
 - Built-in bash tool execution now uses single-settlement cleanup and reports signal-terminated subprocesses as non-zero exits instead of false success.
+- Bash tool now normalizes null/unknown command exit statuses to non-zero failures, avoiding false success when custom executors return ambiguous null exits.
 - Grep tool now registers abort handling before asynchronous tool resolution so cancellations during startup reliably stop execution instead of racing into ripgrep spawn.
 - Grep tool now also short-circuits during post-ripgrep async match formatting when cancellation arrives late, avoiding stale success results after abort.
 - Find/ls tools now use single-settlement abort cleanup and early cancellation checks during async startup/listing paths, reducing abort-related race/leak behavior.

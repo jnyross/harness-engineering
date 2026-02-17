@@ -326,6 +326,18 @@ describe("Coding Agent Tools", () => {
 			);
 		});
 
+		it("should treat null exit codes from custom operations as failures", async () => {
+			const bashWithNullExit = createBashTool(testDir, {
+				operations: {
+					exec: async () => ({ exitCode: null }),
+				},
+			});
+
+			await expect(bashWithNullExit.execute("test-call-9c", { command: "echo ignored" })).rejects.toThrow(
+				/Command exited with code 1/,
+			);
+		});
+
 		it("should respect timeout", async () => {
 			await expect(bashTool.execute("test-call-10", { command: "sleep 5", timeout: 1 })).rejects.toThrow(
 				/timed out/i,
