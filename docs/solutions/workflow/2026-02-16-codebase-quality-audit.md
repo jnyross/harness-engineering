@@ -1770,6 +1770,22 @@ to use a shared single-settlement abort cleanup path and added pre-aborted edit 
 
 **Result:** Edit tool now handles cancellation/error settlement deterministically across all validation/read/write branches.
 
+---
+
+### 105) coding-agent bash execution path had split settlement + signal-null success
+
+**Finding:** Default bash execution path handled error/close settlement in separate branches without a single-settlement guard and returned `exitCode: null` on signal termination, which could surface as false success at higher layers.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/bash.ts`
+- `packages/coding-agent/test/tools.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to use single-settlement cleanup for abort/error/close paths and map signal-terminated child closes to non-zero exits.
+
+**Result:** Bash tool execution now has deterministic settlement semantics and reports signal-terminated commands as failures instead of false success.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1792,6 +1808,8 @@ to use a shared single-settlement abort cleanup path and added pre-aborted edit 
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted read + write coverage)
 - coding-agent tools regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted read + write + edit coverage)
+- coding-agent tools regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes signal-terminated bash command coverage)
 - coding-agent execCommand regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - coding-agent interactive status tests pass after share flow command-exec refactor:
