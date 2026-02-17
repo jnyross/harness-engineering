@@ -1,6 +1,6 @@
 import type { AgentTool } from "@mariozechner/pi-agent-core";
 import { type Static, Type } from "@sinclair/typebox";
-import { spawnSync } from "child_process";
+import { type SpawnSyncReturns, spawnSync } from "child_process";
 import { existsSync } from "fs";
 import { globSync } from "glob";
 import path from "path";
@@ -33,7 +33,9 @@ export interface FindOperations {
 	/** Check if path exists */
 	exists: (absolutePath: string) => Promise<boolean> | boolean;
 	/** Find files matching glob pattern. Returns relative paths. */
-	glob: (pattern: string, cwd: string, options: { ignore: string[]; limit: number }) => Promise<string[]> | string[];
+	glob?: (pattern: string, cwd: string, options: { ignore: string[]; limit: number }) => Promise<string[]> | string[];
+	/** Execute fd with args and return spawnSync-style result. */
+	spawnFd?: (fdPath: string, args: string[]) => SpawnSyncReturns<string>;
 }
 
 const defaultFindOperations: FindOperations = {
@@ -42,6 +44,11 @@ const defaultFindOperations: FindOperations = {
 		// This is a placeholder - actual fd execution happens in execute
 		return [];
 	},
+	spawnFd: (fdPath, args) =>
+		spawnSync(fdPath, args, {
+			encoding: "utf-8",
+			maxBuffer: 10 * 1024 * 1024,
+		}),
 };
 
 export interface FindToolOptions {
@@ -88,14 +95,16 @@ export function createFindTool(cwd: string, options?: FindToolOptions): AgentToo
 					try {
 						const searchPath = resolveToCwd(searchDir || ".", cwd);
 						const effectiveLimit = limit ?? DEFAULT_LIMIT;
-						const ops = customOps ?? defaultFindOperations;
 
 						// If custom operations provided with glob, use that
 						if (customOps?.glob) {
+							const exists = customOps.exists;
+							const customGlob = customOps.glob;
+
 							if (aborted) {
 								return;
 							}
-							if (!(await ops.exists(searchPath))) {
+							if (!(await exists(searchPath))) {
 								settle(() => reject(new Error(`Path not found: ${searchPath}`)));
 								return;
 							}
@@ -103,7 +112,7 @@ export function createFindTool(cwd: string, options?: FindToolOptions): AgentToo
 							if (aborted) {
 								return;
 							}
-							const results = await ops.glob(pattern, searchPath, {
+							const results = await customGlob(pattern, searchPath, {
 								ignore: ["**/node_modules/**", "**/.git/**"],
 								limit: effectiveLimit,
 							});
@@ -212,10 +221,8 @@ export function createFindTool(cwd: string, options?: FindToolOptions): AgentToo
 							return;
 						}
 
-						const result = spawnSync(fdPath, args, {
-							encoding: "utf-8",
-							maxBuffer: 10 * 1024 * 1024,
-						});
+						const runFd = customOps?.spawnFd ?? defaultFindOperations.spawnFd!;
+						const result = runFd(fdPath, args);
 						if (aborted) {
 							return;
 						}
@@ -223,6 +230,12 @@ export function createFindTool(cwd: string, options?: FindToolOptions): AgentToo
 						const spawnError = result.error;
 						if (spawnError) {
 							settle(() => reject(new Error(`Failed to run fd: ${spawnError.message}`)));
+							return;
+						}
+
+						if (result.status === null) {
+							const signal = result.signal ?? "unknown";
+							settle(() => reject(new Error(`fd exited due to signal ${signal}`)));
 							return;
 						}
 

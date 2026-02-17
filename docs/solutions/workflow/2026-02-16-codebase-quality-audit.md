@@ -2581,6 +2581,26 @@ to:
 
 **Result:** Pods log monitoring now observes spawn/exit failures from the earliest point in process lifecycle, reducing startup race risk in SSH log streaming flows.
 
+---
+
+### 147) find tool could accept partial output from signal-terminated `fd` runs
+
+**Finding:** `find` treated non-zero `fd` exits as ignorable when stdout contained partial output, so signal-terminated `fd` executions (`status === null`) could incorrectly resolve as success.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/find.ts`
+- `packages/coding-agent/test/tools.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- treat signal/null `fd` exits as explicit errors,
+- add injectable `spawnFd` operation hook for deterministic regression testing,
+- add regression coverage asserting signal-terminated `fd` execution rejects even with partial stdout.
+
+**Result:** Find tool now preserves deterministic failure semantics for interrupted `fd` executions and no longer reports stale partial results as successful output.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2658,7 +2678,7 @@ to:
 - mom sandbox signal-exit regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes signal-terminated host command case)
 - coding-agent tools regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes bash/grep/find/ls cancellation coverage, grep late-abort during post-process formatting, and bash null-exit normalization coverage for custom executors)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes bash/grep/find/ls cancellation coverage, grep late-abort during post-process formatting, bash null-exit normalization coverage for custom executors, and find signal-exit rejection coverage)
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes docker-missing spawn-error handling case)
 - Agent package tests pass:

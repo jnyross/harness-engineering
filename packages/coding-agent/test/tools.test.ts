@@ -1,10 +1,11 @@
+import type { SpawnSyncReturns } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bashTool, createBashTool } from "../src/core/tools/bash.js";
 import { editTool } from "../src/core/tools/edit.js";
-import { findTool } from "../src/core/tools/find.js";
+import { createFindTool, findTool } from "../src/core/tools/find.js";
 import { createGrepTool, grepTool } from "../src/core/tools/grep.js";
 import { lsTool } from "../src/core/tools/ls.js";
 import { readTool } from "../src/core/tools/read.js";
@@ -545,6 +546,32 @@ describe("Coding Agent Tools", () => {
 					controller.signal,
 				),
 			).rejects.toThrow(/Operation aborted/);
+		});
+
+		it("should reject when fd exits via signal", async () => {
+			const ensureToolMock = vi.spyOn(toolsManager, "ensureTool").mockResolvedValue("fd");
+			const findWithSignalExit = createFindTool(testDir, {
+				operations: {
+					exists: () => true,
+					spawnFd: () =>
+						({
+							status: null,
+							signal: "SIGTERM",
+							stdout: "partial-result\n",
+							stderr: "",
+							error: undefined,
+						}) as SpawnSyncReturns<string>,
+				},
+			});
+
+			await expect(
+				findWithSignalExit.execute("test-call-find-signal", {
+					pattern: "**/*.txt",
+					path: testDir,
+				}),
+			).rejects.toThrow(/fd exited due to signal SIGTERM/);
+
+			ensureToolMock.mockRestore();
 		});
 	});
 
