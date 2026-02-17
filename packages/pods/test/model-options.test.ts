@@ -31,5 +31,7 @@ describe("normalizeContextOption", () => {
 		assert.throws(() => normalizeContextOption("0"), /Invalid --context value/);
 		assert.throws(() => normalizeContextOption("-1"), /Invalid --context value/);
 		assert.throws(() => normalizeContextOption("none"), /Invalid --context value/);
+		assert.throws(() => normalizeContextOption("4096tokens"), /Invalid --context value/);
+		assert.throws(() => normalizeContextOption("16k-extra"), /Invalid --context value/);
 	});
 });

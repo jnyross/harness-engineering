@@ -21,6 +21,10 @@ export function normalizeContextOption(context: string): string {
 		return normalized;
 	}
 
+	if (!/^\d+$/.test(trimmed)) {
+		throw new Error("Invalid --context value. Use 4k/8k/16k/32k/64k/128k or a positive token count.");
+	}
+
 	const numeric = Number.parseInt(trimmed, 10);
 	if (!Number.isFinite(numeric) || numeric <= 0) {
 		throw new Error("Invalid --context value. Use 4k/8k/16k/32k/64k/128k or a positive token count.");

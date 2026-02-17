@@ -72,4 +72,5 @@
 - Model log-stream failure diagnostics now include the full invoked SSH tail command context in startup/live-log paths, making spawn/exit troubleshooting actionable without reproducing command construction manually.
 - Interactive `pi shell` exit diagnostics now include the full invoked SSH command context for signal/non-zero/unknown exits, matching startup-failure diagnostic detail.
 - Streaming SSH helper startup failures now include full invoked command context (`ssh ... <remote-command>`), so `pi ssh`/setup callers see actionable spawn diagnostics.
+- `--context` normalization now rejects mixed alphanumeric inputs (for example `4096tokens`) instead of truncating via `parseInt`, ensuring only aliases or positive integer token counts are accepted.
 
