@@ -3788,6 +3788,24 @@ to:
 
 **Result:** Process-exit helper now settles deterministically even when attached after very fast child-process termination.
 
+---
+
+### 212) session list dialog callback exceptions could disrupt deterministic close/notification teardown
+
+**Finding:** Session list dialog invoked selection/delete callbacks directly during close/select flows, so thrown consumer callback errors could interrupt dialog close sequencing or stop deleted-session callback fan-out.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/dialogs/SessionListDialog.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- ensure selection flow closes dialog via `finally` even when `onSelect` throws,
+- isolate delete-notification callback errors per session so fan-out continues and teardown completes.
+
+**Result:** Session list dialog now preserves deterministic close/notification behavior even when consumer callbacks throw.
+
 ## Validation Evidence
 
 - Root quality gate passes:

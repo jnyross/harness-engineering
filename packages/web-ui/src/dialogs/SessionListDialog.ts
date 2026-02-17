@@ -90,7 +90,11 @@ export class SessionListDialog extends DialogBase {
 		// Only notify about deleted sessions if dialog wasn't closed via selection
 		if (!this.closedViaSelection && this.onDeleteCallback && this.deletedSessions.size > 0) {
 			for (const sessionId of this.deletedSessions) {
-				this.onDeleteCallback(sessionId);
+				try {
+					this.onDeleteCallback(sessionId);
+				} catch (error) {
+					console.error("Failed to notify deleted session callback:", error);
+				}
 			}
 		}
 		this.deletedSessions.clear();
@@ -99,10 +103,11 @@ export class SessionListDialog extends DialogBase {
 
 	private handleSelect(sessionId: string) {
 		this.closedViaSelection = true;
-		if (this.onSelectCallback) {
-			this.onSelectCallback(sessionId);
+		try {
+			this.onSelectCallback?.(sessionId);
+		} finally {
+			this.close();
 		}
-		this.close();
 	}
 
 	private formatDate(isoString: string): string {
