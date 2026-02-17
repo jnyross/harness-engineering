@@ -5637,6 +5637,26 @@ to:
 
 **Result:** RPC dialog timeout normalization now consistently bounds oversized values (including `Infinity`) instead of accidentally disabling timeout enforcement.
 
+---
+
+### 303) coding-agent interactive countdown timeout normalization treated `Infinity` as disabled timeout
+
+**Finding:** `packages/coding-agent/src/modes/interactive/components/countdown-timer.ts` originally rejected all non-finite values; this caused positive-infinite extension timeout values to normalize to `undefined` (no countdown timer) instead of being bounded like other oversized timeout inputs.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/components/countdown-timer.ts`
+- `packages/coding-agent/test/countdown-timer.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- reject only `NaN` and non-positive timeout values,
+- clamp positive-infinite and other oversized timeout inputs to Node timer bounds,
+- add explicit regression coverage for `Infinity` countdown timeout normalization.
+
+**Result:** interactive extension countdown timers now keep timeout enforcement for `Infinity` inputs by clamping them instead of disabling the timer path.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5784,7 +5804,7 @@ to:
 - coding-agent gh auth-status classification regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/gh-auth-status.test.ts` (includes missing gh spawn failure, signal interruption, non-zero auth status, and success cases)
 - coding-agent countdown timer regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/countdown-timer.test.ts` (includes normal expiry, manual dispose stop, onTick-throw safety coverage, and timeout normalization coverage)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/countdown-timer.test.ts` (includes normal expiry, manual dispose stop, onTick-throw safety coverage, and timeout normalization coverage including positive-infinite clamping)
 - coding-agent extension dialog callback regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extension-dialog-callbacks.test.ts` (includes throwing selector/input/editor callback safety and post-dispose callback suppression across selector/input/editor dialogs)
 - coding-agent session selector disposal regression tests pass:
