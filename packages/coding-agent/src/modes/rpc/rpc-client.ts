@@ -537,6 +537,9 @@ export class RpcClient {
 		if (!this.process?.stdin) {
 			throw new Error("Client not started");
 		}
+		if (this.process.stdin.destroyed || this.process.stdin.writableEnded) {
+			throw new Error("Client stdin is not writable");
+		}
 
 		const id = `req_${++this.requestId}`;
 		const fullCommand = { ...command, id } as RpcCommand;
@@ -576,7 +579,11 @@ export class RpcClient {
 			});
 
 			try {
-				stdin.write(`${JSON.stringify(fullCommand)}\n`);
+				stdin.write(`${JSON.stringify(fullCommand)}\n`, (error?: Error | null) => {
+					if (error) {
+						settleReject(error);
+					}
+				});
 			} catch (error) {
 				settleReject(error instanceof Error ? error : new Error(String(error)));
 			}

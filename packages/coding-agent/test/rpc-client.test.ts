@@ -68,6 +68,45 @@ describe("RpcClient.start", () => {
 		expect((client as any).pendingRequests.size).toBe(0);
 	});
 
+	it("rejects send when stdin is not writable", async () => {
+		const client = new RpcClient();
+
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).process = {
+			stdin: {
+				destroyed: true,
+				writableEnded: true,
+				write: () => true,
+			},
+		};
+
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		await expect((client as any).send({ type: "abort" })).rejects.toThrow("Client stdin is not writable");
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		expect((client as any).pendingRequests.size).toBe(0);
+	});
+
+	it("cleans up pending request when stdin write callback returns error", async () => {
+		const client = new RpcClient();
+
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).process = {
+			stdin: {
+				destroyed: false,
+				writableEnded: false,
+				write: (_chunk: string, callback?: (error?: Error | null) => void) => {
+					callback?.(new Error("write callback failure"));
+					return true;
+				},
+			},
+		};
+
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		await expect((client as any).send({ type: "abort" })).rejects.toThrow("write callback failure");
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		expect((client as any).pendingRequests.size).toBe(0);
+	});
+
 	it("cleans up pending request on send timeout", async () => {
 		vi.useFakeTimers();
 		try {
