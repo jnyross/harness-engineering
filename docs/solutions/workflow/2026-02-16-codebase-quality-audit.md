@@ -3018,6 +3018,25 @@ to:
 
 **Result:** Piped-stdin ingestion now settles deterministically across `end`, `error`, and `close` termination paths.
 
+---
+
+### 170) sandbox runtime message bridge left timeout timers alive after early responses
+
+**Finding:** Sandboxed runtime request/response bridge resolved/rejected on message receipt but did not clear the 30s timeout timer, leaving unnecessary pending timers for each successful runtime message.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/sandbox/RuntimeMessageBridge.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- guard runtime bridge promise settlement with a one-time settle helper,
+- clear timeout handlers on both success and error response paths,
+- ensure timeout/error/response handlers cannot double-settle.
+
+**Result:** Runtime bridge messaging now cleans up timeout timers immediately on completion and avoids redundant late timeout callbacks.
+
 ## Validation Evidence
 
 - Root quality gate passes:
