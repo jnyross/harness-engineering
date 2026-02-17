@@ -78,6 +78,7 @@ describe("resolveModelContextTokens", () => {
 		assert.equal(resolveModelContextTokens("16k-extra"), undefined);
 		assert.equal(resolveModelContextTokens("4096tokens"), undefined);
 		assert.equal(resolveModelContextTokens("0"), undefined);
+		assert.equal(resolveModelContextTokens("9007199254740993"), undefined);
 	});
 });
 

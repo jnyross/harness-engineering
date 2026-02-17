@@ -26,6 +26,19 @@ const CONTEXT_SIZE_ALIASES: Record<string, number> = {
 	"128k": 131072,
 };
 
+function parsePositiveSafeInteger(value: string): number | undefined {
+	if (!/^\d+$/.test(value)) {
+		return undefined;
+	}
+
+	const parsed = Number.parseInt(value, 10);
+	if (!Number.isSafeInteger(parsed) || parsed < 1) {
+		return undefined;
+	}
+
+	return parsed;
+}
+
 export function resolveModelMemoryFraction(memoryValue: string): number | undefined {
 	const trimmed = memoryValue.trim();
 	const memoryMatch = trimmed.match(/^(\d+(?:\.\d+)?)%?$/);
@@ -63,12 +76,7 @@ export function resolveModelContextTokens(contextValue: string): number | undefi
 		return aliasMatch;
 	}
 
-	if (!/^\d+$/.test(trimmed)) {
-		return undefined;
-	}
-
-	const parsed = Number.parseInt(trimmed, 10);
-	return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+	return parsePositiveSafeInteger(trimmed);
 }
 
 /**
