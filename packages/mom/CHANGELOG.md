@@ -23,6 +23,7 @@
 - Sandbox command startup failures now include full command context (`command + args`) in `execSimple`/executor error paths, improving diagnostics when `docker`/shell binaries cannot be spawned.
 - Sandbox executor results now include fallback stderr diagnostics for signal/unknown/non-zero command exits when subprocesses fail silently, improving downstream tool error clarity.
 - Channel store timestamp parsing now validates Slack timestamp formats strictly and falls back to current time for malformed values, preventing `logMessage()` date-conversion crashes from partial `parseInt`/`parseFloat` coercion.
+- Slack live/backfill message timestamp handling now shares strict Slack timestamp parsing and ignores malformed history timestamps when selecting backfill cursors, preventing date-conversion crashes and malformed timestamp ordering drift.
 
 ### Changed
 

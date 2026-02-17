@@ -3,6 +3,7 @@ import { WebClient } from "@slack/web-api";
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "fs";
 import { basename, join } from "path";
 import * as log from "./log.js";
+import { getLatestSlackTimestamp, parseSlackTimestampToMilliseconds } from "./slack-timestamp.js";
 import type { Attachment, ChannelStore } from "./store.js";
 
 // ============================================================================
@@ -417,8 +418,16 @@ export class SlackBot {
 		const user = this.users.get(event.user);
 		// Process attachments - queues downloads in background
 		const attachments = event.files ? this.store.processAttachments(event.channel, event.files, event.ts) : [];
+		const timestampMs = parseSlackTimestampToMilliseconds(event.ts);
+		const date =
+			timestampMs === undefined
+				? (() => {
+						log.logWarning("Message has invalid Slack timestamp, using current time", event.ts);
+						return new Date().toISOString();
+					})()
+				: new Date(timestampMs).toISOString();
 		this.logToFile(event.channel, {
-			date: new Date(parseFloat(event.ts) * 1000).toISOString(),
+			date,
 			ts: event.ts,
 			user: event.user,
 			userName: user?.userName,
@@ -453,11 +462,8 @@ export class SlackBot {
 	private async backfillChannel(channelId: string): Promise<number> {
 		const existingTs = this.getExistingTimestamps(channelId);
 
-		// Find the biggest ts in log.jsonl
-		let latestTs: string | undefined;
-		for (const ts of existingTs) {
-			if (!latestTs || parseFloat(ts) > parseFloat(latestTs)) latestTs = ts;
-		}
+		// Find the biggest valid ts in log.jsonl
+		const latestTs = getLatestSlackTimestamp(existingTs);
 
 		type Message = {
 			user?: string;
@@ -510,9 +516,17 @@ export class SlackBot {
 			const text = (msg.text || "").replace(/<@[A-Z0-9]+>/gi, "").trim();
 			// Process attachments - queues downloads in background
 			const attachments = msg.files ? this.store.processAttachments(channelId, msg.files, msg.ts!) : [];
+			const timestampMs = parseSlackTimestampToMilliseconds(msg.ts!);
+			const date =
+				timestampMs === undefined
+					? (() => {
+							log.logWarning("Backfill message has invalid Slack timestamp, using current time", msg.ts!);
+							return new Date().toISOString();
+						})()
+					: new Date(timestampMs).toISOString();
 
 			this.logToFile(channelId, {
-				date: new Date(parseFloat(msg.ts!) * 1000).toISOString(),
+				date,
 				ts: msg.ts!,
 				user: isMomMessage ? "bot" : msg.user!,
 				userName: isMomMessage ? undefined : user?.userName,

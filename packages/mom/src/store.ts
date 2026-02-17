@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync } from "fs";
 import { appendFile, writeFile } from "fs/promises";
 import { join } from "path";
 import * as log from "./log.js";
+import { parseSlackTimestampToMilliseconds } from "./slack-timestamp.js";
 
 export interface Attachment {
 	original: string; // original filename from uploader
@@ -28,26 +29,6 @@ interface PendingDownload {
 	channelId: string;
 	localPath: string; // relative path
 	url: string;
-}
-
-function parseSlackTimestampToMilliseconds(timestamp: string): number | undefined {
-	const trimmed = timestamp.trim();
-	if (/^\d+\.\d+$/.test(trimmed)) {
-		const seconds = Number.parseFloat(trimmed);
-		if (Number.isFinite(seconds) && seconds >= 0) {
-			return Math.floor(seconds * 1000);
-		}
-		return undefined;
-	}
-
-	if (/^\d+$/.test(trimmed)) {
-		const milliseconds = Number.parseInt(trimmed, 10);
-		if (Number.isFinite(milliseconds) && milliseconds >= 0) {
-			return milliseconds;
-		}
-	}
-
-	return undefined;
 }
 
 export class ChannelStore {
