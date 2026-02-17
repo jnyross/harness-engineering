@@ -3674,10 +3674,30 @@ to:
 
 **Result:** Message editor no longer applies stale async attachment updates after detach races during file ingestion.
 
+---
+
+### 206) mom docker preflight command failures had ambiguous close diagnostics
+
+**Finding:** MOM sandbox docker preflight helper (`execSimple`) treated close errors generically and did not include signal-aware exit diagnostics, producing unclear failure messages when subprocesses terminated unexpectedly.
+
+**Action:** Updated:
+
+- `packages/mom/src/sandbox.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- include signal-aware close handling in preflight command error paths,
+- emit command-context-rich diagnostics (`command + args + exit/signal`) for non-zero preflight failures.
+
+**Result:** MOM sandbox validation failures now report clearer diagnostics for unexpected docker preflight termination modes.
+
 ## Validation Evidence
 
 - Root quality gate passes:
   - `npm run check`
+- mom sandbox regression tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
 - AI package tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test`
 - agent spawnScript regression tests pass:

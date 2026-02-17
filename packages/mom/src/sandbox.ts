@@ -88,12 +88,13 @@ function execSimple(cmd: string, args: string[]): Promise<string> {
 		child.on("error", (error) => {
 			rejectOnce(error instanceof Error ? error : new Error(String(error)));
 		});
-		child.on("close", (code) => {
+		child.on("close", (code, signal) => {
 			if (code === 0) {
 				resolveOnce(stdout);
 				return;
 			}
-			rejectOnce(new Error(stderr || `Exit code ${code}`));
+			const exitDescription = signal ? `terminated by signal ${signal}` : `exit code ${code ?? 1}`;
+			rejectOnce(new Error(stderr || `Command ${cmd} ${args.join(" ")} failed (${exitDescription})`));
 		});
 	});
 }

@@ -17,6 +17,7 @@
 - Sandbox executors now short-circuit pre-aborted signals before spawning subprocesses, preventing unnecessary command startup when cancellation was already requested.
 - Sandbox command execution now treats signal-terminated child processes as non-zero exits instead of reporting false success.
 - Sandbox Windows process-tree cleanup now handles async `taskkill` spawn errors, preventing uncaught child-process errors during best-effort termination.
+- Docker sandbox preflight command failures now report explicit command + signal/exit diagnostics, improving `validateSandbox()` error clarity when docker invocations terminate unexpectedly.
 
 ### Changed
 
