@@ -3,7 +3,7 @@
  */
 
 import { type Content, FinishReason, FunctionCallingConfigMode, type Part } from "@google/genai";
-import type { Context, ImageContent, Model, StopReason, TextContent, Tool } from "../types.js";
+import type { Context, ImageContent, Model, StopReason, TextContent, Tool, Usage } from "../types.js";
 import { sanitizeSurrogates } from "../utils/sanitize-unicode.js";
 import { transformMessages } from "./transform-messages.js";
 
@@ -314,4 +314,46 @@ export function mapStopReasonString(reason: string): StopReason {
 		default:
 			return "error";
 	}
+}
+
+function parseUsageNumber(value: unknown): number | undefined {
+	if (typeof value === "number" && Number.isFinite(value)) {
+		return value;
+	}
+	if (typeof value === "string" && value.trim().length > 0) {
+		const parsed = Number(value);
+		if (Number.isFinite(parsed)) {
+			return parsed;
+		}
+	}
+	return undefined;
+}
+
+export function extractGoogleUsageMetadata(usageMetadata: unknown): Usage | undefined {
+	if (!usageMetadata || typeof usageMetadata !== "object") {
+		return undefined;
+	}
+
+	const usage = usageMetadata as {
+		promptTokenCount?: unknown;
+		candidatesTokenCount?: unknown;
+		thoughtsTokenCount?: unknown;
+		cachedContentTokenCount?: unknown;
+		totalTokenCount?: unknown;
+	};
+
+	const input = parseUsageNumber(usage.promptTokenCount) ?? 0;
+	const output =
+		(parseUsageNumber(usage.candidatesTokenCount) ?? 0) + (parseUsageNumber(usage.thoughtsTokenCount) ?? 0);
+	const cacheRead = parseUsageNumber(usage.cachedContentTokenCount) ?? 0;
+	const totalTokens = parseUsageNumber(usage.totalTokenCount) ?? input + output + cacheRead;
+
+	return {
+		input,
+		output,
+		cacheRead,
+		cacheWrite: 0,
+		totalTokens,
+		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+	};
 }

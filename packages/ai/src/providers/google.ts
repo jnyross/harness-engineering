@@ -19,7 +19,6 @@ import type {
 	ThinkingContent,
 	ThinkingLevel,
 	ToolCall,
-	Usage,
 } from "../types.js";
 import { AssistantMessageEventStream } from "../utils/event-stream.js";
 import { sanitizeSurrogates } from "../utils/sanitize-unicode.js";
@@ -27,6 +26,7 @@ import type { GoogleThinkingLevel } from "./google-gemini-cli.js";
 import {
 	convertMessages,
 	convertTools,
+	extractGoogleUsageMetadata,
 	isThinkingPart,
 	mapStopReason,
 	mapToolChoice,
@@ -45,48 +45,6 @@ export interface GoogleOptions extends StreamOptions {
 
 // Counter for generating unique tool call IDs
 let toolCallCounter = 0;
-
-function parseUsageNumber(value: unknown): number | undefined {
-	if (typeof value === "number" && Number.isFinite(value)) {
-		return value;
-	}
-	if (typeof value === "string" && value.trim().length > 0) {
-		const parsed = Number(value);
-		if (Number.isFinite(parsed)) {
-			return parsed;
-		}
-	}
-	return undefined;
-}
-
-export function extractGoogleUsageMetadata(usageMetadata: unknown): Usage | undefined {
-	if (!usageMetadata || typeof usageMetadata !== "object") {
-		return undefined;
-	}
-
-	const usage = usageMetadata as {
-		promptTokenCount?: unknown;
-		candidatesTokenCount?: unknown;
-		thoughtsTokenCount?: unknown;
-		cachedContentTokenCount?: unknown;
-		totalTokenCount?: unknown;
-	};
-
-	const input = parseUsageNumber(usage.promptTokenCount) ?? 0;
-	const output =
-		(parseUsageNumber(usage.candidatesTokenCount) ?? 0) + (parseUsageNumber(usage.thoughtsTokenCount) ?? 0);
-	const cacheRead = parseUsageNumber(usage.cachedContentTokenCount) ?? 0;
-	const totalTokens = parseUsageNumber(usage.totalTokenCount) ?? input + output + cacheRead;
-
-	return {
-		input,
-		output,
-		cacheRead,
-		cacheWrite: 0,
-		totalTokens,
-		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
-	};
-}
 
 export const streamGoogle: StreamFunction<"google-generative-ai", GoogleOptions> = (
 	model: Model<"google-generative-ai">,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractGoogleUsageMetadata } from "../src/providers/google.js";
+import { extractGoogleUsageMetadata } from "../src/providers/google-shared.js";
 
 describe("extractGoogleUsageMetadata", () => {
 	it("normalizes numeric usage metadata fields", () => {

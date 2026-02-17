@@ -26,6 +26,7 @@ import type { GoogleThinkingLevel } from "./google-gemini-cli.js";
 import {
 	convertMessages,
 	convertTools,
+	extractGoogleUsageMetadata,
 	isThinkingPart,
 	mapStopReason,
 	mapToolChoice,
@@ -217,22 +218,11 @@ export const streamGoogleVertex: StreamFunction<"google-vertex", GoogleVertexOpt
 				}
 
 				if (chunk.usageMetadata) {
-					output.usage = {
-						input: chunk.usageMetadata.promptTokenCount || 0,
-						output:
-							(chunk.usageMetadata.candidatesTokenCount || 0) + (chunk.usageMetadata.thoughtsTokenCount || 0),
-						cacheRead: chunk.usageMetadata.cachedContentTokenCount || 0,
-						cacheWrite: 0,
-						totalTokens: chunk.usageMetadata.totalTokenCount || 0,
-						cost: {
-							input: 0,
-							output: 0,
-							cacheRead: 0,
-							cacheWrite: 0,
-							total: 0,
-						},
-					};
-					calculateCost(model, output.usage);
+					const parsedUsage = extractGoogleUsageMetadata(chunk.usageMetadata);
+					if (parsedUsage) {
+						output.usage = parsedUsage;
+						calculateCost(model, output.usage);
+					}
 				}
 			}
 
