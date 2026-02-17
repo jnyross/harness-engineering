@@ -64,6 +64,54 @@ export interface ConvertResponsesToolsOptions {
 	strict?: boolean | null;
 }
 
+interface OpenAIResponsesUsageShape {
+	input_tokens?: unknown;
+	output_tokens?: unknown;
+	total_tokens?: unknown;
+	prompt_tokens?: unknown;
+	completion_tokens?: unknown;
+	input_tokens_details?: {
+		cached_tokens?: unknown;
+	} | null;
+	prompt_tokens_details?: {
+		cached_tokens?: unknown;
+	} | null;
+}
+
+function asNumber(value: unknown): number | undefined {
+	return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+/**
+ * Normalize usage payloads from OpenAI-compatible Responses streams.
+ *
+ * Some providers expose OpenAI-style `input_tokens/output_tokens` fields, while
+ * others (e.g. certain vLLM/OpenAI-compatible backends) expose
+ * `prompt_tokens/completion_tokens`.
+ */
+export function extractOpenAIResponsesUsage(usagePayload: unknown): Usage | undefined {
+	if (!usagePayload || typeof usagePayload !== "object") {
+		return undefined;
+	}
+
+	const usage = usagePayload as OpenAIResponsesUsageShape;
+	const cachedTokens =
+		asNumber(usage.input_tokens_details?.cached_tokens) ?? asNumber(usage.prompt_tokens_details?.cached_tokens) ?? 0;
+	const inputTokens = asNumber(usage.input_tokens) ?? asNumber(usage.prompt_tokens) ?? 0;
+	const outputTokens = asNumber(usage.output_tokens) ?? asNumber(usage.completion_tokens) ?? 0;
+	const inputWithoutCache = Math.max(0, inputTokens - cachedTokens);
+	const totalTokens = asNumber(usage.total_tokens) ?? inputWithoutCache + outputTokens + cachedTokens;
+
+	return {
+		input: inputWithoutCache,
+		output: outputTokens,
+		cacheRead: cachedTokens,
+		cacheWrite: 0,
+		totalTokens,
+		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+	};
+}
+
 // =============================================================================
 // Message conversion
 // =============================================================================
@@ -429,17 +477,9 @@ export async function processResponsesStream<TApi extends Api>(
 			}
 		} else if (event.type === "response.completed") {
 			const response = event.response;
-			if (response?.usage) {
-				const cachedTokens = response.usage.input_tokens_details?.cached_tokens || 0;
-				output.usage = {
-					// OpenAI includes cached tokens in input_tokens, so subtract to get non-cached input
-					input: (response.usage.input_tokens || 0) - cachedTokens,
-					output: response.usage.output_tokens || 0,
-					cacheRead: cachedTokens,
-					cacheWrite: 0,
-					totalTokens: response.usage.total_tokens || 0,
-					cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
-				};
+			const parsedUsage = extractOpenAIResponsesUsage(response?.usage);
+			if (parsedUsage) {
+				output.usage = parsedUsage;
 			}
 			calculateCost(model, output.usage);
 			if (options?.applyServiceTierPricing) {
