@@ -1882,6 +1882,21 @@ to map signal-terminated closes to non-zero failures when not caller-cancelled, 
 
 **Result:** Shared command execution now preserves failure semantics for signal-terminated subprocesses instead of false success reporting.
 
+---
+
+### 112) web-ui sandbox validation failure left stale registered runtime state
+
+**Finding:** `SandboxedIframe.execute()` rejected on HTML validation failure without running shared cleanup, and `loadContent()` validation failures did not unregister the sandbox router entry, leaving stale sandbox state.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/SandboxedIframe.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to run full cleanup on execute-time validation failure and unregister failed `loadContent()` sandboxes before rendering validation-error output.
+
+**Result:** HTML validation failures now cleanly release sandbox router/listener state instead of leaking stale runtime registrations.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1920,6 +1935,8 @@ to map signal-terminated closes to non-zero failures when not caller-cancelled, 
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts` (includes signal-terminated subprocess failure semantics)
 - coding-agent execCommand regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
+- web-ui package checks pass:
+  - `cd packages/web-ui && npm run check`
 - coding-agent interactive status tests pass after share flow command-exec refactor:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts test/interactive-mode-status.test.ts`
 - pods process-exit helper regression tests pass:
