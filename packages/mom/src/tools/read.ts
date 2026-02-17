@@ -35,6 +35,20 @@ interface ReadToolDetails {
 	truncation?: TruncationResult;
 }
 
+function parseWcLineCountOutput(output: string, filePath: string): number {
+	const trimmed = output.trim();
+	if (!/^\d+$/.test(trimmed)) {
+		throw new Error(`Failed to parse line count for file '${filePath}': ${trimmed || "(empty output)"}`);
+	}
+
+	const parsedCount = Number.parseInt(trimmed, 10);
+	if (!Number.isFinite(parsedCount) || parsedCount < 0) {
+		throw new Error(`Failed to parse line count for file '${filePath}': ${trimmed}`);
+	}
+
+	return parsedCount;
+}
+
 export function createReadTool(executor: Executor): AgentTool<typeof readSchema> {
 	return {
 		name: "read",
@@ -70,7 +84,8 @@ export function createReadTool(executor: Executor): AgentTool<typeof readSchema>
 			if (countResult.code !== 0) {
 				throw new Error(countResult.stderr || `Failed to read file: ${path}`);
 			}
-			const totalFileLines = Number.parseInt(countResult.stdout.trim(), 10) + 1; // wc -l counts newlines, not lines
+			// wc -l counts newlines, not lines
+			const totalFileLines = parseWcLineCountOutput(countResult.stdout, path) + 1;
 
 			// Apply offset if specified (1-indexed)
 			const startLine = offset ? Math.max(1, offset) : 1;

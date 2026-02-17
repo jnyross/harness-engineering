@@ -27,6 +27,7 @@
 - Slack timestamp normalization now also handles integer-second timestamp variants correctly (in addition to decimal-second / epoch-ms forms), avoiding 1970-era date skew when decimals are omitted.
 - Channel-download transcript formatting now leaves malformed Slack timestamps as raw text instead of attempting invalid date conversion, preventing `RangeError` crashes during export.
 - Channel-download thread/message iteration now skips invalid/missing Slack timestamps with warnings instead of failing downstream thread fetch/formatting paths.
+- Read-tool line counting now validates `wc -l` output strictly and throws explicit parse errors for malformed output instead of continuing with `NaN`-derived offsets/line ranges.
 
 ### Changed
 
