@@ -1490,6 +1490,23 @@ to route gist creation through shared `execCommand()` with abort-signal support,
 
 **Result:** `/share` gist execution now fails and cancels through the same deterministic subprocess path as other command execution, preventing loader hangs on spawn failures.
 
+---
+
+### 88) pods model log streaming could hang on spawn-time SSH failures
+
+**Finding:** Pods model log streaming paths (`startModel` startup tail + `logs` command) awaited process exit only. If SSH process spawning failed, error events were not handled consistently and could leave log streaming flows hanging.
+
+**Action:** Updated:
+
+- `packages/pods/src/process-exit.ts`
+- `packages/pods/src/commands/models.ts`
+- `packages/pods/test/process-exit.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to add a shared `waitForProcessExit()` helper handling both `exit` and `error`, and routed model log streaming flows through it with explicit error reporting.
+
+**Result:** Pods model log monitoring now handles spawn failures deterministically and exits with actionable errors instead of waiting indefinitely.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1504,6 +1521,8 @@ to route gist creation through shared `execCommand()` with abort-signal support,
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - coding-agent interactive status tests pass after share flow command-exec refactor:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts test/interactive-mode-status.test.ts`
+- pods process-exit helper regression tests pass:
+  - `npm --workspace "@mariozechner/pi" test -- test/process-exit.test.ts`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes docker-missing spawn-error handling case)
 - Agent package tests pass:
