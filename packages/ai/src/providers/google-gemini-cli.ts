@@ -19,6 +19,7 @@ import type {
 	ThinkingContent,
 	ThinkingLevel,
 	ToolCall,
+	Usage,
 } from "../types.js";
 import { abortableSleep } from "../utils/abortable-sleep.js";
 import { AssistantMessageEventStream } from "../utils/event-stream.js";
@@ -97,6 +98,54 @@ const ANTIGRAVITY_SYSTEM_INSTRUCTION =
 
 // Counter for generating unique tool call IDs
 let toolCallCounter = 0;
+
+function parseUsageNumber(value: unknown): number | undefined {
+	if (typeof value === "number" && Number.isFinite(value)) {
+		return value;
+	}
+	if (typeof value === "string" && value.trim().length > 0) {
+		const parsed = Number(value);
+		if (Number.isFinite(parsed)) {
+			return parsed;
+		}
+	}
+	return undefined;
+}
+
+export function extractCloudCodeAssistUsageMetadata(usageMetadata: unknown): Usage | undefined {
+	if (!usageMetadata || typeof usageMetadata !== "object") {
+		return undefined;
+	}
+
+	const usage = usageMetadata as {
+		promptTokenCount?: unknown;
+		candidatesTokenCount?: unknown;
+		thoughtsTokenCount?: unknown;
+		totalTokenCount?: unknown;
+		cachedContentTokenCount?: unknown;
+	};
+	const promptTokens = parseUsageNumber(usage.promptTokenCount) ?? 0;
+	const cacheRead = parseUsageNumber(usage.cachedContentTokenCount) ?? 0;
+	const output =
+		(parseUsageNumber(usage.candidatesTokenCount) ?? 0) + (parseUsageNumber(usage.thoughtsTokenCount) ?? 0);
+	const input = Math.max(0, promptTokens - cacheRead);
+	const totalTokens = parseUsageNumber(usage.totalTokenCount) ?? input + output + cacheRead;
+
+	return {
+		input,
+		output,
+		cacheRead,
+		cacheWrite: 0,
+		totalTokens,
+		cost: {
+			input: 0,
+			output: 0,
+			cacheRead: 0,
+			cacheWrite: 0,
+			total: 0,
+		},
+	};
+}
 
 // Retry configuration
 const MAX_RETRIES = 3;
@@ -632,26 +681,11 @@ export const streamGoogleGeminiCli: StreamFunction<"google-gemini-cli", GoogleGe
 					}
 
 					if (responseData.usageMetadata) {
-						// promptTokenCount includes cachedContentTokenCount, so subtract to get fresh input
-						const promptTokens = responseData.usageMetadata.promptTokenCount || 0;
-						const cacheReadTokens = responseData.usageMetadata.cachedContentTokenCount || 0;
-						output.usage = {
-							input: promptTokens - cacheReadTokens,
-							output:
-								(responseData.usageMetadata.candidatesTokenCount || 0) +
-								(responseData.usageMetadata.thoughtsTokenCount || 0),
-							cacheRead: cacheReadTokens,
-							cacheWrite: 0,
-							totalTokens: responseData.usageMetadata.totalTokenCount || 0,
-							cost: {
-								input: 0,
-								output: 0,
-								cacheRead: 0,
-								cacheWrite: 0,
-								total: 0,
-							},
-						};
-						calculateCost(model, output.usage);
+						const parsedUsage = extractCloudCodeAssistUsageMetadata(responseData.usageMetadata);
+						if (parsedUsage) {
+							output.usage = parsedUsage;
+							calculateCost(model, output.usage);
+						}
 					}
 				};
 
