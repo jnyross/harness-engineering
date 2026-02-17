@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CountdownTimer } from "../src/modes/interactive/components/countdown-timer.js";
+import { CountdownTimer, normalizeCountdownTimeoutMs } from "../src/modes/interactive/components/countdown-timer.js";
 
 describe("CountdownTimer", () => {
 	afterEach(() => {
@@ -48,5 +48,26 @@ describe("CountdownTimer", () => {
 		expect(onTick).toHaveBeenCalledTimes(1);
 		expect(onExpire).not.toHaveBeenCalled();
 		expect(consoleError).toHaveBeenCalled();
+	});
+});
+
+describe("normalizeCountdownTimeoutMs", () => {
+	it("returns undefined for missing or invalid non-positive timeout values", () => {
+		expect(normalizeCountdownTimeoutMs(undefined)).toBeUndefined();
+		expect(normalizeCountdownTimeoutMs(0)).toBeUndefined();
+		expect(normalizeCountdownTimeoutMs(-1)).toBeUndefined();
+		expect(normalizeCountdownTimeoutMs(Number.NaN)).toBeUndefined();
+		expect(normalizeCountdownTimeoutMs(Number.POSITIVE_INFINITY)).toBeUndefined();
+	});
+
+	it("preserves valid timeout values within timer range", () => {
+		expect(normalizeCountdownTimeoutMs(1)).toBe(1);
+		expect(normalizeCountdownTimeoutMs(5_000)).toBe(5_000);
+		expect(normalizeCountdownTimeoutMs(2_147_483_647)).toBe(2_147_483_647);
+	});
+
+	it("clamps oversized timeout values to Node timer max", () => {
+		expect(normalizeCountdownTimeoutMs(2_147_483_648)).toBe(2_147_483_647);
+		expect(normalizeCountdownTimeoutMs(Number.MAX_SAFE_INTEGER)).toBe(2_147_483_647);
 	});
 });

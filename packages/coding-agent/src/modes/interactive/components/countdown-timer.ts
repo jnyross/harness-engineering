@@ -4,6 +4,18 @@
 
 import type { TUI } from "@mariozechner/pi-tui";
 
+const MAX_TIMEOUT_MS = 2_147_483_647;
+
+export function normalizeCountdownTimeoutMs(timeoutMs: number | undefined): number | undefined {
+	if (timeoutMs === undefined) {
+		return undefined;
+	}
+	if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+		return undefined;
+	}
+	return timeoutMs > MAX_TIMEOUT_MS ? MAX_TIMEOUT_MS : timeoutMs;
+}
+
 export class CountdownTimer {
 	private intervalId: ReturnType<typeof setInterval> | undefined;
 	private remainingSeconds: number;

@@ -5,7 +5,7 @@
 
 import { Container, getEditorKeybindings, Spacer, Text, type TUI } from "@mariozechner/pi-tui";
 import { theme } from "../theme/theme.js";
-import { CountdownTimer } from "./countdown-timer.js";
+import { CountdownTimer, normalizeCountdownTimeoutMs } from "./countdown-timer.js";
 import { DynamicBorder } from "./dynamic-border.js";
 import { keyHint, rawKeyHint } from "./keybinding-hints.js";
 
@@ -67,9 +67,10 @@ export class ExtensionSelectorComponent extends Container {
 		this.addChild(this.titleText);
 		this.addChild(new Spacer(1));
 
-		if (opts?.timeout && opts.timeout > 0 && opts.tui) {
+		const timeoutMs = normalizeCountdownTimeoutMs(opts?.timeout);
+		if (timeoutMs !== undefined && opts?.tui) {
 			this.countdown = new CountdownTimer(
-				opts.timeout,
+				timeoutMs,
 				opts.tui,
 				(s) => this.titleText.setText(theme.fg("accent", `${this.baseTitle} (${s}s)`)),
 				() => this.invokeCancel(),
