@@ -107,10 +107,18 @@ function hasStyle(style: TextStyle): boolean {
 /**
  * Parse ANSI SGR (Select Graphic Rendition) codes and update style.
  */
-function applySgrCode(params: number[], style: TextStyle): void {
+function isByteValue(value: unknown): value is number {
+	return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 255;
+}
+
+function applySgrCode(params: Array<number | undefined>, style: TextStyle): void {
 	let i = 0;
 	while (i < params.length) {
 		const code = params[i];
+		if (code === undefined) {
+			i++;
+			continue;
+		}
 
 		if (code === 0) {
 			// Reset all
@@ -143,14 +151,19 @@ function applySgrCode(params: number[], style: TextStyle): void {
 			// Extended foreground color
 			if (params[i + 1] === 5 && params.length > i + 2) {
 				// 256-color: 38;5;N
-				style.fg = color256ToHex(params[i + 2]);
+				const colorIndex = params[i + 2];
+				if (isByteValue(colorIndex)) {
+					style.fg = color256ToHex(colorIndex);
+				}
 				i += 2;
 			} else if (params[i + 1] === 2 && params.length > i + 4) {
 				// RGB: 38;2;R;G;B
 				const r = params[i + 2];
 				const g = params[i + 3];
 				const b = params[i + 4];
-				style.fg = `rgb(${r},${g},${b})`;
+				if (isByteValue(r) && isByteValue(g) && isByteValue(b)) {
+					style.fg = `rgb(${r},${g},${b})`;
+				}
 				i += 4;
 			}
 		} else if (code === 39) {
@@ -163,14 +176,19 @@ function applySgrCode(params: number[], style: TextStyle): void {
 			// Extended background color
 			if (params[i + 1] === 5 && params.length > i + 2) {
 				// 256-color: 48;5;N
-				style.bg = color256ToHex(params[i + 2]);
+				const colorIndex = params[i + 2];
+				if (isByteValue(colorIndex)) {
+					style.bg = color256ToHex(colorIndex);
+				}
 				i += 2;
 			} else if (params[i + 1] === 2 && params.length > i + 4) {
 				// RGB: 48;2;R;G;B
 				const r = params[i + 2];
 				const g = params[i + 3];
 				const b = params[i + 4];
-				style.bg = `rgb(${r},${g},${b})`;
+				if (isByteValue(r) && isByteValue(g) && isByteValue(b)) {
+					style.bg = `rgb(${r},${g},${b})`;
+				}
 				i += 4;
 			}
 		} else if (code === 49) {
@@ -192,8 +210,12 @@ function applySgrCode(params: number[], style: TextStyle): void {
 // Match ANSI escape sequences: ESC[ followed by params and ending with 'm'
 const ANSI_REGEX = /\x1b\[([\d;]*)m/g;
 
-function parseSgrParamToken(token: string): number {
-	return /^\d+$/.test(token) ? Number.parseInt(token, 10) : 0;
+function parseSgrParamToken(token: string): number | undefined {
+	if (!/^\d+$/.test(token)) {
+		return undefined;
+	}
+	const parsed = Number.parseInt(token, 10);
+	return Number.isSafeInteger(parsed) ? parsed : undefined;
 }
 
 /**
