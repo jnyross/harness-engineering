@@ -2272,6 +2272,27 @@ to:
 
 **Result:** Pods agent delegation process handling now settles deterministically across spawn/close races and surfaces clearer startup failure diagnostics.
 
+---
+
+### 131) rpc start/exit listener lifecycle could retain stale handlers after failures
+
+**Finding:** RPC process exit listeners were attached via `on("exit", ...)` and only detached in specific paths, so failed starts/exits could retain stale listener references longer than needed.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/rpc/rpc-client.ts`
+- `packages/coding-agent/test/rpc-client.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- attach RPC process exit listener with `once("exit", ...)`,
+- clear `processExitListener` state on exit callback,
+- ensure failed start paths detach listener state reliably,
+- add regression assertions that failed starts and unexpected exits leave no residual exit listeners.
+
+**Result:** RPC exit-listener lifecycle is now deterministic across failed-start and unexpected-exit paths, reducing stale listener state risk between client restarts.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2281,7 +2302,7 @@ to:
 - agent spawnScript regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts`
 - coding-agent RPC startup/shutdown regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures, pending-request rejection on stop and unexpected exit, stop timeout forced-kill cleanup, send timeout/write-error cleanup, and closed-stdin send handling)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures, pending-request rejection on stop and unexpected exit, stop timeout forced-kill cleanup, send timeout/write-error cleanup, closed-stdin send handling, and exit-listener cleanup assertions)
 - coding-agent sleep helper regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/sleep.test.ts` (includes listener cleanup on resolve + abort paths)
 - ai abortable sleep + retry stream regression tests pass:
