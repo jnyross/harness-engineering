@@ -1180,6 +1180,15 @@ export default function(api) { api.registerTool({ name: "test", description: "te
 			).toThrow("Failed to start");
 		});
 
+		it("runCommandSync rejects timed out commands with explicit timeout diagnostics", () => {
+			expect(() =>
+				// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
+				(packageManager as any).runCommandSync(process.execPath, ["-e", "setTimeout(() => {}, 5000);"], {
+					timeoutMs: 25,
+				}),
+			).toThrow(`${process.execPath} -e setTimeout(() => {}, 5000); timed out after 25ms`);
+		});
+
 		signalAwareIt("runCommandSync rejects signal exits with explicit signal diagnostics", () => {
 			expect(() =>
 				// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior

@@ -1246,7 +1246,7 @@ export class DefaultPackageManager implements PackageManager {
 		if (this.globalNpmRoot) {
 			return this.globalNpmRoot;
 		}
-		const result = this.runCommandSync("npm", ["root", "-g"]);
+		const result = this.runCommandSync("npm", ["root", "-g"], { timeoutMs: 5000 });
 		this.globalNpmRoot = result.trim();
 		return this.globalNpmRoot;
 	}
@@ -1738,20 +1738,26 @@ export class DefaultPackageManager implements PackageManager {
 		});
 	}
 
-	private runCommandSync(command: string, args: string[]): string {
+	private runCommandSync(command: string, args: string[], options?: { timeoutMs?: number }): string {
+		const invokedCommand = [command, ...args].join(" ");
 		const result = spawnSync(command, args, {
 			stdio: ["ignore", "pipe", "pipe"],
 			encoding: "utf-8",
 			shell: process.platform === "win32",
+			timeout: options?.timeoutMs,
 		});
 		if (result.error) {
-			throw new Error(`Failed to start ${command} ${args.join(" ")}: ${result.error.message}`);
+			const error = result.error as NodeJS.ErrnoException;
+			if (error.code === "ETIMEDOUT" && options?.timeoutMs) {
+				throw new Error(`${invokedCommand} timed out after ${options.timeoutMs}ms`);
+			}
+			throw new Error(`Failed to start ${invokedCommand}: ${result.error.message}`);
 		}
 		if (result.status === null) {
-			throw new Error(`${command} ${args.join(" ")} exited due to signal ${result.signal ?? "unknown"}`);
+			throw new Error(`${invokedCommand} exited due to signal ${result.signal ?? "unknown"}`);
 		}
 		if (result.status !== 0) {
-			throw new Error(`Failed to run ${command} ${args.join(" ")}: ${result.stderr || result.stdout}`);
+			throw new Error(`Failed to run ${invokedCommand}: ${result.stderr || result.stdout}`);
 		}
 		return (result.stdout || result.stderr || "").trim();
 	}
