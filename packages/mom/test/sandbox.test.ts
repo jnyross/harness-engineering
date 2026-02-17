@@ -3,7 +3,13 @@ import { existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, it } from "node:test";
-import { buildDockerExecArgs, createExecutor, parseSandboxArg, validateSandbox } from "../src/sandbox.js";
+import {
+	buildDockerExecArgs,
+	createExecutor,
+	normalizeSandboxExitCode,
+	parseSandboxArg,
+	validateSandbox,
+} from "../src/sandbox.js";
 
 const originalExit = process.exit;
 const originalError = console.error;
@@ -46,6 +52,22 @@ describe("buildDockerExecArgs", () => {
 			"-c",
 			"echo 'hello'; ls /workspace",
 		]);
+	});
+});
+
+describe("normalizeSandboxExitCode", () => {
+	it("keeps explicit exit codes when no signal is present", () => {
+		assert.equal(normalizeSandboxExitCode(0, null), 0);
+		assert.equal(normalizeSandboxExitCode(9, null), 9);
+	});
+
+	it("maps signal exits to non-zero", () => {
+		assert.equal(normalizeSandboxExitCode(0, "SIGTERM"), 1);
+		assert.equal(normalizeSandboxExitCode(null, "SIGKILL"), 1);
+	});
+
+	it("maps unknown null/null exits to non-zero", () => {
+		assert.equal(normalizeSandboxExitCode(null, null), 1);
 	});
 });
 

@@ -4,6 +4,13 @@ export type SandboxConfig = { type: "host" } | { type: "docker"; container: stri
 
 const DOCKER_CONTAINER_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.-]*$/;
 
+export function normalizeSandboxExitCode(code: number | null, signal: NodeJS.Signals | null): number {
+	if (signal) {
+		return 1;
+	}
+	return code ?? 1;
+}
+
 export function parseSandboxArg(value: string): SandboxConfig {
 	if (value === "host") {
 		return { type: "host" };
@@ -227,7 +234,7 @@ function execWithSpawn(command: string, args: string[], options?: ExecOptions): 
 				return;
 			}
 
-			resolveOnce({ stdout, stderr, code: code ?? (signal ? 1 : 0) });
+			resolveOnce({ stdout, stderr, code: normalizeSandboxExitCode(code, signal) });
 		});
 	});
 }
