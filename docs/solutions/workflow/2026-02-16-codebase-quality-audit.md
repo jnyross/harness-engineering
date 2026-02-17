@@ -5677,6 +5677,26 @@ to:
 
 **Result:** stdin buffering now keeps long-timeout semantics for oversized/`Infinity` inputs by clamping instead of silently falling back to an immediate/default flush window.
 
+---
+
+### 305) tui `drainInput()` timeout normalization treated `Infinity` as fallback defaults
+
+**Finding:** `packages/tui/src/terminal.ts` normalized `drainInput(maxMs, idleMs)` durations by rejecting all non-finite values; positive-infinite values were treated as invalid and fell back to default short drain windows instead of being bounded as oversized inputs.
+
+**Action:** Updated:
+
+- `packages/tui/src/terminal.ts`
+- `packages/tui/test/terminal-timeouts.test.ts`
+- `packages/tui/CHANGELOG.md`
+
+to:
+
+- reject only `NaN` and non-positive durations,
+- clamp positive-infinite and other oversized durations to Node timer bounds,
+- add regression coverage for positive-infinite `drainInput()` duration normalization.
+
+**Result:** `drainInput()` now preserves long drain semantics for `Infinity`/oversized inputs by clamping, rather than unexpectedly reverting to short default timing windows.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5704,7 +5724,7 @@ to:
   - `cd packages/tui && node --test --import tsx test/tui-cell-size-response.test.ts`
 - tui stdin-buffer timeout normalization regression tests pass (including positive-infinite timeout clamping):
   - `npm --workspace "@mariozechner/pi-tui" test -- test/stdin-buffer.test.ts`
-- tui terminal drain-input timeout normalization regression tests pass:
+- tui terminal drain-input timeout normalization regression tests pass (including positive-infinite duration clamping):
   - `npm --workspace "@mariozechner/pi-tui" test -- test/terminal-timeouts.test.ts`
 - coding-agent changelog/export-color parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/changelog-utils.test.ts test/export-html-color-parsing.test.ts`
