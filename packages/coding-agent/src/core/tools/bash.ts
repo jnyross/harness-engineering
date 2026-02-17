@@ -23,6 +23,7 @@ const bashSchema = Type.Object({
 		Type.Number({ exclusiveMinimum: 0, description: "Timeout in seconds (optional, no default timeout)" }),
 	),
 });
+const MAX_TIMEOUT_MS = 2_147_483_647;
 
 export type BashToolInput = Static<typeof bashSchema>;
 
@@ -35,7 +36,7 @@ function parseTimeoutSeconds(timeout: number | undefined): number | undefined {
 	if (timeout === undefined) {
 		return undefined;
 	}
-	if (!Number.isFinite(timeout) || timeout <= 0) {
+	if (!Number.isFinite(timeout) || timeout <= 0 || timeout * 1000 > MAX_TIMEOUT_MS) {
 		throw new Error("Parameter 'timeout' must be a positive number of seconds.");
 	}
 	return timeout;

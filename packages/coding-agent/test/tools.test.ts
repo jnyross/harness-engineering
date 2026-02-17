@@ -377,6 +377,9 @@ describe("Coding Agent Tools", () => {
 			await expect(bashTool.execute("test-call-10c", { command: "echo ok", timeout: -2 })).rejects.toThrow(
 				"Parameter 'timeout' must be a positive number of seconds.",
 			);
+			await expect(bashTool.execute("test-call-10d", { command: "echo ok", timeout: 2_147_484 })).rejects.toThrow(
+				"Parameter 'timeout' must be a positive number of seconds.",
+			);
 		});
 
 		it("should short-circuit pre-aborted signals", async () => {

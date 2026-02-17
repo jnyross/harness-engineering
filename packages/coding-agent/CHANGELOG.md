@@ -105,6 +105,7 @@
 - Read tool now rejects non-positive/non-integer `offset`/`limit` inputs instead of coercing them silently.
 - Grep tool now rejects non-integer/out-of-range `context`/`limit` values instead of silently coercing them.
 - Bash tool now rejects non-positive timeout values instead of silently disabling timeout behavior.
+- Bash tool now also rejects timeout values above Node.js timer limits (roughly 2,147,483 seconds), preventing oversized timeout inputs from being clamped into unintended near-immediate timer behavior.
 - Find tool now rejects non-integer/out-of-range `limit` values instead of silently coercing them.
 - Ls tool now rejects non-integer/out-of-range `limit` values instead of silently coercing them.
 - Execution-plan progress updates now reject non-integer task indices with explicit errors instead of failing later with ambiguous runtime exceptions.
