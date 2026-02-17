@@ -9,7 +9,7 @@ export interface ParsedArgs {
 
 function readRequiredOptionValue(args: string[], optionIndex: number, optionName: string): string {
 	const value = args[optionIndex + 1];
-	if (!value || value.startsWith("--")) {
+	if (!value || value.startsWith("-")) {
 		throw new Error(`Option ${optionName} requires a value.`);
 	}
 	return value;

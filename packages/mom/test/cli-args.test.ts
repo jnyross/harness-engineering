@@ -28,4 +28,8 @@ describe("parseCliArgs", () => {
 	it("rejects option-like token as option value", () => {
 		assert.throws(() => parseCliArgs(["--download", "--sandbox=host"]), /Option --download requires a value\./);
 	});
+
+	it("rejects single-dash option-like token as option value", () => {
+		assert.throws(() => parseCliArgs(["--sandbox", "-h"]), /Option --sandbox requires a value\./);
+	});
 });
