@@ -1,11 +1,4 @@
-// NEVER convert to top-level import - breaks browser/Vite builds (web-ui)
-let _os: typeof import("node:os") | null = null;
-if (typeof process !== "undefined" && (process.versions?.node || process.versions?.bun)) {
-	import("node:os").then((m) => {
-		_os = m;
-	});
-}
-
+import type * as NodeOs from "node:os";
 import type { Tool as OpenAITool, ResponseInput, ResponseStreamEvent } from "openai/resources/responses/responses.js";
 import { getEnvApiKey } from "../env-api-keys.js";
 import { supportsXhigh } from "../models.js";
@@ -22,6 +15,14 @@ import { abortableSleep } from "../utils/abortable-sleep.js";
 import { AssistantMessageEventStream } from "../utils/event-stream.js";
 import { convertResponsesMessages, convertResponsesTools, processResponsesStream } from "./openai-responses-shared.js";
 import { buildBaseOptions, clampReasoning } from "./simple-options.js";
+
+// NEVER convert to top-level runtime import - breaks browser/Vite builds (web-ui)
+let _os: typeof NodeOs | null = null;
+if (typeof process !== "undefined" && (process.versions?.node || process.versions?.bun)) {
+	import("node:os").then((m) => {
+		_os = m;
+	});
+}
 
 // ============================================================================
 // Configuration

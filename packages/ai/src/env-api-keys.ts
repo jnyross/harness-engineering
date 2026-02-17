@@ -1,7 +1,12 @@
-// NEVER convert to top-level imports - breaks browser/Vite builds (web-ui)
-let _existsSync: typeof import("node:fs").existsSync | null = null;
-let _homedir: typeof import("node:os").homedir | null = null;
-let _join: typeof import("node:path").join | null = null;
+import type { existsSync as NodeExistsSync } from "node:fs";
+import type { homedir as NodeHomedir } from "node:os";
+import type { join as NodeJoin } from "node:path";
+import type { KnownProvider } from "./types.js";
+
+// NEVER convert to top-level runtime imports - breaks browser/Vite builds (web-ui)
+let _existsSync: typeof NodeExistsSync | null = null;
+let _homedir: typeof NodeHomedir | null = null;
+let _join: typeof NodeJoin | null = null;
 
 // Eagerly load in Node.js/Bun environment only
 if (typeof process !== "undefined" && (process.versions?.node || process.versions?.bun)) {
@@ -15,8 +20,6 @@ if (typeof process !== "undefined" && (process.versions?.node || process.version
 		_join = m.join;
 	});
 }
-
-import type { KnownProvider } from "./types.js";
 
 let cachedVertexAdcCredentialsExists: boolean | null = null;
 
