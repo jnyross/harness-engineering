@@ -113,9 +113,6 @@ function parseJwtPayload(token: string): JwtPayload | null {
 }
 
 function decodeJwt(token: string): JwtPayload | null {
-	if (!_randomBytes) {
-		return parseJwtPayload(token);
-	}
 	return parseJwtPayload(token);
 }
 
@@ -362,7 +359,9 @@ export async function loginOpenAICodex(options: {
 }): Promise<OAuthCredentials> {
 	assertNotAborted(options.signal);
 	const { verifier, state, url } = await createAuthorizationFlow(options.originator);
+	assertNotAborted(options.signal);
 	const server = await startLocalOAuthServer(state);
+	assertNotAborted(options.signal);
 	const onAbort = () => {
 		server.cancelWait();
 	};

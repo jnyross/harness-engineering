@@ -103,4 +103,20 @@ describe("openai-codex oauth login", () => {
 		}
 		expect(String(firstCall[1]?.body)).toContain("manual-code");
 	});
+
+	it("rejects when signal aborts after auth URL is emitted", async () => {
+		const controller = new AbortController();
+		const onPrompt = vi.fn(async () => "manual-code");
+
+		await expect(
+			loginOpenAICodex({
+				onAuth: () => {
+					controller.abort();
+				},
+				onPrompt,
+				signal: controller.signal,
+			}),
+		).rejects.toThrow("Login cancelled");
+		expect(onPrompt).not.toHaveBeenCalled();
+	});
 });
