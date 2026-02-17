@@ -17,7 +17,7 @@
 - Prompt-template and slash-command argument splitting now accepts any whitespace separator (spaces/tabs) when detecting command names and arguments.
 - Interactive extension-command detection now accepts tab-separated slash-command arguments (`/command\targ`) consistently with space-separated forms.
 - CLI argument parsing now warns when value-backed flags are provided without values (including extension string flags), rejects option-like tokens for value-backed flags so subsequent flags are not swallowed as values, and still allows option-like text for system-prompt flags.
-- CLI `--models` / `--tools` comma-list parsing now ignores empty entries and warns when `--models` resolves to no usable patterns, preventing blank comma tokens from producing unintended model-scoping behavior.
+- CLI `--models` / `--tools` comma-list parsing now ignores empty entries and warns when either flag resolves to no usable values, preventing blank comma tokens from silently altering model scope or tool activation.
 - RPC client startup now handles spawn/startup failures deterministically (missing runtime, immediate process exit) and cleans up partial startup state before surfacing actionable errors.
 - RPC mode now finalizes pending extension UI requests and exits when stdin closes, uses single-settlement guards for dialog/editor RPC responses (including response-parse failures), and still exits cleanly if `session_shutdown` extension handlers throw.
 - RPC mode now preserves request IDs in unknown-command error responses, improving correlation for clients sending unsupported command types.

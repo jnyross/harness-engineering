@@ -166,6 +166,10 @@ export function parseArgs(args: string[], extensionFlags?: Map<string, { type: "
 			}
 			i++;
 			const toolNames = parseCommaSeparatedValues(toolsArg);
+			if (toolNames.length === 0) {
+				console.error(chalk.yellow("Warning: --tools requires at least one non-empty tool name"));
+				continue;
+			}
 			const validTools: ToolName[] = [];
 			for (const name of toolNames) {
 				if (name in allTools) {

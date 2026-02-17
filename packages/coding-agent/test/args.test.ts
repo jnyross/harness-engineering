@@ -248,6 +248,19 @@ describe("parseArgs", () => {
 			const result = parseArgs(["--tools", "read,, ,bash,"]);
 			expect(result.tools).toEqual(["read", "bash"]);
 		});
+
+		test("warns when --tools value contains only empty entries", () => {
+			const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+			try {
+				const result = parseArgs(["--tools", ",,"]);
+				expect(result.tools).toBeUndefined();
+				expect(errorSpy).toHaveBeenCalledWith(
+					expect.stringContaining("Warning: --tools requires at least one non-empty tool name"),
+				);
+			} finally {
+				errorSpy.mockRestore();
+			}
+		});
 	});
 
 	describe("messages and file args", () => {
