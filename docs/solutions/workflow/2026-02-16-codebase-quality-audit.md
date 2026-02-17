@@ -2545,6 +2545,24 @@ to:
 
 **Result:** Windows process-tree cleanup is now safer in degraded environments, avoiding uncaught async spawn-error bubbling during best-effort termination.
 
+---
+
+### 145) overlay QA extension lacked spawn-error handling for streaming process setup
+
+**Finding:** The overlay QA extension’s streaming demo spawned a shell process without an `error` handler. Startup failures could surface as uncaught child-process errors instead of being reported in the overlay.
+
+**Action:** Updated:
+
+- `packages/coding-agent/examples/extensions/overlay-qa-tests.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- add explicit stream-process spawn `error` handling,
+- render startup error details inside the overlay and mark the stream as finished.
+
+**Result:** Overlay QA streaming demo now degrades safely when process startup fails, with explicit in-overlay diagnostics instead of uncaught process errors.
+
 ## Validation Evidence
 
 - Root quality gate passes:

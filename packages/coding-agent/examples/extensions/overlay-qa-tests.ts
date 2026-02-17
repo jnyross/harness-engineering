@@ -474,6 +474,13 @@ class StreamingOverflowComponent extends BaseOverlay {
 			this.tui.requestRender();
 		});
 
+		this.proc.on("error", (error) => {
+			if (this.disposed) return; // Guard against callbacks after dispose
+			this.lines.push(this.theme.fg("error", `Failed to start stream process: ${error.message}`));
+			this.finished = true;
+			this.tui.requestRender();
+		});
+
 		this.proc.on("close", () => {
 			if (this.disposed) return; // Guard against callbacks after dispose
 			this.finished = true;
