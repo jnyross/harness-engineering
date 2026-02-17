@@ -23,6 +23,7 @@
 - AI CLI readline prompts now resolve with safe fallbacks when interfaces close early (including already-closed prompts), preventing hangs during interrupted interactive provider selection/login flows.
 - Gemini CLI, Antigravity, and OpenAI Codex OAuth callback waiters now use event-driven settlement (instead of polling loops), improving cancellation/close responsiveness and reducing timer churn during local callback waits.
 - Gemini CLI, Antigravity, and OpenAI Codex OAuth now gracefully fall back to manual redirect input when local callback ports are unavailable (e.g., already bound), instead of failing login at callback-server startup.
+- OpenAI Codex OAuth cleanup now safely ignores non-listening callback-server close errors in fallback paths, matching Gemini/Antigravity close-guard behavior.
 
 ## [0.52.12] - 2026-02-13
 

@@ -480,7 +480,11 @@ export async function loginOpenAICodex(options: {
 		};
 	} finally {
 		options.signal?.removeEventListener("abort", onAbort);
-		server.close();
+		try {
+			server.close();
+		} catch {
+			// Ignore non-listening server close errors in manual-input fallback mode.
+		}
 	}
 }
 
