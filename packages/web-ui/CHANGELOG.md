@@ -13,6 +13,7 @@
 - `ApiKeyPromptDialog` and `PersistentStorageDialog` now use single-settlement close handling for promise resolution, preventing duplicate completion paths when dialogs close after success/deny flows.
 - Sandboxed runtime bridge request/response promises now clear timeout handlers on early completion and guard single settlement, preventing 30s timeout timer buildup during rapid runtime messaging.
 - Sandboxed runtime bridge message handlers now ignore non-object postMessage payloads, preventing runtime handler crashes from unrelated window messages.
+- Runtime message router now ignores non-object sandbox payloads and isolates provider/consumer handler exceptions so one faulty handler cannot crash global message routing.
 
 ## [0.52.12] - 2026-02-13
 

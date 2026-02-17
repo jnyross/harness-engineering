@@ -125,7 +125,13 @@ export class RuntimeMessageRouter {
 		// Setup sandbox iframe listener
 		if (!this.messageListener) {
 			this.messageListener = async (e: MessageEvent) => {
-				const { sandboxId, messageId } = e.data;
+				const payload = e.data;
+				if (!payload || typeof payload !== "object") {
+					return;
+				}
+				const messageData = payload as { sandboxId?: string; messageId?: string };
+				const sandboxId = messageData.sandboxId;
+				const messageId = messageData.messageId;
 				if (!sandboxId) return;
 
 				const context = this.sandboxes.get(sandboxId);
@@ -150,14 +156,22 @@ export class RuntimeMessageRouter {
 				// 1. Try provider handlers first (for bidirectional comm)
 				for (const provider of context.providers) {
 					if (provider.handleMessage) {
-						await provider.handleMessage(e.data, respond);
+						try {
+							await provider.handleMessage(payload, respond);
+						} catch (error) {
+							console.error("Runtime provider message handler failed:", error);
+						}
 						// Don't stop - let consumers also handle the message
 					}
 				}
 
 				// 2. Broadcast to consumers (one-way messages or lifecycle events)
 				for (const consumer of context.consumers) {
-					await consumer.handleMessage(e.data);
+					try {
+						await consumer.handleMessage(payload);
+					} catch (error) {
+						console.error("Runtime consumer message handler failed:", error);
+					}
 					// Don't stop - let all consumers see the message
 				}
 			};
@@ -174,6 +188,9 @@ export class RuntimeMessageRouter {
 
 			// biome-ignore lint/suspicious/noExplicitAny: migration
 			this.userScriptMessageListener = (message: any, _sender: any, sendResponse: (response: any) => void) => {
+				if (!message || typeof message !== "object") {
+					return false;
+				}
 				const { sandboxId } = message;
 				if (!sandboxId) return false;
 
@@ -193,14 +210,22 @@ export class RuntimeMessageRouter {
 					// 1. Try provider handlers first (for bidirectional comm)
 					for (const provider of context.providers) {
 						if (provider.handleMessage) {
-							await provider.handleMessage(message, respond);
+							try {
+								await provider.handleMessage(message, respond);
+							} catch (error) {
+								console.error("Runtime provider user-script handler failed:", error);
+							}
 							// Don't stop - let consumers also handle the message
 						}
 					}
 
 					// 2. Broadcast to consumers (one-way messages or lifecycle events)
 					for (const consumer of context.consumers) {
-						await consumer.handleMessage(message);
+						try {
+							await consumer.handleMessage(message);
+						} catch (error) {
+							console.error("Runtime consumer user-script handler failed:", error);
+						}
 						// Don't stop - let all consumers see the message
 					}
 				})();

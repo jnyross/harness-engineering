@@ -3054,6 +3054,24 @@ to:
 
 **Result:** Runtime bridge handlers now safely ignore unrelated message payload shapes instead of throwing.
 
+---
+
+### 172) runtime message router assumed object payloads and could abort routing on handler exceptions
+
+**Finding:** Global runtime router destructured `e.data`/`message` without payload-shape guards and awaited provider/consumer handlers without isolation, allowing malformed payloads or one handler exception to interrupt routing for all sandboxes.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/sandbox/RuntimeMessageRouter.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- guard sandbox and user-script payloads for object shape before routing,
+- isolate provider/consumer handler failures with local try/catch logging so routing continues.
+
+**Result:** Runtime message routing is now resilient to malformed payloads and individual handler failures, preserving global router stability.
+
 ## Validation Evidence
 
 - Root quality gate passes:
