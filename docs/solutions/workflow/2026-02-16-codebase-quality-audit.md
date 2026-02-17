@@ -3037,6 +3037,23 @@ to:
 
 **Result:** Runtime bridge messaging now cleans up timeout timers immediately on completion and avoids redundant late timeout callbacks.
 
+---
+
+### 171) sandbox runtime bridge assumed object-shaped postMessage payloads
+
+**Finding:** Runtime bridge message handler accessed `e.data.type` directly; unrelated `postMessage` payloads like `null` or primitive values could throw and interrupt bridge response handling.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/sandbox/RuntimeMessageBridge.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- ignore non-object message payloads before response-type checks.
+
+**Result:** Runtime bridge handlers now safely ignore unrelated message payload shapes instead of throwing.
+
 ## Validation Evidence
 
 - Root quality gate passes:

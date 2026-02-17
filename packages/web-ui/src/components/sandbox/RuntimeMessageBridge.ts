@@ -43,6 +43,7 @@ window.sendRuntimeMessage = async (message) => {
         };
 
         const handler = (e) => {
+            if (!e.data || typeof e.data !== 'object') return;
             if (e.data.type === 'runtime-response' && e.data.messageId === messageId) {
                 if (e.data.success) {
                     settle(() => resolve(e.data));
