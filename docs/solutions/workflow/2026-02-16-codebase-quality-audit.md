@@ -5249,6 +5249,26 @@ to:
 
 **Result:** model-catalog pricing parsing now rejects non-decimal coercions, and the generator module can be imported in tests without unintentionally executing network/model generation side effects.
 
+---
+
+### 284) coding-agent bash tool accepted timeout values beyond Node timer range
+
+**Finding:** `packages/coding-agent/src/core/tools/bash.ts` only validated timeout values as positive finite numbers; extremely large timeout seconds could overflow Node's timer range and be clamped into unintended runtime behavior.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/bash.ts`
+- `packages/coding-agent/test/tools.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- enforce an upper bound aligned with Node's maximum timer delay (`2,147,483,647ms`),
+- reject oversize timeout seconds before process execution starts,
+- add regression coverage for oversized timeout rejection.
+
+**Result:** coding-agent bash timeout parsing now rejects oversized timeout values deterministically instead of relying on implicit runtime timer clamping.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5326,6 +5346,8 @@ to:
 - coding-agent grep range validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
 - coding-agent bash timeout validation regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
+- coding-agent bash oversized-timeout regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
 - coding-agent find limit validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
