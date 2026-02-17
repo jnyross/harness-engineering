@@ -108,6 +108,8 @@ class UserMessageList implements Component {
  */
 export class UserMessageSelectorComponent extends Container {
 	private messageList: UserMessageList;
+	private autoCancelTimeout: ReturnType<typeof setTimeout> | undefined;
+	private disposed = false;
 
 	constructor(messages: UserMessageItem[], onSelect: (entryId: string) => void, onCancel: () => void) {
 		super();
@@ -122,8 +124,18 @@ export class UserMessageSelectorComponent extends Container {
 
 		// Create message list
 		this.messageList = new UserMessageList(messages);
-		this.messageList.onSelect = onSelect;
-		this.messageList.onCancel = onCancel;
+		this.messageList.onSelect = (entryId) => {
+			if (this.disposed) {
+				return;
+			}
+			onSelect(entryId);
+		};
+		this.messageList.onCancel = () => {
+			if (this.disposed) {
+				return;
+			}
+			onCancel();
+		};
 
 		this.addChild(this.messageList);
 
@@ -133,11 +145,24 @@ export class UserMessageSelectorComponent extends Container {
 
 		// Auto-cancel if no messages
 		if (messages.length === 0) {
-			setTimeout(() => onCancel(), 100);
+			this.autoCancelTimeout = setTimeout(() => {
+				if (this.disposed) {
+					return;
+				}
+				onCancel();
+			}, 100);
 		}
 	}
 
 	getMessageList(): UserMessageList {
 		return this.messageList;
+	}
+
+	dispose(): void {
+		this.disposed = true;
+		if (this.autoCancelTimeout) {
+			clearTimeout(this.autoCancelTimeout);
+			this.autoCancelTimeout = undefined;
+		}
 	}
 }

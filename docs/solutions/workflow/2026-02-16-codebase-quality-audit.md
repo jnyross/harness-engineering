@@ -3965,6 +3965,27 @@ to:
 
 **Result:** Extension editor prompt completion now settles once and ignores stale callbacks targeting replaced editor instances.
 
+---
+
+### 221) tree/user-message selector empty-state auto-cancel timers could fire after teardown
+
+**Finding:** Tree/user-message selectors schedule delayed auto-cancel on empty data; without disposal-aware timer cleanup/guards, stale timers could trigger cancel callbacks after selector teardown.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/components/tree-selector.ts`
+- `packages/coding-agent/src/modes/interactive/components/user-message-selector.ts`
+- `packages/coding-agent/test/selector-autocancel-dispose.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- add disposal-aware timer cleanup for empty-state auto-cancel timeouts,
+- suppress selector callback invocation after disposal,
+- add regression coverage proving auto-cancel timers are ignored after dispose.
+
+**Result:** Tree/user-message selectors no longer emit stale auto-cancel callbacks after teardown races.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -3995,6 +4016,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extension-dialog-callbacks.test.ts` (includes throwing selector/input/editor callback safety and post-dispose callback suppression across selector/input/editor dialogs)
 - coding-agent session selector disposal regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/session-selector-path-delete.test.ts test/extension-dialog-callbacks.test.ts` (includes stale-load suppression after selector dispose)
+- coding-agent selector auto-cancel disposal regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/selector-autocancel-dispose.test.ts test/tree-selector.test.ts` (includes tree/user-message empty-state auto-cancel suppression after dispose)
 - coding-agent antigravity image SSE parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/antigravity-image-gen.test.ts` (includes terminal `data:` chunk without trailing newline and text+image ordering coverage)
 - coding-agent sleep helper regression tests pass:

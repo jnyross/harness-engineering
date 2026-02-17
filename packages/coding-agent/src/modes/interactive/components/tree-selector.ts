@@ -979,6 +979,8 @@ export class TreeSelectorComponent extends Container implements Focusable {
 	private labelInputContainer: Container;
 	private treeContainer: Container;
 	private onLabelChangeCallback?: (entryId: string, label: string | undefined) => void;
+	private autoCancelTimeout: ReturnType<typeof setTimeout> | undefined;
+	private disposed = false;
 
 	// Focusable implementation - propagate to labelInput when active for IME cursor positioning
 	private _focused = false;
@@ -1008,8 +1010,18 @@ export class TreeSelectorComponent extends Container implements Focusable {
 		const maxVisibleLines = Math.max(5, Math.floor(terminalHeight / 2));
 
 		this.treeList = new TreeList(tree, currentLeafId, maxVisibleLines, initialSelectedId);
-		this.treeList.onSelect = onSelect;
-		this.treeList.onCancel = onCancel;
+		this.treeList.onSelect = (entryId) => {
+			if (this.disposed) {
+				return;
+			}
+			onSelect(entryId);
+		};
+		this.treeList.onCancel = () => {
+			if (this.disposed) {
+				return;
+			}
+			onCancel();
+		};
 		this.treeList.onLabelEdit = (entryId, currentLabel) => this.showLabelInput(entryId, currentLabel);
 
 		this.treeContainer = new Container();
@@ -1037,7 +1049,12 @@ export class TreeSelectorComponent extends Container implements Focusable {
 		this.addChild(new DynamicBorder());
 
 		if (tree.length === 0) {
-			setTimeout(() => onCancel(), 100);
+			this.autoCancelTimeout = setTimeout(() => {
+				if (this.disposed) {
+					return;
+				}
+				onCancel();
+			}, 100);
 		}
 	}
 
@@ -1075,5 +1092,13 @@ export class TreeSelectorComponent extends Container implements Focusable {
 
 	getTreeList(): TreeList {
 		return this.treeList;
+	}
+
+	dispose(): void {
+		this.disposed = true;
+		if (this.autoCancelTimeout) {
+			clearTimeout(this.autoCancelTimeout);
+			this.autoCancelTimeout = undefined;
+		}
 	}
 }
