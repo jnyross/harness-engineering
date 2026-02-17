@@ -22,6 +22,15 @@ const THINKING_DESCRIPTIONS: Record<ThinkingLevel, string> = {
 	xhigh: "Maximum reasoning (~32k tokens)",
 };
 
+export function parseSettingsIntegerValue(value: string): number | undefined {
+	const trimmed = value.trim();
+	if (!/^\d+$/.test(trimmed)) {
+		return undefined;
+	}
+	const parsed = Number.parseInt(trimmed, 10);
+	return Number.isSafeInteger(parsed) ? parsed : undefined;
+}
+
 export interface SettingsConfig {
 	autoCompact: boolean;
 	showImages: boolean;
@@ -383,10 +392,20 @@ export class SettingsSelectorComponent extends Container {
 						callbacks.onShowHardwareCursorChange(newValue === "true");
 						break;
 					case "editor-padding":
-						callbacks.onEditorPaddingXChange(parseInt(newValue, 10));
+						{
+							const parsed = parseSettingsIntegerValue(newValue);
+							if (parsed !== undefined) {
+								callbacks.onEditorPaddingXChange(parsed);
+							}
+						}
 						break;
 					case "autocomplete-max-visible":
-						callbacks.onAutocompleteMaxVisibleChange(parseInt(newValue, 10));
+						{
+							const parsed = parseSettingsIntegerValue(newValue);
+							if (parsed !== undefined) {
+								callbacks.onAutocompleteMaxVisibleChange(parsed);
+							}
+						}
 						break;
 					case "clear-on-shrink":
 						callbacks.onClearOnShrinkChange(newValue === "true");
