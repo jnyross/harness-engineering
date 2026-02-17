@@ -1459,6 +1459,22 @@ to add deterministic startup failure handling (spawn error + early exit), single
 
 **Result:** RPC client startup now fails fast and predictably on runtime/startup issues, with clean client-state rollback and actionable error reporting.
 
+---
+
+### 86) coding-agent `execCommand()` reported cancelled processes as successful
+
+**Finding:** Shared `execCommand()` could return exit code `0` for cancelled subprocesses (`close` with `code === null`), spawned even when the provided `AbortSignal` was already aborted, and dropped spawn-error details from stderr.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/exec.ts`
+- `packages/coding-agent/test/exec.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to short-circuit pre-aborted signals, enforce non-zero exit status for killed/cancelled processes, and propagate spawn error messages into stderr. Added regression tests for success path, missing binary spawn failure, pre-aborted signal behavior, and timeout cancellation semantics.
+
+**Result:** Shared subprocess execution now reports cancellation/failure outcomes accurately and surfaces actionable spawn diagnostics for extension/runtime callers.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1469,6 +1485,8 @@ to add deterministic startup failure handling (spawn error + early exit), single
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts`
 - coding-agent RPC startup regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts`
+- coding-agent execCommand regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts` (includes docker-missing spawn-error handling case)
 - Agent package tests pass:
