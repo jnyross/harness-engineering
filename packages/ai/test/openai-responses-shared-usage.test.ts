@@ -55,6 +55,24 @@ describe("extractOpenAIResponsesUsage", () => {
 		});
 	});
 
+	it("parses numeric string token fields from compatible backends", () => {
+		expect(
+			extractOpenAIResponsesUsage({
+				prompt_tokens: "42",
+				completion_tokens: "8",
+				prompt_tokens_details: { cached_tokens: "7" },
+				total_tokens: "50",
+			}),
+		).toEqual({
+			input: 35,
+			output: 8,
+			cacheRead: 7,
+			cacheWrite: 0,
+			totalTokens: 50,
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+		});
+	});
+
 	it("returns undefined for non-object payloads", () => {
 		expect(extractOpenAIResponsesUsage(null)).toBeUndefined();
 		expect(extractOpenAIResponsesUsage("not-usage")).toBeUndefined();

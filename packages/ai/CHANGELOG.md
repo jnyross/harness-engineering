@@ -4,7 +4,7 @@
 
 ### Fixed
 
-- OpenAI Responses stream usage parsing now falls back to `prompt_tokens`/`completion_tokens` payloads (including cached prompt-token details), preventing zeroed usage accounting with OpenAI-compatible backends that omit `input_tokens`/`output_tokens`.
+- OpenAI Responses stream usage parsing now falls back to `prompt_tokens`/`completion_tokens` payloads (including cached prompt-token details) and accepts numeric-string token values, preventing zeroed usage accounting with OpenAI-compatible backends that omit `input_tokens`/`output_tokens` or serialize usage counts as strings.
 - Updated Codex WebSocket header conversion to iterate with `Headers.forEach()`, avoiding type incompatibilities in consumer check flows that use non-DOM `Headers` typings.
 - Consolidated provider retry sleep into a shared abortable helper that removes abort listeners on resolve/reject, preventing listener leaks across retry backoff paths.
 - GitHub Copilot OAuth polling now reuses the shared abortable sleep helper to avoid accumulating abort listeners across long-running device-flow polling loops.
