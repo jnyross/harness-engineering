@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { getModelSshCommandError, parseModelRunnerPid, resolveModelContextTokens } from "../src/commands/models.js";
+import {
+	getModelSshCommandError,
+	parseModelRunnerPid,
+	resolveModelContextTokens,
+	resolveModelMemoryFraction,
+} from "../src/commands/models.js";
 
 describe("getModelSshCommandError", () => {
 	it("returns undefined for successful SSH results", () => {
@@ -73,5 +78,18 @@ describe("resolveModelContextTokens", () => {
 		assert.equal(resolveModelContextTokens("16k-extra"), undefined);
 		assert.equal(resolveModelContextTokens("4096tokens"), undefined);
 		assert.equal(resolveModelContextTokens("0"), undefined);
+	});
+});
+
+describe("resolveModelMemoryFraction", () => {
+	it("accepts percent and numeric memory values", () => {
+		assert.equal(resolveModelMemoryFraction("50%"), 0.5);
+		assert.equal(resolveModelMemoryFraction("12.5"), 0.125);
+	});
+
+	it("rejects malformed or out-of-range memory values", () => {
+		assert.equal(resolveModelMemoryFraction("0"), undefined);
+		assert.equal(resolveModelMemoryFraction("101%"), undefined);
+		assert.equal(resolveModelMemoryFraction("50percent"), undefined);
 	});
 });

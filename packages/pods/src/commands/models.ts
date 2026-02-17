@@ -26,6 +26,21 @@ const CONTEXT_SIZE_ALIASES: Record<string, number> = {
 	"128k": 131072,
 };
 
+export function resolveModelMemoryFraction(memoryValue: string): number | undefined {
+	const trimmed = memoryValue.trim();
+	const memoryMatch = trimmed.match(/^(\d+(?:\.\d+)?)%?$/);
+	if (!memoryMatch) {
+		return undefined;
+	}
+
+	const parsed = Number(memoryMatch[1]);
+	if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 100) {
+		return undefined;
+	}
+
+	return parsed / 100;
+}
+
 export function parseModelRunnerPid(rawPid: string): number | undefined {
 	const trimmed = rawPid.trim();
 	if (!/^\d+$/.test(trimmed)) {
@@ -248,7 +263,13 @@ export const startModel = async (
 	// Apply memory/context overrides
 	if (!options.vllmArgs?.length) {
 		if (options.memory) {
-			const fraction = parseFloat(options.memory.replace("%", "")) / 100;
+			const fraction = resolveModelMemoryFraction(options.memory);
+			if (!fraction) {
+				console.error(
+					chalk.red('Error: invalid memory value. Use percentage between 0 and 100 (e.g. "50%" or "75").'),
+				);
+				process.exit(1);
+			}
 			vllmArgs = vllmArgs.filter((arg) => !arg.includes("gpu-memory-utilization"));
 			vllmArgs.push("--gpu-memory-utilization", String(fraction));
 		}
