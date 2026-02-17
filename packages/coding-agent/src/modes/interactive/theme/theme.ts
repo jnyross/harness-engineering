@@ -618,16 +618,26 @@ export function getThemeByName(name: string): Theme | undefined {
 	}
 }
 
+function parseColorFgbgBackgroundIndex(colorfgbg: string): number | undefined {
+	const parts = colorfgbg.split(";");
+	if (parts.length < 2) {
+		return undefined;
+	}
+	const backgroundRaw = parts[1]?.trim();
+	if (!backgroundRaw || !/^\d+$/.test(backgroundRaw)) {
+		return undefined;
+	}
+	const background = Number.parseInt(backgroundRaw, 10);
+	return Number.isInteger(background) ? background : undefined;
+}
+
 function detectTerminalBackground(): "dark" | "light" {
 	const colorfgbg = process.env.COLORFGBG || "";
 	if (colorfgbg) {
-		const parts = colorfgbg.split(";");
-		if (parts.length >= 2) {
-			const bg = parseInt(parts[1], 10);
-			if (!Number.isNaN(bg)) {
-				const result = bg < 8 ? "dark" : "light";
-				return result;
-			}
+		const bg = parseColorFgbgBackgroundIndex(colorfgbg);
+		if (bg !== undefined) {
+			const result = bg < 8 ? "dark" : "light";
+			return result;
 		}
 	}
 	return "dark";
