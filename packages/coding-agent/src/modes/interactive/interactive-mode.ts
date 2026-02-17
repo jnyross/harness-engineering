@@ -3883,7 +3883,7 @@ export class InteractiveMode {
 	private async handleShareCommand(): Promise<void> {
 		// Check if gh is available and logged in
 		try {
-			const authResult = spawnSync("gh", ["auth", "status"], { encoding: "utf-8" });
+			const authResult = spawnSync("gh", ["auth", "status"], { encoding: "utf-8", timeout: 5000 });
 			const authError = getGhAuthStatusError(authResult);
 			if (authError) {
 				this.showError(authError);

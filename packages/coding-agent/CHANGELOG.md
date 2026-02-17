@@ -24,6 +24,7 @@
 - Shared `execCommand()` now escalates timeout/abort termination to forced `SIGKILL` after a grace period when child processes ignore `SIGTERM`, preventing lingering subprocesses.
 - Interactive `/share` gist creation now uses shared `execCommand()` cancellation/error handling, preventing stuck loaders when `gh gist create` fails to spawn and preserving clean abort semantics.
 - Interactive `/share` now distinguishes missing/interrupted `gh auth status` checks from unauthenticated states, surfacing accurate install/interruption guidance before gist creation.
+- Interactive `/share` now runs `gh auth status` with a timeout and distinguishes ENOENT, timeout, generic spawn failures, signal exits, and unknown null-status exits before gist creation.
 - Extension selector/input dialogs in interactive mode now use single-settlement completion guards, preventing duplicate hide/resolve races when abort signals and UI completion fire concurrently.
 - Extension selector/input/editor dialog components now isolate `onSelect`/`onSubmit`/`onCancel` callback exceptions, and selector/input/editor callbacks are ignored after disposal, preventing extension callback failures from crashing interactive input handling or firing after teardown.
 - Extension editor prompt flow now uses single-settlement completion with instance-aware hide guards, preventing stale editor callbacks from tearing down newer editor instances.

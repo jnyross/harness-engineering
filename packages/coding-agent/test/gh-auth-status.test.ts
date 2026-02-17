@@ -21,7 +21,9 @@ function createResult(overrides: Partial<SpawnSyncReturns<string>>): SpawnSyncRe
 
 describe("getGhAuthStatusError", () => {
 	it("returns install guidance when gh cannot be spawned", () => {
-		const result = createResult({ error: new Error("spawn gh ENOENT"), status: null });
+		const error = new Error("spawn gh ENOENT") as NodeJS.ErrnoException;
+		error.code = "ENOENT";
+		const result = createResult({ error, status: null });
 		expect(getGhAuthStatusError(result)).toBe(GH_CLI_NOT_INSTALLED_MESSAGE);
 	});
 
@@ -30,9 +32,28 @@ describe("getGhAuthStatusError", () => {
 		expect(getGhAuthStatusError(result)).toBe("GitHub CLI auth check was interrupted (SIGTERM). Try again.");
 	});
 
+	it("returns timeout guidance when auth check times out", () => {
+		const error = new Error("spawnSync gh ETIMEDOUT") as NodeJS.ErrnoException;
+		error.code = "ETIMEDOUT";
+		const result = createResult({ status: null, error });
+		expect(getGhAuthStatusError(result)).toBe("GitHub CLI auth check timed out. Try again.");
+	});
+
+	it("returns generic guidance for non-ENOENT spawn errors", () => {
+		const error = new Error("spawnSync gh EACCES") as NodeJS.ErrnoException;
+		error.code = "EACCES";
+		const result = createResult({ status: null, error });
+		expect(getGhAuthStatusError(result)).toBe("GitHub CLI auth check failed: spawnSync gh EACCES");
+	});
+
 	it("returns login guidance on non-zero auth status", () => {
 		const result = createResult({ status: 1 });
 		expect(getGhAuthStatusError(result)).toBe(GH_CLI_NOT_LOGGED_IN_MESSAGE);
+	});
+
+	it("returns unknown-status guidance for null status without signal", () => {
+		const result = createResult({ status: null, signal: null });
+		expect(getGhAuthStatusError(result)).toBe("GitHub CLI auth check exited with unknown status. Try again.");
 	});
 
 	it("returns undefined for successful auth status", () => {
