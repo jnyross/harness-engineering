@@ -103,9 +103,9 @@ export const setupPod = async (
 	// Test SSH connection
 	console.log("Testing SSH connection...");
 	const testResult = await sshExec(sshCmd, "echo 'SSH OK'");
-	if (testResult.exitCode !== 0) {
-		console.error(chalk.red("Failed to connect via SSH"));
-		console.error(testResult.stderr);
+	const testSshError = getPodSetupSshError({ action: "Testing SSH connection", result: testResult });
+	if (testSshError) {
+		console.error(chalk.red(testSshError));
 		process.exit(1);
 	}
 	console.log(chalk.green("✓ SSH connection successful"));
@@ -148,9 +148,13 @@ export const setupPod = async (
 	console.log("");
 	console.log("Detecting GPU configuration...");
 	const gpuResult = await sshExec(sshCmd, "nvidia-smi --query-gpu=index,name,memory.total --format=csv,noheader");
+	const gpuDetectionError = getPodSetupSshError({ action: "Detecting GPU configuration", result: gpuResult });
+	if (gpuDetectionError) {
+		console.log(chalk.yellow(`⚠ ${gpuDetectionError}. Continuing with no detected GPUs.`));
+	}
 
 	const gpus: GPU[] = [];
-	if (gpuResult.exitCode === 0 && gpuResult.stdout) {
+	if (!gpuDetectionError && gpuResult.stdout) {
 		const lines = gpuResult.stdout.trim().split("\n");
 		for (const line of lines) {
 			const [id, name, memory] = line.split(",").map((s) => s.trim());
@@ -185,6 +189,27 @@ export const setupPod = async (
 	console.log("You can now deploy models with:");
 	console.log(chalk.cyan(`  ${cliCommand} start <model> --name <name>`));
 };
+
+export function getPodSetupSshError(options: {
+	action: string;
+	result: { stdout: string; stderr: string; exitCode: number };
+}): string | undefined {
+	if (options.result.exitCode === 0) {
+		return undefined;
+	}
+
+	const stderr = options.result.stderr.trim();
+	if (stderr) {
+		return `${options.action} failed: ${stderr}`;
+	}
+
+	const stdout = options.result.stdout.trim();
+	if (stdout) {
+		return `${options.action} failed: ${stdout}`;
+	}
+
+	return `${options.action} failed: SSH command exited with code ${options.result.exitCode}`;
+}
 
 export function buildPodSetupCommand(params: {
 	modelsPath: string;

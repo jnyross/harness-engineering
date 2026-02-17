@@ -67,4 +67,5 @@
 - `pi agent` delegated close-status failures now include the full invoked command in signal/unknown/non-zero diagnostics, improving troubleshooting for remote delegated CLI exits after successful spawn.
 - Model start/stop/list flows now fail fast on non-zero SSH command results (with stderr/stdout/exit-code diagnostics) instead of silently continuing with generic errors or stale config cleanup after SSH failures.
 - CLI pod-shell/ssh command paths now use top-level `Pod` type imports (instead of inline `import("./types").Pod` annotations), aligning with static import conventions used across the monorepo.
+- Pod setup SSH preflight/GPU-detection now surfaces explicit stderr/stdout/exit-code diagnostics; GPU detection failures are warned with actionable context instead of silently reporting zero GPUs.
 
