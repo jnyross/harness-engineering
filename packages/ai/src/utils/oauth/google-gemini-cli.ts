@@ -60,9 +60,10 @@ async function getNodeCreateServer(): Promise<typeof import("node:http").createS
 async function startCallbackServer(): Promise<CallbackServerInfo> {
 	const createServer = await getNodeCreateServer();
 
-	return new Promise((resolve, reject) => {
+	return new Promise((resolve) => {
 		let result: { code: string; state: string } | null = null;
 		let cancelled = false;
+		let settled = false;
 		let waitForCodeResolve: ((value: { code: string; state: string } | null) => void) | undefined;
 		let waitForCodePromise: Promise<{ code: string; state: string } | null> | undefined;
 
@@ -74,6 +75,14 @@ async function startCallbackServer(): Promise<CallbackServerInfo> {
 			waitForCodeResolve = undefined;
 			waitForCodePromise = undefined;
 			resolvePending(value);
+		};
+
+		const resolveOnce = (value: CallbackServerInfo) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			resolve(value);
 		};
 
 		const server = createServer((req, res) => {
@@ -112,7 +121,17 @@ async function startCallbackServer(): Promise<CallbackServerInfo> {
 		});
 
 		server.on("error", (err) => {
-			reject(err);
+			console.error(
+				`[google-gemini-cli] Failed to bind ${REDIRECT_URI} (${(err as NodeJS.ErrnoException).code ?? "unknown"}). Falling back to manual redirect input.`,
+			);
+			resolveOnce({
+				server,
+				cancelWait: () => {
+					cancelled = true;
+					settleWait(result);
+				},
+				waitForCode: async () => null,
+			});
 		});
 		server.on("close", () => {
 			cancelled = true;
@@ -120,7 +139,7 @@ async function startCallbackServer(): Promise<CallbackServerInfo> {
 		});
 
 		server.listen(8085, "127.0.0.1", () => {
-			resolve({
+			resolveOnce({
 				server,
 				cancelWait: () => {
 					cancelled = true;
@@ -593,7 +612,11 @@ export async function loginGeminiCli(
 		return credentials;
 	} finally {
 		signal?.removeEventListener("abort", onAbort);
-		server.server.close();
+		try {
+			server.server.close();
+		} catch {
+			// Ignore non-listening server close errors in manual-input fallback mode.
+		}
 	}
 }
 

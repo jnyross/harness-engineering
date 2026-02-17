@@ -1,3 +1,4 @@
+import { createServer } from "node:http";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { antigravityOAuthProvider, loginAntigravity } from "../src/utils/oauth/google-antigravity.js";
 
@@ -59,5 +60,62 @@ describe("google-antigravity oauth login", () => {
 			),
 		).rejects.toThrow("Manual input must be a full redirect URL");
 		expect(fetchMock).not.toHaveBeenCalled();
+	});
+
+	it("falls back to manual input when callback port is unavailable", async () => {
+		const busyServer = createServer((_req, res) => {
+			res.statusCode = 200;
+			res.end("busy");
+		});
+		await new Promise<void>((resolve) => {
+			busyServer.listen(51121, "127.0.0.1", () => resolve());
+		});
+
+		const fetchMock = vi.fn(async (input: unknown) => {
+			const url = String(input);
+			if (url === "https://oauth2.googleapis.com/token") {
+				return new Response(
+					JSON.stringify({
+						access_token: "access-token",
+						refresh_token: "refresh-token",
+						expires_in: 3600,
+					}),
+					{ status: 200, headers: { "content-type": "application/json" } },
+				);
+			}
+			if (url === "https://www.googleapis.com/oauth2/v1/userinfo?alt=json") {
+				return new Response(JSON.stringify({ email: "user@example.com" }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			}
+			if (url.includes("/v1internal:loadCodeAssist")) {
+				return new Response(JSON.stringify({ cloudaicompanionProject: "project-from-api" }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			}
+			throw new Error(`Unexpected fetch URL: ${url}`);
+		});
+		vi.stubGlobal("fetch", fetchMock);
+
+		let authState = "";
+		try {
+			const credentials = await loginAntigravity(
+				(info) => {
+					authState = new URL(info.url).searchParams.get("state") ?? "";
+				},
+				undefined,
+				async () => `http://localhost:51121/oauth-callback?code=manual-code&state=${authState}`,
+			);
+
+			expect(credentials.refresh).toBe("refresh-token");
+			expect(credentials.access).toBe("access-token");
+			expect(credentials.projectId).toBe("project-from-api");
+		} finally {
+			await new Promise<void>((resolve) => {
+				busyServer.close(() => resolve());
+			});
+		}
 	});
 });
