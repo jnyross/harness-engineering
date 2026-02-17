@@ -73,6 +73,13 @@ const DEFAULT_CONFIG: SandboxConfig = {
 	},
 };
 
+function normalizeExitCode(code: number | null, signal: NodeJS.Signals | null): number {
+	if (signal) {
+		return 1;
+	}
+	return code ?? 1;
+}
+
 function loadConfig(cwd: string): SandboxConfig {
 	const projectConfigPath = join(cwd, ".pi", "sandbox.json");
 	const globalConfigPath = join(homedir(), ".pi", "agent", "sandbox.json");
@@ -209,7 +216,7 @@ function createSandboxedBashOps(): BashOperations {
 					} else if (timedOut) {
 						rejectOnce(new Error(`timeout:${timeout}`));
 					} else {
-						resolveOnce({ exitCode: code ?? (closeSignal ? 1 : 0) });
+						resolveOnce({ exitCode: normalizeExitCode(code, closeSignal) });
 					}
 				});
 			});

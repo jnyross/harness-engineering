@@ -28,6 +28,13 @@ const MAX_PARALLEL_TASKS = 8;
 const MAX_CONCURRENCY = 4;
 const COLLAPSED_ITEM_COUNT = 10;
 
+function normalizeExitCode(code: number | null, signal: NodeJS.Signals | null): number {
+	if (signal) {
+		return 1;
+	}
+	return code ?? 1;
+}
+
 function formatTokens(count: number): string {
 	if (count < 1000) return count.toString();
 	if (count < 10000) return `${(count / 1000).toFixed(1)}k`;
@@ -361,7 +368,7 @@ async function runSingleAgent(
 
 			proc.on("close", (code, closeSignal) => {
 				if (buffer.trim()) processLine(buffer);
-				resolveOnce(code ?? (closeSignal ? 1 : 0));
+				resolveOnce(normalizeExitCode(code, closeSignal));
 			});
 
 			proc.on("error", (error) => {
