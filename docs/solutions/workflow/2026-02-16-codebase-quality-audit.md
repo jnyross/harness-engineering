@@ -4587,6 +4587,26 @@ to:
 
 **Result:** ls tool now rejects malformed numeric limit inputs deterministically instead of silently coercing them.
 
+---
+
+### 252) coding-agent execution-plan updates accepted non-integer task indices
+
+**Finding:** execution-plan progress updates accepted non-integer `task_index` values, which could bypass index intent checks and fail later with ambiguous runtime errors.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/execution-plan.ts`
+- `packages/coding-agent/test/execution-plan.test.ts` (new)
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- constrain `task_index` schema to non-negative integers,
+- validate runtime task indices explicitly before bounds checks,
+- add regression coverage for non-integer index rejection and valid-index update behavior.
+
+**Result:** execution-plan progress updates now reject malformed indices deterministically and preserve clear index-validation diagnostics.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4620,6 +4640,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
 - coding-agent ls limit validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
+- coding-agent execution-plan task-index validation tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/execution-plan.test.ts test/tools.test.ts`
 - mom CLI args/model regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/cli-args.test.ts test/agent-model.test.ts`
 - mom CLI args parser regression tests pass:
