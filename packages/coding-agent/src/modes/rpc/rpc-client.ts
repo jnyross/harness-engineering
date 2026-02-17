@@ -200,6 +200,9 @@ export class RpcClient {
 
 		this.process = null;
 		this.rl = null;
+		for (const { reject } of this.pendingRequests.values()) {
+			reject(new Error("RPC client stopped before response was received"));
+		}
 		this.pendingRequests.clear();
 	}
 
