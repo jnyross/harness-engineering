@@ -4023,6 +4023,24 @@ to:
 
 **Result:** Interactive mode now disposes disposable transient components before container clears, preventing stale background activity after UI teardown.
 
+---
+
+### 224) mac-system-theme extension example could accumulate overlapping async poll intervals
+
+**Finding:** mac-system-theme example started an async polling interval on `session_start` without clearing prior intervals or serializing in-flight polls, risking interval accumulation and overlapping `osascript` checks.
+
+**Action:** Updated:
+
+- `packages/coding-agent/examples/extensions/mac-system-theme.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- clear existing interval before starting a new session poller,
+- serialize asynchronous poll cycles with an in-flight guard.
+
+**Result:** mac-system-theme example now runs a single serialized theme poll loop per session lifecycle.
+
 ## Validation Evidence
 
 - Root quality gate passes:

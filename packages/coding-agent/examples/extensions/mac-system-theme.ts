@@ -26,15 +26,25 @@ export default function (pi: ExtensionAPI) {
 	let intervalId: ReturnType<typeof setInterval> | null = null;
 
 	pi.on("session_start", async (_event, ctx) => {
+		if (intervalId) {
+			clearInterval(intervalId);
+			intervalId = null;
+		}
 		let currentTheme = (await isDarkMode()) ? "dark" : "light";
 		ctx.ui.setTheme(currentTheme);
+		let pollInFlight = false;
 
 		intervalId = setInterval(async () => {
+			if (pollInFlight) {
+				return;
+			}
+			pollInFlight = true;
 			const newTheme = (await isDarkMode()) ? "dark" : "light";
 			if (newTheme !== currentTheme) {
 				currentTheme = newTheme;
 				ctx.ui.setTheme(currentTheme);
 			}
+			pollInFlight = false;
 		}, 2000);
 	});
 
