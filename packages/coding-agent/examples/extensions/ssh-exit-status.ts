@@ -14,3 +14,7 @@ export function getSshExampleFailureReason(code: number | null, signal: NodeJS.S
 	}
 	return `code ${code}`;
 }
+
+export function getSshExampleStartError(options: { invokedCommand: string; error: Error }): string {
+	return `Failed to start SSH command '${options.invokedCommand}': ${options.error.message}`;
+}

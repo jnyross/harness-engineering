@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getSshExampleFailureReason, normalizeSshExampleExitCode } from "../examples/extensions/ssh-exit-status.js";
+import {
+	getSshExampleFailureReason,
+	getSshExampleStartError,
+	normalizeSshExampleExitCode,
+} from "../examples/extensions/ssh-exit-status.js";
 
 describe("ssh example exit status helpers", () => {
 	it("normalizes successful and explicit non-zero exits", () => {
@@ -16,5 +20,14 @@ describe("ssh example exit status helpers", () => {
 		expect(getSshExampleFailureReason(null, "SIGKILL")).toBe("signal SIGKILL");
 		expect(getSshExampleFailureReason(9, null)).toBe("code 9");
 		expect(getSshExampleFailureReason(null, null)).toBe("unknown status");
+	});
+
+	it("formats startup failures with invoked command context", () => {
+		expect(
+			getSshExampleStartError({
+				invokedCommand: "ssh user@host pwd",
+				error: new Error("spawn ssh ENOENT"),
+			}),
+		).toBe("Failed to start SSH command 'ssh user@host pwd': spawn ssh ENOENT");
 	});
 });

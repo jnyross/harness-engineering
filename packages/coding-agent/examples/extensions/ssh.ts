@@ -25,11 +25,13 @@ import {
 	type ReadOperations,
 	type WriteOperations,
 } from "@mariozechner/pi-coding-agent";
-import { getSshExampleFailureReason, normalizeSshExampleExitCode } from "./ssh-exit-status.js";
+import { getSshExampleFailureReason, getSshExampleStartError, normalizeSshExampleExitCode } from "./ssh-exit-status.js";
 
 function sshExec(remote: string, command: string): Promise<Buffer> {
 	return new Promise((resolve, reject) => {
-		const child = spawn("ssh", [remote, command], { stdio: ["ignore", "pipe", "pipe"] });
+		const childArgs = [remote, command];
+		const invokedCommand = ["ssh", ...childArgs].join(" ");
+		const child = spawn("ssh", childArgs, { stdio: ["ignore", "pipe", "pipe"] });
 		const chunks: Buffer[] = [];
 		const errChunks: Buffer[] = [];
 		let settled = false;
@@ -52,12 +54,22 @@ function sshExec(remote: string, command: string): Promise<Buffer> {
 
 		child.stdout.on("data", (data) => chunks.push(data));
 		child.stderr.on("data", (data) => errChunks.push(data));
-		child.on("error", (error) => rejectOnce(error));
+		child.on("error", (error) =>
+			rejectOnce(
+				new Error(
+					getSshExampleStartError({
+						invokedCommand,
+						error,
+					}),
+				),
+			),
+		);
 		child.on("close", (code, closeSignal) => {
 			const normalizedCode = normalizeSshExampleExitCode(code, closeSignal);
 			if (normalizedCode !== 0) {
 				const reason = getSshExampleFailureReason(code, closeSignal);
-				rejectOnce(new Error(`SSH failed (${reason}): ${Buffer.concat(errChunks).toString()}`));
+				const stderr = Buffer.concat(errChunks).toString().trim();
+				rejectOnce(new Error(`SSH failed (${reason})${stderr ? `: ${stderr}` : ""}`));
 			} else {
 				resolveOnce(Buffer.concat(chunks));
 			}
@@ -105,7 +117,9 @@ function createRemoteBashOps(remote: string, remoteCwd: string, localCwd: string
 		exec: (command, cwd, { onData, signal, timeout }) =>
 			new Promise((resolve, reject) => {
 				const cmd = `cd ${JSON.stringify(toRemote(cwd))} && ${command}`;
-				const child = spawn("ssh", [remote, cmd], { stdio: ["ignore", "pipe", "pipe"] });
+				const childArgs = [remote, cmd];
+				const invokedCommand = ["ssh", ...childArgs].join(" ");
+				const child = spawn("ssh", childArgs, { stdio: ["ignore", "pipe", "pipe"] });
 				let timedOut = false;
 				let settled = false;
 				const timer = timeout
@@ -120,7 +134,7 @@ function createRemoteBashOps(remote: string, remoteCwd: string, localCwd: string
 					signal?.removeEventListener("abort", onAbort);
 				};
 
-				const resolveOnce = (value: { exitCode: number | null }) => {
+				const resolveOnce = (value: { exitCode: number | null; failureReason?: string }) => {
 					if (settled) {
 						return;
 					}
@@ -140,15 +154,29 @@ function createRemoteBashOps(remote: string, remoteCwd: string, localCwd: string
 
 				child.stdout.on("data", onData);
 				child.stderr.on("data", onData);
-				child.on("error", (e) => {
-					rejectOnce(e);
-				});
+				child.on("error", (error) =>
+					rejectOnce(
+						new Error(
+							getSshExampleStartError({
+								invokedCommand,
+								error,
+							}),
+						),
+					),
+				);
 				const onAbort = () => child.kill();
 				signal?.addEventListener("abort", onAbort, { once: true });
 				child.on("close", (code, closeSignal) => {
 					if (signal?.aborted) rejectOnce(new Error("aborted"));
 					else if (timedOut) rejectOnce(new Error(`timeout:${timeout}`));
-					else resolveOnce({ exitCode: normalizeSshExampleExitCode(code, closeSignal) });
+					else
+						resolveOnce({
+							exitCode: normalizeSshExampleExitCode(code, closeSignal),
+							failureReason:
+								closeSignal || code !== 0
+									? `SSH command '${invokedCommand}' failed (${getSshExampleFailureReason(code, closeSignal)})`
+									: undefined,
+						});
 				});
 			}),
 	};
