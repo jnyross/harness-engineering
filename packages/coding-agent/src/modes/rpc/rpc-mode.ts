@@ -647,9 +647,14 @@ export async function runRpcMode(session: AgentSession): Promise<never> {
 		shutdownInProgress = true;
 		rejectPendingExtensionRequests(`RPC mode shutting down: ${reason}`);
 
-		const currentRunner = session.extensionRunner;
-		if (currentRunner?.hasHandlers("session_shutdown")) {
-			await currentRunner.emit({ type: "session_shutdown" });
+		try {
+			const currentRunner = session.extensionRunner;
+			if (currentRunner?.hasHandlers("session_shutdown")) {
+				await currentRunner.emit({ type: "session_shutdown" });
+			}
+		} catch (shutdownError) {
+			const message = shutdownError instanceof Error ? shutdownError.message : String(shutdownError);
+			output(error(undefined, "shutdown", `Error during session_shutdown handlers: ${message}`));
 		}
 
 		// Close readline interface to stop waiting for input

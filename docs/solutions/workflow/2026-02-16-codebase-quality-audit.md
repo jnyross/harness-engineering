@@ -2694,6 +2694,24 @@ to:
 
 **Result:** RPC extension UI request handling now settles exactly once across overlapping response/timeout/abort/shutdown paths, reducing promise race and cleanup ambiguity.
 
+---
+
+### 153) RPC shutdown path could hang if extension `session_shutdown` handlers threw
+
+**Finding:** RPC mode shutdown awaited extension `session_shutdown` handlers without guarding handler failures, so thrown errors could prevent final readline close/process exit.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/rpc/rpc-mode.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- catch and report `session_shutdown` handler failures via RPC error output,
+- preserve deterministic readline close + process exit behavior even when shutdown handlers fail.
+
+**Result:** RPC mode now exits reliably during shutdown even if extension cleanup handlers throw, avoiding stuck headless shutdowns.
+
 ## Validation Evidence
 
 - Root quality gate passes:
