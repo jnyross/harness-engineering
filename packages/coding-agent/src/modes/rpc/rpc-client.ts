@@ -104,11 +104,75 @@ export class RpcClient {
 			this.handleLine(line);
 		});
 
-		// Wait a moment for process to initialize
-		await new Promise((resolve) => setTimeout(resolve, 100));
+		try {
+			await new Promise<void>((resolve, reject) => {
+				const startupProcess = this.process;
+				if (!startupProcess) {
+					reject(new Error("Agent process failed to initialize"));
+					return;
+				}
 
-		if (this.process.exitCode !== null) {
-			throw new Error(`Agent process exited immediately with code ${this.process.exitCode}. Stderr: ${this.stderr}`);
+				let settled = false;
+				const startupDelayMs = 100;
+				let startupTimer: ReturnType<typeof setTimeout> | undefined;
+
+				const cleanup = () => {
+					if (startupTimer) {
+						clearTimeout(startupTimer);
+					}
+					startupProcess.removeListener("error", onError);
+					startupProcess.removeListener("exit", onExit);
+				};
+
+				const resolveOnce = () => {
+					if (settled) {
+						return;
+					}
+					settled = true;
+					cleanup();
+					resolve();
+				};
+
+				const rejectOnce = (error: Error) => {
+					if (settled) {
+						return;
+					}
+					settled = true;
+					cleanup();
+					reject(error);
+				};
+
+				const onError = (error: Error) => {
+					rejectOnce(
+						new Error(`Failed to start agent process: ${error.message}. Stderr: ${this.stderr || "(none)"}`),
+					);
+				};
+
+				const onExit = (code: number | null, signal: NodeJS.Signals | null) => {
+					const exitReason = signal ? `signal ${signal}` : `code ${code ?? "unknown"}`;
+					rejectOnce(
+						new Error(
+							`Agent process exited before initialization with ${exitReason}. Stderr: ${this.stderr || "(none)"}`,
+						),
+					);
+				};
+
+				startupProcess.once("error", onError);
+				startupProcess.once("exit", onExit);
+
+				startupTimer = setTimeout(() => {
+					if (startupProcess.exitCode !== null) {
+						onExit(startupProcess.exitCode, startupProcess.signalCode);
+						return;
+					}
+					resolveOnce();
+				}, startupDelayMs);
+			});
+		} catch (error) {
+			this.rl?.close();
+			this.process = null;
+			this.rl = null;
+			throw error;
 		}
 	}
 

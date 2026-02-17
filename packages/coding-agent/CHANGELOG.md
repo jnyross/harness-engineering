@@ -16,6 +16,7 @@
 - Prompt template expansion now validates quoted argument syntax (unmatched quotes are rejected instead of being silently misparsed).
 - Prompt-template and slash-command argument splitting now accepts any whitespace separator (spaces/tabs) when detecting command names and arguments.
 - Interactive extension-command detection now accepts tab-separated slash-command arguments (`/command\targ`) consistently with space-separated forms.
+- RPC client startup now handles spawn/startup failures deterministically (missing runtime, immediate process exit) and cleans up partial startup state before surfacing actionable errors.
 
 ## [0.52.12] - 2026-02-13
 
