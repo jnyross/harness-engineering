@@ -1137,6 +1137,8 @@ export default function(api) { api.registerTool({ name: "test", description: "te
 	});
 
 	describe("runCommand", () => {
+		const signalAwareIt = process.platform === "win32" ? it.skip : it;
+
 		it("resolves on zero exit", async () => {
 			await expect(
 				// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
@@ -1158,6 +1160,13 @@ export default function(api) { api.registerTool({ name: "test", description: "te
 			).rejects.toThrow("Failed to start");
 		});
 
+		signalAwareIt("rejects signal-terminated exits with explicit signal diagnostics", async () => {
+			await expect(
+				// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
+				(packageManager as any).runCommand(process.execPath, ["-e", "process.kill(process.pid, 'SIGTERM')"]),
+			).rejects.toThrow("exited due to signal SIGTERM");
+		});
+
 		it("runCommandSync returns stdout for successful commands", () => {
 			// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
 			const output = (packageManager as any).runCommandSync(process.execPath, ["-e", "process.stdout.write('ok')"]);
@@ -1169,6 +1178,13 @@ export default function(api) { api.registerTool({ name: "test", description: "te
 				// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
 				(packageManager as any).runCommandSync("/definitely/missing/binary-12345", []),
 			).toThrow("Failed to start");
+		});
+
+		signalAwareIt("runCommandSync rejects signal exits with explicit signal diagnostics", () => {
+			expect(() =>
+				// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
+				(packageManager as any).runCommandSync(process.execPath, ["-e", "process.kill(process.pid, 'SIGTERM')"]),
+			).toThrow("exited due to signal SIGTERM");
 		});
 	});
 });
