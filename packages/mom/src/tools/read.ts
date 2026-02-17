@@ -35,8 +35,11 @@ interface ReadToolDetails {
 	truncation?: TruncationResult;
 }
 
-function parseWcLineCountOutput(output: string, filePath: string): number {
+function parseLineCountOutput(output: string, filePath: string): number {
 	const trimmed = output.trim();
+	if (trimmed.length === 0) {
+		return 0;
+	}
 	if (!/^\d+$/.test(trimmed)) {
 		throw new Error(`Failed to parse line count for file '${filePath}': ${trimmed || "(empty output)"}`);
 	}
@@ -80,19 +83,18 @@ export function createReadTool(executor: Executor): AgentTool<typeof readSchema>
 			}
 
 			// Get total line count first
-			const countResult = await executor.exec(`wc -l < ${shellEscape(path)}`, { signal });
+			const countResult = await executor.exec(`sed -n '$=' ${shellEscape(path)}`, { signal });
 			if (countResult.code !== 0) {
 				throw new Error(countResult.stderr || `Failed to read file: ${path}`);
 			}
-			// wc -l counts newlines, not lines
-			const totalFileLines = parseWcLineCountOutput(countResult.stdout, path) + 1;
+			const totalFileLines = parseLineCountOutput(countResult.stdout, path);
 
 			// Apply offset if specified (1-indexed)
 			const startLine = offset ? Math.max(1, offset) : 1;
 			const startLineDisplay = startLine;
 
 			// Check if offset is out of bounds
-			if (startLine > totalFileLines) {
+			if (offset !== undefined && startLine > totalFileLines) {
 				throw new Error(`Offset ${offset} is beyond end of file (${totalFileLines} lines total)`);
 			}
 
