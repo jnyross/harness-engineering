@@ -48,7 +48,8 @@ function resolveCacheRetention(cacheRetention?: CacheRetention): CacheRetention 
 
 function parseUsageNumber(value: unknown): number {
 	if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
-		return Math.trunc(value);
+		const normalized = Math.trunc(value);
+		return Number.isSafeInteger(normalized) ? normalized : 0;
 	}
 	if (typeof value === "string" && value.trim().length > 0) {
 		const trimmed = value.trim();
@@ -57,7 +58,8 @@ function parseUsageNumber(value: unknown): number {
 		}
 		const parsed = Number(trimmed);
 		if (Number.isFinite(parsed) && parsed >= 0) {
-			return Math.trunc(parsed);
+			const normalized = Math.trunc(parsed);
+			return Number.isSafeInteger(normalized) ? normalized : 0;
 		}
 	}
 	return 0;

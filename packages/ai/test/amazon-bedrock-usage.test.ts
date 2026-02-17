@@ -96,6 +96,25 @@ describe("extractBedrockUsageMetadata", () => {
 		});
 	});
 
+	it("ignores unsafe integer usage values", () => {
+		expect(
+			extractBedrockUsageMetadata({
+				inputTokens: "9007199254740993",
+				outputTokens: 9007199254740992,
+				cacheReadInputTokens: "9007199254740993",
+				cacheWriteInputTokens: "9007199254740993",
+				totalTokens: "9007199254740993",
+			}),
+		).toEqual({
+			input: 0,
+			output: 0,
+			cacheRead: 0,
+			cacheWrite: 0,
+			totalTokens: 0,
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+		});
+	});
+
 	it("returns undefined for invalid payloads", () => {
 		expect(extractBedrockUsageMetadata(null)).toBeUndefined();
 		expect(extractBedrockUsageMetadata("invalid")).toBeUndefined();

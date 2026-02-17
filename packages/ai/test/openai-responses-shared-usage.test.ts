@@ -109,6 +109,24 @@ describe("extractOpenAIResponsesUsage", () => {
 		});
 	});
 
+	it("ignores unsafe integer token fields", () => {
+		expect(
+			extractOpenAIResponsesUsage({
+				prompt_tokens: "9007199254740993",
+				completion_tokens: 9007199254740992,
+				prompt_tokens_details: { cached_tokens: "9007199254740993" },
+				total_tokens: "9007199254740993",
+			}),
+		).toEqual({
+			input: 0,
+			output: 0,
+			cacheRead: 0,
+			cacheWrite: 0,
+			totalTokens: 0,
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+		});
+	});
+
 	it("returns undefined for non-object payloads", () => {
 		expect(extractOpenAIResponsesUsage(null)).toBeUndefined();
 		expect(extractOpenAIResponsesUsage("not-usage")).toBeUndefined();

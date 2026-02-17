@@ -80,7 +80,11 @@ interface OpenAIResponsesUsageShape {
 
 function asNumber(value: unknown): number | undefined {
 	if (typeof value === "number") {
-		return Number.isFinite(value) && value >= 0 ? Math.trunc(value) : undefined;
+		if (!Number.isFinite(value) || value < 0) {
+			return undefined;
+		}
+		const normalized = Math.trunc(value);
+		return Number.isSafeInteger(normalized) ? normalized : undefined;
 	}
 	if (typeof value === "string" && value.trim().length > 0) {
 		const trimmed = value.trim();
@@ -88,7 +92,11 @@ function asNumber(value: unknown): number | undefined {
 			return undefined;
 		}
 		const parsed = Number(trimmed);
-		return Number.isFinite(parsed) && parsed >= 0 ? Math.trunc(parsed) : undefined;
+		if (!Number.isFinite(parsed) || parsed < 0) {
+			return undefined;
+		}
+		const normalized = Math.trunc(parsed);
+		return Number.isSafeInteger(normalized) ? normalized : undefined;
 	}
 	return undefined;
 }

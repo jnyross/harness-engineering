@@ -11,7 +11,14 @@ const mockState = vi.hoisted(
 			usageAsStrings: false,
 			usageMalformed: false,
 			usageNonDecimal: false,
-		}) as { lastParams: unknown; usageAsStrings: boolean; usageMalformed: boolean; usageNonDecimal: boolean },
+			usageUnsafe: false,
+		}) as {
+			lastParams: unknown;
+			usageAsStrings: boolean;
+			usageMalformed: boolean;
+			usageNonDecimal: boolean;
+			usageUnsafe: boolean;
+		},
 );
 
 vi.mock("openai", () => {
@@ -24,32 +31,40 @@ vi.mock("openai", () => {
 						async *[Symbol.asyncIterator]() {
 							const promptTokens = mockState.usageNonDecimal
 								? "0x10"
-								: mockState.usageMalformed
-									? "-4"
-									: mockState.usageAsStrings
-										? "5"
-										: 5;
+								: mockState.usageUnsafe
+									? "9007199254740993"
+									: mockState.usageMalformed
+										? "-4"
+										: mockState.usageAsStrings
+											? "5"
+											: 5;
 							const completionTokens = mockState.usageNonDecimal
 								? "1e2"
-								: mockState.usageMalformed
-									? "2.9"
-									: mockState.usageAsStrings
-										? "2"
-										: 2;
+								: mockState.usageUnsafe
+									? 9007199254740992
+									: mockState.usageMalformed
+										? "2.9"
+										: mockState.usageAsStrings
+											? "2"
+											: 2;
 							const cachedTokens = mockState.usageNonDecimal
 								? "0x3"
-								: mockState.usageMalformed
-									? "1.8"
-									: mockState.usageAsStrings
-										? "3"
-										: 3;
+								: mockState.usageUnsafe
+									? "9007199254740993"
+									: mockState.usageMalformed
+										? "1.8"
+										: mockState.usageAsStrings
+											? "3"
+											: 3;
 							const reasoningTokens = mockState.usageNonDecimal
 								? "2.9"
-								: mockState.usageMalformed
-									? "-7"
-									: mockState.usageAsStrings
-										? "4"
-										: 4;
+								: mockState.usageUnsafe
+									? "9007199254740993"
+									: mockState.usageMalformed
+										? "-7"
+										: mockState.usageAsStrings
+											? "4"
+											: 4;
 							yield {
 								choices: [{ delta: {}, finish_reason: "stop" }],
 								usage: {
@@ -74,6 +89,7 @@ describe("openai-completions tool_choice", () => {
 		mockState.usageAsStrings = false;
 		mockState.usageMalformed = false;
 		mockState.usageNonDecimal = false;
+		mockState.usageUnsafe = false;
 		const { compat: _compat, ...baseModel } = getModel("openai", "gpt-4o-mini")!;
 		const model = { ...baseModel, api: "openai-completions" } as const;
 		const tools: Tool[] = [
@@ -118,6 +134,7 @@ describe("openai-completions tool_choice", () => {
 		mockState.usageAsStrings = false;
 		mockState.usageMalformed = false;
 		mockState.usageNonDecimal = false;
+		mockState.usageUnsafe = false;
 		const { compat: _compat, ...baseModel } = getModel("openai", "gpt-4o-mini")!;
 		const model = {
 			...baseModel,
@@ -166,6 +183,7 @@ describe("openai-completions tool_choice", () => {
 		mockState.usageAsStrings = true;
 		mockState.usageMalformed = false;
 		mockState.usageNonDecimal = false;
+		mockState.usageUnsafe = false;
 		const { compat: _compat, ...baseModel } = getModel("openai", "gpt-4o-mini")!;
 		const model = { ...baseModel, api: "openai-completions" } as const;
 
@@ -193,6 +211,7 @@ describe("openai-completions tool_choice", () => {
 		mockState.usageAsStrings = false;
 		mockState.usageMalformed = true;
 		mockState.usageNonDecimal = false;
+		mockState.usageUnsafe = false;
 		const { compat: _compat, ...baseModel } = getModel("openai", "gpt-4o-mini")!;
 		const model = { ...baseModel, api: "openai-completions" } as const;
 
@@ -220,6 +239,7 @@ describe("openai-completions tool_choice", () => {
 		mockState.usageAsStrings = false;
 		mockState.usageMalformed = false;
 		mockState.usageNonDecimal = true;
+		mockState.usageUnsafe = false;
 		const { compat: _compat, ...baseModel } = getModel("openai", "gpt-4o-mini")!;
 		const model = { ...baseModel, api: "openai-completions" } as const;
 
@@ -241,5 +261,33 @@ describe("openai-completions tool_choice", () => {
 		expect(stream.usage.output).toBe(2);
 		expect(stream.usage.cacheRead).toBe(0);
 		expect(stream.usage.totalTokens).toBe(2);
+	});
+
+	it("ignores unsafe integer usage counters", async () => {
+		mockState.usageAsStrings = false;
+		mockState.usageMalformed = false;
+		mockState.usageNonDecimal = false;
+		mockState.usageUnsafe = true;
+		const { compat: _compat, ...baseModel } = getModel("openai", "gpt-4o-mini")!;
+		const model = { ...baseModel, api: "openai-completions" } as const;
+
+		const stream = await streamSimple(
+			model,
+			{
+				messages: [
+					{
+						role: "user",
+						content: "hello",
+						timestamp: Date.now(),
+					},
+				],
+			},
+			{ apiKey: "test" },
+		).result();
+
+		expect(stream.usage.input).toBe(0);
+		expect(stream.usage.output).toBe(0);
+		expect(stream.usage.cacheRead).toBe(0);
+		expect(stream.usage.totalTokens).toBe(0);
 	});
 });

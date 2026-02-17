@@ -344,7 +344,8 @@ function handleMetadata(
 
 function parseUsageNumber(value: unknown): number | undefined {
 	if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
-		return Math.trunc(value);
+		const normalized = Math.trunc(value);
+		return Number.isSafeInteger(normalized) ? normalized : undefined;
 	}
 	if (typeof value === "string" && value.trim().length > 0) {
 		const trimmed = value.trim();
@@ -353,7 +354,8 @@ function parseUsageNumber(value: unknown): number | undefined {
 		}
 		const parsed = Number(trimmed);
 		if (Number.isFinite(parsed) && parsed >= 0) {
-			return Math.trunc(parsed);
+			const normalized = Math.trunc(parsed);
+			return Number.isSafeInteger(normalized) ? normalized : undefined;
 		}
 	}
 	return undefined;

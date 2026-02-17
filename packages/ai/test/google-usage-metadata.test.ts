@@ -96,6 +96,25 @@ describe("extractGoogleUsageMetadata", () => {
 		});
 	});
 
+	it("ignores unsafe integer usage values", () => {
+		expect(
+			extractGoogleUsageMetadata({
+				promptTokenCount: "9007199254740993",
+				candidatesTokenCount: 9007199254740992,
+				thoughtsTokenCount: "9007199254740993",
+				cachedContentTokenCount: "9007199254740993",
+				totalTokenCount: "9007199254740993",
+			}),
+		).toEqual({
+			input: 0,
+			output: 0,
+			cacheRead: 0,
+			cacheWrite: 0,
+			totalTokens: 0,
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+		});
+	});
+
 	it("returns undefined for non-object usage payloads", () => {
 		expect(extractGoogleUsageMetadata(null)).toBeUndefined();
 		expect(extractGoogleUsageMetadata("invalid")).toBeUndefined();
