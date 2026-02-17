@@ -148,7 +148,7 @@ export function executeBash(command: string, options?: BashExecutorOptions): Pro
 		child.stdout?.on("data", handleData);
 		child.stderr?.on("data", handleData);
 
-		child.on("close", (code) => {
+		child.on("close", (code, signal) => {
 			// Clean up abort listener
 			if (options?.signal) {
 				options.signal.removeEventListener("abort", abortHandler);
@@ -162,12 +162,11 @@ export function executeBash(command: string, options?: BashExecutorOptions): Pro
 			const fullOutput = outputChunks.join("");
 			const truncationResult = truncateTail(fullOutput);
 
-			// code === null means killed (cancelled)
-			const cancelled = code === null;
+			const cancelled = options?.signal?.aborted ?? false;
 
 			resolve({
 				output: truncationResult.truncated ? truncationResult.content : fullOutput,
-				exitCode: cancelled ? undefined : code,
+				exitCode: cancelled ? undefined : (code ?? (signal ? 1 : 0)),
 				cancelled,
 				truncated: truncationResult.truncated,
 				fullOutputPath: tempFilePath,
@@ -268,7 +267,7 @@ export async function executeBashWithOperations(
 
 		return {
 			output: truncationResult.truncated ? truncationResult.content : fullOutput,
-			exitCode: cancelled ? undefined : (result.exitCode ?? undefined),
+			exitCode: cancelled ? undefined : (result.exitCode ?? 1),
 			cancelled,
 			truncated: truncationResult.truncated,
 			fullOutputPath: tempFilePath,

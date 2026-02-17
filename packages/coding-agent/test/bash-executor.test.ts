@@ -73,4 +73,28 @@ describe("bash executor cancellation behavior", () => {
 		expect(result.exitCode).toBe(0);
 		expect(result.output).toContain("hello");
 	});
+
+	it("treats signal-terminated local commands as non-cancelled failures", async () => {
+		const result = await executeBash("kill -TERM $$");
+		expect(result.cancelled).toBe(false);
+		expect(result.exitCode).toBe(1);
+	});
+
+	it("maps null operation exit codes to non-zero when not cancelled", async () => {
+		const result = await executeBashWithOperations(
+			"echo hi",
+			process.cwd(),
+			{
+				exec: async (_command, _cwd, options) => {
+					options.onData(Buffer.from("terminated\n"));
+					return { exitCode: null };
+				},
+			},
+			{},
+		);
+
+		expect(result.cancelled).toBe(false);
+		expect(result.exitCode).toBe(1);
+		expect(result.output).toContain("terminated");
+	});
 });
