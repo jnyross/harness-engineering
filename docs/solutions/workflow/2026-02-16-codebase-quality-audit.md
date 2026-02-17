@@ -3769,6 +3769,25 @@ to:
 
 **Result:** API key prompt polling now runs deterministically (no overlapping reads) and avoids unhandled async interval rejections on transient storage errors.
 
+---
+
+### 211) process-exit helper could hang when called after child process already terminated
+
+**Finding:** Pods `waitForProcessExit()` waited on future `exit/error` events only; if a child process had already exited before listener attachment, callers could hang awaiting never-fired events.
+
+**Action:** Updated:
+
+- `packages/pods/src/process-exit.ts`
+- `packages/pods/test/process-exit.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- add immediate-resolution fast path for already-exited child processes using `exitCode/signalCode`,
+- add regression coverage verifying immediate settlement for pre-exited processes.
+
+**Result:** Process-exit helper now settles deterministically even when attached after very fast child-process termination.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -3828,7 +3847,7 @@ to:
 - coding-agent tools regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes signal-terminated bash command coverage)
 - pods process-exit regression tests pass:
-  - `npm --workspace "@mariozechner/pi" test -- test/process-exit.test.ts` (includes signal-exit non-zero assertion)
+  - `npm --workspace "@mariozechner/pi" test -- test/process-exit.test.ts` (includes signal-exit non-zero assertion and already-exited immediate-settlement coverage)
 - coding-agent bash executor regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/bash-executor.test.ts` (includes signal/null exit non-zero semantics and shell spawn-startup failure coverage)
 - agent proxy stream regression tests pass:

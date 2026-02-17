@@ -51,6 +51,7 @@
 - Shared `waitForProcessExit()` now treats signal-terminated child exits as non-zero results, avoiding false success semantics in process-monitoring flows.
 - SSH/SCP wrappers now use single-settlement guards across `close`/`error` events, preventing duplicate resolve races during spawn/exit edge cases.
 - SCP wrapper now treats signal-terminated copy subprocesses as explicit failures, avoiding ambiguous success on interrupted transfer processes.
+- Shared process-exit helper now resolves immediately for already-exited child processes, preventing hangs when listeners attach after fast process termination.
 - `pi agent` delegated command spawning now uses single-settlement `error`/`close` handling and clearer startup-failure diagnostics when the delegated CLI command cannot be launched.
 - Model-start/log streaming now begins `waitForProcessExit()` observation immediately after SSH process spawn, preventing early spawn-error races from slipping past log-monitoring handlers.
 

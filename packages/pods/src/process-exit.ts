@@ -8,6 +8,14 @@ export interface ProcessExitResult {
 
 export function waitForProcessExit(process: ChildProcess): Promise<ProcessExitResult> {
 	return new Promise((resolve) => {
+		if (process.exitCode !== null || process.signalCode !== null) {
+			resolve({
+				code: process.exitCode ?? (process.signalCode ? 1 : 0),
+				signal: process.signalCode,
+			});
+			return;
+		}
+
 		let settled = false;
 
 		const cleanup = () => {
