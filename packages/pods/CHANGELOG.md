@@ -62,6 +62,7 @@
 - SCP setup-script copy now forwards compatible SSH options (e.g. identity/config/port) into `scp` invocation and surfaces explicit parse/startup/signal/unknown-status diagnostics instead of a generic copy-failed message during `pods setup`.
 - Streaming SSH command execution now exposes parse/startup/signal/unknown-status diagnostics to CLI/setup callers, so `pi ssh` and `pods setup` surface explicit failure causes before exiting non-zero.
 - Non-streaming SSH execution now adds fallback stderr diagnostics for startup failures, signal exits, and stderr-less non-zero exits, so callers no longer receive empty error output on remote command failures.
+- Non-streaming SSH execution fallback diagnostics now include full invoked command context for signal/non-zero exits, improving troubleshooting of failing remote command invocations.
 - SCP startup failures now include full invoked-command context in diagnostics (e.g., quoted args + destination), improving troubleshooting when `scp` cannot be launched.
 - Interactive `pi shell` now surfaces explicit SSH failure reasons (signal/non-zero/unknown) and startup command context instead of exiting silently with only a status code.
 - `pi agent` delegated close-status failures now include the full invoked command in signal/unknown/non-zero diagnostics, improving troubleshooting for remote delegated CLI exits after successful spawn.

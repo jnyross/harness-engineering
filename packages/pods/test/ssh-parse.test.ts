@@ -106,7 +106,7 @@ describe("sshExec", () => {
 
 			const result = await sshExec(`${sshPath} user@host`, "echo test");
 			assert.equal(result.exitCode, 1);
-			assert.equal(result.stderr, "SSH process terminated by signal SIGTERM");
+			assert.equal(result.stderr, `SSH command '${sshPath} user@host echo test' terminated by signal SIGTERM`);
 		} finally {
 			rmSync(dir, { recursive: true, force: true });
 		}
@@ -121,7 +121,7 @@ describe("sshExec", () => {
 
 			const result = await sshExec(`${sshPath} user@host`, "echo test");
 			assert.equal(result.exitCode, 17);
-			assert.equal(result.stderr, "SSH process exited with code 17");
+			assert.equal(result.stderr, `SSH command '${sshPath} user@host echo test' exited with code 17`);
 		} finally {
 			rmSync(dir, { recursive: true, force: true });
 		}

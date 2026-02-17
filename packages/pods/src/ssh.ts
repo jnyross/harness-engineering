@@ -254,9 +254,12 @@ export const sshExec = async (
 
 		proc.on("close", (code, signal) => {
 			const exitCode = normalizeChildExitCode(code, signal);
+			const processLabel = `SSH command '${invokedCommand}'`;
 			const stderrMessage =
 				stderr ||
-				(exitCode !== 0 ? getSshStreamExitError(code, signal) || `SSH process exited with code ${exitCode}` : "");
+				(exitCode !== 0
+					? getSshStreamExitError(code, signal, processLabel) || `${processLabel} exited with code ${exitCode}`
+					: "");
 			resolveOnce({
 				stdout,
 				stderr: stderrMessage,
