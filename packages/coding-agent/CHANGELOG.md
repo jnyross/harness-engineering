@@ -60,6 +60,7 @@
 - session delete fallback diagnostics now also classify rare `spawnSync` null/null trash exits as explicit `unknown status` hints instead of dropping that failure context.
 - Extension loader shortcut registration now uses a top-level `ExtensionContext` type import (instead of inline `import("./types").ExtensionContext`), aligning with static type-import conventions.
 - Interactive theme helpers now use a top-level `SettingsListTheme` type import (instead of inline `import("@mariozechner/pi-tui").SettingsListTheme`), aligning with static type-import conventions.
+- Photon utility typing now uses top-level `fs`/`@silvia-odwyer/photon-node` type imports instead of inline `typeof import(...)` type expressions, while preserving lazy runtime loading behavior.
 - shell bash-path lookup now centralizes `spawnSync` result parsing (including signal/error/null-status handling) and validates multi-path lookup output deterministically.
 - grep tool ripgrep-close handling now normalizes signal/null-status exits with explicit diagnostics (while preserving intentional match-limit termination as success).
 - find tool fd-close handling now centralizes spawn/signal/null-status diagnostics and preserves non-zero exits with partial stdout while surfacing hard failures.
