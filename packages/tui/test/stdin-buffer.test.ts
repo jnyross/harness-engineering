@@ -282,6 +282,19 @@ describe("StdinBuffer", () => {
 			oversizedBuffer.destroy();
 		});
 
+		it("should clamp positive-infinite timeout values instead of flushing immediately", async () => {
+			const oversizedBuffer = new StdinBuffer({ timeout: Number.POSITIVE_INFINITY });
+			const oversizedEmitted: string[] = [];
+			oversizedBuffer.on("data", (sequence) => {
+				oversizedEmitted.push(sequence);
+			});
+
+			oversizedBuffer.process("\x1b[<35");
+			await wait(15);
+			assert.deepStrictEqual(oversizedEmitted, []);
+			oversizedBuffer.destroy();
+		});
+
 		it("should handle lone escape character with timeout", async () => {
 			processInput("\x1b");
 			assert.deepStrictEqual(emittedSequences, []);

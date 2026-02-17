@@ -237,7 +237,7 @@ function parseBufferTimeoutMs(timeout: number | undefined): number {
 	if (timeout === undefined) {
 		return DEFAULT_BUFFER_TIMEOUT_MS;
 	}
-	if (!Number.isFinite(timeout) || timeout <= 0) {
+	if (Number.isNaN(timeout) || timeout <= 0) {
 		return DEFAULT_BUFFER_TIMEOUT_MS;
 	}
 	return timeout > MAX_TIMEOUT_MS ? MAX_TIMEOUT_MS : timeout;
