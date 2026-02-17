@@ -4256,6 +4256,28 @@ to:
 
 **Result:** coding-agent CLI no longer swallows subsequent flags as accidental option values in common value-backed flag paths.
 
+---
+
+### 236) mom CLI silently accepted missing `--sandbox` / `--download` values
+
+**Finding:** mom CLI argument parsing accepted `--sandbox` and `--download` without required values, which could silently fall back to default behavior rather than failing with actionable diagnostics.
+
+**Action:** Updated:
+
+- `packages/mom/src/cli-args.ts` (new)
+- `packages/mom/src/main.ts`
+- `packages/mom/test/cli-args.test.ts` (new)
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- extract CLI parsing into a dedicated helper module,
+- enforce required values for `--sandbox` and `--download` (including option-like token rejection),
+- add focused regression tests for valid and missing-value scenarios,
+- keep startup flow unchanged apart from explicit parse errors for invalid CLI usage.
+
+**Result:** mom CLI now rejects incomplete option invocations deterministically instead of silently ignoring missing required values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4273,6 +4295,8 @@ to:
   - `npx tsx packages/pods/src/cli.ts start demo-model --name demo --vllm`
 - coding-agent CLI args regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/args.test.ts`
+- mom CLI args/model regression tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/cli-args.test.ts test/agent-model.test.ts`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
 - pods SSH/SCP parser regression tests pass:
