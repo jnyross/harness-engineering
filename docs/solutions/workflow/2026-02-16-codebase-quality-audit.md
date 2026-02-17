@@ -6006,6 +6006,28 @@ to:
 
 **Result:** mom settings now load deterministically from malformed settings-file edits instead of forwarding incompatible values into runtime compaction/retry/model preference behavior.
 
+---
+
+### 321) mom log-to-session sync accepted malformed log-line timestamp payloads and could coerce epoch timestamps
+
+**Finding:** `packages/mom/src/context.ts` sync logic parsed log lines with broad casts and computed message times via `new Date(date).getTime() || Date.now()`, which allowed malformed timestamp payloads and could coerce valid epoch timestamp `0` to current time.
+
+**Action:** Updated:
+
+- `packages/mom/src/context.ts`
+- `packages/mom/test/context-sync.test.ts` (new)
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- parse/validate sync log-line timestamp shapes before use,
+- skip malformed timestamp payloads safely,
+- preserve valid epoch timestamp `0` values,
+- keep malformed date fallback behavior deterministic (`Date.now()`),
+- add regression coverage for malformed timestamp skipping, malformed-date fallback, and epoch preservation.
+
+**Result:** log-to-session sync now handles malformed timestamp payloads safely and preserves valid epoch timestamps instead of coercing them to current time.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6022,6 +6044,8 @@ to:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/store.test.ts`
 - mom settings normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/context-settings.test.ts test/store.test.ts`
+- mom context sync timestamp regression tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/context-sync.test.ts test/context-settings.test.ts test/store.test.ts`
 - web-ui model discovery + archive-index numeric parsing regression tests pass:
   - `cd packages/web-ui && npx tsx --test test/model-discovery.test.ts test/archive-index.test.ts`
 - tui kitty CSI-u + overlay percentage parsing regression tests pass:
