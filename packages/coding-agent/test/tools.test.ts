@@ -370,6 +370,15 @@ describe("Coding Agent Tools", () => {
 			);
 		});
 
+		it("should reject invalid timeout values", async () => {
+			await expect(bashTool.execute("test-call-10b", { command: "echo ok", timeout: 0 })).rejects.toThrow(
+				"Parameter 'timeout' must be a positive number of seconds.",
+			);
+			await expect(bashTool.execute("test-call-10c", { command: "echo ok", timeout: -2 })).rejects.toThrow(
+				"Parameter 'timeout' must be a positive number of seconds.",
+			);
+		});
+
 		it("should short-circuit pre-aborted signals", async () => {
 			const markerFile = join(testDir, `bash-preabort-${Date.now()}.txt`);
 			const controller = new AbortController();

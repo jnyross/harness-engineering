@@ -19,7 +19,9 @@ function getTempFilePath(): string {
 
 const bashSchema = Type.Object({
 	command: Type.String({ description: "Bash command to execute" }),
-	timeout: Type.Optional(Type.Number({ description: "Timeout in seconds (optional, no default timeout)" })),
+	timeout: Type.Optional(
+		Type.Number({ exclusiveMinimum: 0, description: "Timeout in seconds (optional, no default timeout)" }),
+	),
 });
 
 export type BashToolInput = Static<typeof bashSchema>;
@@ -27,6 +29,16 @@ export type BashToolInput = Static<typeof bashSchema>;
 export interface BashToolDetails {
 	truncation?: TruncationResult;
 	fullOutputPath?: string;
+}
+
+function parseTimeoutSeconds(timeout: number | undefined): number | undefined {
+	if (timeout === undefined) {
+		return undefined;
+	}
+	if (!Number.isFinite(timeout) || timeout <= 0) {
+		throw new Error("Parameter 'timeout' must be a positive number of seconds.");
+	}
+	return timeout;
 }
 
 /**
@@ -217,6 +229,7 @@ export function createBashTool(cwd: string, options?: BashToolOptions): AgentToo
 			signal?: AbortSignal,
 			onUpdate?,
 		) => {
+			const normalizedTimeout = parseTimeoutSeconds(timeout);
 			// Apply command prefix if configured (e.g., "shopt -s expand_aliases" for alias support)
 			const resolvedCommand = commandPrefix ? `${commandPrefix}\n${command}` : command;
 			const spawnContext = resolveSpawnContext(resolvedCommand, cwd, spawnHook);
@@ -279,7 +292,7 @@ export function createBashTool(cwd: string, options?: BashToolOptions): AgentToo
 				ops.exec(spawnContext.command, spawnContext.cwd, {
 					onData: handleData,
 					signal,
-					timeout,
+					timeout: normalizedTimeout,
 					env: spawnContext.env,
 				})
 					.then(({ exitCode, failureReason }) => {

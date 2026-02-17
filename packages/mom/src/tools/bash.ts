@@ -18,12 +18,24 @@ function getTempFilePath(): string {
 const bashSchema = Type.Object({
 	label: Type.String({ description: "Brief description of what this command does (shown to user)" }),
 	command: Type.String({ description: "Bash command to execute" }),
-	timeout: Type.Optional(Type.Number({ description: "Timeout in seconds (optional, no default timeout)" })),
+	timeout: Type.Optional(
+		Type.Number({ exclusiveMinimum: 0, description: "Timeout in seconds (optional, no default timeout)" }),
+	),
 });
 
 interface BashToolDetails {
 	truncation?: TruncationResult;
 	fullOutputPath?: string;
+}
+
+function parseTimeoutSeconds(timeout: number | undefined): number | undefined {
+	if (timeout === undefined) {
+		return undefined;
+	}
+	if (!Number.isFinite(timeout) || timeout <= 0) {
+		throw new Error("Parameter 'timeout' must be a positive number of seconds.");
+	}
+	return timeout;
 }
 
 export function createBashTool(executor: Executor): AgentTool<typeof bashSchema> {
@@ -37,11 +49,12 @@ export function createBashTool(executor: Executor): AgentTool<typeof bashSchema>
 			{ command, timeout }: { label: string; command: string; timeout?: number },
 			signal?: AbortSignal,
 		) => {
+			const normalizedTimeout = parseTimeoutSeconds(timeout);
 			// Track output for potential temp file writing
 			let tempFilePath: string | undefined;
 			let tempFileStream: ReturnType<typeof createWriteStream> | undefined;
 
-			const result = await executor.exec(command, { timeout, signal });
+			const result = await executor.exec(command, { timeout: normalizedTimeout, signal });
 			let output = "";
 			if (result.stdout) output += result.stdout;
 			if (result.stderr) {
