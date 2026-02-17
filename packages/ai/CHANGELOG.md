@@ -9,6 +9,7 @@
 - Anthropic Messages stream usage parsing now accepts numeric-string token counters for input/output/cache fields, preserving accurate usage totals when proxy layers serialize token counts as strings.
 - Google and Google Vertex stream usage parsing now accepts numeric-string usage metadata values and computes fallback totals when `totalTokenCount` is omitted, preserving non-zero accounting for compatible proxy layers.
 - Google Gemini CLI / Antigravity stream usage parsing now accepts numeric-string usage metadata values and computes fallback totals when `totalTokenCount` is omitted, preserving non-zero accounting for Cloud Code Assist responses that serialize token counts as strings.
+- Google Gemini CLI / Antigravity usage metadata parsing now ignores negative values and normalizes fractional counts to integer tokens, preventing malformed usage payloads from producing negative/fractional accounting.
 - Bedrock stream usage parsing now accepts numeric-string usage metadata values and computes fallback totals when `totalTokens` is omitted, preserving stable usage accounting for compatible intermediary responses.
 - Updated Codex WebSocket header conversion to iterate with `Headers.forEach()`, avoiding type incompatibilities in consumer check flows that use non-DOM `Headers` typings.
 - Consolidated provider retry sleep into a shared abortable helper that removes abort listeners on resolve/reject, preventing listener leaks across retry backoff paths.
@@ -27,6 +28,7 @@
 - Gemini CLI retry-delay parsing now ignores malformed `x-ratelimit-reset` header values and malformed decimal retry fields instead of partially coercing them, correctly falling back to other delay hints.
 - Google Gemini CLI SSE parsing now flushes terminal buffered `data:` lines when streams end without trailing newline delimiters.
 - OpenAI Codex SSE parsing now flushes terminal buffered event chunks when streams end without trailing `\n\n` separators.
+- Model-catalog generation now parses external pricing metadata with strict numeric conversion, ignoring malformed numeric strings instead of partially coercing prefixed values.
 - Shared `EventStream.result()` now rejects when streams end without a completion event/result, preventing silent hangs from incomplete stream lifecycles.
 - AI CLI readline prompts now resolve with safe fallbacks when interfaces close early (including already-closed prompts), preventing hangs during interrupted interactive provider selection/login flows.
 - Gemini CLI, Antigravity, and OpenAI Codex OAuth callback waiters now use event-driven settlement (instead of polling loops), improving cancellation/close responsiveness and reducing timer churn during local callback waits.

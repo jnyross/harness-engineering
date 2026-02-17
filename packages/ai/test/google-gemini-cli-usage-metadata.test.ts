@@ -62,4 +62,23 @@ describe("extractCloudCodeAssistUsageMetadata", () => {
 		expect(extractCloudCodeAssistUsageMetadata(null)).toBeUndefined();
 		expect(extractCloudCodeAssistUsageMetadata("invalid")).toBeUndefined();
 	});
+
+	it("ignores malformed and negative usage values", () => {
+		expect(
+			extractCloudCodeAssistUsageMetadata({
+				promptTokenCount: "-5",
+				candidatesTokenCount: "3.8",
+				thoughtsTokenCount: "oops",
+				cachedContentTokenCount: -2,
+				totalTokenCount: "-1",
+			}),
+		).toEqual({
+			input: 0,
+			output: 3,
+			cacheRead: 0,
+			cacheWrite: 0,
+			totalTokens: 3,
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+		});
+	});
 });

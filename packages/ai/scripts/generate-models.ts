@@ -56,6 +56,18 @@ const COPILOT_STATIC_HEADERS = {
 const AI_GATEWAY_MODELS_URL = "https://ai-gateway.vercel.sh/v1";
 const AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh";
 
+function parseNonNegativeNumericValue(value: string | number | undefined): number {
+	if (typeof value === "number") {
+		return Number.isFinite(value) && value >= 0 ? value : 0;
+	}
+	const rawValue = value?.trim();
+	if (!rawValue) {
+		return 0;
+	}
+	const parsed = Number(rawValue);
+	return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+}
+
 async function fetchOpenRouterModels(): Promise<Model<Api>[]> {
 	try {
 		console.log("Fetching models from OpenRouter API...");
@@ -81,10 +93,10 @@ async function fetchOpenRouterModels(): Promise<Model<Api>[]> {
 			}
 
 			// Convert pricing from $/token to $/million tokens
-			const inputCost = parseFloat(model.pricing?.prompt || "0") * 1_000_000;
-			const outputCost = parseFloat(model.pricing?.completion || "0") * 1_000_000;
-			const cacheReadCost = parseFloat(model.pricing?.input_cache_read || "0") * 1_000_000;
-			const cacheWriteCost = parseFloat(model.pricing?.input_cache_write || "0") * 1_000_000;
+			const inputCost = parseNonNegativeNumericValue(model.pricing?.prompt) * 1_000_000;
+			const outputCost = parseNonNegativeNumericValue(model.pricing?.completion) * 1_000_000;
+			const cacheReadCost = parseNonNegativeNumericValue(model.pricing?.input_cache_read) * 1_000_000;
+			const cacheWriteCost = parseNonNegativeNumericValue(model.pricing?.input_cache_write) * 1_000_000;
 
 			const normalizedModel: Model<Api> = {
 				id: modelKey,
@@ -121,14 +133,6 @@ async function fetchAiGatewayModels(): Promise<Model<Api>[]> {
 		const data = await response.json();
 		const models: Model<Api>[] = [];
 
-		const toNumber = (value: string | number | undefined): number => {
-			if (typeof value === "number") {
-				return Number.isFinite(value) ? value : 0;
-			}
-			const parsed = parseFloat(value ?? "0");
-			return Number.isFinite(parsed) ? parsed : 0;
-		};
-
 		const items = Array.isArray(data.data) ? (data.data as AiGatewayModel[]) : [];
 		for (const model of items) {
 			const tags = Array.isArray(model.tags) ? model.tags : [];
@@ -140,10 +144,10 @@ async function fetchAiGatewayModels(): Promise<Model<Api>[]> {
 				input.push("image");
 			}
 
-			const inputCost = toNumber(model.pricing?.input) * 1_000_000;
-			const outputCost = toNumber(model.pricing?.output) * 1_000_000;
-			const cacheReadCost = toNumber(model.pricing?.input_cache_read) * 1_000_000;
-			const cacheWriteCost = toNumber(model.pricing?.input_cache_write) * 1_000_000;
+			const inputCost = parseNonNegativeNumericValue(model.pricing?.input) * 1_000_000;
+			const outputCost = parseNonNegativeNumericValue(model.pricing?.output) * 1_000_000;
+			const cacheReadCost = parseNonNegativeNumericValue(model.pricing?.input_cache_read) * 1_000_000;
+			const cacheWriteCost = parseNonNegativeNumericValue(model.pricing?.input_cache_write) * 1_000_000;
 
 			models.push({
 				id: model.id,
