@@ -531,10 +531,35 @@ export function isKeyRepeat(data: string): boolean {
 
 function parseEventType(eventTypeStr: string | undefined): KeyEventType {
 	if (!eventTypeStr) return "press";
-	const eventType = parseInt(eventTypeStr, 10);
+	const eventType = parseKittySafeInteger(eventTypeStr);
+	if (eventType === undefined) return "press";
 	if (eventType === 2) return "repeat";
 	if (eventType === 3) return "release";
 	return "press";
+}
+
+function parseKittySafeInteger(value: string | undefined): number | undefined {
+	if (!value || !/^\d+$/.test(value)) {
+		return undefined;
+	}
+	const parsed = Number.parseInt(value, 10);
+	return Number.isSafeInteger(parsed) ? parsed : undefined;
+}
+
+function parseKittyUnicodeCodepoint(value: string | undefined): number | undefined {
+	const parsed = parseKittySafeInteger(value);
+	if (parsed === undefined || parsed < 1 || parsed > 0x10ffff) {
+		return undefined;
+	}
+	return parsed;
+}
+
+function parseKittyModifierValue(value: string | undefined): number | undefined {
+	const parsed = parseKittySafeInteger(value);
+	if (parsed === undefined || parsed < 1) {
+		return undefined;
+	}
+	return parsed;
 }
 
 function parseKittySequence(data: string): ParsedKittySequence | null {
@@ -550,10 +575,22 @@ function parseKittySequence(data: string): ParsedKittySequence | null {
 	// With flag 4, alternate keys are appended after codepoint with colons
 	const csiUMatch = data.match(/^\x1b\[(\d+)(?::(\d*))?(?::(\d+))?(?:;(\d+))?(?::(\d+))?u$/);
 	if (csiUMatch) {
-		const codepoint = parseInt(csiUMatch[1]!, 10);
-		const shiftedKey = csiUMatch[2] && csiUMatch[2].length > 0 ? parseInt(csiUMatch[2], 10) : undefined;
-		const baseLayoutKey = csiUMatch[3] ? parseInt(csiUMatch[3], 10) : undefined;
-		const modValue = csiUMatch[4] ? parseInt(csiUMatch[4], 10) : 1;
+		const codepoint = parseKittyUnicodeCodepoint(csiUMatch[1]);
+		if (codepoint === undefined) {
+			return null;
+		}
+		const shiftedKey = csiUMatch[2] && csiUMatch[2].length > 0 ? parseKittyUnicodeCodepoint(csiUMatch[2]) : undefined;
+		if (csiUMatch[2] && csiUMatch[2].length > 0 && shiftedKey === undefined) {
+			return null;
+		}
+		const baseLayoutKey = csiUMatch[3] ? parseKittyUnicodeCodepoint(csiUMatch[3]) : undefined;
+		if (csiUMatch[3] && baseLayoutKey === undefined) {
+			return null;
+		}
+		const modValue = csiUMatch[4] ? parseKittyModifierValue(csiUMatch[4]) : 1;
+		if (modValue === undefined) {
+			return null;
+		}
 		const eventType = parseEventType(csiUMatch[5]);
 		_lastEventType = eventType;
 		return { codepoint, shiftedKey, baseLayoutKey, modifier: modValue - 1, eventType };
@@ -562,7 +599,10 @@ function parseKittySequence(data: string): ParsedKittySequence | null {
 	// Arrow keys with modifier: \x1b[1;<mod>A/B/C/D or \x1b[1;<mod>:<event>A/B/C/D
 	const arrowMatch = data.match(/^\x1b\[1;(\d+)(?::(\d+))?([ABCD])$/);
 	if (arrowMatch) {
-		const modValue = parseInt(arrowMatch[1]!, 10);
+		const modValue = parseKittyModifierValue(arrowMatch[1]);
+		if (modValue === undefined) {
+			return null;
+		}
 		const eventType = parseEventType(arrowMatch[2]);
 		const arrowCodes: Record<string, number> = { A: -1, B: -2, C: -3, D: -4 };
 		_lastEventType = eventType;
@@ -572,8 +612,14 @@ function parseKittySequence(data: string): ParsedKittySequence | null {
 	// Functional keys: \x1b[<num>~ or \x1b[<num>;<mod>~ or \x1b[<num>;<mod>:<event>~
 	const funcMatch = data.match(/^\x1b\[(\d+)(?:;(\d+))?(?::(\d+))?~$/);
 	if (funcMatch) {
-		const keyNum = parseInt(funcMatch[1]!, 10);
-		const modValue = funcMatch[2] ? parseInt(funcMatch[2], 10) : 1;
+		const keyNum = parseKittySafeInteger(funcMatch[1]);
+		if (keyNum === undefined) {
+			return null;
+		}
+		const modValue = funcMatch[2] ? parseKittyModifierValue(funcMatch[2]) : 1;
+		if (modValue === undefined) {
+			return null;
+		}
 		const eventType = parseEventType(funcMatch[3]);
 		const funcCodes: Record<number, number> = {
 			2: FUNCTIONAL_CODEPOINTS.insert,
@@ -593,7 +639,10 @@ function parseKittySequence(data: string): ParsedKittySequence | null {
 	// Home/End with modifier: \x1b[1;<mod>H/F or \x1b[1;<mod>:<event>H/F
 	const homeEndMatch = data.match(/^\x1b\[1;(\d+)(?::(\d+))?([HF])$/);
 	if (homeEndMatch) {
-		const modValue = parseInt(homeEndMatch[1]!, 10);
+		const modValue = parseKittyModifierValue(homeEndMatch[1]);
+		if (modValue === undefined) {
+			return null;
+		}
 		const eventType = parseEventType(homeEndMatch[2]);
 		const codepoint = homeEndMatch[3] === "H" ? FUNCTIONAL_CODEPOINTS.home : FUNCTIONAL_CODEPOINTS.end;
 		_lastEventType = eventType;
@@ -645,8 +694,11 @@ function matchesKittySequence(data: string, expectedCodepoint: number, expectedM
 function matchesModifyOtherKeys(data: string, expectedKeycode: number, expectedModifier: number): boolean {
 	const match = data.match(/^\x1b\[27;(\d+);(\d+)~$/);
 	if (!match) return false;
-	const modValue = parseInt(match[1]!, 10);
-	const keycode = parseInt(match[2]!, 10);
+	const modValue = parseKittyModifierValue(match[1]);
+	const keycode = parseKittyUnicodeCodepoint(match[2]);
+	if (modValue === undefined || keycode === undefined) {
+		return false;
+	}
 	// Convert from 1-indexed xterm format to our 0-indexed format
 	const actualMod = modValue - 1;
 	return keycode === expectedKeycode && actualMod === expectedModifier;

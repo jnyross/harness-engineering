@@ -116,6 +116,14 @@ describe("matchesKey", () => {
 			assert.strictEqual(matchesKey(cyrillicCtrlC, "ctrl+shift+c"), false);
 			setKittyProtocolActive(false);
 		});
+
+		it("should reject Kitty CSI-u sequences with unsafe modifier integers", () => {
+			setKittyProtocolActive(true);
+			const unsafeModifier = "\x1b[99;9007199254740993u";
+			assert.strictEqual(matchesKey(unsafeModifier, "ctrl+c"), false);
+			assert.strictEqual(matchesKey(unsafeModifier, "ctrl+shift+alt+c"), false);
+			setKittyProtocolActive(false);
+		});
 	});
 
 	describe("Legacy key matching", () => {
@@ -292,6 +300,12 @@ describe("parseKey", () => {
 			setKittyProtocolActive(true);
 			const latinCtrlC = "\x1b[99;5u";
 			assert.strictEqual(parseKey(latinCtrlC), "ctrl+c");
+			setKittyProtocolActive(false);
+		});
+
+		it("should return undefined for Kitty CSI-u sequences with unsafe modifier integers", () => {
+			setKittyProtocolActive(true);
+			assert.strictEqual(parseKey("\x1b[99;9007199254740993u"), undefined);
 			setKittyProtocolActive(false);
 		});
 	});
