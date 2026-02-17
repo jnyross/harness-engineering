@@ -2999,6 +2999,25 @@ to:
 
 **Result:** web-ui permission dialogs now resolve promise outcomes deterministically once across success, deny, and close transitions.
 
+---
+
+### 169) CLI piped-stdin helper still depended on `end`/`error` only and could hang on close-only stream termination
+
+**Finding:** After initial stdin helper extraction, settlement still relied on `end`/`error` events. Some stream shutdown paths can emit `close` without `end`, leaving the promise pending.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/cli/read-piped-stdin.ts`
+- `packages/coding-agent/test/read-piped-stdin.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- settle on `close` events using buffered stdin content,
+- add regression coverage for close-before-end behavior.
+
+**Result:** Piped-stdin ingestion now settles deterministically across `end`, `error`, and `close` termination paths.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -3014,7 +3033,7 @@ to:
 - coding-agent login dialog lifecycle regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/login-dialog.test.ts test/login-dialog-url-open.test.ts` (includes single-settlement cancel behavior and prompt-replacement rejection coverage)
 - coding-agent piped-stdin helper regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/read-piped-stdin.test.ts` (includes TTY short-circuit, trimmed piped content, and stdin error rejection coverage)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/read-piped-stdin.test.ts` (includes TTY short-circuit, trimmed piped content, stdin error rejection, and close-before-end settlement coverage)
 - coding-agent prompt-confirm helper regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-confirm.test.ts test/read-piped-stdin.test.ts` (includes yes/no parsing and early stdin-close settlement)
 - coding-agent antigravity image SSE parsing regression tests pass:

@@ -15,6 +15,7 @@ export async function readPipedStdin(input: NodeJS.ReadStream = process.stdin): 
 			input.removeListener("data", onData);
 			input.removeListener("end", onEnd);
 			input.removeListener("error", onError);
+			input.removeListener("close", onClose);
 		};
 
 		const resolveOnce = (value: string | undefined) => {
@@ -47,10 +48,15 @@ export async function readPipedStdin(input: NodeJS.ReadStream = process.stdin): 
 			rejectOnce(error);
 		};
 
+		const onClose = () => {
+			resolveOnce(data.trim() || undefined);
+		};
+
 		input.setEncoding("utf8");
 		input.on("data", onData);
 		input.on("end", onEnd);
 		input.on("error", onError);
+		input.on("close", onClose);
 		input.resume();
 	});
 }

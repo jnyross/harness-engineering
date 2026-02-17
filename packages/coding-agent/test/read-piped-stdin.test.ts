@@ -30,4 +30,12 @@ describe("readPipedStdin", () => {
 		(input as unknown as PassThrough).emit("error", new Error("stdin failed"));
 		await expect(resultPromise).rejects.toThrow("stdin failed");
 	});
+
+	it("resolves with collected data when stream closes before end", async () => {
+		const input = createInputStream(false);
+		const resultPromise = readPipedStdin(input);
+		(input as unknown as PassThrough).write("  partial ");
+		(input as unknown as PassThrough).emit("close");
+		await expect(resultPromise).resolves.toBe("partial");
+	});
 });
