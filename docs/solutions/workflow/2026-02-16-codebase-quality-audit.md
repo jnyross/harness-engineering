@@ -1252,6 +1252,21 @@ to parse `/export` input using shared strict argument parsing and surface syntax
 
 **Result:** `/export "path with spaces.html"` style usage now resolves correctly, and malformed quote syntax is handled with a clear error instead of silent misparsing.
 
+---
+
+### 73) interactive `/share` used a fixed temp export filename
+
+**Finding:** Interactive `/share` exported session HTML to a fixed temp filename (`session.html`), risking path collisions between concurrent invocations/sessions and stale file interference.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/interactive-mode.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to export share payloads to a unique temp filename per invocation (`pi-session-share-<uuid>.html`).
+
+**Result:** `/share` temp export flow now avoids fixed-path collisions and stale temp-file reuse.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1380,6 +1395,8 @@ to parse `/export` input using shared strict argument parsing and surface syntax
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/parse-command-args.test.ts test/interactive-mode-status.test.ts` (includes `parseCommandInvocation` malformed-input guard behavior)
 - coding-agent quoted export-path parser coverage:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/parse-command-args.test.ts test/interactive-mode-status.test.ts` (includes `/export "path with spaces"` argument parsing case)
+- coding-agent interactive share-flow regression check:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/interactive-mode-status.test.ts test/parse-command-args.test.ts`
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
