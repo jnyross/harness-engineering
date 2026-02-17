@@ -1299,6 +1299,22 @@ to preserve non-escape backslashes while still supporting escaped whitespace/quo
 
 **Result:** Pods SSH command parsing now supports Windows-style `ssh.exe` command paths using backslashes as well as forward slashes.
 
+---
+
+### 76) agent gate command parser stripped backslashes from Windows binary paths
+
+**Finding:** Agent mechanical-gate command parsing treated all backslashes as generic escapes, which could corrupt Windows-style binary paths in `PI_TEST_COMMAND` / `PI_VALIDATE_COMMAND`.
+
+**Action:** Updated:
+
+- `packages/agent/src/gates.ts`
+- `packages/agent/test/gates.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to preserve non-escape backslashes while still supporting escaped whitespace/quote sequences, and added regression coverage for Windows-style gate command binaries.
+
+**Result:** Mechanical gate command overrides now parse Windows-style binary paths reliably without losing backslashes.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1433,6 +1449,8 @@ to preserve non-escape backslashes while still supporting escaped whitespace/quo
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/parse-command-args.test.ts test/prompt-templates.test.ts` (includes `C:\Users\...` argument preservation cases)
 - pods SSH Windows-backslash parser coverage:
   - `npm --workspace "@mariozechner/pi" test -- test/ssh-parse.test.ts` (includes `C:\Windows\...\ssh.exe` parse and host extraction cases)
+- agent gate Windows-backslash parser coverage:
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (includes `C:\Tools\node.exe ...` command parse case)
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
