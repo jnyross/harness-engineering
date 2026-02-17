@@ -5840,6 +5840,27 @@ to:
 
 **Result:** malformed non-boolean toggle values from settings files now safely fall back to defaults instead of changing runtime behavior through implicit truthy/falsy coercion.
 
+---
+
+### 313) coding-agent enum settings reads accepted malformed values from settings files
+
+**Finding:** `packages/coding-agent/src/core/settings-manager.ts` enum-oriented getters (`defaultThinkingLevel`, steering/follow-up mode, transport, double-escape action) returned parsed values directly; malformed settings-file strings could propagate unsupported enum values into runtime behavior.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/settings-manager.ts`
+- `packages/coding-agent/test/settings-manager.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize enum settings reads through explicit allowed-value checks,
+- fall back to established defaults/`undefined` for malformed enum values,
+- preserve valid enum settings values unchanged,
+- add regression coverage for malformed fallback and valid-value preservation paths.
+
+**Result:** malformed enum values from settings files no longer propagate into runtime mode/transport/thinking/action selection paths.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5988,7 +6009,7 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/gh-auth-status.test.ts` (includes missing gh spawn failure, signal interruption, non-zero auth status, and success cases)
 - coding-agent countdown timer regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/countdown-timer.test.ts` (includes normal expiry, manual dispose stop, onTick-throw safety coverage, and timeout normalization coverage including positive-infinite clamping)
-- coding-agent settings manager normalization regression tests pass (numeric + boolean settings):
+- coding-agent settings manager normalization regression tests pass (numeric + boolean + enum settings):
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/settings-manager.test.ts`
 - coding-agent extension dialog callback regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extension-dialog-callbacks.test.ts` (includes throwing selector/input/editor callback safety and post-dispose callback suppression across selector/input/editor dialogs)
