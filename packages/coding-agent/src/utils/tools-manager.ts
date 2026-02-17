@@ -64,8 +64,10 @@ const TOOLS: Record<string, ToolConfig> = {
 function commandExists(cmd: string): boolean {
 	try {
 		const result = spawnSync(cmd, ["--version"], { stdio: "pipe" });
-		// Check for ENOENT error (command not found)
-		return result.error === undefined || result.error === null;
+		if (result.error || result.signal || result.status === null) {
+			return false;
+		}
+		return result.status === 0;
 	} catch {
 		return false;
 	}
@@ -163,8 +165,16 @@ async function downloadTool(tool: "fd" | "rg"): Promise<string> {
 				? spawnSync("tar", ["xf", archivePath, "-C", extractDir], { stdio: "pipe" })
 				: null;
 
-		if (!extractResult || extractResult.error || extractResult.status !== 0) {
-			const errMsg = extractResult?.error?.message ?? extractResult?.stderr?.toString().trim() ?? "unknown error";
+		if (!extractResult) {
+			throw new Error(`Failed to extract ${assetName}: unsupported archive format`);
+		}
+
+		if (extractResult.error || extractResult.signal || extractResult.status !== 0) {
+			const errMsg =
+				extractResult.error?.message ??
+				(extractResult.signal
+					? `terminated by signal ${extractResult.signal}`
+					: extractResult.stderr?.toString().trim() || `exited with code ${extractResult.status}`);
 			throw new Error(`Failed to extract ${assetName}: ${errMsg}`);
 		}
 

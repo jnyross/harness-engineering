@@ -4079,6 +4079,24 @@ to:
 
 **Result:** autocomplete fd path handling now has explicit signal/error semantics and dedicated regression coverage.
 
+---
+
+### 227) coding-agent tool bootstrap spawnSync paths had ambiguous signal diagnostics
+
+**Finding:** tools bootstrap command checks/extraction paths used `spawnSync` but did not consistently surface signal/null-status outcomes, causing ambiguous diagnostics in command discovery or tar extraction failures.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/utils/tools-manager.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- treat signal/null-status command checks as command-unavailable,
+- include signal/exit-code-aware extraction diagnostics for tar failures.
+
+**Result:** managed tool bootstrap now reports clearer subprocess failure causes and avoids false-positive command availability under abnormal process exits.
+
 ## Validation Evidence
 
 - Root quality gate passes:
