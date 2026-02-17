@@ -2025,6 +2025,28 @@ to:
 
 **Result:** Manual OAuth input handling now accepts both query-string and hash-fragment redirect URL variants across Anthropic and Codex login flows.
 
+---
+
+### 119) google OAuth manual parsing still missed hash-fragment redirect URLs
+
+**Finding:** After hardening Anthropic/Codex manual parsing, Google Gemini CLI and Antigravity OAuth flows still only reliably parsed query-string callbacks and could miss manual redirect input where `code`/`state` arrive in hash fragments.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/google-gemini-cli.ts`
+- `packages/ai/src/utils/oauth/google-antigravity.ts`
+- `packages/ai/test/google-gemini-cli-oauth-abort.test.ts`
+- `packages/ai/test/google-antigravity-oauth-abort.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- parse manual input from full redirect URLs with query-string or hash-fragment `code`/`state`,
+- preserve fallback handling for `code#state`, query-string snippets, and bare code input,
+- add regression tests proving mismatched hash-fragment state is rejected before network calls.
+
+**Result:** Google OAuth manual-input parsing now matches the hardened behavior across the other OAuth providers and supports hash-fragment callback variants consistently.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2043,6 +2065,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/abortable-sleep.test.ts test/github-copilot-anthropic.test.ts`
 - ai oauth cancellation regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts test/openai-codex-oauth-abort.test.ts test/google-antigravity-oauth-abort.test.ts test/google-gemini-cli-oauth-abort.test.ts`
+- ai google oauth hash-fragment parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-oauth-abort.test.ts test/google-antigravity-oauth-abort.test.ts`
 - ai anthropic oauth parsing/state-validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts`
 - ai openai-codex oauth startup/manual-flow/cancellation/base64url-decoding/hash-fragment parsing regression tests pass:
