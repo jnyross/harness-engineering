@@ -6,6 +6,7 @@ import { afterEach, describe, it } from "node:test";
 import {
 	buildDockerExecArgs,
 	createExecutor,
+	getSandboxCommandExitError,
 	normalizeSandboxExitCode,
 	parseSandboxArg,
 	validateSandbox,
@@ -68,6 +69,73 @@ describe("normalizeSandboxExitCode", () => {
 
 	it("maps unknown null/null exits to non-zero", () => {
 		assert.equal(normalizeSandboxExitCode(null, null), 1);
+	});
+});
+
+describe("getSandboxCommandExitError", () => {
+	it("returns undefined for successful exits", () => {
+		assert.equal(
+			getSandboxCommandExitError({
+				command: "docker",
+				args: ["--version"],
+				code: 0,
+				signal: null,
+				stderr: "",
+			}),
+			undefined,
+		);
+	});
+
+	it("reports signal exits", () => {
+		assert.equal(
+			getSandboxCommandExitError({
+				command: "docker",
+				args: ["inspect", "mom-sandbox"],
+				code: null,
+				signal: "SIGTERM",
+				stderr: "",
+			}),
+			"Command docker inspect mom-sandbox failed (terminated by signal SIGTERM)",
+		);
+	});
+
+	it("reports unknown null/null exits", () => {
+		assert.equal(
+			getSandboxCommandExitError({
+				command: "docker",
+				args: ["inspect", "mom-sandbox"],
+				code: null,
+				signal: null,
+				stderr: "",
+			}),
+			"Command docker inspect mom-sandbox failed (unknown exit status)",
+		);
+	});
+
+	it("reports non-zero exits", () => {
+		assert.equal(
+			getSandboxCommandExitError({
+				command: "docker",
+				args: ["inspect", "mom-sandbox"],
+				code: 1,
+				signal: null,
+				stderr: "",
+			}),
+			"Command docker inspect mom-sandbox failed (exit code 1)",
+		);
+	});
+
+	it("prefers stderr output details", () => {
+		assert.equal(
+			getSandboxCommandExitError({
+				command: "docker",
+				args: ["inspect", "missing"],
+				code: 1,
+				signal: null,
+				stderr: "Error: No such object",
+			}),
+			"Error: No such object",
+		);
 	});
 });
 

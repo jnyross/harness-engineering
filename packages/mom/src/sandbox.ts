@@ -11,6 +11,27 @@ export function normalizeSandboxExitCode(code: number | null, signal: NodeJS.Sig
 	return code ?? 1;
 }
 
+export function getSandboxCommandExitError(options: {
+	command: string;
+	args: string[];
+	code: number | null;
+	signal: NodeJS.Signals | null;
+	stderr: string;
+}): string | undefined {
+	if (options.code === 0 && !options.signal) {
+		return undefined;
+	}
+
+	const commandText = `${options.command} ${options.args.join(" ")}`.trim();
+	if (options.signal) {
+		return options.stderr || `Command ${commandText} failed (terminated by signal ${options.signal})`;
+	}
+	if (options.code === null) {
+		return options.stderr || `Command ${commandText} failed (unknown exit status)`;
+	}
+	return options.stderr || `Command ${commandText} failed (exit code ${options.code})`;
+}
+
 export function parseSandboxArg(value: string): SandboxConfig {
 	if (value === "host") {
 		return { type: "host" };
@@ -96,12 +117,18 @@ function execSimple(cmd: string, args: string[]): Promise<string> {
 			rejectOnce(error instanceof Error ? error : new Error(String(error)));
 		});
 		child.on("close", (code, signal) => {
-			if (code === 0) {
+			const exitError = getSandboxCommandExitError({
+				command: cmd,
+				args,
+				code,
+				signal,
+				stderr,
+			});
+			if (!exitError) {
 				resolveOnce(stdout);
 				return;
 			}
-			const exitDescription = signal ? `terminated by signal ${signal}` : `exit code ${code ?? 1}`;
-			rejectOnce(new Error(stderr || `Command ${cmd} ${args.join(" ")} failed (${exitDescription})`));
+			rejectOnce(new Error(exitError));
 		});
 	});
 }
