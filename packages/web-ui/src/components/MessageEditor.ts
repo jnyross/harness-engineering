@@ -49,6 +49,7 @@ export class MessageEditor extends LitElement {
 	@state() isDragging = false;
 	private fileInputRef = createRef<HTMLInputElement>();
 	private pendingModelSelectFrameId: number | undefined;
+	private attachmentProcessingSeq = 0;
 
 	protected override createRenderRoot(): HTMLElement | DocumentFragment {
 		return this;
@@ -56,10 +57,21 @@ export class MessageEditor extends LitElement {
 
 	override disconnectedCallback(): void {
 		super.disconnectedCallback();
+		this.attachmentProcessingSeq++;
+		this.processingFiles = false;
 		if (this.pendingModelSelectFrameId !== undefined) {
 			cancelAnimationFrame(this.pendingModelSelectFrameId);
 			this.pendingModelSelectFrameId = undefined;
 		}
+	}
+
+	private beginAttachmentProcessing(): number {
+		this.processingFiles = true;
+		return ++this.attachmentProcessingSeq;
+	}
+
+	private canApplyAttachmentProcessing(seq: number): boolean {
+		return this.isConnected && seq === this.attachmentProcessingSeq;
 	}
 
 	private handleTextareaInput = (e: Event) => {
@@ -106,27 +118,41 @@ export class MessageEditor extends LitElement {
 				return;
 			}
 
-			this.processingFiles = true;
+			const processingSeq = this.beginAttachmentProcessing();
 			const newAttachments: Attachment[] = [];
 
-			for (const file of imageFiles) {
-				try {
-					if (file.size > this.maxFileSize) {
-						alert(`Image exceeds maximum size of ${Math.round(this.maxFileSize / 1024 / 1024)}MB`);
-						continue;
-					}
+			try {
+				for (const file of imageFiles) {
+					try {
+						if (file.size > this.maxFileSize) {
+							alert(`Image exceeds maximum size of ${Math.round(this.maxFileSize / 1024 / 1024)}MB`);
+							continue;
+						}
 
-					const attachment = await loadAttachment(file);
-					newAttachments.push(attachment);
-				} catch (error) {
-					console.error("Error processing pasted image:", error);
-					alert(`Failed to process pasted image: ${String(error)}`);
+						const attachment = await loadAttachment(file);
+						if (!this.canApplyAttachmentProcessing(processingSeq)) {
+							return;
+						}
+						newAttachments.push(attachment);
+					} catch (error) {
+						if (!this.canApplyAttachmentProcessing(processingSeq)) {
+							return;
+						}
+						console.error("Error processing pasted image:", error);
+						alert(`Failed to process pasted image: ${String(error)}`);
+					}
+				}
+
+				if (!this.canApplyAttachmentProcessing(processingSeq)) {
+					return;
+				}
+				this.attachments = [...this.attachments, ...newAttachments];
+				this.onFilesChange?.(this.attachments);
+			} finally {
+				if (this.canApplyAttachmentProcessing(processingSeq)) {
+					this.processingFiles = false;
 				}
 			}
-
-			this.attachments = [...this.attachments, ...newAttachments];
-			this.onFilesChange?.(this.attachments);
-			this.processingFiles = false;
 		}
 	};
 
@@ -149,28 +175,42 @@ export class MessageEditor extends LitElement {
 			return;
 		}
 
-		this.processingFiles = true;
+		const processingSeq = this.beginAttachmentProcessing();
 		const newAttachments: Attachment[] = [];
 
-		for (const file of files) {
-			try {
-				if (file.size > this.maxFileSize) {
-					alert(`${file.name} exceeds maximum size of ${Math.round(this.maxFileSize / 1024 / 1024)}MB`);
-					continue;
-				}
+		try {
+			for (const file of files) {
+				try {
+					if (file.size > this.maxFileSize) {
+						alert(`${file.name} exceeds maximum size of ${Math.round(this.maxFileSize / 1024 / 1024)}MB`);
+						continue;
+					}
 
-				const attachment = await loadAttachment(file);
-				newAttachments.push(attachment);
-			} catch (error) {
-				console.error(`Error processing ${file.name}:`, error);
-				alert(`Failed to process ${file.name}: ${String(error)}`);
+					const attachment = await loadAttachment(file);
+					if (!this.canApplyAttachmentProcessing(processingSeq)) {
+						return;
+					}
+					newAttachments.push(attachment);
+				} catch (error) {
+					if (!this.canApplyAttachmentProcessing(processingSeq)) {
+						return;
+					}
+					console.error(`Error processing ${file.name}:`, error);
+					alert(`Failed to process ${file.name}: ${String(error)}`);
+				}
+			}
+
+			if (!this.canApplyAttachmentProcessing(processingSeq)) {
+				return;
+			}
+			this.attachments = [...this.attachments, ...newAttachments];
+			this.onFilesChange?.(this.attachments);
+			input.value = ""; // Reset input
+		} finally {
+			if (this.canApplyAttachmentProcessing(processingSeq)) {
+				this.processingFiles = false;
 			}
 		}
-
-		this.attachments = [...this.attachments, ...newAttachments];
-		this.onFilesChange?.(this.attachments);
-		this.processingFiles = false;
-		input.value = ""; // Reset input
 	}
 
 	private removeFile(fileId: string) {
@@ -211,27 +251,41 @@ export class MessageEditor extends LitElement {
 			return;
 		}
 
-		this.processingFiles = true;
+		const processingSeq = this.beginAttachmentProcessing();
 		const newAttachments: Attachment[] = [];
 
-		for (const file of files) {
-			try {
-				if (file.size > this.maxFileSize) {
-					alert(`${file.name} exceeds maximum size of ${Math.round(this.maxFileSize / 1024 / 1024)}MB`);
-					continue;
-				}
+		try {
+			for (const file of files) {
+				try {
+					if (file.size > this.maxFileSize) {
+						alert(`${file.name} exceeds maximum size of ${Math.round(this.maxFileSize / 1024 / 1024)}MB`);
+						continue;
+					}
 
-				const attachment = await loadAttachment(file);
-				newAttachments.push(attachment);
-			} catch (error) {
-				console.error(`Error processing ${file.name}:`, error);
-				alert(`Failed to process ${file.name}: ${String(error)}`);
+					const attachment = await loadAttachment(file);
+					if (!this.canApplyAttachmentProcessing(processingSeq)) {
+						return;
+					}
+					newAttachments.push(attachment);
+				} catch (error) {
+					if (!this.canApplyAttachmentProcessing(processingSeq)) {
+						return;
+					}
+					console.error(`Error processing ${file.name}:`, error);
+					alert(`Failed to process ${file.name}: ${String(error)}`);
+				}
+			}
+
+			if (!this.canApplyAttachmentProcessing(processingSeq)) {
+				return;
+			}
+			this.attachments = [...this.attachments, ...newAttachments];
+			this.onFilesChange?.(this.attachments);
+		} finally {
+			if (this.canApplyAttachmentProcessing(processingSeq)) {
+				this.processingFiles = false;
 			}
 		}
-
-		this.attachments = [...this.attachments, ...newAttachments];
-		this.onFilesChange?.(this.attachments);
-		this.processingFiles = false;
 	};
 
 	override firstUpdated() {

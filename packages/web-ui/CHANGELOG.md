@@ -41,6 +41,7 @@
 - `CustomProviderDialog` now invalidates stale async test/save completions across disconnects, preventing detached dialog state updates and stale callback/close paths after unmount races.
 - `SessionListDialog` now invalidates stale async session-list loads across disconnects, preventing detached dialog state updates from in-flight storage reads.
 - `MessageEditor` now coalesces/cancels deferred model-selector open animation frames on disconnect, preventing stale post-detach selector opens.
+- `MessageEditor` now sequence-guards async attachment ingestion (paste/file-select/drag-drop) across disconnects, preventing stale detached state updates from in-flight file processing.
 
 ## [0.52.12] - 2026-02-13
 

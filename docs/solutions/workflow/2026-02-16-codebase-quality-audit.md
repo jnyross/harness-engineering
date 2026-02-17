@@ -3655,6 +3655,25 @@ to:
 
 **Result:** Message editor no longer triggers stale model-selector open callbacks after component detach races.
 
+---
+
+### 205) message editor attachment ingestion could apply stale async file-processing results after disconnect
+
+**Finding:** Message editor attachment flows (`paste`, file picker, drag/drop) awaited file-loading operations without invalidating stale completion paths, allowing detached state updates from in-flight processing.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/MessageEditor.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- introduce sequence-guarded attachment-processing lifecycle,
+- ignore stale async completion paths after disconnect/superseded operations,
+- ensure processing indicator resets only for active operations.
+
+**Result:** Message editor no longer applies stale async attachment updates after detach races during file ingestion.
+
 ## Validation Evidence
 
 - Root quality gate passes:
