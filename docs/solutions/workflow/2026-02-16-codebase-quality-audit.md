@@ -4888,6 +4888,26 @@ to:
 
 **Result:** TUI now ignores malformed oversized cell-size payloads and only applies validated positive safe-integer dimensions.
 
+---
+
+### 267) Gemini CLI retry-delay parsing accepted oversized delay values beyond safe millisecond precision
+
+**Finding:** retry-delay normalization accepted finite positive delays without safe-integer millisecond bounds, allowing oversized header/body delay values to produce rounded unsafe wait durations.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/google-gemini-cli.ts`
+- `packages/ai/test/google-gemini-cli-retry-delay.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require normalized retry delays to be finite positive safe-integer milliseconds,
+- ignore oversized delay hints and continue fallback behavior when available,
+- add regression coverage for unsafe `x-ratelimit-reset-after` and oversized body retry values.
+
+**Result:** retry-delay extraction now rejects oversized unsafe millisecond delays instead of returning rounded coercions.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4907,7 +4927,7 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/changelog-utils.test.ts test/export-html-color-parsing.test.ts`
 - ai usage metadata regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts`
-- ai Gemini retry-delay regression tests pass:
+- ai Gemini retry-delay (including safe-millisecond bounds) regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-retry-delay.test.ts`
 - ai shared usage parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts test/amazon-bedrock-usage.test.ts test/openai-responses-shared-usage.test.ts`
