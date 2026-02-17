@@ -357,8 +357,8 @@ export const scpFile = async (sshCmd: string, localPath: string, remotePath: str
 
 		const proc = spawn("scp", scpArgs, { stdio: "inherit" });
 
-		proc.on("close", (code) => {
-			resolveOnce(code === 0);
+		proc.on("close", (code, signal) => {
+			resolveOnce(code === 0 && !signal);
 		});
 
 		proc.on("error", () => {

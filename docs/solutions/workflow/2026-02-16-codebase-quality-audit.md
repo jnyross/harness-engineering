@@ -3692,12 +3692,33 @@ to:
 
 **Result:** MOM sandbox validation failures now report clearer diagnostics for unexpected docker preflight termination modes.
 
+---
+
+### 207) SCP wrapper close handling did not explicitly model signal-terminated copy subprocesses
+
+**Finding:** Pods SCP helper relied on `code === 0` checks but did not explicitly account for `signal` in close-event semantics, leaving signal-interrupted transfer outcomes implicit rather than contractually encoded.
+
+**Action:** Updated:
+
+- `packages/pods/src/ssh.ts`
+- `packages/pods/test/ssh-parse.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- treat signal-terminated `scp` subprocess exits as explicit failure outcomes,
+- add regression coverage for signal-terminated SCP subprocess behavior.
+
+**Result:** Pods SCP helper now explicitly reports interrupted transfer processes as failures with regression coverage for signal-exit behavior.
+
 ## Validation Evidence
 
 - Root quality gate passes:
   - `npm run check`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
+- pods SSH/SCP parser regression tests pass:
+  - `npm --workspace "@mariozechner/pi" test -- test/ssh-parse.test.ts`
 - AI package tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test`
 - agent spawnScript regression tests pass:

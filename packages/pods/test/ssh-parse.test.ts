@@ -3,7 +3,14 @@ import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
-import { extractHostFromSshCommand, parseShellCommand, parseSshCommand, sshExec, sshExecStream } from "../src/ssh.js";
+import {
+	extractHostFromSshCommand,
+	parseShellCommand,
+	parseSshCommand,
+	scpFile,
+	sshExec,
+	sshExecStream,
+} from "../src/ssh.js";
 
 describe("parseShellCommand", () => {
 	it("parses simple ssh commands", () => {
@@ -119,5 +126,24 @@ describe("sshExecStream", () => {
 	it("returns non-zero when ssh binary cannot be spawned", async () => {
 		const exitCode = await sshExecStream("/definitely/missing/ssh user@host", "echo test", { silent: true });
 		assert.equal(exitCode, 1);
+	});
+});
+
+describe("scpFile", () => {
+	it("returns false when scp process exits via signal", async () => {
+		const dir = mkdtempSync(join(tmpdir(), "pi-pods-scp-signal-"));
+		const scpPath = join(dir, "scp");
+		const originalPath = process.env.PATH;
+		try {
+			writeFileSync(scpPath, "#!/bin/sh\nkill -TERM $$\n", { mode: 0o755 });
+			chmodSync(scpPath, 0o755);
+			process.env.PATH = `${dir}:${originalPath ?? ""}`;
+
+			const ok = await scpFile("ssh user@host", "/tmp/local.txt", "/tmp/remote.txt");
+			assert.equal(ok, false);
+		} finally {
+			process.env.PATH = originalPath;
+			rmSync(dir, { recursive: true, force: true });
+		}
 	});
 });
