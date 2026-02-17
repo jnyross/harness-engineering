@@ -96,6 +96,18 @@ const KITTY_CSI_U_REGEX = /^\x1b\[(\d+)(?::(\d*))?(?::(\d+))?(?:;(\d+))?(?::(\d+
 const KITTY_MOD_SHIFT = 1;
 const KITTY_MOD_ALT = 2;
 const KITTY_MOD_CTRL = 4;
+const MAX_UNICODE_CODEPOINT = 0x10ffff;
+
+function parseKittySafeInteger(value: string | undefined): number | undefined {
+	if (!value || !/^\d+$/.test(value)) {
+		return undefined;
+	}
+	const parsed = Number.parseInt(value, 10);
+	if (!Number.isSafeInteger(parsed)) {
+		return undefined;
+	}
+	return parsed;
+}
 
 // Decode a printable CSI-u sequence, preferring the shifted key when present.
 function decodeKittyPrintable(data: string): string | undefined {
@@ -103,13 +115,16 @@ function decodeKittyPrintable(data: string): string | undefined {
 	if (!match) return undefined;
 
 	// CSI-u groups: <codepoint>[:<shifted>[:<base>]];<mod>u
-	const codepoint = Number.parseInt(match[1] ?? "", 10);
-	if (!Number.isFinite(codepoint)) return undefined;
+	const codepoint = parseKittySafeInteger(match[1]);
+	if (codepoint === undefined) return undefined;
 
-	const shiftedKey = match[2] && match[2].length > 0 ? Number.parseInt(match[2], 10) : undefined;
-	const modValue = match[4] ? Number.parseInt(match[4], 10) : 1;
+	const shiftedKey = parseKittySafeInteger(match[2]);
+	const parsedModifier = parseKittySafeInteger(match[4]);
+	if (match[4] !== undefined && parsedModifier === undefined) return undefined;
+	const modValue = parsedModifier ?? 1;
+	if (modValue < 1) return undefined;
 	// Modifiers are 1-indexed in CSI-u; normalize to our bitmask.
-	const modifier = Number.isFinite(modValue) ? modValue - 1 : 0;
+	const modifier = modValue - 1;
 
 	// Ignore CSI-u sequences used for Alt/Ctrl shortcuts.
 	if (modifier & (KITTY_MOD_ALT | KITTY_MOD_CTRL)) return undefined;
@@ -120,7 +135,7 @@ function decodeKittyPrintable(data: string): string | undefined {
 		effectiveCodepoint = shiftedKey;
 	}
 	// Drop control characters or invalid codepoints.
-	if (!Number.isFinite(effectiveCodepoint) || effectiveCodepoint < 32) return undefined;
+	if (effectiveCodepoint < 32 || effectiveCodepoint > MAX_UNICODE_CODEPOINT) return undefined;
 
 	try {
 		return String.fromCodePoint(effectiveCodepoint);
