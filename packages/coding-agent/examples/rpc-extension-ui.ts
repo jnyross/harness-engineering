@@ -35,6 +35,13 @@ const DIM = "\x1b[2m";
 const BOLD = "\x1b[1m";
 const RESET = "\x1b[0m";
 
+function normalizeExitCode(code: number | null, signal: NodeJS.Signals | null): number {
+	if (signal) {
+		return 1;
+	}
+	return code ?? 1;
+}
+
 // ============================================================================
 // Extension UI request type (subset of rpc-types.ts)
 // ============================================================================
@@ -628,7 +635,7 @@ async function main() {
 	});
 
 	agent.on("exit", (code, signal) => {
-		const exitCode = code ?? (signal ? 1 : 0);
+		const exitCode = normalizeExitCode(code, signal);
 		const reason = signal ? `signal ${signal}` : `code ${code}`;
 		settleAndExit(exitCode, `Agent exited with ${reason}`);
 	});
