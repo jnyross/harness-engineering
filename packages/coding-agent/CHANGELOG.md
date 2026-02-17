@@ -14,6 +14,7 @@
 - Interactive `/export` command parsing now respects quoted output paths (including spaces) and reports malformed quoted syntax clearly.
 - Interactive `/share` now exports to a unique temp HTML filename per invocation instead of reusing a fixed temp path.
 - Prompt template expansion now validates quoted argument syntax (unmatched quotes are rejected instead of being silently misparsed).
+- Prompt-template and slash-command argument splitting now accepts any whitespace separator (spaces/tabs) when detecting command names and arguments.
 
 ## [0.52.12] - 2026-02-13
 

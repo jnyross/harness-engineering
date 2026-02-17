@@ -392,4 +392,12 @@ describe("parseCommandArgs + substituteArgs integration", () => {
 			]),
 		).toThrow(/Unmatched quote/);
 	});
+
+	test("expands template when command and args are separated by tabs", () => {
+		expect(
+			expandPromptTemplate(`/tmpl\t"path with spaces"`, [
+				{ name: "tmpl", description: "template", content: "Prompt $ARGUMENTS", source: "project", filePath: "" },
+			]),
+		).toBe("Prompt path with spaces");
+	});
 });

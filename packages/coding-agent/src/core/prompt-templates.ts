@@ -251,7 +251,7 @@ export function loadPromptTemplates(options: LoadPromptTemplatesOptions = {}): P
 export function expandPromptTemplate(text: string, templates: PromptTemplate[]): string {
 	if (!text.startsWith("/")) return text;
 
-	const spaceIndex = text.indexOf(" ");
+	const spaceIndex = text.search(/\s/);
 	const templateName = spaceIndex === -1 ? text.slice(1) : text.slice(1, spaceIndex);
 	const argsString = spaceIndex === -1 ? "" : text.slice(spaceIndex + 1);
 

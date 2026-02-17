@@ -851,7 +851,7 @@ export class AgentSession {
 		if (!this._extensionRunner) return false;
 
 		// Parse command name and args
-		const spaceIndex = text.indexOf(" ");
+		const spaceIndex = text.search(/\s/);
 		const commandName = spaceIndex === -1 ? text.slice(1) : text.slice(1, spaceIndex);
 		const args = spaceIndex === -1 ? "" : text.slice(spaceIndex + 1);
 
@@ -883,7 +883,7 @@ export class AgentSession {
 	private _expandSkillCommand(text: string): string {
 		if (!text.startsWith("/skill:")) return text;
 
-		const spaceIndex = text.indexOf(" ");
+		const spaceIndex = text.search(/\s/);
 		const skillName = spaceIndex === -1 ? text.slice(7) : text.slice(7, spaceIndex);
 		const args = spaceIndex === -1 ? "" : text.slice(spaceIndex + 1).trim();
 
@@ -984,7 +984,7 @@ export class AgentSession {
 	private _throwIfExtensionCommand(text: string): void {
 		if (!this._extensionRunner) return;
 
-		const spaceIndex = text.indexOf(" ");
+		const spaceIndex = text.search(/\s/);
 		const commandName = spaceIndex === -1 ? text.slice(1) : text.slice(1, spaceIndex);
 		const command = this._extensionRunner.getCommand(commandName);
 
