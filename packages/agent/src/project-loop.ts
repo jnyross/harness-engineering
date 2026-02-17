@@ -30,6 +30,14 @@ export interface ProjectLoopOptions {
 const DEFAULT_ITERATIONS = 1;
 const DEFAULT_MAX_TASKS = 20;
 const COMPOUND_EVERY_N_TASKS = 5;
+const NON_TASK_SECTION_TITLES = new Set([
+	"plan",
+	"execution plan",
+	"implementation plan",
+	"task list",
+	"tasks",
+	"overview",
+]);
 
 function userMessage(text: string): AgentMessage {
 	return {
@@ -55,7 +63,7 @@ function lastAssistantText(messages: AgentMessage[]): string {
 /**
  * Naive parse of plan output for task list. Looks for "- Title" / "Acceptance criteria:" blocks or JSON.
  */
-function parseTasksFromPlanOutput(planText: string): TddTask[] {
+export function parseTasksFromPlanOutput(planText: string): TddTask[] {
 	const tasks: TddTask[] = [];
 	// Try JSON array first
 	const jsonMatch = planText.match(/\[[\s\S]*?\{[\s\S]*?"title"[\s\S]*?\}[\s\S]*?\]/);
@@ -81,16 +89,23 @@ function parseTasksFromPlanOutput(planText: string): TddTask[] {
 	// Markdown list: "### Task N: Title" or "- **Title**" followed by acceptance criteria
 	const lines = planText.split(/\r?\n/);
 	let current: Partial<TddTask> = {};
+	const maybePushCurrentTask = () => {
+		if (!current.title) {
+			return;
+		}
+		if (NON_TASK_SECTION_TITLES.has(current.title.trim().toLowerCase())) {
+			return;
+		}
+		tasks.push({
+			title: current.title,
+			description: current.description,
+			acceptanceCriteria: current.acceptanceCriteria ?? [],
+		});
+	};
 	for (const line of lines) {
 		const titleMatch = line.match(/^#+\s*(?:Task\s+\d+:\s*)?(.+)$/) || line.match(/^[-*]\s+\*\*(.+)\*\*/);
 		if (titleMatch) {
-			if (current.title) {
-				tasks.push({
-					title: current.title,
-					description: current.description,
-					acceptanceCriteria: current.acceptanceCriteria ?? [],
-				});
-			}
+			maybePushCurrentTask();
 			current = { title: titleMatch[1].trim(), acceptanceCriteria: [] };
 			continue;
 		}
@@ -103,13 +118,7 @@ function parseTasksFromPlanOutput(planText: string): TddTask[] {
 			current.acceptanceCriteria.push(line.replace(/^\s*-\s*/, "").trim());
 		}
 	}
-	if (current.title) {
-		tasks.push({
-			title: current.title,
-			description: current.description,
-			acceptanceCriteria: current.acceptanceCriteria ?? [],
-		});
-	}
+	maybePushCurrentTask();
 	return tasks;
 }
 
