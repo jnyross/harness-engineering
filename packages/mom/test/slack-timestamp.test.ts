@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { getLatestSlackTimestamp, parseSlackTimestampToMilliseconds } from "../src/slack-timestamp.js";
+import {
+	getLatestSlackTimestamp,
+	isValidSlackTimestamp,
+	parseSlackTimestampToMilliseconds,
+} from "../src/slack-timestamp.js";
 
 describe("parseSlackTimestampToMilliseconds", () => {
 	it("parses decimal Slack timestamps as milliseconds", () => {
@@ -41,5 +45,17 @@ describe("getLatestSlackTimestamp", () => {
 	it("compares mixed integer-seconds and decimal-second timestamps correctly", () => {
 		const latest = getLatestSlackTimestamp(["1700000000", "1700000000.200000", "1700000000.100000"]);
 		assert.equal(latest, "1700000000.200000");
+	});
+});
+
+describe("isValidSlackTimestamp", () => {
+	it("returns true for valid decimal/integer timestamp values", () => {
+		assert.equal(isValidSlackTimestamp("1700000000.123456"), true);
+		assert.equal(isValidSlackTimestamp("1700000000"), true);
+	});
+
+	it("returns false for missing or malformed values", () => {
+		assert.equal(isValidSlackTimestamp(undefined), false);
+		assert.equal(isValidSlackTimestamp("invalid"), false);
 	});
 });

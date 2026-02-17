@@ -1,5 +1,5 @@
 import { LogLevel, WebClient } from "@slack/web-api";
-import { parseSlackTimestampToMilliseconds } from "./slack-timestamp.js";
+import { isValidSlackTimestamp, parseSlackTimestampToMilliseconds } from "./slack-timestamp.js";
 
 interface Message {
 	ts: string;
@@ -74,7 +74,16 @@ export async function downloadChannel(channelId: string, botToken: string): Prom
 
 	// Build map of thread replies
 	const threadReplies = new Map<string, Message[]>();
-	const threadsToFetch = messages.filter((m) => m.reply_count && m.reply_count > 0);
+	const threadsToFetch = messages.filter((m): m is Message & { ts: string } => {
+		if (!(m.reply_count && m.reply_count > 0)) {
+			return false;
+		}
+		if (!isValidSlackTimestamp(m.ts)) {
+			console.error(`  Skipping thread with invalid parent timestamp: ${m.ts ?? "(missing)"}`);
+			return false;
+		}
+		return true;
+	});
 
 	console.error(`Fetching ${threadsToFetch.length} threads...`);
 
@@ -107,6 +116,11 @@ export async function downloadChannel(channelId: string, botToken: string): Prom
 	// Output messages with thread replies interleaved
 	let totalReplies = 0;
 	for (const msg of messages) {
+		if (!isValidSlackTimestamp(msg.ts)) {
+			console.error(`  Skipping message with invalid timestamp: ${msg.ts ?? "(missing)"}`);
+			continue;
+		}
+
 		// Output the message
 		console.log(formatMessage(msg.ts, msg.user || "unknown", msg.text || ""));
 
@@ -114,6 +128,10 @@ export async function downloadChannel(channelId: string, botToken: string): Prom
 		const replies = threadReplies.get(msg.ts);
 		if (replies) {
 			for (const reply of replies) {
+				if (!isValidSlackTimestamp(reply.ts)) {
+					console.error(`  Skipping thread reply with invalid timestamp: ${reply.ts ?? "(missing)"}`);
+					continue;
+				}
 				console.log(formatMessage(reply.ts, reply.user || "unknown", reply.text || "", "  "));
 				totalReplies++;
 			}

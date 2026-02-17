@@ -23,6 +23,10 @@ export function parseSlackTimestampToMilliseconds(timestamp: string): number | u
 	return undefined;
 }
 
+export function isValidSlackTimestamp(timestamp: string | undefined): timestamp is string {
+	return typeof timestamp === "string" && parseSlackTimestampToMilliseconds(timestamp) !== undefined;
+}
+
 export function getLatestSlackTimestamp(timestamps: Iterable<string>): string | undefined {
 	let latestTimestamp: string | undefined;
 	let latestTimestampMs: number | undefined;
