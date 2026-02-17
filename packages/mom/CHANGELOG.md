@@ -31,6 +31,7 @@
 - Channel-download thread/message iteration now skips invalid/missing Slack timestamps with warnings instead of failing downstream thread fetch/formatting paths.
 - Read-tool line counting now validates `wc -l` output strictly and throws explicit parse errors for malformed output instead of continuing with `NaN`-derived offsets/line ranges.
 - MOM agent API key resolution now follows the configured model provider (instead of always requesting Anthropic credentials), and model env overrides now trim/ignore blank values before validation.
+- CLI argument parsing now rejects missing `--sandbox`/`--download` option values (including option-like tokens) with explicit diagnostics instead of silently falling back.
 
 ### Changed
 

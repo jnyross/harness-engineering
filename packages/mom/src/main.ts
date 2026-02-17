@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
-import { join, resolve } from "path";
+import { join } from "path";
 import { type AgentRunner, getOrCreateRunner } from "./agent.js";
+import { type ParsedArgs, parseCliArgs } from "./cli-args.js";
 import { downloadChannel } from "./download.js";
 import { createEventsWatcher } from "./events.js";
 import * as log from "./log.js";
-import { parseSandboxArg, type SandboxConfig, validateSandbox } from "./sandbox.js";
+import { validateSandbox } from "./sandbox.js";
 import { type MomHandler, type SlackBot, SlackBot as SlackBotClass, type SlackEvent } from "./slack.js";
 import { ChannelStore } from "./store.js";
 
@@ -16,41 +17,13 @@ import { ChannelStore } from "./store.js";
 const MOM_SLACK_APP_TOKEN = process.env.MOM_SLACK_APP_TOKEN;
 const MOM_SLACK_BOT_TOKEN = process.env.MOM_SLACK_BOT_TOKEN;
 
-interface ParsedArgs {
-	workingDir?: string;
-	sandbox: SandboxConfig;
-	downloadChannel?: string;
+let parsedArgs: ParsedArgs;
+try {
+	parsedArgs = parseCliArgs(process.argv.slice(2));
+} catch (error) {
+	console.error(error instanceof Error ? error.message : String(error));
+	process.exit(1);
 }
-
-function parseArgs(): ParsedArgs {
-	const args = process.argv.slice(2);
-	let sandbox: SandboxConfig = { type: "host" };
-	let workingDir: string | undefined;
-	let downloadChannelId: string | undefined;
-
-	for (let i = 0; i < args.length; i++) {
-		const arg = args[i];
-		if (arg.startsWith("--sandbox=")) {
-			sandbox = parseSandboxArg(arg.slice("--sandbox=".length));
-		} else if (arg === "--sandbox") {
-			sandbox = parseSandboxArg(args[++i] || "");
-		} else if (arg.startsWith("--download=")) {
-			downloadChannelId = arg.slice("--download=".length);
-		} else if (arg === "--download") {
-			downloadChannelId = args[++i];
-		} else if (!arg.startsWith("-")) {
-			workingDir = arg;
-		}
-	}
-
-	return {
-		workingDir: workingDir ? resolve(workingDir) : undefined,
-		sandbox,
-		downloadChannel: downloadChannelId,
-	};
-}
-
-const parsedArgs = parseArgs();
 
 // Handle --download mode
 if (parsedArgs.downloadChannel) {
