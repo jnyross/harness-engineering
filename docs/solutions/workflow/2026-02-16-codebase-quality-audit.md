@@ -4175,6 +4175,28 @@ to:
 
 **Result:** mom model/provider configuration now drives matching credential lookup reliably instead of always requiring Anthropic keys.
 
+---
+
+### 232) pods CLI silently ignored missing required option values for setup/start flags
+
+**Finding:** pods CLI option parsing accepted `--memory`, `--context`, `--gpus`, `--name`, `--mount`, `--models-path`, and `--vllm` flags without enforcing required values, allowing accidental silent fallback behavior when values were omitted.
+
+**Action:** Updated:
+
+- `packages/pods/src/cli-options.ts`
+- `packages/pods/src/cli.ts`
+- `packages/pods/test/cli-options.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- centralize required-option value parsing in a shared helper,
+- reject missing option values (including option-like next tokens),
+- add unit coverage for accepted/missing/option-like-value cases,
+- preserve top-level CLI error handling flow via thrown parse errors.
+
+**Result:** pods CLI now fails fast with explicit option-value diagnostics instead of silently ignoring missing required values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4183,6 +4205,11 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts`
 - mom model/key resolution regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/agent-model.test.ts`
+- pods required-option parser regression tests pass:
+  - `npm --workspace "@mariozechner/pi" test -- test/cli-options.test.ts test/cli-args.test.ts`
+- pods required-option smoke checks pass:
+  - `npx tsx packages/pods/src/cli.ts start demo-model --name demo --memory`
+  - `npx tsx packages/pods/src/cli.ts pods setup demo "ssh host" --vllm`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
 - pods SSH/SCP parser regression tests pass:
