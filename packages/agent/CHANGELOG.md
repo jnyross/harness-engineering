@@ -31,6 +31,7 @@
 - Proxy streaming now surfaces an explicit error result when the proxy returns an OK response without a readable body, instead of failing with a null-body runtime exception.
 - Project-loop task parsing now ignores non-task wrapper headings (e.g., `# Plan`, `## Tasks`) so decomposition validation no longer fails on valid plans that include section headers.
 - `runner.ts` / `project-runner.ts` numeric option parsing now rejects malformed or non-positive values (for example `--iterations 3rounds`, `PI_MAX_REDO_ROUNDS=0`) instead of silently coercing via `parseInt` fallback behavior.
+- Shared CLI positive-integer option parsing now rejects unsafe integer values (greater than `Number.MAX_SAFE_INTEGER`) instead of accepting rounded coercions.
 - `runner.ts` CLI entrypoint now guards direct execution behind `import.meta.url` checks and exposes argument parsing as a reusable helper, preventing side-effectful `main()` execution when imported in tests.
 - `spawnScript()` timeout/spawn failures now include invoked-command context in error messages, improving diagnostics for sub-agent script delegation failures.
 - `spawnScript()` now adds fallback stderr diagnostics for signal/unknown/non-zero close statuses when scripts fail silently, so callers receive actionable failure reasons even without child stderr output.

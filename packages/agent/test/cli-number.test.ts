@@ -22,5 +22,12 @@ describe("parsePositiveIntegerOption", () => {
 		expect(() => parsePositiveIntegerOption({ value: "-2", fallback: 1, optionName: "--max-tasks" })).toThrow(
 			"Invalid --max-tasks value '-2'. Use a positive integer.",
 		);
+		expect(() =>
+			parsePositiveIntegerOption({
+				value: "9007199254740993",
+				fallback: 1,
+				optionName: "--iterations",
+			}),
+		).toThrow("Invalid --iterations value '9007199254740993'. Use a positive integer.");
 	});
 });

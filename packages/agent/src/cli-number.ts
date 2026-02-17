@@ -13,7 +13,7 @@ export function parsePositiveIntegerOption(options: {
 	}
 
 	const parsed = Number.parseInt(rawValue, 10);
-	if (!Number.isFinite(parsed) || parsed < 1) {
+	if (!Number.isSafeInteger(parsed) || parsed < 1) {
 		throw new Error(`Invalid ${options.optionName} value '${options.value}'. Use a positive integer.`);
 	}
 
