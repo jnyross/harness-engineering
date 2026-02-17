@@ -2251,6 +2251,27 @@ with platform-safe skipping on Windows.
 
 **Result:** Package-manager signal-exit diagnostics are now protected by explicit regression tests.
 
+---
+
+### 130) pods agent delegation spawn path could double-settle on `error`/`close` races
+
+**Finding:** `promptModel(...)` delegated agent launch used a Promise that resolved/rejected directly from child `error` and `exit` handlers without a single-settlement guard, creating duplicate-settle race potential and less explicit startup diagnostics.
+
+**Action:** Updated:
+
+- `packages/pods/src/commands/prompt.ts`
+- `packages/pods/test/prompt-model-validation.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- add single-settlement `resolveOnce` / `rejectOnce` handling for delegated process lifecycle,
+- switch completion handling to `close` semantics with clear signal/exit reporting,
+- emit explicit startup diagnostics when delegated CLI command fails to spawn,
+- add regression test covering startup failure path (`PATH=""` / missing `npx`) with clear error output expectations.
+
+**Result:** Pods agent delegation process handling now settles deterministically across spawn/close races and surfaces clearer startup failure diagnostics.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2478,7 +2499,7 @@ with platform-safe skipping on Windows.
 - `pi agent` malformed SSH host guard:
   - `PI_CONFIG_DIR=<tmp> PI_API_KEY=test-key npx tsx packages/pods/src/cli.ts agent demo-model --list-models` with SSH `ssh -o StrictHostKeyChecking=no` (rejected with invalid SSH command error)
 - prompt validation unit coverage:
-  - `npm --workspace "@mariozechner/pi" test -- test/prompt-model-validation.test.ts`
+  - `npm --workspace "@mariozechner/pi" test -- test/prompt-model-validation.test.ts` (includes invalid ssh/port guards and delegated-cli spawn startup failure diagnostics)
 - pods targeted test filtering behavior:
   - `npm --workspace "@mariozechner/pi" test -- test/ssh-parse.test.ts` (runs only SSH parser tests)
 - pods invoked-command guidance in pod listing:
