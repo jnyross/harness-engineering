@@ -71,4 +71,29 @@ describe("getThemeExportColors", () => {
 			},
 		);
 	});
+
+	it("returns undefined for malformed export hex values", () => {
+		withTempTheme(
+			(theme) => {
+				theme.name = "export-bad-hex-theme";
+				theme.vars = {
+					...(theme.vars as Record<string, unknown>),
+					badHex: "#ff00f-",
+				};
+				theme.export = {
+					pageBg: "#ff00f-",
+					cardBg: "badHex",
+					infoBg: "#112233",
+				};
+			},
+			(themePath) => {
+				setRegisteredThemes([loadThemeFromPath(themePath)]);
+				expect(getThemeExportColors("export-bad-hex-theme")).toEqual({
+					pageBg: undefined,
+					cardBg: undefined,
+					infoBg: "#112233",
+				});
+			},
+		);
+	});
 });

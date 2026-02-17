@@ -900,11 +900,13 @@ export function getThemeExportColors(themeName?: string): {
 		if (!exportSection) return {};
 
 		const vars = themeJson.vars ?? {};
+		const isHexColor = (candidate: string): boolean => /^#[0-9a-fA-F]{6}$/.test(candidate);
 		const resolve = (value: string | number | undefined): string | undefined => {
 			if (value === undefined) return undefined;
 			if (typeof value === "number") return ansi256ToHex(value);
-			if (value === "" || value.startsWith("#")) {
-				return value;
+			if (value === "") return value;
+			if (value.startsWith("#")) {
+				return isHexColor(value) ? value : undefined;
 			}
 
 			const prefixedVariable = value.startsWith("$");
@@ -918,6 +920,9 @@ export function getThemeExportColors(themeName?: string): {
 
 			const resolved = resolveVarRefs(vars[variableName], vars);
 			if (typeof resolved === "number") return ansi256ToHex(resolved);
+			if (resolved.startsWith("#")) {
+				return isHexColor(resolved) ? resolved : undefined;
+			}
 			return resolved;
 		};
 
