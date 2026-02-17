@@ -20,7 +20,7 @@
  * If the agent runs an interactive command, it will fail (which is fine).
  */
 
-import { spawnSync } from "node:child_process";
+import { type SpawnSyncReturns, spawnSync } from "node:child_process";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
 // Default interactive commands - editors, pagers, git ops, TUIs
@@ -128,6 +128,43 @@ function isInteractiveCommand(command: string): boolean {
 	return false;
 }
 
+export function getInteractiveShellExitStatus(result: SpawnSyncReturns<Buffer>): {
+	exitCode: number;
+	failureReason?: string;
+} {
+	if (result.error) {
+		return {
+			exitCode: 1,
+			failureReason: `failed to start shell: ${result.error.message}`,
+		};
+	}
+
+	if (result.signal) {
+		return {
+			exitCode: 1,
+			failureReason: `terminated by signal ${result.signal}`,
+		};
+	}
+
+	if (result.status === null) {
+		return {
+			exitCode: 1,
+			failureReason: "exited with unknown status",
+		};
+	}
+
+	if (result.status !== 0) {
+		return {
+			exitCode: result.status,
+			failureReason: `exited with code ${result.status}`,
+		};
+	}
+
+	return {
+		exitCode: 0,
+	};
+}
+
 export default function (pi: ExtensionAPI) {
 	pi.on("user_bash", async (event, ctx) => {
 		let command = event.command;
@@ -167,14 +204,9 @@ export default function (pi: ExtensionAPI) {
 				stdio: "inherit",
 				env: process.env,
 			});
-			const normalizedExitCode = result.status ?? (result.signal || result.error ? 1 : 0);
-			if (result.error) {
-				failureReason = `failed to start shell: ${result.error.message}`;
-			} else if (result.signal) {
-				failureReason = `terminated by signal ${result.signal}`;
-			} else if (normalizedExitCode !== 0) {
-				failureReason = `exited with code ${normalizedExitCode}`;
-			}
+			const status = getInteractiveShellExitStatus(result);
+			const normalizedExitCode = status.exitCode;
+			failureReason = status.failureReason;
 
 			// Restart TUI
 			tui.start();

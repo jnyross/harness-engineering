@@ -87,6 +87,7 @@
 - RPC extension TUI example now handles agent spawn failures explicitly and maps signal-terminated agent exits to non-zero process exits.
 - RPC extension TUI example now also uses single-settlement process exit handling across `error`/`exit` events to avoid duplicate shutdown paths.
 - Subagent extension example now uses single-settlement process handling with abort-listener cleanup and non-zero signal-exit mapping to avoid stale listeners and false success exits.
+- Interactive-shell extension example now classifies `spawnSync` startup/signal/unknown-status outcomes explicitly, treating rare `status=null/signal=null` closes as failures instead of false success.
 
 ## [0.52.12] - 2026-02-13
 
