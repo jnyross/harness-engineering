@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import { getCliCommand } from "../cli-command.js";
 import { getActivePod, loadConfig, saveConfig } from "../config.js";
 import { extractGpuType } from "../gpu-name.js";
+import { getLogStreamExitError } from "../log-stream-exit-status.js";
 import { getModelConfig, getModelName, isKnownModel } from "../model-configs.js";
 import { assertValidModelId } from "../model-id.js";
 import { assertValidModelInstanceName, isValidModelInstanceName } from "../model-name.js";
@@ -373,9 +374,16 @@ WRAPPER
 
 	const logResult = await logResultPromise;
 	process.removeListener("SIGINT", sigintHandler);
-	if (logResult.error && !startupComplete && !interrupted) {
-		startupFailed = true;
-		failureReason = `Failed to stream startup logs: ${logResult.error.message}`;
+	if (!startupComplete && !startupFailed) {
+		const streamError = getLogStreamExitError({
+			processLabel: "startup log stream",
+			result: logResult,
+			interrupted,
+		});
+		if (streamError) {
+			startupFailed = true;
+			failureReason = streamError;
+		}
 	}
 
 	if (startupFailed) {
@@ -690,10 +698,22 @@ export const viewLogs = async (name: string, options: { pod?: string }) => {
 		},
 	});
 	const logResultPromise = waitForProcessExit(logProcess);
+	let interrupted = false;
+	const sigintHandler = () => {
+		interrupted = true;
+		logProcess.kill();
+	};
+	process.on("SIGINT", sigintHandler);
 
 	const logResult = await logResultPromise;
-	if (logResult.error) {
-		console.error(chalk.red(`Failed to stream logs: ${logResult.error.message}`));
+	process.removeListener("SIGINT", sigintHandler);
+	const streamError = getLogStreamExitError({
+		processLabel: "model log stream",
+		result: logResult,
+		interrupted,
+	});
+	if (streamError) {
+		console.error(chalk.red(streamError));
 		process.exit(1);
 	}
 };
