@@ -257,7 +257,7 @@ export function expandPromptTemplate(text: string, templates: PromptTemplate[]):
 
 	const template = templates.find((t) => t.name === templateName);
 	if (template) {
-		const args = parseCommandArgs(argsString);
+		const args = parseCommandArgs(argsString, { strict: true });
 		return substituteArgs(template.content, args);
 	}
 

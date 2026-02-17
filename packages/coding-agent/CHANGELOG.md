@@ -13,6 +13,7 @@
 - Shared command argument parsing now preserves Windows-style backslashes for non-escaped characters (e.g., `C:\Users\...`) while still supporting escaped spaces/quotes.
 - Interactive `/export` command parsing now respects quoted output paths (including spaces) and reports malformed quoted syntax clearly.
 - Interactive `/share` now exports to a unique temp HTML filename per invocation instead of reusing a fixed temp path.
+- Prompt template expansion now validates quoted argument syntax (unmatched quotes are rejected instead of being silently misparsed).
 
 ## [0.52.12] - 2026-02-13
 

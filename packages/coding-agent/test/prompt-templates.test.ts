@@ -9,7 +9,7 @@
  */
 
 import { describe, expect, test } from "vitest";
-import { parseCommandArgs, substituteArgs } from "../src/core/prompt-templates.js";
+import { expandPromptTemplate, parseCommandArgs, substituteArgs } from "../src/core/prompt-templates.js";
 
 // ============================================================================
 // substituteArgs
@@ -383,5 +383,13 @@ describe("parseCommandArgs + substituteArgs integration", () => {
 		const template1 = "Implement: $@";
 		const template2 = "Implement: $ARGUMENTS";
 		expect(substituteArgs(template1, args)).toBe(substituteArgs(template2, args));
+	});
+
+	test("throws when expanding template with unmatched quoted args", () => {
+		expect(() =>
+			expandPromptTemplate(`/tmpl "unterminated`, [
+				{ name: "tmpl", description: "template", content: "Prompt $ARGUMENTS", source: "project", filePath: "" },
+			]),
+		).toThrow(/Unmatched quote/);
 	});
 });
