@@ -22,6 +22,7 @@
 - Docker sandbox preflight command failures now report explicit command + signal/exit diagnostics, improving `validateSandbox()` error clarity when docker invocations terminate unexpectedly.
 - Sandbox command startup failures now include full command context (`command + args`) in `execSimple`/executor error paths, improving diagnostics when `docker`/shell binaries cannot be spawned.
 - Sandbox executor results now include fallback stderr diagnostics for signal/unknown/non-zero command exits when subprocesses fail silently, improving downstream tool error clarity.
+- Channel store timestamp parsing now validates Slack timestamp formats strictly and falls back to current time for malformed values, preventing `logMessage()` date-conversion crashes from partial `parseInt`/`parseFloat` coercion.
 
 ### Changed
 

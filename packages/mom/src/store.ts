@@ -30,6 +30,26 @@ interface PendingDownload {
 	url: string;
 }
 
+function parseSlackTimestampToMilliseconds(timestamp: string): number | undefined {
+	const trimmed = timestamp.trim();
+	if (/^\d+\.\d+$/.test(trimmed)) {
+		const seconds = Number.parseFloat(trimmed);
+		if (Number.isFinite(seconds) && seconds >= 0) {
+			return Math.floor(seconds * 1000);
+		}
+		return undefined;
+	}
+
+	if (/^\d+$/.test(trimmed)) {
+		const milliseconds = Number.parseInt(trimmed, 10);
+		if (Number.isFinite(milliseconds) && milliseconds >= 0) {
+			return milliseconds;
+		}
+	}
+
+	return undefined;
+}
+
 export class ChannelStore {
 	private workingDir: string;
 	private botToken: string;
@@ -64,8 +84,9 @@ export class ChannelStore {
 	 * Generate a unique local filename for an attachment
 	 */
 	generateLocalFilename(originalName: string, timestamp: string): string {
-		// Convert slack timestamp (1234567890.123456) to milliseconds
-		const ts = Math.floor(parseFloat(timestamp) * 1000);
+		// Convert slack timestamp (1234567890.123456) to milliseconds.
+		// Fall back to current time if the timestamp format is invalid.
+		const ts = parseSlackTimestampToMilliseconds(timestamp) ?? Date.now();
 		// Sanitize original name (remove problematic characters)
 		const sanitized = originalName.replace(/[^a-zA-Z0-9._-]/g, "_");
 		return `${ts}_${sanitized}`;
@@ -127,16 +148,13 @@ export class ChannelStore {
 
 		// Ensure message has a date field
 		if (!message.date) {
-			// Parse timestamp to get date
-			let date: Date;
-			if (message.ts.includes(".")) {
-				// Slack timestamp format (1234567890.123456)
-				date = new Date(parseFloat(message.ts) * 1000);
+			const timestampMs = parseSlackTimestampToMilliseconds(message.ts);
+			if (timestampMs === undefined) {
+				log.logWarning("Message has invalid timestamp, using current time", message.ts);
+				message.date = new Date().toISOString();
 			} else {
-				// Epoch milliseconds
-				date = new Date(parseInt(message.ts, 10));
+				message.date = new Date(timestampMs).toISOString();
 			}
-			message.date = date.toISOString();
 		}
 
 		const line = `${JSON.stringify(message)}\n`;
