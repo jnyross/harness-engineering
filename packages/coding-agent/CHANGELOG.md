@@ -11,6 +11,7 @@
 - Environment-variable value resolution now treats explicitly empty env vars as empty/unset values (instead of falling back to literal variable names), with regression coverage.
 - Prompt-template argument parsing now preserves quoted empty args and supports escaped quotes/spaces for shell-style command arguments; both interactive and extension editor external command parsing now use shared safe command-invocation parsing for `$EDITOR`/`$VISUAL`, preventing malformed command strings from crashing editor launch paths.
 - Interactive `/export` command parsing now respects quoted output paths (including spaces) and reports malformed quoted syntax clearly.
+- Interactive `/share` now exports to a unique temp HTML filename per invocation instead of reusing a fixed temp path.
 
 ## [0.52.12] - 2026-02-13
 

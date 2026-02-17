@@ -3835,8 +3835,8 @@ export class InteractiveMode {
 			return;
 		}
 
-		// Export to a temp file
-		const tmpFile = path.join(os.tmpdir(), "session.html");
+		// Export to a unique temp file
+		const tmpFile = path.join(os.tmpdir(), `pi-session-share-${crypto.randomUUID()}.html`);
 		try {
 			await this.session.exportToHtml(tmpFile);
 		} catch (error: unknown) {
