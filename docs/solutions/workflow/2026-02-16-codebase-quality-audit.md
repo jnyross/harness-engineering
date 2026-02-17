@@ -1380,6 +1380,22 @@ to validate docker container names against a safe pattern (`[A-Za-z0-9][A-Za-z0-
 
 **Result:** Docker sandbox mode now rejects invalid/unsafe container names early, preventing unsafe shell interpolation in sandbox command execution.
 
+---
+
+### 81) mom docker sandbox execution still used shell-composed `docker exec`
+
+**Finding:** Even with container-name validation, docker sandbox execution composed `docker exec ... sh -c ...` as a shell string before host execution, leaving unnecessary shell interpolation surface.
+
+**Action:** Updated:
+
+- `packages/mom/src/sandbox.ts`
+- `packages/mom/test/sandbox.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to execute docker sandbox commands via argv-based `spawn("docker", ["exec", ...])` and added regression coverage for docker exec argv construction.
+
+**Result:** Mom docker sandbox command execution no longer relies on shell-composed host command strings, reducing interpolation risk and aligning with argument-safe execution patterns used elsewhere.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1524,6 +1540,8 @@ to validate docker container names against a safe pattern (`[A-Za-z0-9][A-Za-z0-
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/interactive-mode-status.test.ts` (includes `/demo\targ` extension-command detection case)
 - mom sandbox container-name validation coverage:
   - `cd packages/mom && npx tsx --test test/sandbox.test.ts`
+- mom docker argv execution coverage:
+  - `cd packages/mom && npx tsx --test test/sandbox.test.ts` (includes `buildDockerExecArgs` assertion for shell-free argv construction)
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
