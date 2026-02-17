@@ -1,8 +1,8 @@
 #!/usr/bin/env tsx
 
 import { writeFileSync } from "fs";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
+import { join, dirname, resolve } from "path";
+import { fileURLToPath, pathToFileURL } from "url";
 import { Api, KnownProvider, Model } from "../src/types.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -56,7 +56,7 @@ const COPILOT_STATIC_HEADERS = {
 const AI_GATEWAY_MODELS_URL = "https://ai-gateway.vercel.sh/v1";
 const AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh";
 
-function parseNonNegativeNumericValue(value: string | number | undefined): number {
+export function parseNonNegativeNumericValue(value: string | number | undefined): number {
 	if (typeof value === "number") {
 		return Number.isFinite(value) && value >= 0 ? value : 0;
 	}
@@ -64,19 +64,45 @@ function parseNonNegativeNumericValue(value: string | number | undefined): numbe
 	if (!rawValue) {
 		return 0;
 	}
+	if (!/^\d+(?:\.\d+)?$/.test(rawValue)) {
+		return 0;
+	}
 	const parsed = Number(rawValue);
 	return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+}
+
+function isExecutedAsScriptEntryPoint(): boolean {
+	const entryPoint = process.argv[1];
+	if (!entryPoint) {
+		return false;
+	}
+	return import.meta.url === pathToFileURL(resolve(entryPoint)).href;
 }
 
 async function fetchOpenRouterModels(): Promise<Model<Api>[]> {
 	try {
 		console.log("Fetching models from OpenRouter API...");
 		const response = await fetch("https://openrouter.ai/api/v1/models");
-		const data = await response.json();
+		const data = (await response.json()) as {
+			data?: Array<{
+				id: string;
+				name: string;
+				supported_parameters?: string[];
+				architecture?: { modality?: string };
+				pricing?: {
+					prompt?: string | number;
+					completion?: string | number;
+					input_cache_read?: string | number;
+					input_cache_write?: string | number;
+				};
+				context_length?: number;
+				top_provider?: { max_completion_tokens?: number };
+			}>;
+		};
 
 		const models: Model<Api>[] = [];
 
-		for (const model of data.data) {
+		for (const model of data.data ?? []) {
 			// Only include models that support tools
 			if (!model.supported_parameters?.includes("tools")) continue;
 
@@ -130,10 +156,10 @@ async function fetchAiGatewayModels(): Promise<Model<Api>[]> {
 	try {
 		console.log("Fetching models from Vercel AI Gateway API...");
 		const response = await fetch(`${AI_GATEWAY_MODELS_URL}/models`);
-		const data = await response.json();
+		const data = (await response.json()) as { data?: AiGatewayModel[] };
 		const models: Model<Api>[] = [];
 
-		const items = Array.isArray(data.data) ? (data.data as AiGatewayModel[]) : [];
+		const items = Array.isArray(data.data) ? data.data : [];
 		for (const model of items) {
 			const tags = Array.isArray(model.tags) ? model.tags : [];
 			// Only include models that support tools
@@ -180,7 +206,7 @@ async function loadModelsDevData(): Promise<Model<Api>[]> {
 	try {
 		console.log("Fetching models from models.dev API...");
 		const response = await fetch("https://models.dev/api.json");
-		const data = await response.json();
+		const data = (await response.json()) as Record<string, { models?: Record<string, ModelsDevModel> } | undefined>;
 
 		const models: Model<Api>[] = [];
 
@@ -1356,5 +1382,7 @@ export const MODELS = {
 	}
 }
 
-// Run the generator
-generateModels().catch(console.error);
+// Run the generator when executed directly.
+if (isExecutedAsScriptEntryPoint()) {
+	generateModels().catch(console.error);
+}

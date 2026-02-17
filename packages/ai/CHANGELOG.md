@@ -37,6 +37,7 @@
 - Google Gemini CLI SSE parsing now flushes terminal buffered `data:` lines when streams end without trailing newline delimiters.
 - OpenAI Codex SSE parsing now flushes terminal buffered event chunks when streams end without trailing `\n\n` separators.
 - Model-catalog generation now parses external pricing metadata with strict numeric conversion, ignoring malformed numeric strings instead of partially coercing prefixed values.
+- Model-catalog generator now only parses decimal numeric pricing strings (rejecting non-decimal forms like `0x10` / `1e2`) and no longer auto-executes network fetches when imported for tests.
 - Shared `EventStream.result()` now rejects when streams end without a completion event/result, preventing silent hangs from incomplete stream lifecycles.
 - AI CLI readline prompts now resolve with safe fallbacks when interfaces close early (including already-closed prompts), preventing hangs during interrupted interactive provider selection/login flows.
 - Gemini CLI, Antigravity, and OpenAI Codex OAuth callback waiters now use event-driven settlement (instead of polling loops), improving cancellation/close responsiveness and reducing timer churn during local callback waits.
