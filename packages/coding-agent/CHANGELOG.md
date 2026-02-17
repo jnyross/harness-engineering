@@ -97,6 +97,7 @@
 - Grep tool now rejects non-integer/out-of-range `context`/`limit` values instead of silently coercing them.
 - Bash tool now rejects non-positive timeout values instead of silently disabling timeout behavior.
 - Find tool now rejects non-integer/out-of-range `limit` values instead of silently coercing them.
+- Ls tool now rejects non-integer/out-of-range `limit` values instead of silently coercing them.
 - Edit tool now uses single-settlement abort cleanup across validation/read/write branches, ensuring deterministic cancellation/error settlement behavior.
 - Package-manager command execution now uses single-settlement handling for spawn `error`/`close` races and reports clearer startup/signal failures.
 - Package-manager async command failures now include the full invoked command line in startup/signal/non-zero diagnostics for easier troubleshooting.

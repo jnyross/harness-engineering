@@ -7,7 +7,9 @@ import { DEFAULT_MAX_BYTES, formatSize, type TruncationResult, truncateHead } fr
 
 const lsSchema = Type.Object({
 	path: Type.Optional(Type.String({ description: "Directory to list (default: current directory)" })),
-	limit: Type.Optional(Type.Number({ description: "Maximum number of entries to return (default: 500)" })),
+	limit: Type.Optional(
+		Type.Integer({ minimum: 1, description: "Maximum number of entries to return (default: 500)" }),
+	),
 });
 
 export type LsToolInput = Static<typeof lsSchema>;
@@ -17,6 +19,16 @@ const DEFAULT_LIMIT = 500;
 export interface LsToolDetails {
 	truncation?: TruncationResult;
 	entryLimitReached?: number;
+}
+
+function parseLimitValue(limit: number | undefined): number {
+	if (limit === undefined) {
+		return DEFAULT_LIMIT;
+	}
+	if (!Number.isInteger(limit) || limit < 1) {
+		throw new Error("Parameter 'limit' must be a positive integer.");
+	}
+	return limit;
 }
 
 /**
@@ -56,6 +68,7 @@ export function createLsTool(cwd: string, options?: LsToolOptions): AgentTool<ty
 			{ path, limit }: { path?: string; limit?: number },
 			signal?: AbortSignal,
 		) => {
+			const effectiveLimit = parseLimitValue(limit);
 			return new Promise((resolve, reject) => {
 				if (signal?.aborted) {
 					reject(new Error("Operation aborted"));
@@ -81,7 +94,6 @@ export function createLsTool(cwd: string, options?: LsToolOptions): AgentTool<ty
 				(async () => {
 					try {
 						const dirPath = resolveToCwd(path || ".", cwd);
-						const effectiveLimit = limit ?? DEFAULT_LIMIT;
 						if (aborted) {
 							return;
 						}

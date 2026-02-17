@@ -686,6 +686,15 @@ describe("Coding Agent Tools", () => {
 			expect(output).toContain(".hidden-dir/");
 		});
 
+		it("should reject non-integer or out-of-range limit values", async () => {
+			await expect(lsTool.execute("test-call-ls-invalid-limit-1", { path: testDir, limit: 0 })).rejects.toThrow(
+				"Parameter 'limit' must be a positive integer.",
+			);
+			await expect(lsTool.execute("test-call-ls-invalid-limit-2", { path: testDir, limit: 3.2 })).rejects.toThrow(
+				"Parameter 'limit' must be a positive integer.",
+			);
+		});
+
 		it("should short-circuit when ls signal is already aborted", async () => {
 			const controller = new AbortController();
 			controller.abort();
