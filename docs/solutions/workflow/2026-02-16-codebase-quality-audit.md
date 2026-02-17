@@ -1707,6 +1707,21 @@ to centralize abort-aware sleep behavior with deterministic listener cleanup and
 
 **Result:** AI provider retry backoff now uses a shared abort-safe sleep implementation that avoids abort-listener leaks across retries.
 
+---
+
+### 101) ai GitHub Copilot OAuth polling duplicated leaky abort-sleep logic
+
+**Finding:** GitHub Copilot device-flow polling used a separate local abortable sleep implementation with the same no-cleanup listener pattern, which could accumulate listeners during long polling loops.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/github-copilot.ts`
+- `packages/ai/CHANGELOG.md`
+
+to reuse shared `abortableSleep(...)` with explicit `"Login cancelled"` abort messaging.
+
+**Result:** Copilot OAuth polling now shares deterministic abort-listener cleanup semantics with other AI retry/backoff paths.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1721,6 +1736,8 @@ to centralize abort-aware sleep behavior with deterministic listener cleanup and
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/sleep.test.ts` (includes listener cleanup on resolve + abort paths)
 - ai abortable sleep + retry stream regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/abortable-sleep.test.ts test/google-gemini-cli-retry-delay.test.ts test/openai-codex-stream.test.ts`
+- ai copilot/oauth-related regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/abortable-sleep.test.ts test/github-copilot-anthropic.test.ts`
 - coding-agent execCommand regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - coding-agent interactive status tests pass after share flow command-exec refactor:
