@@ -5778,6 +5778,27 @@ to:
 
 **Result:** compaction/branch-summary token budgets now remain safe and deterministic even when settings files contain malformed numeric values.
 
+---
+
+### 310) coding-agent thinking-budget settings accepted malformed values from settings files
+
+**Finding:** `packages/coding-agent/src/core/settings-manager.ts` forwarded `thinkingBudgets` settings entries directly from parsed settings files; malformed values (`NaN`, negative, non-safe integers, `Infinity`) could propagate into provider thinking-budget overrides.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/settings-manager.ts`
+- `packages/coding-agent/test/settings-manager.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize thinking-budget entries to non-negative safe integers,
+- discard malformed thinking-budget entries from settings reads,
+- fall back to provider defaults when all configured thinking-budget entries are invalid,
+- add regression coverage for malformed-entry dropping and valid-entry preservation.
+
+**Result:** thinking-budget overrides from settings files are now deterministic and bounded, preventing malformed numeric values from altering provider thinking-budget behavior.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5926,7 +5947,7 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/gh-auth-status.test.ts` (includes missing gh spawn failure, signal interruption, non-zero auth status, and success cases)
 - coding-agent countdown timer regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/countdown-timer.test.ts` (includes normal expiry, manual dispose stop, onTick-throw safety coverage, and timeout normalization coverage including positive-infinite clamping)
-- coding-agent settings manager numeric-normalization regression tests pass (retry + editor layout + token-budget settings):
+- coding-agent settings manager numeric-normalization regression tests pass (retry + editor layout + token-budget + thinking-budget settings):
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/settings-manager.test.ts`
 - coding-agent extension dialog callback regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extension-dialog-callbacks.test.ts` (includes throwing selector/input/editor callback safety and post-dispose callback suppression across selector/input/editor dialogs)
