@@ -5123,6 +5123,26 @@ to:
 
 **Result:** memory-option normalization behavior remains unchanged but is now explicit and simpler to maintain.
 
+---
+
+### 278) coding-agent export theme colors accepted malformed hex overrides
+
+**Finding:** `getThemeExportColors(...)` could return malformed hex strings (for example `#ff00f-`) from direct export overrides or variable references, leaking invalid color values into generated HTML export CSS.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/theme/theme.ts`
+- `packages/coding-agent/test/theme-export-colors.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- validate export hex strings as strict `#RRGGBB` values,
+- return `undefined` for malformed direct or variable-resolved hex export colors,
+- add regression coverage for malformed export hex fallback behavior.
+
+**Result:** malformed export hex colors are now ignored safely instead of propagating invalid CSS color values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5155,6 +5175,8 @@ to:
 - coding-agent export theme color resolution regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-export-colors.test.ts test/theme-hex-validation.test.ts test/theme-colorfgbg.test.ts`
 - coding-agent export missing `$var` regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-export-colors.test.ts`
+- coding-agent export malformed hex-color regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-export-colors.test.ts`
 - ai usage metadata regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts`
