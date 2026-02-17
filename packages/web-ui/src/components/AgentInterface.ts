@@ -44,16 +44,34 @@ export class AgentInterface extends LitElement {
 	private _scrollContainer?: HTMLElement;
 	private _resizeObserver?: ResizeObserver;
 	private _unsubscribeSession?: () => void;
+	private _pendingSetInputFrameId: number | undefined;
+	private _pendingSetInputValue: { text: string; attachments: Attachment[] } | undefined;
+
+	private _flushPendingInput = () => {
+		this._pendingSetInputFrameId = undefined;
+		if (!this.isConnected) {
+			return;
+		}
+
+		if (!this._messageEditor) {
+			this._pendingSetInputFrameId = requestAnimationFrame(this._flushPendingInput);
+			return;
+		}
+
+		if (!this._pendingSetInputValue) {
+			return;
+		}
+		const { text, attachments } = this._pendingSetInputValue;
+		this._messageEditor.value = text;
+		this._messageEditor.attachments = attachments;
+		this._pendingSetInputValue = undefined;
+	};
 
 	public setInput(text: string, attachments?: Attachment[]) {
-		const update = () => {
-			if (!this._messageEditor) requestAnimationFrame(update);
-			else {
-				this._messageEditor.value = text;
-				this._messageEditor.attachments = attachments || [];
-			}
-		};
-		update();
+		this._pendingSetInputValue = { text, attachments: attachments || [] };
+		if (this._pendingSetInputFrameId === undefined) {
+			this._pendingSetInputFrameId = requestAnimationFrame(this._flushPendingInput);
+		}
 	}
 
 	public setAutoScroll(enabled: boolean) {
@@ -125,6 +143,12 @@ export class AgentInterface extends LitElement {
 			this._unsubscribeSession();
 			this._unsubscribeSession = undefined;
 		}
+
+		if (this._pendingSetInputFrameId !== undefined) {
+			cancelAnimationFrame(this._pendingSetInputFrameId);
+			this._pendingSetInputFrameId = undefined;
+		}
+		this._pendingSetInputValue = undefined;
 	}
 
 	private setupSessionSubscription() {

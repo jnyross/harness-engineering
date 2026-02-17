@@ -3201,6 +3201,24 @@ to:
 
 **Result:** Streaming message batch updates now avoid stale deferred callbacks after clear/unmount transitions.
 
+---
+
+### 180) AgentInterface `setInput()` could spin deferred frame retries without disconnect cancellation
+
+**Finding:** `setInput()` retried editor assignment via recursive `requestAnimationFrame` loops until the editor ref existed, but did not track/cancel pending frame retries on component teardown.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/AgentInterface.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- coalesce pending set-input requests into tracked deferred frame callbacks,
+- cancel pending callbacks and clear queued values in `disconnectedCallback()`.
+
+**Result:** Agent interface input prefill now avoids runaway deferred frame retries and stale callbacks across disconnect cycles.
+
 ## Validation Evidence
 
 - Root quality gate passes:
