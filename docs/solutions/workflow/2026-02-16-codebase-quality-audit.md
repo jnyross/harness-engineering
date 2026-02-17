@@ -4994,6 +4994,26 @@ to:
 
 **Result:** wrap-style state tracking now ignores malformed/unsafe SGR color payloads instead of re-emitting invalid carried-over ANSI color sequences.
 
+---
+
+### 272) coding-agent theme hex parsing accepted malformed trailing-character coercions
+
+**Finding:** `packages/coding-agent/src/modes/interactive/theme/theme.ts` parsed `#RRGGBB` channels with permissive base-16 `parseInt(...)`, allowing malformed tokens like `#ff00f-` to partially coerce instead of failing validation.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/theme/theme.ts`
+- `packages/coding-agent/test/theme-hex-validation.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require strict 6-digit hex validation before channel parsing,
+- reject malformed trailing-character hex tokens deterministically,
+- add regression coverage for malformed hex-color rejection during theme loading.
+
+**Result:** theme loading now rejects malformed `#RRGGBB` tokens instead of accepting partial base-16 coercions.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5019,6 +5039,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/execution-plan.test.ts test/read-tool.test.ts test/tool-numeric-parameter-safety.test.ts`
 - coding-agent settings-selector numeric parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/settings-selector.test.ts`
+- coding-agent theme hex validation regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-hex-validation.test.ts test/theme-colorfgbg.test.ts`
 - ai usage metadata regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts`
 - ai Gemini retry-delay (including safe-millisecond bounds) regression tests pass:
