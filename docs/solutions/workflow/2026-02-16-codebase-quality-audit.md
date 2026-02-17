@@ -3290,6 +3290,24 @@ to:
 
 **Result:** Runtime routing now rejects spoofed cross-frame iframe messages that do not originate from the registered sandbox window.
 
+---
+
+### 185) runtime message router could leave bridge requests unresolved when providers omitted explicit responses
+
+**Finding:** Sandbox/user-script runtime bridge calls always included `messageId` and awaited responses, but router paths depended on providers to call `respond(...)`; unhandled/fire-and-forget messages could otherwise time out unnecessarily.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/sandbox/RuntimeMessageRouter.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- enforce one-time response semantics per message ID,
+- emit default success acknowledgements when no provider response is produced.
+
+**Result:** Runtime bridge request lifecycles now settle deterministically even when provider handlers do not explicitly respond.
+
 ## Validation Evidence
 
 - Root quality gate passes:

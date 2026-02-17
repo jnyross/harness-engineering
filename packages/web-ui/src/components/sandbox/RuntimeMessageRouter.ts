@@ -142,10 +142,16 @@ export class RuntimeMessageRouter {
 					return;
 				}
 				const sourceWindow = e.source && "postMessage" in e.source ? (e.source as WindowProxy) : null;
+				const shouldRespond = typeof messageId === "string" && messageId.length > 0;
+				let responded = false;
 
 				// Create respond() function for bidirectional communication
 				// biome-ignore lint/suspicious/noExplicitAny: migration
 				const respond = (response: any) => {
+					if (!shouldRespond || responded) {
+						return;
+					}
+					responded = true;
 					const targetWindow = context.iframe?.contentWindow ?? sourceWindow;
 					targetWindow?.postMessage(
 						{
@@ -179,6 +185,10 @@ export class RuntimeMessageRouter {
 					}
 					// Don't stop - let all consumers see the message
 				}
+
+				if (shouldRespond && !responded) {
+					respond({ success: true });
+				}
 			};
 
 			window.addEventListener("message", this.messageListener);
@@ -196,14 +206,20 @@ export class RuntimeMessageRouter {
 				if (!message || typeof message !== "object") {
 					return false;
 				}
-				const { sandboxId } = message;
+				const { sandboxId, messageId } = message as { sandboxId?: string; messageId?: string };
 				if (!sandboxId) return false;
 
 				const context = this.sandboxes.get(sandboxId);
 				if (!context) return false;
+				const shouldRespond = typeof messageId === "string" && messageId.length > 0;
+				let responded = false;
 
 				// biome-ignore lint/suspicious/noExplicitAny: migration
 				const respond = (response: any) => {
+					if (!shouldRespond || responded) {
+						return;
+					}
+					responded = true;
 					sendResponse({
 						...response,
 						sandboxId,
@@ -232,6 +248,10 @@ export class RuntimeMessageRouter {
 							console.error("Runtime consumer user-script handler failed:", error);
 						}
 						// Don't stop - let all consumers see the message
+					}
+
+					if (shouldRespond && !responded) {
+						respond({ success: true });
 					}
 				})();
 

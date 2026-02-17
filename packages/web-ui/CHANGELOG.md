@@ -16,6 +16,7 @@
 - Runtime message router now ignores non-object sandbox payloads and isolates provider/consumer handler exceptions so one faulty handler cannot crash global message routing.
 - Runtime message router now falls back to the incoming message source window when sandbox iframe references are not yet attached, avoiding unnecessary request/response timeouts during early iframe lifecycle races.
 - Runtime message router now ignores iframe messages whose `source` does not match the registered sandbox window, reducing cross-frame message spoofing risk.
+- Runtime message router now guarantees a default runtime response for handled sandbox/user-script messages when providers don't respond explicitly, preventing avoidable bridge timeouts on fire-and-forget handlers.
 - `ProviderKeyInput` now tracks and clears delayed failure-reset timers across retries/disconnects, preventing stale timeout callbacks from mutating detached component state.
 - `ConsoleBlock` now clears copy-feedback reset timers on repeated copy/disconnect paths, preventing stale timeout callbacks after component unmount.
 - `AttachmentOverlay` now removes global keydown listeners and cancels in-flight preview loading in `disconnectedCallback()`, preventing listener/task leaks if the overlay is removed externally.
