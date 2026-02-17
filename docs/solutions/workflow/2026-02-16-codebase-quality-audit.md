@@ -4297,6 +4297,27 @@ to:
 
 **Result:** mom required-option parsing now rejects both single-dash and double-dash option-like tokens as missing values.
 
+---
+
+### 238) agent project-runner option parsing accepted option-like tokens as values
+
+**Finding:** `project-runner` parsed `--iterations`, `--max-tasks`, and `--provider` values by position only, so option-like next tokens (for example `--provider --max-tasks`) could be consumed as values and suppress intended flag parsing.
+
+**Action:** Updated:
+
+- `packages/agent/src/project-runner.ts`
+- `packages/agent/test/project-runner.test.ts` (new)
+- `packages/agent/CHANGELOG.md`
+
+to:
+
+- centralize required option-value parsing with option-like token rejection,
+- expose `parseProjectRunnerArgs(...)` for focused parser coverage,
+- guard CLI entrypoint execution so parser utilities can be imported in tests without running `main()`,
+- add regression tests for valid parsing and missing/option-like value rejection.
+
+**Result:** project-runner CLI parsing now fails fast on malformed option values and no longer swallows subsequent flags as accidental option values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4318,6 +4339,8 @@ to:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/cli-args.test.ts test/agent-model.test.ts`
 - mom CLI args parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/cli-args.test.ts`
+- agent project-runner args regression tests pass:
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/project-runner.test.ts`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
 - pods SSH/SCP parser regression tests pass:
