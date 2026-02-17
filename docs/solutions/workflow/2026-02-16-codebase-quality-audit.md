@@ -4236,6 +4236,26 @@ to:
 
 **Result:** coding-agent CLI now surfaces actionable diagnostics when value-backed flags are missing arguments instead of silently ignoring them.
 
+---
+
+### 235) coding-agent value-backed flags could consume following flags as values
+
+**Finding:** value-backed CLI flags accepted option-like next tokens as values (for example `--model --print`), causing subsequent flags to be swallowed instead of parsed.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/cli/args.ts`
+- `packages/coding-agent/test/args.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- reject option-like tokens for value-backed flags by default,
+- preserve option-like value support for system prompt flags (`--system-prompt`, `--append-system-prompt`),
+- add regression coverage confirming non-swallowed follow-up flags and preserved system-prompt behavior.
+
+**Result:** coding-agent CLI no longer swallows subsequent flags as accidental option values in common value-backed flag paths.
+
 ## Validation Evidence
 
 - Root quality gate passes:
