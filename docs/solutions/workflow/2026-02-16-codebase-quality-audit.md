@@ -4417,12 +4417,38 @@ to:
 
 **Result:** coding-agent read-tool now enforces exact line-offset boundaries and no longer exposes false extra-line offsets from trailing newline artifacts.
 
+---
+
+### 244) shared AI usage metadata parsers still accepted negative/fractional token values
+
+**Finding:** shared usage metadata parsers for Google/Bedrock/OpenAI-Responses accepted any finite numeric value, so malformed provider payloads could produce negative or fractional token accounting values.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/google-shared.ts`
+- `packages/ai/src/providers/amazon-bedrock.ts`
+- `packages/ai/src/providers/openai-responses-shared.ts`
+- `packages/ai/test/google-usage-metadata.test.ts`
+- `packages/ai/test/amazon-bedrock-usage.test.ts`
+- `packages/ai/test/openai-responses-shared-usage.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- normalize parsed usage values to non-negative integers (`Math.trunc` + lower-bound guard),
+- ignore malformed/negative values by falling back to computed safe totals,
+- add regression coverage for malformed, negative, and fractional token-value inputs.
+
+**Result:** shared AI usage accounting now avoids negative/fractional token drift and remains stable when compatible providers emit malformed token metadata.
+
 ## Validation Evidence
 
 - Root quality gate passes:
   - `npm run check`
 - ai usage metadata regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts`
+- ai shared usage parser regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts test/amazon-bedrock-usage.test.ts test/openai-responses-shared-usage.test.ts`
 - mom model/key resolution regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/agent-model.test.ts`
 - pods required-option parser regression tests pass:
