@@ -1965,7 +1965,7 @@ to:
 
 ### 116) anthropic OAuth login trusted unvalidated pasted state/code input
 
-**Finding:** `loginAnthropic(...)` accepted raw pasted input with simple `code#state` splitting and no local state verification against the generated verifier. It also did not parse full redirect URLs, making manual login input more error-prone.
+**Finding:** `loginAnthropic(...)` accepted raw pasted input with simple `code#state` splitting and no local state verification against the generated verifier. It also did not parse full redirect URLs or query-string formatted manual input, making headless login input more error-prone.
 
 **Action:** Updated:
 
@@ -1975,7 +1975,7 @@ to:
 
 to:
 
-- parse manual input as either full redirect URL (`?code=...&state=...`), legacy `code#state`, or bare code,
+- parse manual input as either full redirect URL (`?code=...&state=...`), query-string format (`code=...&state=...`), legacy `code#state`, or bare code,
 - reject state mismatches before token exchange (`OAuth state mismatch - possible CSRF attack`),
 - keep token exchange state tied to the generated verifier,
 - add regression tests for state-mismatch rejection and full redirect URL parsing.
