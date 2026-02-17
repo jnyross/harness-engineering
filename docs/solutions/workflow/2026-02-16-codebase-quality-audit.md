@@ -2937,6 +2937,27 @@ to:
 
 **Result:** Shared event streams now fail fast on incomplete endings instead of hanging `result()` consumers indefinitely.
 
+---
+
+### 166) CLI fork-confirm prompt could hang when stdin closed before answer
+
+**Finding:** Session fork confirmation prompt in CLI main used inline `readline.question(...)` without explicit close-path settlement handling, risking unresolved prompt promises when stdin closed unexpectedly.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/cli/prompt-confirm.ts` (new)
+- `packages/coding-agent/src/main.ts`
+- `packages/coding-agent/test/prompt-confirm.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- extract yes/no prompting into a dedicated helper,
+- add single-settlement close handling that resolves `false` on early stdin close,
+- add regression tests for yes/no responses and pre-answer input-close behavior.
+
+**Result:** CLI session-fork confirmation now completes deterministically even when stdin closes before user input.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2953,6 +2974,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/login-dialog.test.ts test/login-dialog-url-open.test.ts` (includes single-settlement cancel behavior and prompt-replacement rejection coverage)
 - coding-agent piped-stdin helper regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/read-piped-stdin.test.ts` (includes TTY short-circuit, trimmed piped content, and stdin error rejection coverage)
+- coding-agent prompt-confirm helper regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-confirm.test.ts test/read-piped-stdin.test.ts` (includes yes/no parsing and early stdin-close settlement)
 - coding-agent antigravity image SSE parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/antigravity-image-gen.test.ts` (includes terminal `data:` chunk without trailing newline and text+image ordering coverage)
 - coding-agent sleep helper regression tests pass:
