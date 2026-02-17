@@ -1,4 +1,5 @@
 import { LogLevel, WebClient } from "@slack/web-api";
+import { parseSlackTimestampToMilliseconds } from "./slack-timestamp.js";
 
 interface Message {
 	ts: string;
@@ -9,15 +10,20 @@ interface Message {
 	files?: Array<{ name: string; url_private?: string }>;
 }
 
-function formatTs(ts: string): string {
-	const date = new Date(parseFloat(ts) * 1000);
+export function formatTs(ts: string): string {
+	const timestampMs = parseSlackTimestampToMilliseconds(ts);
+	if (timestampMs === undefined) {
+		return ts;
+	}
+
+	const date = new Date(timestampMs);
 	return date
 		.toISOString()
 		.replace("T", " ")
 		.replace(/\.\d+Z$/, "");
 }
 
-function formatMessage(ts: string, user: string, text: string, indent = ""): string {
+export function formatMessage(ts: string, user: string, text: string, indent = ""): string {
 	const prefix = `[${formatTs(ts)}] ${user}: `;
 	const lines = text.split("\n");
 	const firstLine = `${indent}${prefix}${lines[0]}`;

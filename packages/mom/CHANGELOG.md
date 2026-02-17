@@ -24,6 +24,7 @@
 - Sandbox executor results now include fallback stderr diagnostics for signal/unknown/non-zero command exits when subprocesses fail silently, improving downstream tool error clarity.
 - Channel store timestamp parsing now validates Slack timestamp formats strictly and falls back to current time for malformed values, preventing `logMessage()` date-conversion crashes from partial `parseInt`/`parseFloat` coercion.
 - Slack live/backfill message timestamp handling now shares strict Slack timestamp parsing and ignores malformed history timestamps when selecting backfill cursors, preventing date-conversion crashes and malformed timestamp ordering drift.
+- Channel-download transcript formatting now leaves malformed Slack timestamps as raw text instead of attempting invalid date conversion, preventing `RangeError` crashes during export.
 
 ### Changed
 
