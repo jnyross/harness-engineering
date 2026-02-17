@@ -18,6 +18,7 @@ import type {
 	StreamFunction,
 	StreamOptions,
 } from "../types.js";
+import { abortableSleep } from "../utils/abortable-sleep.js";
 import { AssistantMessageEventStream } from "../utils/event-stream.js";
 import { convertResponsesMessages, convertResponsesTools, processResponsesStream } from "./openai-responses-shared.js";
 import { buildBaseOptions, clampReasoning } from "./simple-options.js";
@@ -79,20 +80,6 @@ function isRetryableError(status: number, errorText: string): boolean {
 		return true;
 	}
 	return /rate.?limit|overloaded|service.?unavailable|upstream.?connect|connection.?refused/i.test(errorText);
-}
-
-function sleep(ms: number, signal?: AbortSignal): Promise<void> {
-	return new Promise((resolve, reject) => {
-		if (signal?.aborted) {
-			reject(new Error("Request was aborted"));
-			return;
-		}
-		const timeout = setTimeout(resolve, ms);
-		signal?.addEventListener("abort", () => {
-			clearTimeout(timeout);
-			reject(new Error("Request was aborted"));
-		});
-	});
 }
 
 // ============================================================================
@@ -195,7 +182,7 @@ export const streamOpenAICodexResponses: StreamFunction<"openai-codex-responses"
 					const errorText = await response.text();
 					if (attempt < MAX_RETRIES && isRetryableError(response.status, errorText)) {
 						const delayMs = BASE_DELAY_MS * 2 ** attempt;
-						await sleep(delayMs, options?.signal);
+						await abortableSleep(delayMs, options?.signal);
 						continue;
 					}
 
@@ -216,7 +203,7 @@ export const streamOpenAICodexResponses: StreamFunction<"openai-codex-responses"
 					// Network errors are retryable
 					if (attempt < MAX_RETRIES && !lastError.message.includes("usage limit")) {
 						const delayMs = BASE_DELAY_MS * 2 ** attempt;
-						await sleep(delayMs, options?.signal);
+						await abortableSleep(delayMs, options?.signal);
 						continue;
 					}
 					throw lastError;

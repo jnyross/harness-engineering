@@ -5,6 +5,7 @@
 ### Fixed
 
 - Updated Codex WebSocket header conversion to iterate with `Headers.forEach()`, avoiding type incompatibilities in consumer check flows that use non-DOM `Headers` typings.
+- Consolidated provider retry sleep into a shared abortable helper that removes abort listeners on resolve/reject, preventing listener leaks across retry backoff paths.
 
 ## [0.52.12] - 2026-02-13
 
