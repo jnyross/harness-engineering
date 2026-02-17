@@ -172,6 +172,14 @@ const CLAUDE_THINKING_BETA_HEADER = "interleaved-thinking-2025-05-14";
  */
 export function extractRetryDelay(errorText: string, response?: Response | Headers): number | undefined {
 	const normalizeDelay = (ms: number): number | undefined => (ms > 0 ? Math.ceil(ms + 1000) : undefined);
+	const parseNonNegativeInteger = (value: string): number | undefined => {
+		const trimmed = value.trim();
+		if (!/^\d+$/.test(trimmed)) {
+			return undefined;
+		}
+		const parsed = Number.parseInt(trimmed, 10);
+		return Number.isSafeInteger(parsed) ? parsed : undefined;
+	};
 	const parseNonNegativeDecimal = (value: string): number | undefined => {
 		const trimmed = value.trim();
 		if (!/^\d+(?:\.\d+)?$/.test(trimmed)) {
@@ -204,9 +212,8 @@ export function extractRetryDelay(errorText: string, response?: Response | Heade
 
 		const rateLimitReset = headers.get("x-ratelimit-reset");
 		if (rateLimitReset) {
-			const trimmedRateLimitReset = rateLimitReset.trim();
-			if (/^\d+$/.test(trimmedRateLimitReset)) {
-				const resetSeconds = Number.parseInt(trimmedRateLimitReset, 10);
+			const resetSeconds = parseNonNegativeInteger(rateLimitReset);
+			if (resetSeconds !== undefined) {
 				const delay = normalizeDelay(resetSeconds * 1000 - Date.now());
 				if (delay !== undefined) {
 					return delay;
@@ -229,8 +236,13 @@ export function extractRetryDelay(errorText: string, response?: Response | Heade
 	// Pattern 1: "Your quota will reset after ..." (formats: "18h31m10s", "10m15s", "6s", "39s")
 	const durationMatch = errorText.match(/reset after (?:(\d+)h)?(?:(\d+)m)?(\d+(?:\.\d+)?)s/i);
 	if (durationMatch) {
-		const hours = durationMatch[1] ? parseInt(durationMatch[1], 10) : 0;
-		const minutes = durationMatch[2] ? parseInt(durationMatch[2], 10) : 0;
+		const hoursValue = durationMatch[1] ? parseNonNegativeInteger(durationMatch[1]) : 0;
+		const minutesValue = durationMatch[2] ? parseNonNegativeInteger(durationMatch[2]) : 0;
+		if (hoursValue === undefined || minutesValue === undefined) {
+			return undefined;
+		}
+		const hours = hoursValue;
+		const minutes = minutesValue;
 		const seconds = parseFloat(durationMatch[3]);
 		if (!Number.isNaN(seconds)) {
 			const totalMs = ((hours * 60 + minutes) * 60 + seconds) * 1000;

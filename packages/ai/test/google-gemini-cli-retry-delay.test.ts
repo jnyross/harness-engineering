@@ -81,6 +81,16 @@ describe("extractRetryDelay header parsing", () => {
 		expect(delay).toBe(3000);
 	});
 
+	it("ignores unsafe x-ratelimit-reset header values and falls back to body parsing", () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2025-01-01T00:00:00Z"));
+
+		const response = new Response("", { headers: { "x-ratelimit-reset": "9007199254740993" } });
+		const delay = extractRetryDelay("Please retry in 2s", response);
+
+		expect(delay).toBe(3000);
+	});
+
 	it("returns undefined when only malformed x-ratelimit-reset is present", () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2025-01-01T00:00:00Z"));
