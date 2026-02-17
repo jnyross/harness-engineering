@@ -36,6 +36,7 @@ describe("normalizeContextOption", () => {
 		assert.throws(() => normalizeContextOption("none"), /Invalid --context value/);
 		assert.throws(() => normalizeContextOption("4096tokens"), /Invalid --context value/);
 		assert.throws(() => normalizeContextOption("16k-extra"), /Invalid --context value/);
+		assert.throws(() => normalizeContextOption("9007199254740993"), /Invalid --context value/);
 	});
 });
 
@@ -50,5 +51,6 @@ describe("normalizeGpuCountOption", () => {
 		assert.throws(() => normalizeGpuCountOption("-1"), /Invalid --gpus value/);
 		assert.throws(() => normalizeGpuCountOption("2gpu"), /Invalid --gpus value/);
 		assert.throws(() => normalizeGpuCountOption("abc"), /Invalid --gpus value/);
+		assert.throws(() => normalizeGpuCountOption("9007199254740993"), /Invalid --gpus value/);
 	});
 });

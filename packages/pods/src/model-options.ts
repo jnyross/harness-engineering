@@ -1,5 +1,19 @@
 const CONTEXT_SIZE_ALIASES = new Set(["4k", "8k", "16k", "32k", "64k", "128k"]);
 
+function parsePositiveSafeIntegerOption(value: string, optionName: "--context" | "--gpus"): number {
+	const trimmed = value.trim();
+	if (!/^\d+$/.test(trimmed)) {
+		throw new Error(`Invalid ${optionName} value. Use a positive integer.`);
+	}
+
+	const numeric = Number.parseInt(trimmed, 10);
+	if (!Number.isSafeInteger(numeric) || numeric < 1) {
+		throw new Error(`Invalid ${optionName} value. Use a positive integer.`);
+	}
+
+	return numeric;
+}
+
 export function normalizeMemoryOption(memory: string): string {
 	const trimmed = memory.trim();
 	const numericPart = trimmed.endsWith("%") ? trimmed.slice(0, -1).trim() : trimmed;
@@ -24,28 +38,13 @@ export function normalizeContextOption(context: string): string {
 		return normalized;
 	}
 
-	if (!/^\d+$/.test(trimmed)) {
+	try {
+		return String(parsePositiveSafeIntegerOption(trimmed, "--context"));
+	} catch {
 		throw new Error("Invalid --context value. Use 4k/8k/16k/32k/64k/128k or a positive token count.");
 	}
-
-	const numeric = Number.parseInt(trimmed, 10);
-	if (!Number.isFinite(numeric) || numeric <= 0) {
-		throw new Error("Invalid --context value. Use 4k/8k/16k/32k/64k/128k or a positive token count.");
-	}
-
-	return String(numeric);
 }
 
 export function normalizeGpuCountOption(gpuCount: string): number {
-	const trimmed = gpuCount.trim();
-	if (!/^\d+$/.test(trimmed)) {
-		throw new Error("Invalid --gpus value. Use a positive integer.");
-	}
-
-	const numeric = Number.parseInt(trimmed, 10);
-	if (!Number.isFinite(numeric) || numeric < 1) {
-		throw new Error("Invalid --gpus value. Use a positive integer.");
-	}
-
-	return numeric;
+	return parsePositiveSafeIntegerOption(gpuCount, "--gpus");
 }
