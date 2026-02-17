@@ -18,6 +18,7 @@
 - Sandbox command execution now treats signal-terminated child processes as non-zero exits instead of reporting false success.
 - Sandbox command execution now treats unknown `close(code=null, signal=null)` subprocess outcomes as non-zero failures instead of ambiguous success.
 - Sandbox executor timeouts now ignore oversized timeout values above Node.js timer limits, avoiding implicit runtime timer clamping that could prematurely abort sandboxed commands.
+- One-shot event scheduling now validates timestamp parsing and chunks delays above Node.js timer limits, preventing malformed/oversized schedules from executing immediately via runtime timer clamping.
 - Docker sandbox preflight command diagnostics now also distinguish unknown `code=null/signal=null` exits from ordinary non-zero codes, improving `validateSandbox()` failure clarity on rare close-status edge cases.
 - Sandbox Windows process-tree cleanup now handles async `taskkill` spawn errors, preventing uncaught child-process errors during best-effort termination.
 - Docker sandbox preflight command failures now report explicit command + signal/exit diagnostics, improving `validateSandbox()` error clarity when docker invocations terminate unexpectedly.

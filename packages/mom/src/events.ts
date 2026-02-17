@@ -39,6 +39,22 @@ export type MomEvent = ImmediateEvent | OneShotEvent | PeriodicEvent;
 const DEBOUNCE_MS = 100;
 const MAX_RETRIES = 3;
 const RETRY_BASE_MS = 100;
+const MAX_TIMER_DELAY_MS = 2_147_483_647;
+
+export function parseOneShotTimestampMs(value: string): number | undefined {
+	const parsed = new Date(value).getTime();
+	return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+export function normalizeOneShotDelayMs(delayMs: number): { delayMs: number; needsReschedule: boolean } | undefined {
+	if (!Number.isFinite(delayMs) || delayMs <= 0) {
+		return undefined;
+	}
+	if (delayMs > MAX_TIMER_DELAY_MS) {
+		return { delayMs: MAX_TIMER_DELAY_MS, needsReschedule: true };
+	}
+	return { delayMs, needsReschedule: false };
+}
 
 export class EventsWatcher {
 	private timers: Map<string, NodeJS.Timeout> = new Map();
@@ -276,24 +292,38 @@ export class EventsWatcher {
 	}
 
 	private handleOneShot(filename: string, event: OneShotEvent): void {
-		const atTime = new Date(event.at).getTime();
-		const now = Date.now();
+		const atTime = parseOneShotTimestampMs(event.at);
+		if (atTime === undefined) {
+			log.logWarning(`Invalid one-shot event timestamp, deleting: ${filename}`, event.at);
+			this.deleteFile(filename);
+			return;
+		}
 
-		if (atTime <= now) {
+		const now = Date.now();
+		const normalizedDelay = normalizeOneShotDelayMs(atTime - now);
+		if (!normalizedDelay) {
 			// Past - delete without executing
 			log.logInfo(`One-shot event in the past, deleting: ${filename}`);
 			this.deleteFile(filename);
 			return;
 		}
 
-		const delay = atTime - now;
-		log.logInfo(`Scheduling one-shot event: ${filename} in ${Math.round(delay / 1000)}s`);
+		log.logInfo(`Scheduling one-shot event: ${filename} in ${Math.round((atTime - now) / 1000)}s`);
+		if (normalizedDelay.needsReschedule) {
+			log.logInfo(
+				`One-shot event exceeds max timer range, staging chunked scheduling: ${filename} (${Math.round((atTime - now) / 1000)}s)`,
+			);
+		}
 
 		const timer = setTimeout(() => {
 			this.timers.delete(filename);
+			if (normalizedDelay.needsReschedule) {
+				this.handleOneShot(filename, event);
+				return;
+			}
 			log.logInfo(`Executing one-shot event: ${filename}`);
 			this.execute(filename, event);
-		}, delay);
+		}, normalizedDelay.delayMs);
 
 		this.timers.set(filename, timer);
 	}
