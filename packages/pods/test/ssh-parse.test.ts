@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { describe, it } from "node:test";
 import {
 	extractHostFromSshCommand,
+	getScpExitError,
 	parseShellCommand,
 	parseSshCommand,
 	scpFile,
@@ -130,7 +131,17 @@ describe("sshExecStream", () => {
 });
 
 describe("scpFile", () => {
-	it("returns false when scp process exits via signal", async () => {
+	it("reports unknown null/null exits", () => {
+		assert.equal(getScpExitError(null, null), "scp process exited with unknown status");
+	});
+
+	it("returns parse errors when ssh command is invalid", async () => {
+		const result = await scpFile("bash -lc 'echo hi'", "/tmp/local.txt", "/tmp/remote.txt");
+		assert.equal(result.ok, false);
+		assert.match(result.error ?? "", /expected ssh binary/);
+	});
+
+	it("returns failure result when scp process exits via signal", async () => {
 		const dir = mkdtempSync(join(tmpdir(), "pi-pods-scp-signal-"));
 		const scpPath = join(dir, "scp");
 		const originalPath = process.env.PATH;
@@ -139,8 +150,9 @@ describe("scpFile", () => {
 			chmodSync(scpPath, 0o755);
 			process.env.PATH = `${dir}:${originalPath ?? ""}`;
 
-			const ok = await scpFile("ssh user@host", "/tmp/local.txt", "/tmp/remote.txt");
-			assert.equal(ok, false);
+			const result = await scpFile("ssh user@host", "/tmp/local.txt", "/tmp/remote.txt");
+			assert.equal(result.ok, false);
+			assert.equal(result.error, "scp process terminated by signal SIGTERM");
 		} finally {
 			process.env.PATH = originalPath;
 			rmSync(dir, { recursive: true, force: true });

@@ -113,9 +113,9 @@ export const setupPod = async (
 	// Copy setup script
 	console.log("Copying setup script...");
 	const scriptPath = join(__dirname, "../../scripts/pod_setup.sh");
-	const success = await scpFile(sshCmd, scriptPath, "/tmp/pod_setup.sh");
-	if (!success) {
-		console.error(chalk.red("Failed to copy setup script"));
+	const copyResult = await scpFile(sshCmd, scriptPath, "/tmp/pod_setup.sh");
+	if (!copyResult.ok) {
+		console.error(chalk.red(`Failed to copy setup script${copyResult.error ? `: ${copyResult.error}` : ""}`));
 		process.exit(1);
 	}
 	console.log(chalk.green("✓ Setup script copied"));

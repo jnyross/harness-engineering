@@ -7,6 +7,11 @@ export interface SSHResult {
 	exitCode: number;
 }
 
+export interface ScpResult {
+	ok: boolean;
+	error?: string;
+}
+
 const SSH_FLAGS_WITH_VALUE = new Set([
 	"-b",
 	"-c",
@@ -303,15 +308,31 @@ export const sshExecStream = async (
 /**
  * Copy a file to remote via SCP
  */
-export const scpFile = async (sshCmd: string, localPath: string, remotePath: string): Promise<boolean> => {
+export function getScpExitError(code: number | null, signal: NodeJS.Signals | null): string | undefined {
+	if (signal) {
+		return `scp process terminated by signal ${signal}`;
+	}
+	if (code === null) {
+		return "scp process exited with unknown status";
+	}
+	if (code !== 0) {
+		return `scp process exited with code ${code}`;
+	}
+	return undefined;
+}
+
+export const scpFile = async (sshCmd: string, localPath: string, remotePath: string): Promise<ScpResult> => {
 	let host = "";
 	let port = "22";
 	let sshArgs: string[];
 	try {
 		const parsed = parseSshCommand(sshCmd);
 		sshArgs = parsed.sshArgs;
-	} catch {
-		return false;
+	} catch (error) {
+		return {
+			ok: false,
+			error: error instanceof Error ? error.message : String(error),
+		};
 	}
 
 	for (let i = 0; i < sshArgs.length; i++) {
@@ -339,8 +360,10 @@ export const scpFile = async (sshCmd: string, localPath: string, remotePath: str
 	}
 
 	if (!host) {
-		console.error("Could not parse host from SSH command");
-		return false;
+		return {
+			ok: false,
+			error: "Could not parse host from SSH command",
+		};
 	}
 
 	// Build SCP command
@@ -348,7 +371,7 @@ export const scpFile = async (sshCmd: string, localPath: string, remotePath: str
 
 	return new Promise((resolve) => {
 		let settled = false;
-		const resolveOnce = (result: boolean) => {
+		const resolveOnce = (result: ScpResult) => {
 			if (settled) {
 				return;
 			}
@@ -359,11 +382,15 @@ export const scpFile = async (sshCmd: string, localPath: string, remotePath: str
 		const proc = spawn("scp", scpArgs, { stdio: "inherit" });
 
 		proc.on("close", (code, signal) => {
-			resolveOnce(code === 0 && !signal);
+			const exitError = getScpExitError(code, signal);
+			resolveOnce(exitError ? { ok: false, error: exitError } : { ok: true });
 		});
 
-		proc.on("error", () => {
-			resolveOnce(false);
+		proc.on("error", (error) => {
+			resolveOnce({
+				ok: false,
+				error: `Failed to start scp command: ${error.message}`,
+			});
 		});
 	});
 };
