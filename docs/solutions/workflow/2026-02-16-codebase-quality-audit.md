@@ -5014,6 +5014,26 @@ to:
 
 **Result:** theme loading now rejects malformed `#RRGGBB` tokens instead of accepting partial base-16 coercions.
 
+---
+
+### 273) coding-agent COLORFGBG theme auto-detection accepted out-of-range palette indices
+
+**Finding:** `packages/coding-agent/src/modes/interactive/theme/theme.ts` accepted any safe integer `COLORFGBG` background index, including out-of-range values outside ANSI palette bounds (`0-255`), causing malformed environment payloads to influence light/dark detection.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/theme/theme.ts`
+- `packages/coding-agent/test/theme-colorfgbg.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- enforce `0-255` bounds for parsed `COLORFGBG` background indices,
+- fall back to default theme detection when the index is out-of-range,
+- add regression coverage for out-of-range background index rejection.
+
+**Result:** theme auto-detection now ignores malformed out-of-range `COLORFGBG` values instead of treating oversized palette indices as valid.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5041,6 +5061,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/settings-selector.test.ts`
 - coding-agent theme hex validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-hex-validation.test.ts test/theme-colorfgbg.test.ts`
+- coding-agent COLORFGBG range regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-colorfgbg.test.ts`
 - ai usage metadata regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts`
 - ai Gemini retry-delay (including safe-millisecond bounds) regression tests pass:
