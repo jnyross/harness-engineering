@@ -20,6 +20,7 @@ import type { ExtensionAPI, ExtensionCommandContext, Theme } from "@mariozechner
 import type { OverlayAnchor, OverlayHandle, OverlayOptions, TUI } from "@mariozechner/pi-tui";
 import { matchesKey, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import { spawn } from "child_process";
+import { getOverlayQATestStartError } from "./overlay-qa-test-status.js";
 
 // Global handle for toggle demo (in real code, use a more elegant pattern)
 let globalToggleHandle: OverlayHandle | null = null;
@@ -426,7 +427,8 @@ class StreamingOverflowComponent extends BaseOverlay {
 	private startProcess(): void {
 		// Run a command that produces many lines with ANSI colors
 		// Using find with -ls produces file listings, or use ls --color
-		this.proc = spawn("bash", [
+		const command = "bash";
+		const args = [
 			"-c",
 			`
 			echo "Starting streaming overflow test (30+ seconds)..."
@@ -454,7 +456,8 @@ class StreamingOverflowComponent extends BaseOverlay {
 			echo -e "\\033[32m✓ Complete - 100 files processed in 30 seconds\\033[0m"
 			echo "Press Esc to close"
 			`,
-		]);
+		];
+		this.proc = spawn(command, args);
 
 		this.proc.stdout?.on("data", (data: Buffer) => {
 			if (this.disposed) return; // Guard against callbacks after dispose
@@ -476,7 +479,16 @@ class StreamingOverflowComponent extends BaseOverlay {
 
 		this.proc.on("error", (error) => {
 			if (this.disposed) return; // Guard against callbacks after dispose
-			this.lines.push(this.theme.fg("error", `Failed to start stream process: ${error.message}`));
+			this.lines.push(
+				this.theme.fg(
+					"error",
+					getOverlayQATestStartError({
+						command,
+						args,
+						error,
+					}),
+				),
+			);
 			this.finished = true;
 			this.tui.requestRender();
 		});
