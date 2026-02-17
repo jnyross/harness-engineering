@@ -40,6 +40,7 @@ describe("extractPodOverride", () => {
 
 	it("rejects option-like --pod values", () => {
 		assert.throws(() => extractPodOverride(["agent", "model-a", "--pod", "-h"], true), /requires a pod name/);
+		assert.throws(() => extractPodOverride(["agent", "model-a", "--pod=-h"], true), /requires a pod name/);
 	});
 
 	it("rejects duplicate --pod flags", () => {
