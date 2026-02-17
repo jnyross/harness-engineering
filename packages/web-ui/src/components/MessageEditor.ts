@@ -48,9 +48,18 @@ export class MessageEditor extends LitElement {
 	@state() processingFiles = false;
 	@state() isDragging = false;
 	private fileInputRef = createRef<HTMLInputElement>();
+	private pendingModelSelectFrameId: number | undefined;
 
 	protected override createRenderRoot(): HTMLElement | DocumentFragment {
 		return this;
+	}
+
+	override disconnectedCallback(): void {
+		super.disconnectedCallback();
+		if (this.pendingModelSelectFrameId !== undefined) {
+			cancelAnimationFrame(this.pendingModelSelectFrameId);
+			this.pendingModelSelectFrameId = undefined;
+		}
 	}
 
 	private handleTextareaInput = (e: Event) => {
@@ -232,6 +241,19 @@ export class MessageEditor extends LitElement {
 		}
 	}
 
+	private scheduleModelSelectOpen() {
+		if (this.pendingModelSelectFrameId !== undefined) {
+			cancelAnimationFrame(this.pendingModelSelectFrameId);
+		}
+		this.pendingModelSelectFrameId = requestAnimationFrame(() => {
+			this.pendingModelSelectFrameId = undefined;
+			if (!this.isConnected) {
+				return;
+			}
+			this.onModelSelect?.();
+		});
+	}
+
 	override render() {
 		// Check if current model supports thinking/reasoning
 		const model = this.currentModel;
@@ -357,9 +379,7 @@ export class MessageEditor extends LitElement {
 											// Focus textarea before opening model selector so focus returns there
 											this.textareaRef.value?.focus();
 											// Wait for next frame to ensure focus takes effect before dialog captures it
-											requestAnimationFrame(() => {
-												this.onModelSelect?.();
-											});
+											this.scheduleModelSelectOpen();
 										},
 										children: html`
 											${icon(Sparkles, "sm")}

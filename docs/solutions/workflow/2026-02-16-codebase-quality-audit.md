@@ -3636,6 +3636,25 @@ to:
 
 **Result:** Model selector no longer runs stale deferred scroll callbacks after close/disconnect races.
 
+---
+
+### 204) message editor deferred model-selector open callback could fire after detach
+
+**Finding:** Message editor deferred model-selector opens with `requestAnimationFrame` after focusing the textarea, but did not cancel pending frames on disconnect.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/MessageEditor.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- coalesce pending model-selector open frames,
+- cancel queued frame callbacks on disconnect,
+- guard deferred callbacks with connectivity checks.
+
+**Result:** Message editor no longer triggers stale model-selector open callbacks after component detach races.
+
 ## Validation Evidence
 
 - Root quality gate passes:
