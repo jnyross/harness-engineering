@@ -13,6 +13,9 @@ describe("normalizeMemoryOption", () => {
 		assert.throws(() => normalizeMemoryOption("0"), /Invalid --memory value/);
 		assert.throws(() => normalizeMemoryOption("101"), /Invalid --memory value/);
 		assert.throws(() => normalizeMemoryOption("abc"), /Invalid --memory value/);
+		assert.throws(() => normalizeMemoryOption("1e2"), /Invalid --memory value/);
+		assert.throws(() => normalizeMemoryOption("0x10"), /Invalid --memory value/);
+		assert.throws(() => normalizeMemoryOption(".5"), /Invalid --memory value/);
 	});
 });
 

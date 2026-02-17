@@ -3,6 +3,9 @@ const CONTEXT_SIZE_ALIASES = new Set(["4k", "8k", "16k", "32k", "64k", "128k"]);
 export function normalizeMemoryOption(memory: string): string {
 	const trimmed = memory.trim();
 	const numericPart = trimmed.endsWith("%") ? trimmed.slice(0, -1).trim() : trimmed;
+	if (!/^\d+(?:\.\d+)?$/.test(numericPart)) {
+		throw new Error('Invalid --memory value. Use a percentage between 0 and 100 (for example: "50%" or "75").');
+	}
 	const value = Number(numericPart);
 
 	if (!Number.isFinite(value) || value <= 0 || value > 100) {
