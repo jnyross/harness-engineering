@@ -26,6 +26,7 @@
 - OpenAI Codex OAuth cleanup now safely ignores non-listening callback-server close errors in fallback paths, matching Gemini/Antigravity close-guard behavior.
 - Gemini CLI and Antigravity OAuth callback-server modules now use top-level Node HTTP function type imports (instead of inline `import("node:http").Type` annotations), aligning with static type-import conventions while preserving lazy runtime loading.
 - Lazy Node-module helpers in `env-api-keys`, OpenAI Codex Responses, and OpenAI Codex OAuth now use top-level type imports (instead of inline `typeof import("node:*").*` annotations), aligning with static type-import conventions while preserving lazy runtime loading.
+- HTTP proxy bootstrap now only initializes undici proxy dispatchers when proxy environment variables are set, and reports import/setup failures with explicit diagnostics instead of unhandled promise rejections.
 
 ## [0.52.12] - 2026-02-13
 
