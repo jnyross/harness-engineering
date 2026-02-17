@@ -8,6 +8,7 @@
 - Updated local TypeScript path mapping for package and example checks so web-ui typechecks reliably against source packages without requiring prebuilt declaration outputs.
 - Re-enabled persistent storage permission requests in the example app now that `PersistentStorageDialog` is fixed, removing stale disabled code paths.
 - `SandboxedIframe` now unregisters failed sandboxes and performs full cleanup on HTML validation failures in `execute()`, preventing stale router/listener state after early rejects.
+- `SandboxedIframe.execute()` now removes pending `sandbox-ready`/`sandbox-error` window listeners during cleanup, preventing listener leaks when executions abort/timeout before sandbox bootstrap completes.
 
 ## [0.52.12] - 2026-02-13
 

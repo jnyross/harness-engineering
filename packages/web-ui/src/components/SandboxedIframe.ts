@@ -266,6 +266,9 @@ export class SandboxIframe extends LitElement {
 		let completed = false;
 
 		return new Promise((resolve, reject) => {
+			let readyHandler: ((e: MessageEvent) => void) | undefined;
+			let errorHandler: ((e: MessageEvent) => void) | undefined;
+
 			// 4. Create execution consumer for lifecycle messages
 			const executionConsumer: MessageConsumer = {
 				// biome-ignore lint/suspicious/noExplicitAny: migration
@@ -303,6 +306,12 @@ export class SandboxIframe extends LitElement {
 
 				RUNTIME_MESSAGE_ROUTER.unregisterSandbox(sandboxId);
 				signal?.removeEventListener("abort", abortHandler);
+				if (readyHandler) {
+					window.removeEventListener("message", readyHandler);
+				}
+				if (errorHandler) {
+					window.removeEventListener("message", errorHandler);
+				}
 				clearTimeout(timeoutId);
 				this.iframe?.remove();
 				this.iframe = undefined;
@@ -361,10 +370,14 @@ export class SandboxIframe extends LitElement {
 				RUNTIME_MESSAGE_ROUTER.setSandboxIframe(sandboxId, this.iframe);
 
 				// Listen for sandbox-ready and sandbox-error messages
-				const readyHandler = (e: MessageEvent) => {
+				readyHandler = (e: MessageEvent) => {
 					if (e.data.type === "sandbox-ready" && e.source === this.iframe?.contentWindow) {
-						window.removeEventListener("message", readyHandler);
-						window.removeEventListener("message", errorHandler);
+						if (readyHandler) {
+							window.removeEventListener("message", readyHandler);
+						}
+						if (errorHandler) {
+							window.removeEventListener("message", errorHandler);
+						}
 
 						// Send content to sandbox
 						this.iframe?.contentWindow?.postMessage(
@@ -378,10 +391,14 @@ export class SandboxIframe extends LitElement {
 					}
 				};
 
-				const errorHandler = (e: MessageEvent) => {
+				errorHandler = (e: MessageEvent) => {
 					if (e.data.type === "sandbox-error" && e.source === this.iframe?.contentWindow) {
-						window.removeEventListener("message", readyHandler);
-						window.removeEventListener("message", errorHandler);
+						if (readyHandler) {
+							window.removeEventListener("message", readyHandler);
+						}
+						if (errorHandler) {
+							window.removeEventListener("message", errorHandler);
+						}
 
 						// Convert sandbox-error to execution-error for the execution consumer
 						window.postMessage(
