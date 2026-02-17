@@ -19,6 +19,10 @@ describe("normalizeDrainInputDurations", () => {
 			maxMs: 2_147_483_647,
 			idleMs: 2_147_483_647,
 		});
+		assert.deepEqual(normalizeDrainInputDurations(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY), {
+			maxMs: 2_147_483_647,
+			idleMs: 2_147_483_647,
+		});
 		assert.deepEqual(normalizeDrainInputDurations(500, 1_000), { maxMs: 500, idleMs: 500 });
 	});
 });

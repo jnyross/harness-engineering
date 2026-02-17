@@ -11,7 +11,7 @@ function normalizeDurationMs(value: number | undefined, fallback: number): numbe
 	if (value === undefined) {
 		return fallback;
 	}
-	if (!Number.isFinite(value) || value <= 0) {
+	if (Number.isNaN(value) || value <= 0) {
 		return fallback;
 	}
 	return value > MAX_TIMEOUT_MS ? MAX_TIMEOUT_MS : value;
