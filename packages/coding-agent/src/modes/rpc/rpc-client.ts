@@ -14,6 +14,12 @@ import type { CompactionResult } from "../../core/compaction/index.js";
 import { getRpcClientStartError, getRpcClientStartupExitError } from "./rpc-client-status.js";
 import type { RpcCommand, RpcResponse, RpcSessionState, RpcSlashCommand } from "./rpc-types.js";
 
+const MAX_TIMEOUT_MS = 2_147_483_647;
+
+export function normalizeRpcTimeoutMs(timeout: number): number {
+	return timeout > MAX_TIMEOUT_MS ? MAX_TIMEOUT_MS : timeout;
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -494,7 +500,7 @@ export class RpcClient {
 			const timer = setTimeout(() => {
 				unsubscribe();
 				reject(new Error(`Timeout waiting for agent to become idle. Stderr: ${this.stderr}`));
-			}, timeout);
+			}, normalizeRpcTimeoutMs(timeout));
 
 			const unsubscribe = this.onEvent((event) => {
 				if (event.type === "agent_end") {
@@ -515,7 +521,7 @@ export class RpcClient {
 			const timer = setTimeout(() => {
 				unsubscribe();
 				reject(new Error(`Timeout collecting events. Stderr: ${this.stderr}`));
-			}, timeout);
+			}, normalizeRpcTimeoutMs(timeout));
 
 			const unsubscribe = this.onEvent((event) => {
 				events.push(event);

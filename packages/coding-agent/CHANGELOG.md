@@ -100,6 +100,7 @@
 - RPC client request sending now also guards non-writable stdin and write-callback errors, preventing pending-request leaks when the RPC process pipe closes mid-session.
 - RPC client shutdown now uses single-settlement stop handling with timeout/listener cleanup, avoiding duplicate settle races between process exit and forced kill paths.
 - RPC client now rejects pending requests immediately when the RPC process exits unexpectedly, avoids stale exit listeners after failed starts/exits, and prevents 30s request timeouts after child-process crashes.
+- RPC client event-wait timeout helpers now clamp oversized timeout values to Node.js timer limits, preventing implicit runtime timer clamping from triggering premature wait-timeout errors.
 - `sleep(ms, signal)` now cleans up abort listeners on resolve/reject and avoids double-settlement paths during abort timing races.
 - `sleep(ms, signal)` now clamps oversized timeout values to Node.js timer limits, preventing implicit runtime timer clamping from resolving oversized sleeps prematurely.
 - Write tool now uses single-settlement abort cleanup during async filesystem operations, preventing duplicate settle races and ensuring consistent cancellation behavior.
