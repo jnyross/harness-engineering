@@ -2071,6 +2071,26 @@ Shared helper behavior now covers:
 
 **Result:** OAuth parsing behavior is now centralized and regression-tested at the utility level, reducing parser drift while preserving provider-specific contracts.
 
+---
+
+### 121) codex OAuth manual state errors used generic messaging
+
+**Finding:** OpenAI Codex manual-input state mismatch paths still emitted generic `"State mismatch"` errors, while the other OAuth providers had explicit CSRF-oriented diagnostics.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/openai-codex.ts`
+- `packages/ai/test/openai-codex-oauth-abort.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to align mismatch errors with explicit wording:
+
+- `OAuth state mismatch - possible CSRF attack`
+
+across manual-input validation branches.
+
+**Result:** OAuth state mismatch diagnostics are now consistent and explicit across providers, improving security-context clarity for manual login failures.
+
 ## Validation Evidence
 
 - Root quality gate passes:
