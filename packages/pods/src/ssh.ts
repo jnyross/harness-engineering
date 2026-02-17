@@ -174,6 +174,15 @@ export const sshExec = async (
 	options?: { keepAlive?: boolean },
 ): Promise<SSHResult> => {
 	return new Promise((resolve) => {
+		let settled = false;
+		const resolveOnce = (result: SSHResult) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			resolve(result);
+		};
+
 		let sshBinary: string;
 		let sshArgs: string[];
 		try {
@@ -214,7 +223,7 @@ export const sshExec = async (
 		});
 
 		proc.on("close", (code, signal) => {
-			resolve({
+			resolveOnce({
 				stdout,
 				stderr,
 				exitCode: code ?? (signal ? 1 : 0),
@@ -222,7 +231,7 @@ export const sshExec = async (
 		});
 
 		proc.on("error", (err) => {
-			resolve({
+			resolveOnce({
 				stdout,
 				stderr: err.message,
 				exitCode: 1,
@@ -240,6 +249,15 @@ export const sshExecStream = async (
 	options?: { silent?: boolean; forceTTY?: boolean; keepAlive?: boolean },
 ): Promise<number> => {
 	return new Promise((resolve) => {
+		let settled = false;
+		const resolveOnce = (exitCode: number) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			resolve(exitCode);
+		};
+
 		let sshBinary: string;
 		let sshArgs: string[];
 		try {
@@ -272,11 +290,11 @@ export const sshExecStream = async (
 		const proc = spawn(sshBinary, sshArgs, spawnOptions);
 
 		proc.on("close", (code, signal) => {
-			resolve(code ?? (signal ? 1 : 0));
+			resolveOnce(code ?? (signal ? 1 : 0));
 		});
 
 		proc.on("error", () => {
-			resolve(1);
+			resolveOnce(1);
 		});
 	});
 };
@@ -328,14 +346,23 @@ export const scpFile = async (sshCmd: string, localPath: string, remotePath: str
 	const scpArgs = ["-P", port, localPath, `${host}:${remotePath}`];
 
 	return new Promise((resolve) => {
+		let settled = false;
+		const resolveOnce = (result: boolean) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			resolve(result);
+		};
+
 		const proc = spawn("scp", scpArgs, { stdio: "inherit" });
 
 		proc.on("close", (code) => {
-			resolve(code === 0);
+			resolveOnce(code === 0);
 		});
 
 		proc.on("error", () => {
-			resolve(false);
+			resolveOnce(false);
 		});
 	});
 };

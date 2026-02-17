@@ -81,6 +81,11 @@ describe("sshExec", () => {
 		assert.match(result.stderr, /expected ssh binary/);
 	});
 
+	it("returns non-zero when ssh binary cannot be spawned", async () => {
+		const result = await sshExec("/definitely/missing/ssh user@host", "echo test");
+		assert.equal(result.exitCode, 1);
+	});
+
 	it("reports non-zero exit code when ssh process exits via signal", async () => {
 		const dir = mkdtempSync(join(tmpdir(), "pi-pods-ssh-signal-"));
 		const sshPath = join(dir, "ssh");
@@ -109,5 +114,10 @@ describe("sshExecStream", () => {
 		} finally {
 			rmSync(dir, { recursive: true, force: true });
 		}
+	});
+
+	it("returns non-zero when ssh binary cannot be spawned", async () => {
+		const exitCode = await sshExecStream("/definitely/missing/ssh user@host", "echo test", { silent: true });
+		assert.equal(exitCode, 1);
 	});
 });
