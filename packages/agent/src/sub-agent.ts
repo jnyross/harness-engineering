@@ -10,6 +10,8 @@ import { normalizeChildExitCode } from "./child-exit-status.js";
 import type { AgentDefinition } from "./skill-registry.js";
 import type { AgentContext, AgentLoopConfig, AgentMessage } from "./types.js";
 
+const MAX_TIMEOUT_MS = 2_147_483_647;
+
 export interface SpawnSubAgentOptions {
 	signal?: AbortSignal;
 	/** If true, do not await; return a promise that resolves when done. */
@@ -37,6 +39,16 @@ export function getSpawnScriptCloseError(options: {
 		return `Script '${options.invokedCommand}' exited with unknown status`;
 	}
 	return `Script '${options.invokedCommand}' exited with code ${options.code}`;
+}
+
+function parseScriptTimeoutMs(timeoutMs: number | undefined): number | undefined {
+	if (timeoutMs === undefined) {
+		return undefined;
+	}
+	if (!Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > MAX_TIMEOUT_MS) {
+		return undefined;
+	}
+	return timeoutMs;
 }
 
 /**
@@ -130,7 +142,7 @@ export function spawnScript(
 		child.stderr?.on("data", (chunk: Buffer) => {
 			stderr += chunk.toString();
 		});
-		const timeoutMs = options.timeoutMs;
+		const timeoutMs = parseScriptTimeoutMs(options.timeoutMs);
 		let timeoutId: ReturnType<typeof setTimeout> | undefined;
 		let forceKillId: ReturnType<typeof setTimeout> | undefined;
 

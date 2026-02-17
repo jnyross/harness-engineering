@@ -102,6 +102,13 @@ describe("spawnScript", () => {
 		).rejects.toThrow(`Script '${process.execPath} -e setTimeout(() => {}, 5000);' timed out after 25ms`);
 	});
 
+	it("ignores oversized timeout values beyond Node timer range", async () => {
+		const result = await spawnScript(process.execPath, ["-e", "setTimeout(() => process.exit(0), 25);"], {
+			timeoutMs: Number.MAX_SAFE_INTEGER,
+		});
+		expect(result.exitCode).toBe(0);
+	});
+
 	it("wraps spawn errors with command context", async () => {
 		await expect(spawnScript("/definitely-not-a-real-binary", ["--version"])).rejects.toThrow(
 			/Failed to start script '\/definitely-not-a-real-binary --version':/,

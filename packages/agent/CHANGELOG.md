@@ -34,6 +34,7 @@
 - Shared CLI positive-integer option parsing now rejects unsafe integer values (greater than `Number.MAX_SAFE_INTEGER`) instead of accepting rounded coercions.
 - `runner.ts` CLI entrypoint now guards direct execution behind `import.meta.url` checks and exposes argument parsing as a reusable helper, preventing side-effectful `main()` execution when imported in tests.
 - `spawnScript()` timeout/spawn failures now include invoked-command context in error messages, improving diagnostics for sub-agent script delegation failures.
+- `spawnScript()` now ignores oversized timeout values above Node.js timer limits, avoiding implicit runtime timer clamping that could prematurely abort delegated scripts.
 - `spawnScript()` now adds fallback stderr diagnostics for signal/unknown/non-zero close statuses when scripts fail silently, so callers receive actionable failure reasons even without child stderr output.
 - `project-runner` CLI option parsing now rejects option-like/missing values for `--iterations`, `--max-tasks`, and `--provider` instead of treating subsequent flags as values.
 
