@@ -43,5 +43,11 @@ describe("createReadTool text line counting", () => {
 		await expect(tool.execute("tool-6", { path: "demo.txt", limit: 0 }, undefined)).rejects.toThrow(
 			"Parameter 'limit' must be a positive integer.",
 		);
+		await expect(tool.execute("tool-7", { path: "demo.txt", offset: 9007199254740992 }, undefined)).rejects.toThrow(
+			"Parameter 'offset' must be a positive integer.",
+		);
+		await expect(tool.execute("tool-8", { path: "demo.txt", limit: 9007199254740992 }, undefined)).rejects.toThrow(
+			"Parameter 'limit' must be a positive integer.",
+		);
 	});
 });

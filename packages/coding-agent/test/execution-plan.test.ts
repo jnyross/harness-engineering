@@ -27,6 +27,19 @@ describe("update_plan_progress tool", () => {
 		);
 	});
 
+	it("rejects unsafe task indices", async () => {
+		const operations = createOperations(
+			["# Execution Plan", "", "*Created: 2026-01-01T00:00:00.000Z*", "", "- [ ] Task one", "- [ ] Task two"].join(
+				"\n",
+			),
+		);
+		const tool = createUpdateProgressTool("/workspace", { operations });
+
+		await expect(
+			tool.execute("tool-unsafe", { task_index: 9007199254740992, status: "completed" }, undefined),
+		).rejects.toThrow("Invalid task index: 9007199254740992. Task index must be a non-negative integer.");
+	});
+
 	it("updates plan status for valid indices", async () => {
 		const operations = createOperations(
 			["# Execution Plan", "", "*Created: 2026-01-01T00:00:00.000Z*", "", "- [ ] Task one", "- [ ] Task two"].join(

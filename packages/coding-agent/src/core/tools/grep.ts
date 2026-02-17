@@ -46,7 +46,7 @@ function parseContextValue(context: number | undefined): number {
 	if (context === undefined) {
 		return 0;
 	}
-	if (!Number.isInteger(context) || context < 0) {
+	if (!Number.isSafeInteger(context) || context < 0) {
 		throw new Error("Parameter 'context' must be a non-negative integer.");
 	}
 	return context;
@@ -56,7 +56,7 @@ function parseLimitValue(limit: number | undefined): number {
 	if (limit === undefined) {
 		return DEFAULT_LIMIT;
 	}
-	if (!Number.isInteger(limit) || limit < 1) {
+	if (!Number.isSafeInteger(limit) || limit < 1) {
 		throw new Error("Parameter 'limit' must be a positive integer.");
 	}
 	return limit;

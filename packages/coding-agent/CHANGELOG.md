@@ -67,6 +67,7 @@
 - ANSI export HTML conversion now ignores out-of-range and unsafe-integer SGR color parameters instead of emitting invalid CSS color values from oversized numeric coercions.
 - Interactive changelog parser now rejects unsafe integer version components in changelog headers and last-seen version state, preventing rounded version coercion in update-entry filtering.
 - HTML export color parsing now rejects out-of-range and unsafe-integer `rgb(...)` components, preventing malformed theme colors from being coerced into derived export background values.
+- execution-plan/read/ls/find/grep numeric parameter parsing now rejects unsafe integers (greater than `Number.MAX_SAFE_INTEGER`), preventing rounded coercion of task indices and tool limit/context/offset values.
 - session delete fallback diagnostics now normalize `trash` spawn outcomes (startup failures, timeouts, signal exits, and non-zero statuses) into explicit error hints when unlink fallback also fails.
 - session delete fallback diagnostics now also classify rare `spawnSync` null/null trash exits as explicit `unknown status` hints instead of dropping that failure context.
 - Extension loader shortcut registration now uses a top-level `ExtensionContext` type import (instead of inline `import("./types").ExtensionContext`), aligning with static type-import conventions.

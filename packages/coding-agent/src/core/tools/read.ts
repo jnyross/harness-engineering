@@ -27,7 +27,7 @@ function parsePositiveIntegerParameter(
 	if (value === undefined) {
 		return undefined;
 	}
-	if (!Number.isInteger(value) || value <= 0) {
+	if (!Number.isSafeInteger(value) || value <= 0) {
 		throw new Error(`Parameter '${parameterName}' must be a positive integer.`);
 	}
 	return value;

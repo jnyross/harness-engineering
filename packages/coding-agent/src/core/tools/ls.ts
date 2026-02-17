@@ -25,7 +25,7 @@ function parseLimitValue(limit: number | undefined): number {
 	if (limit === undefined) {
 		return DEFAULT_LIMIT;
 	}
-	if (!Number.isInteger(limit) || limit < 1) {
+	if (!Number.isSafeInteger(limit) || limit < 1) {
 		throw new Error("Parameter 'limit' must be a positive integer.");
 	}
 	return limit;

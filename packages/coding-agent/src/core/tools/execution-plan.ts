@@ -52,7 +52,7 @@ export interface PlanOperations {
 }
 
 function parseTaskIndex(taskIndex: number): number {
-	if (!Number.isInteger(taskIndex) || taskIndex < 0) {
+	if (!Number.isSafeInteger(taskIndex) || taskIndex < 0) {
 		throw new Error(`Invalid task index: ${taskIndex}. Task index must be a non-negative integer.`);
 	}
 	return taskIndex;
