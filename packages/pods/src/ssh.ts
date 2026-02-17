@@ -12,6 +12,24 @@ export interface ScpResult {
 	error?: string;
 }
 
+const SCP_FLAGS_WITH_VALUE = new Set(["-c", "-D", "-F", "-i", "-J", "-l", "-o", "-S", "-X"]);
+const SCP_FLAGS_NO_VALUE = new Set([
+	"-3",
+	"-4",
+	"-6",
+	"-A",
+	"-B",
+	"-C",
+	"-O",
+	"-p",
+	"-q",
+	"-R",
+	"-r",
+	"-s",
+	"-T",
+	"-v",
+]);
+
 const SSH_FLAGS_WITH_VALUE = new Set([
 	"-b",
 	"-c",
@@ -321,9 +339,81 @@ export function getScpExitError(code: number | null, signal: NodeJS.Signals | nu
 	return undefined;
 }
 
-export const scpFile = async (sshCmd: string, localPath: string, remotePath: string): Promise<ScpResult> => {
+function buildScpOptions(sshArgs: string[]): { options: string[]; host: string } | { error: string } {
+	const options: string[] = [];
 	let host = "";
-	let port = "22";
+
+	for (let i = 0; i < sshArgs.length; i++) {
+		const arg = sshArgs[i];
+
+		if (arg === "--") {
+			host = sshArgs[i + 1] ?? "";
+			break;
+		}
+
+		if (arg.startsWith("-p") && arg.length > 2 && !arg.startsWith("--")) {
+			options.push("-P", arg.slice(2));
+			continue;
+		}
+
+		if (arg === "-p") {
+			const port = sshArgs[i + 1];
+			if (!port) {
+				return { error: "Invalid SSH command: missing value for -p option." };
+			}
+			options.push("-P", port);
+			i++;
+			continue;
+		}
+
+		if (arg.startsWith("-")) {
+			const attachedValueFlag = hasAttachedShortFlagValue(arg);
+			if (attachedValueFlag) {
+				const flag = arg.slice(0, 2);
+				const value = arg.slice(2);
+				if (!SCP_FLAGS_WITH_VALUE.has(flag)) {
+					return { error: `Unsupported SSH option for SCP: ${flag}` };
+				}
+				options.push(flag, value);
+				continue;
+			}
+
+			if (SCP_FLAGS_WITH_VALUE.has(arg)) {
+				const value = sshArgs[i + 1];
+				if (!value) {
+					return { error: `Invalid SSH command: missing value for ${arg} option.` };
+				}
+				options.push(arg, value);
+				i++;
+				continue;
+			}
+
+			if (SCP_FLAGS_NO_VALUE.has(arg)) {
+				options.push(arg);
+				continue;
+			}
+
+			if (SSH_FLAGS_WITH_VALUE.has(arg)) {
+				return { error: `Unsupported SSH option for SCP: ${arg}` };
+			}
+
+			// Unknown short options are forwarded for compatibility.
+			options.push(arg);
+			continue;
+		}
+
+		host = arg;
+		break;
+	}
+
+	if (!host) {
+		return { error: "Could not parse host from SSH command" };
+	}
+
+	return { options, host };
+}
+
+export const scpFile = async (sshCmd: string, localPath: string, remotePath: string): Promise<ScpResult> => {
 	let sshArgs: string[];
 	try {
 		const parsed = parseSshCommand(sshCmd);
@@ -335,39 +425,16 @@ export const scpFile = async (sshCmd: string, localPath: string, remotePath: str
 		};
 	}
 
-	for (let i = 0; i < sshArgs.length; i++) {
-		const arg = sshArgs[i];
-		if (arg.startsWith("-p") && arg.length > 2 && !arg.startsWith("--")) {
-			port = arg.slice(2);
-			continue;
-		}
-		if (arg === "-p" && i + 1 < sshArgs.length) {
-			port = sshArgs[i + 1];
-			i++;
-			continue;
-		}
-		if (arg.startsWith("-")) {
-			if (hasAttachedShortFlagValue(arg)) {
-				continue;
-			}
-			if (SSH_FLAGS_WITH_VALUE.has(arg)) {
-				i++;
-			}
-			continue;
-		}
-		host = arg;
-		break;
-	}
-
-	if (!host) {
+	const scpOptionsResult = buildScpOptions(sshArgs);
+	if ("error" in scpOptionsResult) {
 		return {
 			ok: false,
-			error: "Could not parse host from SSH command",
+			error: scpOptionsResult.error,
 		};
 	}
 
 	// Build SCP command
-	const scpArgs = ["-P", port, localPath, `${host}:${remotePath}`];
+	const scpArgs = [...scpOptionsResult.options, localPath, `${scpOptionsResult.host}:${remotePath}`];
 
 	return new Promise((resolve) => {
 		let settled = false;

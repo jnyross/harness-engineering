@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
@@ -139,6 +139,53 @@ describe("scpFile", () => {
 		const result = await scpFile("bash -lc 'echo hi'", "/tmp/local.txt", "/tmp/remote.txt");
 		assert.equal(result.ok, false);
 		assert.match(result.error ?? "", /expected ssh binary/);
+	});
+
+	it("forwards compatible ssh options and transforms -p to scp -P", async () => {
+		const dir = mkdtempSync(join(tmpdir(), "pi-pods-scp-args-"));
+		const scpPath = join(dir, "scp");
+		const argsPath = join(dir, "scp-args.txt");
+		const originalPath = process.env.PATH;
+		try {
+			writeFileSync(
+				scpPath,
+				`#!/bin/sh
+printf '%s\n' "$@" > "${argsPath}"
+exit 0
+`,
+				{ mode: 0o755 },
+			);
+			chmodSync(scpPath, 0o755);
+			process.env.PATH = `${dir}:${originalPath ?? ""}`;
+
+			const result = await scpFile(
+				`ssh -i "${join(dir, "id_rsa")}" -o StrictHostKeyChecking=no -p 2222 user@demo.host`,
+				"/tmp/local.txt",
+				"/tmp/remote.txt",
+			);
+			assert.equal(result.ok, true);
+
+			const capturedArgs = readFileSync(argsPath, "utf8").trim().split("\n");
+			assert.deepEqual(capturedArgs, [
+				"-i",
+				join(dir, "id_rsa"),
+				"-o",
+				"StrictHostKeyChecking=no",
+				"-P",
+				"2222",
+				"/tmp/local.txt",
+				"user@demo.host:/tmp/remote.txt",
+			]);
+		} finally {
+			process.env.PATH = originalPath;
+			rmSync(dir, { recursive: true, force: true });
+		}
+	});
+
+	it("reports unsupported ssh options for scp forwarding", async () => {
+		const result = await scpFile("ssh -W target:22 jump@host", "/tmp/local.txt", "/tmp/remote.txt");
+		assert.equal(result.ok, false);
+		assert.equal(result.error, "Unsupported SSH option for SCP: -W");
 	});
 
 	it("returns failure result when scp process exits via signal", async () => {
