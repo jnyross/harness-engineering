@@ -89,5 +89,6 @@
 - Model start context/PID parsing now uses strict validation (`--context` alias/integer resolution + runner PID parsing) so malformed values like `4096tokens` / `123abc` are rejected instead of being partially coerced via `parseInt`.
 - Model start memory parsing now validates percentage values strictly (`0 < value <= 100`) so malformed inputs like `50percent` are rejected instead of being partially coerced.
 - Pods config loading now normalizes parsed JSON structure/content (`pods`, `active`, pod/model/GPU entries), ignoring malformed entries and preventing invalid persisted config shapes from propagating into runtime pod selection flows.
+- Built-in models config loading now normalizes parsed `models.json` structure/content and drops malformed model/config entries instead of forwarding invalid runtime launch config shapes.
 - Model start memory parsing now also rejects non-decimal numeric formats (for example `1e2`, `0x10`, `.5`) instead of accepting them via broad numeric coercion.
 

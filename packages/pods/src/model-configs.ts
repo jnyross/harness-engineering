@@ -25,9 +25,127 @@ interface ModelsData {
 	models: Record<string, ModelInfo>;
 }
 
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function parsePositiveSafeInteger(value: unknown): number | undefined {
+	if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) {
+		return undefined;
+	}
+	return value;
+}
+
+function normalizeModelConfig(value: unknown): ModelConfig | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	const record = value as Record<string, unknown>;
+	const gpuCount = parsePositiveSafeInteger(record.gpuCount);
+	if (gpuCount === undefined) {
+		return undefined;
+	}
+	if (!Array.isArray(record.args) || record.args.length === 0) {
+		return undefined;
+	}
+	const args = record.args
+		.filter((entry): entry is string => typeof entry === "string")
+		.map((entry) => entry.trim())
+		.filter((entry) => entry.length > 0);
+	if (args.length === 0) {
+		return undefined;
+	}
+
+	const normalized: ModelConfig = {
+		gpuCount,
+		args,
+	};
+
+	if (Array.isArray(record.gpuTypes)) {
+		const gpuTypes = record.gpuTypes
+			.filter((entry): entry is string => typeof entry === "string")
+			.map((entry) => entry.trim())
+			.filter((entry) => entry.length > 0);
+		if (gpuTypes.length > 0) {
+			normalized.gpuTypes = gpuTypes;
+		}
+	}
+
+	if (record.env && typeof record.env === "object" && !Array.isArray(record.env)) {
+		const env: Record<string, string> = {};
+		for (const [key, rawValue] of Object.entries(record.env as Record<string, unknown>)) {
+			const parsedKey = parseNonEmptyString(key);
+			const parsedValue = parseNonEmptyString(rawValue);
+			if (parsedKey && parsedValue !== undefined) {
+				env[parsedKey] = parsedValue;
+			}
+		}
+		if (Object.keys(env).length > 0) {
+			normalized.env = env;
+		}
+	}
+
+	const notes = parseNonEmptyString(record.notes);
+	if (notes) {
+		normalized.notes = notes;
+	}
+
+	return normalized;
+}
+
+export function parseModelsData(content: string): ModelsData {
+	let rawData: unknown;
+	try {
+		rawData = JSON.parse(content);
+	} catch {
+		return { models: {} };
+	}
+
+	if (!rawData || typeof rawData !== "object" || Array.isArray(rawData)) {
+		return { models: {} };
+	}
+	const modelsRecord = (rawData as { models?: unknown }).models;
+	if (!modelsRecord || typeof modelsRecord !== "object" || Array.isArray(modelsRecord)) {
+		return { models: {} };
+	}
+
+	const models: Record<string, ModelInfo> = {};
+	for (const [modelId, rawModelInfo] of Object.entries(modelsRecord as Record<string, unknown>)) {
+		const parsedModelId = parseNonEmptyString(modelId);
+		if (!parsedModelId || !rawModelInfo || typeof rawModelInfo !== "object" || Array.isArray(rawModelInfo)) {
+			continue;
+		}
+
+		const record = rawModelInfo as Record<string, unknown>;
+		const name = parseNonEmptyString(record.name);
+		if (!name || !Array.isArray(record.configs)) {
+			continue;
+		}
+		const configs = record.configs
+			.map((entry) => normalizeModelConfig(entry))
+			.filter((entry): entry is ModelConfig => entry !== undefined);
+		if (configs.length === 0) {
+			continue;
+		}
+
+		const modelInfo: ModelInfo = { name, configs };
+		const notes = parseNonEmptyString(record.notes);
+		if (notes) {
+			modelInfo.notes = notes;
+		}
+		models[parsedModelId] = modelInfo;
+	}
+
+	return { models };
+}
+
 // Load models configuration - resolve relative to this file
 const modelsJsonPath = join(__dirname, "models.json");
-const modelsData: ModelsData = JSON.parse(readFileSync(modelsJsonPath, "utf-8"));
+const modelsData: ModelsData = parseModelsData(readFileSync(modelsJsonPath, "utf-8"));
 
 /**
  * Get the best configuration for a model based on available GPUs
