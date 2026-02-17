@@ -38,5 +38,9 @@ describe("createBashTool timeout parsing", () => {
 			() => tool.execute("tool-3", { label: "run", command: "echo ok", timeout: -5 }, undefined),
 			/Parameter 'timeout' must be a positive number of seconds\./,
 		);
+		await assert.rejects(
+			() => tool.execute("tool-4", { label: "run", command: "echo ok", timeout: 2_147_484 }, undefined),
+			/Parameter 'timeout' must be a positive number of seconds\./,
+		);
 	});
 });

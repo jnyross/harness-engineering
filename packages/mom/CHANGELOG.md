@@ -35,6 +35,7 @@
 - Read-tool now rejects non-positive/non-integer `offset`/`limit` values instead of silently coercing them.
 - Read-tool line-count and `offset`/`limit` parsing now also rejects unsafe integers (greater than `Number.MAX_SAFE_INTEGER`) instead of accepting rounded numeric coercions.
 - Bash tool now rejects non-positive timeout values instead of silently disabling timeout behavior.
+- Bash tool now also rejects timeout values above Node.js timer limits (roughly 2,147,483 seconds), preventing oversized timeout inputs from being clamped into unintended runtime behavior.
 - MOM agent API key resolution now follows the configured model provider (instead of always requesting Anthropic credentials), and model env overrides now trim/ignore blank values before validation.
 - CLI argument parsing now rejects missing `--sandbox`/`--download` option values (including option-like tokens) with explicit diagnostics instead of silently falling back.
 - CLI argument parsing now treats any option-like next token (including single-dash forms) as missing `--sandbox`/`--download` values, avoiding accidental flag consumption.
