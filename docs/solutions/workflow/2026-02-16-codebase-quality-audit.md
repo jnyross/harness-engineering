@@ -4337,6 +4337,25 @@ to:
 
 **Result:** pods required-option parsing now consistently rejects both single-dash and double-dash option-like tokens as missing required values.
 
+---
+
+### 240) pods `--pod <name>` parsing still accepted single-dash option-like values
+
+**Finding:** pods `extractPodOverride(...)` rejected missing/`--option` values for `--pod` but still accepted single-dash option-like tokens (for example `--pod -h`) as pod names.
+
+**Action:** Updated:
+
+- `packages/pods/src/cli-args.ts`
+- `packages/pods/test/cli-args.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- reject any leading-dash token as invalid `--pod` value,
+- add regression coverage for single-dash option-like value rejection.
+
+**Result:** pods `--pod` parsing now consistently rejects both single- and double-dash option-like tokens as missing required pod names.
+
 ## Validation Evidence
 
 - Root quality gate passes:
