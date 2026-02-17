@@ -168,22 +168,40 @@ Current working directory: ${process.cwd()}`;
 	const childEnv = { ...process.env, [PODS_AGENT_API_KEY_ENV]: resolvedApiKey };
 	try {
 		await new Promise<void>((resolve, reject) => {
+			let settled = false;
+			const resolveOnce = () => {
+				if (settled) {
+					return;
+				}
+				settled = true;
+				resolve();
+			};
+			const rejectOnce = (error: Error) => {
+				if (settled) {
+					return;
+				}
+				settled = true;
+				reject(error);
+			};
+
 			const child = spawn(command, commandArgs, {
 				stdio: "inherit",
 				env: childEnv,
 			});
 
-			child.on("error", (error) => reject(error));
-			child.on("exit", (code, signal) => {
+			child.on("error", (error) =>
+				rejectOnce(new Error(`Failed to start agent command '${command}': ${error.message}`)),
+			);
+			child.on("close", (code, signal) => {
 				if (signal) {
-					reject(new Error(`Agent process exited due to signal ${signal}`));
+					rejectOnce(new Error(`Agent process exited due to signal ${signal}`));
 					return;
 				}
 				if (code === 0) {
-					resolve();
+					resolveOnce();
 					return;
 				}
-				reject(new Error(`Agent process exited with code ${code}`));
+				rejectOnce(new Error(`Agent process exited with code ${code}`));
 			});
 		});
 	} catch (err: unknown) {
