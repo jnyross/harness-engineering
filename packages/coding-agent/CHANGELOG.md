@@ -25,7 +25,7 @@
 - Interactive `/share` gist creation now uses shared `execCommand()` cancellation/error handling, preventing stuck loaders when `gh gist create` fails to spawn and preserving clean abort semantics.
 - Interactive `/share` now distinguishes missing/interrupted `gh auth status` checks from unauthenticated states, surfacing accurate install/interruption guidance before gist creation.
 - Extension selector/input dialogs in interactive mode now use single-settlement completion guards, preventing duplicate hide/resolve races when abort signals and UI completion fire concurrently.
-- Extension selector/input/editor dialog components now isolate `onSelect`/`onSubmit`/`onCancel` callback exceptions, preventing extension callback failures from crashing interactive input handling.
+- Extension selector/input/editor dialog components now isolate `onSelect`/`onSubmit`/`onCancel` callback exceptions, and extension editor callbacks are ignored after disposal, preventing extension callback failures from crashing interactive input handling or firing after teardown.
 - Interactive countdown timer now isolates `onTick`/`onExpire` callback exceptions and disposes safely on tick failures, preventing interval leaks and repeated error cascades from extension dialog countdown hooks.
 - Interactive external-editor launch now reports startup/signal/non-zero exit failures explicitly (while preserving current editor content) instead of silently no-oping.
 - Interactive selector replacement now disposes previous disposable selector components before teardown, and session selector now cancels pending status timers/load updates on dispose, preventing stale async updates after selector close/switch.

@@ -3905,6 +3905,27 @@ to:
 
 **Result:** Interactive selector teardown now cleans up disposable selectors deterministically and avoids stale post-dispose session-selector updates.
 
+---
+
+### 218) extension editor callbacks could still be invoked after component disposal
+
+**Finding:** Extension editor callback isolation prevented throws from bubbling, but callbacks could still run after component disposal in stale invocation paths.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/components/extension-editor.ts`
+- `packages/coding-agent/src/modes/interactive/interactive-mode.ts`
+- `packages/coding-agent/test/extension-dialog-callbacks.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- add explicit disposed-state guarding in extension editor callback paths,
+- expose disposal-driven callback suppression semantics,
+- ensure interactive hide flow disposes extension editor instances deterministically.
+
+**Result:** Extension editor callbacks are now suppressed after disposal, avoiding stale post-teardown callback execution.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -3932,7 +3953,7 @@ to:
 - coding-agent countdown timer regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/countdown-timer.test.ts` (includes normal expiry, manual dispose stop, and onTick-throw safety coverage)
 - coding-agent extension dialog callback regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extension-dialog-callbacks.test.ts` (includes throwing selector/input/editor callback safety)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extension-dialog-callbacks.test.ts` (includes throwing selector/input/editor callback safety and post-dispose callback suppression)
 - coding-agent session selector disposal regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/session-selector-path-delete.test.ts test/extension-dialog-callbacks.test.ts` (includes stale-load suppression after selector dispose)
 - coding-agent antigravity image SSE parsing regression tests pass:

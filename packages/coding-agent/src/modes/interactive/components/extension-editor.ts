@@ -28,7 +28,11 @@ export class ExtensionEditorComponent extends Container {
 	private onCancelCallback: () => void;
 	private tui: TUI;
 	private keybindings: KeybindingsManager;
+	private disposed = false;
 	private invokeSubmit(value: string): void {
+		if (this.disposed) {
+			return;
+		}
 		try {
 			this.onSubmitCallback(value);
 		} catch (error) {
@@ -37,6 +41,9 @@ export class ExtensionEditorComponent extends Container {
 	}
 
 	private invokeCancel(): void {
+		if (this.disposed) {
+			return;
+		}
 		try {
 			this.onCancelCallback();
 		} catch (error) {
@@ -117,6 +124,9 @@ export class ExtensionEditorComponent extends Container {
 	}
 
 	private openExternalEditor(): void {
+		if (this.disposed) {
+			return;
+		}
 		const editorCmd = process.env.VISUAL || process.env.EDITOR;
 		if (!editorCmd) {
 			return;
@@ -151,5 +161,9 @@ export class ExtensionEditorComponent extends Container {
 			// Force full re-render since external editor uses alternate screen
 			this.tui.requestRender(true);
 		}
+	}
+
+	dispose(): void {
+		this.disposed = true;
 	}
 }

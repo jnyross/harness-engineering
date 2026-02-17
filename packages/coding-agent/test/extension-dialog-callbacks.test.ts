@@ -40,9 +40,12 @@ describe("extension dialog callback safety", () => {
 		const component = Object.create(ExtensionEditorComponent.prototype) as {
 			invokeSubmit(value: string): void;
 			invokeCancel(): void;
+			dispose(): void;
 			onSubmitCallback: (value: string) => void;
 			onCancelCallback: () => void;
+			disposed: boolean;
 		};
+		component.disposed = false;
 		component.onSubmitCallback = () => {
 			throw new Error("editor submit failed");
 		};
@@ -53,5 +56,28 @@ describe("extension dialog callback safety", () => {
 		expect(() => component.invokeSubmit("value")).not.toThrow();
 		expect(() => component.invokeCancel()).not.toThrow();
 		expect(consoleError).toHaveBeenCalledTimes(2);
+	});
+
+	it("extension editor ignores callbacks after dispose", () => {
+		const onSubmit = vi.fn();
+		const onCancel = vi.fn();
+		const component = Object.create(ExtensionEditorComponent.prototype) as {
+			invokeSubmit(value: string): void;
+			invokeCancel(): void;
+			dispose(): void;
+			onSubmitCallback: (value: string) => void;
+			onCancelCallback: () => void;
+			disposed: boolean;
+		};
+		component.disposed = false;
+		component.onSubmitCallback = onSubmit;
+		component.onCancelCallback = onCancel;
+
+		component.dispose();
+		component.invokeSubmit("value");
+		component.invokeCancel();
+
+		expect(onSubmit).not.toHaveBeenCalled();
+		expect(onCancel).not.toHaveBeenCalled();
 	});
 });
