@@ -8,7 +8,7 @@ describe("RpcClient.start", () => {
 			env: { PATH: "" },
 		});
 
-		await expect(client.start()).rejects.toThrow("Failed to start agent process");
+		await expect(client.start()).rejects.toThrow("Failed to start agent process 'node dist/cli.js --mode rpc'");
 		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
 		expect((client as any).processExitListener).toBeNull();
 		await expect(client.stop()).resolves.toBeUndefined();
@@ -19,7 +19,9 @@ describe("RpcClient.start", () => {
 			cliPath: "/definitely/missing-cli.js",
 		});
 
-		await expect(client.start()).rejects.toThrow("Agent process exited before initialization");
+		await expect(client.start()).rejects.toThrow(
+			"Agent process 'node /definitely/missing-cli.js --mode rpc' exited before initialization",
+		);
 		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
 		expect((client as any).processExitListener).toBeNull();
 		await expect(client.stop()).resolves.toBeUndefined();

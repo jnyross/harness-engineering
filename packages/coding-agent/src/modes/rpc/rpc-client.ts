@@ -11,6 +11,7 @@ import type { ImageContent } from "@mariozechner/pi-ai";
 import type { SessionStats } from "../../core/agent-session.js";
 import type { BashResult } from "../../core/bash-executor.js";
 import type { CompactionResult } from "../../core/compaction/index.js";
+import { getRpcClientStartError, getRpcClientStartupExitError } from "./rpc-client-status.js";
 import type { RpcCommand, RpcResponse, RpcSessionState, RpcSlashCommand } from "./rpc-types.js";
 
 // ============================================================================
@@ -72,6 +73,7 @@ export class RpcClient {
 		}
 
 		const cliPath = this.options.cliPath ?? "dist/cli.js";
+		const command = "node";
 		const args = ["--mode", "rpc"];
 
 		if (this.options.provider) {
@@ -84,7 +86,8 @@ export class RpcClient {
 			args.push(...this.options.args);
 		}
 
-		this.process = spawn("node", [cliPath, ...args], {
+		const commandArgs = [cliPath, ...args];
+		this.process = spawn(command, commandArgs, {
 			cwd: this.options.cwd,
 			env: { ...process.env, ...this.options.env },
 			stdio: ["pipe", "pipe", "pipe"],
@@ -141,15 +144,27 @@ export class RpcClient {
 
 				const onError = (error: Error) => {
 					rejectOnce(
-						new Error(`Failed to start agent process: ${error.message}. Stderr: ${this.stderr || "(none)"}`),
+						new Error(
+							getRpcClientStartError({
+								command,
+								args: commandArgs,
+								error,
+								stderr: this.stderr,
+							}),
+						),
 					);
 				};
 
 				const onExit = (code: number | null, signal: NodeJS.Signals | null) => {
-					const exitReason = signal ? `signal ${signal}` : `code ${code ?? "unknown"}`;
 					rejectOnce(
 						new Error(
-							`Agent process exited before initialization with ${exitReason}. Stderr: ${this.stderr || "(none)"}`,
+							getRpcClientStartupExitError({
+								command,
+								args: commandArgs,
+								code,
+								signal,
+								stderr: this.stderr,
+							}),
 						),
 					);
 				};
