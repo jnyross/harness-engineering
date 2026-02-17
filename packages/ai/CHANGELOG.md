@@ -9,6 +9,7 @@
 - Anthropic Messages stream usage parsing now accepts numeric-string token counters for input/output/cache fields, preserving accurate usage totals when proxy layers serialize token counts as strings.
 - Google and Google Vertex stream usage parsing now accepts numeric-string usage metadata values and computes fallback totals when `totalTokenCount` is omitted, preserving non-zero accounting for compatible proxy layers.
 - Google Gemini CLI / Antigravity stream usage parsing now accepts numeric-string usage metadata values and computes fallback totals when `totalTokenCount` is omitted, preserving non-zero accounting for Cloud Code Assist responses that serialize token counts as strings.
+- Bedrock stream usage parsing now accepts numeric-string usage metadata values and computes fallback totals when `totalTokens` is omitted, preserving stable usage accounting for compatible intermediary responses.
 - Updated Codex WebSocket header conversion to iterate with `Headers.forEach()`, avoiding type incompatibilities in consumer check flows that use non-DOM `Headers` typings.
 - Consolidated provider retry sleep into a shared abortable helper that removes abort listeners on resolve/reject, preventing listener leaks across retry backoff paths.
 - GitHub Copilot OAuth polling now reuses the shared abortable sleep helper to avoid accumulating abort listeners across long-running device-flow polling loops.

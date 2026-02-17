@@ -38,6 +38,7 @@ import type {
 	Tool,
 	ToolCall,
 	ToolResultMessage,
+	Usage,
 } from "../types.js";
 import { AssistantMessageEventStream } from "../utils/event-stream.js";
 import { parseStreamingJson } from "../utils/json-parse.js";
@@ -334,14 +335,52 @@ function handleMetadata(
 	model: Model<"bedrock-converse-stream">,
 	output: AssistantMessage,
 ): void {
-	if (event.usage) {
-		output.usage.input = event.usage.inputTokens || 0;
-		output.usage.output = event.usage.outputTokens || 0;
-		output.usage.cacheRead = event.usage.cacheReadInputTokens || 0;
-		output.usage.cacheWrite = event.usage.cacheWriteInputTokens || 0;
-		output.usage.totalTokens = event.usage.totalTokens || output.usage.input + output.usage.output;
+	const parsedUsage = extractBedrockUsageMetadata(event.usage);
+	if (parsedUsage) {
+		output.usage = parsedUsage;
 		calculateCost(model, output.usage);
 	}
+}
+
+function parseUsageNumber(value: unknown): number | undefined {
+	if (typeof value === "number" && Number.isFinite(value)) {
+		return value;
+	}
+	if (typeof value === "string" && value.trim().length > 0) {
+		const parsed = Number(value);
+		if (Number.isFinite(parsed)) {
+			return parsed;
+		}
+	}
+	return undefined;
+}
+
+export function extractBedrockUsageMetadata(usageMetadata: unknown): Usage | undefined {
+	if (!usageMetadata || typeof usageMetadata !== "object") {
+		return undefined;
+	}
+
+	const usage = usageMetadata as {
+		inputTokens?: unknown;
+		outputTokens?: unknown;
+		cacheReadInputTokens?: unknown;
+		cacheWriteInputTokens?: unknown;
+		totalTokens?: unknown;
+	};
+	const input = parseUsageNumber(usage.inputTokens) ?? 0;
+	const output = parseUsageNumber(usage.outputTokens) ?? 0;
+	const cacheRead = parseUsageNumber(usage.cacheReadInputTokens) ?? 0;
+	const cacheWrite = parseUsageNumber(usage.cacheWriteInputTokens) ?? 0;
+	const totalTokens = parseUsageNumber(usage.totalTokens) ?? input + output + cacheRead + cacheWrite;
+
+	return {
+		input,
+		output,
+		cacheRead,
+		cacheWrite,
+		totalTokens,
+		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+	};
 }
 
 function handleContentBlockStop(
