@@ -143,3 +143,35 @@ describe("InteractiveMode.showLoadedResources", () => {
 		expect(output).not.toContain("[Skills]");
 	});
 });
+
+describe("InteractiveMode.isExtensionCommand", () => {
+	test("recognizes extension commands separated by tabs", () => {
+		// biome-ignore lint/suspicious/noExplicitAny: migration
+		const fakeThis: any = {
+			session: {
+				extensionRunner: {
+					getCommand: (name: string) => (name === "demo" ? { name } : undefined),
+				},
+			},
+		};
+
+		// biome-ignore lint/suspicious/noExplicitAny: migration
+		const result = (InteractiveMode as any).prototype.isExtensionCommand.call(fakeThis, "/demo\targ");
+		expect(result).toBe(true);
+	});
+
+	test("returns false when extension command is unknown", () => {
+		// biome-ignore lint/suspicious/noExplicitAny: migration
+		const fakeThis: any = {
+			session: {
+				extensionRunner: {
+					getCommand: () => undefined,
+				},
+			},
+		};
+
+		// biome-ignore lint/suspicious/noExplicitAny: migration
+		const result = (InteractiveMode as any).prototype.isExtensionCommand.call(fakeThis, "/missing\targ");
+		expect(result).toBe(false);
+	});
+});

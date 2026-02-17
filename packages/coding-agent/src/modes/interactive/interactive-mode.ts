@@ -2915,7 +2915,7 @@ export class InteractiveMode {
 		const extensionRunner = this.session.extensionRunner;
 		if (!extensionRunner) return false;
 
-		const spaceIndex = text.indexOf(" ");
+		const spaceIndex = text.search(/\s/);
 		const commandName = spaceIndex === -1 ? text.slice(1) : text.slice(1, spaceIndex);
 		return !!extensionRunner.getCommand(commandName);
 	}
