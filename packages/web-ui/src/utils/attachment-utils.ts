@@ -3,6 +3,7 @@ import JSZip from "jszip";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import * as pdfjsLib from "pdfjs-dist";
 import * as XLSX from "xlsx";
+import { parseArchiveEntryIndex } from "./archive-index.js";
 import { i18n } from "./i18n.js";
 
 // Configure PDF.js worker - we'll need to bundle this
@@ -374,8 +375,8 @@ async function processPptx(arrayBuffer: ArrayBuffer, fileName: string): Promise<
 		const slideFiles = Object.keys(zip.files)
 			.filter((name) => name.match(/ppt\/slides\/slide\d+\.xml$/))
 			.sort((a, b) => {
-				const numA = Number.parseInt(a.match(/slide(\d+)\.xml$/)?.[1] || "0", 10);
-				const numB = Number.parseInt(b.match(/slide(\d+)\.xml$/)?.[1] || "0", 10);
+				const numA = parseArchiveEntryIndex(a, /slide(\d+)\.xml$/);
+				const numB = parseArchiveEntryIndex(b, /slide(\d+)\.xml$/);
 				return numA - numB;
 			});
 
@@ -410,8 +411,8 @@ async function processPptx(arrayBuffer: ArrayBuffer, fileName: string): Promise<
 		const notesFiles = Object.keys(zip.files)
 			.filter((name) => name.match(/ppt\/notesSlides\/notesSlide\d+\.xml$/))
 			.sort((a, b) => {
-				const numA = Number.parseInt(a.match(/notesSlide(\d+)\.xml$/)?.[1] || "0", 10);
-				const numB = Number.parseInt(b.match(/notesSlide(\d+)\.xml$/)?.[1] || "0", 10);
+				const numA = parseArchiveEntryIndex(a, /notesSlide(\d+)\.xml$/);
+				const numB = parseArchiveEntryIndex(b, /notesSlide(\d+)\.xml$/);
 				return numA - numB;
 			});
 

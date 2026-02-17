@@ -51,6 +51,7 @@
 - `MessageEditor` now sequence-guards async attachment ingestion (paste/file-select/drag-drop) across disconnects, preventing stale detached state updates from in-flight file processing.
 - Model-discovery numeric parsing now validates remote context/token/port values strictly before fallback, avoiding `NaN` propagation from malformed provider metadata.
 - Model-discovery numeric parsing now also rejects unsafe integers (greater than `Number.MAX_SAFE_INTEGER`) before fallback, avoiding rounded context/token metadata coercions.
+- PPTX slide/notes archive index parsing now rejects unsafe integers before sorting, avoiding rounded slide-order coercions from oversized XML entry numbers.
 - `extract_document` now parses `Content-Length` headers strictly before pre-download size checks, avoiding partial numeric coercion from malformed header values.
 
 ## [0.52.12] - 2026-02-13
