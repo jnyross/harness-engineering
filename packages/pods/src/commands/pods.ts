@@ -12,6 +12,44 @@ import type { GPU, Pod } from "../types.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+function parseGpuQueryLine(line: string): GPU | undefined {
+	const trimmed = line.trim();
+	if (!trimmed) {
+		return undefined;
+	}
+
+	const [idRaw, nameRaw, memoryRaw] = trimmed.split(",").map((value) => value.trim());
+	if (!idRaw || !/^\d+$/.test(idRaw)) {
+		return undefined;
+	}
+
+	return {
+		id: Number.parseInt(idRaw, 10),
+		name: nameRaw || "Unknown",
+		memory: memoryRaw || "Unknown",
+	};
+}
+
+export function parseGpuQueryOutput(output: string): { gpus: GPU[]; skippedLines: string[] } {
+	const gpus: GPU[] = [];
+	const skippedLines: string[] = [];
+
+	const lines = output
+		.split("\n")
+		.map((line) => line.trim())
+		.filter(Boolean);
+	for (const line of lines) {
+		const gpu = parseGpuQueryLine(line);
+		if (gpu) {
+			gpus.push(gpu);
+			continue;
+		}
+		skippedLines.push(line);
+	}
+
+	return { gpus, skippedLines };
+}
+
 /**
  * List all pods
  */
@@ -155,16 +193,14 @@ export const setupPod = async (
 
 	const gpus: GPU[] = [];
 	if (!gpuDetectionError && gpuResult.stdout) {
-		const lines = gpuResult.stdout.trim().split("\n");
-		for (const line of lines) {
-			const [id, name, memory] = line.split(",").map((s) => s.trim());
-			if (id !== undefined) {
-				gpus.push({
-					id: parseInt(id, 10),
-					name: name || "Unknown",
-					memory: memory || "Unknown",
-				});
-			}
+		const parsed = parseGpuQueryOutput(gpuResult.stdout);
+		gpus.push(...parsed.gpus);
+		if (parsed.skippedLines.length > 0) {
+			console.log(
+				chalk.yellow(
+					`⚠ Skipped ${parsed.skippedLines.length} malformed GPU detection line(s) from nvidia-smi output.`,
+				),
+			);
 		}
 	}
 

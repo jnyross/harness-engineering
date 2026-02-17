@@ -74,4 +74,5 @@
 - Streaming SSH helper startup failures now include full invoked command context (`ssh ... <remote-command>`), so `pi ssh`/setup callers see actionable spawn diagnostics.
 - `--context` normalization now rejects mixed alphanumeric inputs (for example `4096tokens`) instead of truncating via `parseInt`, ensuring only aliases or positive integer token counts are accepted.
 - `--gpus` option parsing now rejects mixed/non-numeric values (for example `2gpu`) instead of truncating via `parseInt`, ensuring only positive integer GPU counts are accepted.
+- Pod setup GPU detection now skips malformed `nvidia-smi` CSV lines (with warning) instead of persisting `NaN` GPU IDs from partially parseable output.
 
