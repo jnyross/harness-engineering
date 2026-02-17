@@ -5,6 +5,7 @@ import { existsSync } from "fs";
 import { globSync } from "glob";
 import path from "path";
 import { ensureTool } from "../../utils/tools-manager.js";
+import { getFindExitError } from "./find-exit-status.js";
 import { resolveToCwd } from "./path-utils.js";
 import { DEFAULT_MAX_BYTES, formatSize, type TruncationResult, truncateHead } from "./truncate.js";
 
@@ -227,27 +228,13 @@ export function createFindTool(cwd: string, options?: FindToolOptions): AgentToo
 							return;
 						}
 
-						const spawnError = result.error;
-						if (spawnError) {
-							settle(() => reject(new Error(`Failed to run fd: ${spawnError.message}`)));
-							return;
-						}
-
-						if (result.status === null) {
-							const signal = result.signal ?? "unknown";
-							settle(() => reject(new Error(`fd exited due to signal ${signal}`)));
+						const exitError = getFindExitError(result);
+						if (exitError) {
+							settle(() => reject(new Error(exitError)));
 							return;
 						}
 
 						const output = result.stdout?.trim() || "";
-
-						if (result.status !== 0) {
-							const errorMsg = result.stderr?.trim() || `fd exited with code ${result.status}`;
-							if (!output) {
-								settle(() => reject(new Error(errorMsg)));
-								return;
-							}
-						}
 
 						if (!output) {
 							settle(() =>
