@@ -215,7 +215,7 @@ function execWithSpawn(command: string, args: string[], options?: ExecOptions): 
 			rejectOnce(error instanceof Error ? error : new Error(String(error)));
 		});
 
-		child.on("close", (code) => {
+		child.on("close", (code, signal) => {
 			if (options?.signal?.aborted) {
 				rejectOnce(new Error(`${stdout}\n${stderr}\nCommand aborted`.trim()));
 				return;
@@ -226,7 +226,7 @@ function execWithSpawn(command: string, args: string[], options?: ExecOptions): 
 				return;
 			}
 
-			resolveOnce({ stdout, stderr, code: code ?? 0 });
+			resolveOnce({ stdout, stderr, code: code ?? (signal ? 1 : 0) });
 		});
 	});
 }

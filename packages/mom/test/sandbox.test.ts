@@ -82,4 +82,10 @@ describe("createExecutor", () => {
 		);
 		assert.equal(existsSync(markerPath), false);
 	});
+
+	it("returns non-zero exit code for signal-terminated host commands", async () => {
+		const executor = createExecutor({ type: "host" });
+		const result = await executor.exec("kill -TERM $$");
+		assert.equal(result.code, 1);
+	});
 });
