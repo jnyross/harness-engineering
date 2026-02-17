@@ -71,6 +71,16 @@ describe("extractRetryDelay header parsing", () => {
 		expect(delay).toBe(3000);
 	});
 
+	it("ignores unsafe x-ratelimit-reset-after values and falls back to body parsing", () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2025-01-01T00:00:00Z"));
+
+		const response = new Response("", { headers: { "x-ratelimit-reset-after": "9007199254740.993" } });
+		const delay = extractRetryDelay("Please retry in 2s", response);
+
+		expect(delay).toBe(3000);
+	});
+
 	it("ignores malformed x-ratelimit-reset header and falls back to body parsing", () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2025-01-01T00:00:00Z"));
@@ -108,6 +118,11 @@ describe("extractRetryDelay header parsing", () => {
 
 	it("ignores malformed retry values with multiple decimals", () => {
 		const delay = extractRetryDelay("Please retry in 1.2.3s");
+		expect(delay).toBeUndefined();
+	});
+
+	it("ignores unsafe retry values that exceed safe integer millisecond precision", () => {
+		const delay = extractRetryDelay("Please retry in 9007199254740993s");
 		expect(delay).toBeUndefined();
 	});
 });

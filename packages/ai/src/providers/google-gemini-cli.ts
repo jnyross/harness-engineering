@@ -171,7 +171,16 @@ const CLAUDE_THINKING_BETA_HEADER = "interleaved-thinking-2025-05-14";
  * - "retryDelay": "34.074824224s" (JSON field)
  */
 export function extractRetryDelay(errorText: string, response?: Response | Headers): number | undefined {
-	const normalizeDelay = (ms: number): number | undefined => (ms > 0 ? Math.ceil(ms + 1000) : undefined);
+	const normalizeDelay = (ms: number): number | undefined => {
+		if (!Number.isFinite(ms) || ms <= 0) {
+			return undefined;
+		}
+		const normalized = Math.ceil(ms + 1000);
+		if (!Number.isSafeInteger(normalized) || normalized <= 0) {
+			return undefined;
+		}
+		return normalized;
+	};
 	const parseNonNegativeInteger = (value: string): number | undefined => {
 		const trimmed = value.trim();
 		if (!/^\d+$/.test(trimmed)) {

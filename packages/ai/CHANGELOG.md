@@ -32,6 +32,7 @@
 - Gemini CLI retry-delay parsing now ignores malformed `x-ratelimit-reset` header values and malformed decimal retry fields instead of partially coercing them, correctly falling back to other delay hints.
 - Gemini CLI retry-delay parsing now also rejects non-decimal numeric header formats (`Retry-After`, `x-ratelimit-reset-after`) instead of accepting broad numeric coercions.
 - Gemini CLI retry-delay parsing now rejects unsafe integer `x-ratelimit-reset` values (greater than `Number.MAX_SAFE_INTEGER`) instead of accepting rounded coercions.
+- Gemini CLI retry-delay parsing now also rejects delays that overflow safe integer millisecond precision (headers/body patterns), avoiding rounded oversized retry-delay coercions.
 - Google Gemini CLI SSE parsing now flushes terminal buffered `data:` lines when streams end without trailing newline delimiters.
 - OpenAI Codex SSE parsing now flushes terminal buffered event chunks when streams end without trailing `\n\n` separators.
 - Model-catalog generation now parses external pricing metadata with strict numeric conversion, ignoring malformed numeric strings instead of partially coercing prefixed values.
