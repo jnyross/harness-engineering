@@ -24,6 +24,7 @@
 - Runtime message router default acknowledgements are now gated to request messages carrying `messageId`, avoiding unsolicited responses for non-request sandbox broadcasts.
 - `ProviderKeyInput` now tracks and clears delayed failure-reset timers across retries/disconnects, preventing stale timeout callbacks from mutating detached component state.
 - `ProviderKeyInput` now sequence-guards async key status/test/save flows across disconnects, preventing stale async completions from mutating detached component state.
+- `ProviderKeyInput` now also clears transient `testing` UI state on disconnect, preventing stale loading indicators from persisting across detach/remount cycles.
 - `ConsoleBlock` now clears copy-feedback reset timers on repeated copy/disconnect paths, preventing stale timeout callbacks after component unmount.
 - `AttachmentOverlay` now removes global keydown listeners and cancels in-flight preview loading in `disconnectedCallback()`, preventing listener/task leaks if the overlay is removed externally.
 - `ChatPanel` now cancels its deferred initial resize `requestAnimationFrame` callback on disconnect, preventing stale update callbacks after rapid mount/unmount cycles.

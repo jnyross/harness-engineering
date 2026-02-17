@@ -3986,6 +3986,23 @@ to:
 
 **Result:** Tree/user-message selectors no longer emit stale auto-cancel callbacks after teardown races.
 
+---
+
+### 222) provider-key input could retain stale `testing` UI state across disconnect/remount cycles
+
+**Finding:** Provider key input invalidated async operations on disconnect, but did not reset transient `testing` UI state during teardown.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/ProviderKeyInput.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- clear `testing` state in `disconnectedCallback()` alongside operation invalidation/timer cleanup.
+
+**Result:** Provider key input no longer carries stale loading indicators across detach/remount cycles.
+
 ## Validation Evidence
 
 - Root quality gate passes:

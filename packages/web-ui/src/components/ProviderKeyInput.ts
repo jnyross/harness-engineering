@@ -45,6 +45,7 @@ export class ProviderKeyInput extends LitElement {
 	override disconnectedCallback(): void {
 		super.disconnectedCallback();
 		this.operationSeq++;
+		this.testing = false;
 		if (this.failureResetTimeout) {
 			clearTimeout(this.failureResetTimeout);
 			this.failureResetTimeout = undefined;
