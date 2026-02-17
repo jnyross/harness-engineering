@@ -107,6 +107,17 @@ function parsePercentageFraction(value: string): number | undefined {
 	return parsed / 100;
 }
 
+function parsePositiveSafeInteger(value: string): number | undefined {
+	if (!/^\d+$/.test(value)) {
+		return undefined;
+	}
+	const parsed = Number.parseInt(value, 10);
+	if (!Number.isSafeInteger(parsed) || parsed < 1) {
+		return undefined;
+	}
+	return parsed;
+}
+
 /** Parse a SizeValue into absolute value given a reference size */
 function parseSizeValue(value: SizeValue | undefined, referenceSize: number): number | undefined {
 	if (value === undefined) return undefined;
@@ -514,10 +525,10 @@ export class TUI extends Container {
 		const match = this.inputBuffer.match(responsePattern);
 
 		if (match) {
-			const heightPx = parseInt(match[1], 10);
-			const widthPx = parseInt(match[2], 10);
+			const heightPx = parsePositiveSafeInteger(match[1]);
+			const widthPx = parsePositiveSafeInteger(match[2]);
 
-			if (heightPx > 0 && widthPx > 0) {
+			if (heightPx !== undefined && widthPx !== undefined) {
 				setCellDimensions({ widthPx, heightPx });
 				// Invalidate all components so images re-render with correct dimensions
 				this.invalidate();
