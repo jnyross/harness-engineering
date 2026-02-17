@@ -1834,6 +1834,22 @@ to flush/process the final buffered SSE line after stream completion and added r
 
 **Result:** Proxy streams now correctly process final SSE events even when responses end without trailing newline delimiters.
 
+---
+
+### 109) ai Gemini CLI stream could drop terminal SSE data line
+
+**Finding:** Gemini CLI SSE parser processed only newline-delimited lines and did not flush the terminal buffered line on stream completion, so responses without trailing newline could lose the final event chunk.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/google-gemini-cli.ts`
+- `packages/ai/test/google-gemini-cli-empty-stream.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to route SSE line handling through a reusable line processor and flush the remaining buffer after read-loop completion, with regression coverage for newline-less terminal `data:` events.
+
+**Result:** Gemini CLI streaming now handles terminal SSE events reliably even when providers omit trailing newline delimiters.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1864,6 +1880,8 @@ to flush/process the final buffered SSE line after stream completion and added r
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/bash-executor.test.ts` (includes signal/null exit non-zero semantics)
 - agent proxy stream regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts` (includes trailing SSE line without newline)
+- ai Gemini CLI SSE regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-empty-stream.test.ts` (includes terminal `data:` line without trailing newline)
 - coding-agent execCommand regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - coding-agent interactive status tests pass after share flow command-exec refactor:
