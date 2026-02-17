@@ -15,19 +15,37 @@ function parsePositiveSafeIntegerOption(value: string, optionName: "--context" |
 }
 
 export function normalizeMemoryOption(memory: string): string {
+	const value = parseMemoryPercentage(memory);
+	if (value === undefined) {
+		throw new Error('Invalid --memory value. Use a percentage between 0 and 100 (for example: "50%" or "75").');
+	}
+	return `${String(value)}%`;
+}
+
+export function parseMemoryPercentage(memory: string): number | undefined {
 	const trimmed = memory.trim();
 	const numericPart = trimmed.endsWith("%") ? trimmed.slice(0, -1).trim() : trimmed;
 	if (!/^\d+(?:\.\d+)?$/.test(numericPart)) {
-		throw new Error('Invalid --memory value. Use a percentage between 0 and 100 (for example: "50%" or "75").');
+		return undefined;
+	}
+	const [wholePart, fractionalPart = ""] = numericPart.split(".");
+	if (!wholePart) {
+		return undefined;
+	}
+	const whole = BigInt(wholePart);
+	if (whole > 100n) {
+		return undefined;
+	}
+	if (whole === 100n && /[1-9]/.test(fractionalPart)) {
+		return undefined;
 	}
 	const value = Number(numericPart);
 
 	if (!Number.isFinite(value) || value <= 0 || value > 100) {
-		throw new Error('Invalid --memory value. Use a percentage between 0 and 100 (for example: "50%" or "75").');
+		return undefined;
 	}
 
-	const normalized = String(value);
-	return `${normalized}%`;
+	return value;
 }
 
 export function normalizeContextOption(context: string): string {

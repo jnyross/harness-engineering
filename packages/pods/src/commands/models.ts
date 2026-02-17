@@ -10,6 +10,7 @@ import { getLogStreamExitError } from "../log-stream-exit-status.js";
 import { getModelConfig, getModelName, isKnownModel } from "../model-configs.js";
 import { assertValidModelId } from "../model-id.js";
 import { assertValidModelInstanceName, isValidModelInstanceName } from "../model-name.js";
+import { parseMemoryPercentage } from "../model-options.js";
 import { waitForProcessExit } from "../process-exit.js";
 import { assertValidPid, isValidPid, isValidPort } from "../process-identifiers.js";
 import { joinShellArgs, shellExport } from "../shell-quote.js";
@@ -40,18 +41,12 @@ function parsePositiveSafeInteger(value: string): number | undefined {
 }
 
 export function resolveModelMemoryFraction(memoryValue: string): number | undefined {
-	const trimmed = memoryValue.trim();
-	const memoryMatch = trimmed.match(/^(\d+(?:\.\d+)?)%?$/);
-	if (!memoryMatch) {
+	const percentage = parseMemoryPercentage(memoryValue);
+	if (percentage === undefined) {
 		return undefined;
 	}
 
-	const parsed = Number(memoryMatch[1]);
-	if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 100) {
-		return undefined;
-	}
-
-	return parsed / 100;
+	return percentage / 100;
 }
 
 export function parseModelRunnerPid(rawPid: string): number | undefined {

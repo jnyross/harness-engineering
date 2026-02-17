@@ -86,11 +86,13 @@ describe("resolveModelMemoryFraction", () => {
 	it("accepts percent and numeric memory values", () => {
 		assert.equal(resolveModelMemoryFraction("50%"), 0.5);
 		assert.equal(resolveModelMemoryFraction("12.5"), 0.125);
+		assert.equal(resolveModelMemoryFraction("100.0%"), 1);
 	});
 
 	it("rejects malformed or out-of-range memory values", () => {
 		assert.equal(resolveModelMemoryFraction("0"), undefined);
 		assert.equal(resolveModelMemoryFraction("101%"), undefined);
+		assert.equal(resolveModelMemoryFraction("100.0000000000000000001"), undefined);
 		assert.equal(resolveModelMemoryFraction("50percent"), undefined);
 	});
 });

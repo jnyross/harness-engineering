@@ -27,6 +27,7 @@
 - SSH command validation now accepts standard `ssh.exe` binary forms (including absolute Windows-style paths with `/` or `\`) in addition to `ssh`.
 - Memory-option normalization now uses direct numeric-string conversion after validation, preserving canonical output formatting (for example `50.0%` normalizes to `50%`) without redundant branch logic.
 - PID/port validator helpers now require safe integers, rejecting oversized unsafe numeric values before command assembly uses persisted process identifiers.
+- Memory percentage parsing now uses precision-safe range validation, rejecting values slightly above 100 that could previously round down during float conversion (for example `100.0000000000000000001`).
 
 ### Fixed
 

@@ -13,6 +13,7 @@ describe("normalizeMemoryOption", () => {
 	it("rejects invalid percent values", () => {
 		assert.throws(() => normalizeMemoryOption("0"), /Invalid --memory value/);
 		assert.throws(() => normalizeMemoryOption("101"), /Invalid --memory value/);
+		assert.throws(() => normalizeMemoryOption("100.0000000000000000001"), /Invalid --memory value/);
 		assert.throws(() => normalizeMemoryOption("abc"), /Invalid --memory value/);
 		assert.throws(() => normalizeMemoryOption("1e2"), /Invalid --memory value/);
 		assert.throws(() => normalizeMemoryOption("0x10"), /Invalid --memory value/);
