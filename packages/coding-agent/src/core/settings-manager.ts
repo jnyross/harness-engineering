@@ -120,6 +120,28 @@ function normalizeRetryDelayMs(value: number | undefined, fallback: number): num
 	return value;
 }
 
+function normalizeEditorPaddingX(value: number | undefined): number {
+	if (value === undefined || Number.isNaN(value)) {
+		return 0;
+	}
+	const normalized = Math.floor(value);
+	if (!Number.isSafeInteger(normalized)) {
+		return 0;
+	}
+	return Math.max(0, Math.min(3, normalized));
+}
+
+function normalizeAutocompleteMaxVisible(value: number | undefined): number {
+	if (value === undefined || Number.isNaN(value)) {
+		return 5;
+	}
+	const normalized = Math.floor(value);
+	if (!Number.isSafeInteger(normalized)) {
+		return 5;
+	}
+	return Math.max(3, Math.min(20, normalized));
+}
+
 /** Deep merge settings: project/overrides take precedence, nested objects merge recursively */
 function deepMergeSettings(base: Settings, overrides: Settings): Settings {
 	const result: Settings = { ...base };
@@ -774,7 +796,7 @@ export class SettingsManager {
 	}
 
 	getEditorPaddingX(): number {
-		return this.settings.editorPaddingX ?? 0;
+		return normalizeEditorPaddingX(this.settings.editorPaddingX);
 	}
 
 	setEditorPaddingX(padding: number): void {
@@ -784,7 +806,7 @@ export class SettingsManager {
 	}
 
 	getAutocompleteMaxVisible(): number {
-		return this.settings.autocompleteMaxVisible ?? 5;
+		return normalizeAutocompleteMaxVisible(this.settings.autocompleteMaxVisible);
 	}
 
 	setAutocompleteMaxVisible(maxVisible: number): void {

@@ -262,4 +262,36 @@ describe("SettingsManager", () => {
 			});
 		});
 	});
+
+	describe("editor numeric settings normalization", () => {
+		it("clamps oversized values to supported ranges", () => {
+			const manager = SettingsManager.inMemory({
+				editorPaddingX: 99,
+				autocompleteMaxVisible: 999,
+			});
+
+			expect(manager.getEditorPaddingX()).toBe(3);
+			expect(manager.getAutocompleteMaxVisible()).toBe(20);
+		});
+
+		it("normalizes decimals and negative values consistently", () => {
+			const manager = SettingsManager.inMemory({
+				editorPaddingX: -1.2,
+				autocompleteMaxVisible: 2.8,
+			});
+
+			expect(manager.getEditorPaddingX()).toBe(0);
+			expect(manager.getAutocompleteMaxVisible()).toBe(3);
+		});
+
+		it("falls back to defaults for malformed non-finite values", () => {
+			const manager = SettingsManager.inMemory({
+				editorPaddingX: Number.POSITIVE_INFINITY,
+				autocompleteMaxVisible: Number.NaN,
+			});
+
+			expect(manager.getEditorPaddingX()).toBe(0);
+			expect(manager.getAutocompleteMaxVisible()).toBe(5);
+		});
+	});
 });

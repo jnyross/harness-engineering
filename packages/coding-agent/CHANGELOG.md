@@ -37,6 +37,7 @@
 - Interactive countdown timer now isolates `onTick`/`onExpire` callback exceptions and disposes safely on tick failures, preventing interval leaks and repeated error cascades from extension dialog countdown hooks.
 - Interactive extension dialog countdown setup now normalizes timeout inputs (non-positive/`NaN` rejected, oversized including `Infinity` clamped to Node timer max), preventing malformed extension timeout values from creating non-expiring countdown behavior.
 - Retry settings loading now normalizes malformed numeric values (`maxRetries`, `baseDelayMs`, `maxDelayMs`) from settings files, falling back/clamping to safe defaults instead of propagating invalid/oversized delay values into retry scheduling.
+- Settings-file numeric overrides for `editorPaddingX` and `autocompleteMaxVisible` now normalize malformed/non-finite values and clamp to supported ranges, preventing manual settings edits from producing invalid interactive layout values.
 - Interactive external-editor launch now reports startup/signal/non-zero exit failures explicitly (while preserving current editor content) instead of silently no-oping.
 - Interactive selector replacement now disposes previous disposable selector components before teardown, and session selector now cancels pending status timers/load updates on dispose, preventing stale async updates after selector close/switch.
 - Interactive chat/pending container clears now dispose disposable child components before removal, preventing leaked background timers/listeners from detached transient message components.
