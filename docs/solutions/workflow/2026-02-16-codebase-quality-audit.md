@@ -2958,6 +2958,27 @@ to:
 
 **Result:** CLI session-fork confirmation now completes deterministically even when stdin closes before user input.
 
+---
+
+### 167) AI CLI interactive prompts could hang when readline closed before callback answer
+
+**Finding:** AI CLI prompt helper relied on bare `rl.question(...)` promise resolution; if readline closed before an answer callback fired, interactive selection/login prompts could remain pending indefinitely.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/readline-prompt.ts` (new)
+- `packages/ai/src/cli.ts`
+- `packages/ai/test/readline-prompt.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- introduce a reusable prompt helper with close-fallback single-settlement behavior,
+- route AI CLI prompt reads through the hardened helper,
+- add regression tests for answer resolution, early-close fallback, and no-override-after-close behavior.
+
+**Result:** AI CLI interactive prompting now settles deterministically even when readline closes before user input arrives.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2984,6 +3005,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/abortable-sleep.test.ts test/google-gemini-cli-retry-delay.test.ts test/openai-codex-stream.test.ts`
 - ai shared event-stream lifecycle regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/event-stream.test.ts test/openai-codex-stream.test.ts test/google-gemini-cli-empty-stream.test.ts` (includes incomplete-end rejection and stream consumer compatibility coverage)
+- ai readline prompt lifecycle regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/readline-prompt.test.ts` (includes close-fallback settlement and answered-value stability)
 - ai copilot/oauth-related regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/abortable-sleep.test.ts test/github-copilot-anthropic.test.ts`
 - ai oauth cancellation regression tests pass:
