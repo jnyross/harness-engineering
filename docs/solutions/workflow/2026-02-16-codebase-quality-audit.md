@@ -5717,6 +5717,26 @@ to:
 
 **Result:** one-shot scheduling now treats `Infinity` delays as oversized (chunked safely) instead of invalid, preserving deterministic long-delay behavior.
 
+---
+
+### 307) coding-agent retry settings accepted malformed delay/count values from settings files
+
+**Finding:** `packages/coding-agent/src/core/settings-manager.ts` returned retry settings (`maxRetries`, `baseDelayMs`, `maxDelayMs`) directly from parsed settings without numeric normalization; malformed values (negative, `NaN`, oversized) could propagate into retry scheduling behavior and disable/short-circuit expected backoff semantics.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/settings-manager.ts`
+- `packages/coding-agent/test/settings-manager.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize retry count values to non-negative safe integers with defaults,
+- normalize retry delays to positive safe integers with defaults and Node timer-bound clamping for oversized values (including `Infinity`),
+- add regression coverage for invalid fallback behavior and oversized delay clamping behavior.
+
+**Result:** retry scheduling now uses deterministic, bounded numeric settings even when settings files contain malformed retry values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5865,6 +5885,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/gh-auth-status.test.ts` (includes missing gh spawn failure, signal interruption, non-zero auth status, and success cases)
 - coding-agent countdown timer regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/countdown-timer.test.ts` (includes normal expiry, manual dispose stop, onTick-throw safety coverage, and timeout normalization coverage including positive-infinite clamping)
+- coding-agent settings manager retry normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/settings-manager.test.ts`
 - coding-agent extension dialog callback regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extension-dialog-callbacks.test.ts` (includes throwing selector/input/editor callback safety and post-dispose callback suppression across selector/input/editor dialogs)
 - coding-agent session selector disposal regression tests pass:
