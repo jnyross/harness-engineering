@@ -4,6 +4,7 @@ import { spawn } from "child_process";
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { getSignalTerminationMessage, normalizeChildExitCode } from "./child-exit-status.js";
 import { extractPodOverride, resolveAppCommand } from "./cli-args.js";
 import { setCliCommand } from "./cli-command.js";
 import { listModels, showKnownModels, startModel, stopAllModels, stopModel, viewLogs } from "./commands/models.js";
@@ -222,7 +223,7 @@ try {
 					});
 
 					sshProcess.on("exit", (code, signal) => {
-						exitOnce(code ?? (signal ? 1 : 0));
+						exitOnce(normalizeChildExitCode(code, signal), getSignalTerminationMessage("SSH process", signal));
 					});
 				} catch (error) {
 					const message = error instanceof Error ? error.message : String(error);

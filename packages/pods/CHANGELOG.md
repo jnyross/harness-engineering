@@ -54,4 +54,5 @@
 - Shared process-exit helper now resolves immediately for already-exited child processes, preventing hangs when listeners attach after fast process termination.
 - `pi agent` delegated command spawning now uses single-settlement `error`/`close` handling and clearer startup-failure diagnostics when the delegated CLI command cannot be launched.
 - Model-start/log streaming now begins `waitForProcessExit()` observation immediately after SSH process spawn, preventing early spawn-error races from slipping past log-monitoring handlers.
+- `pi shell` now normalizes signal-terminated SSH child exits as non-zero and surfaces explicit signal-termination diagnostics instead of silently exiting with code-only output.
 
