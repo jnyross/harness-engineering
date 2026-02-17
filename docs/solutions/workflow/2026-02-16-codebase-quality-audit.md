@@ -2766,6 +2766,23 @@ to:
 
 **Result:** RPC clients now receive correlated unknown-command errors with original request IDs, improving protocol diagnostics and retry/error handling.
 
+---
+
+### 157) package-manager async command errors omitted full invocation context
+
+**Finding:** `runCommand()` startup/signal/non-zero error messages in package manager only included the binary name in some paths, reducing diagnostic clarity for multi-arg command failures.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/package-manager.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- include full invoked command (`<binary> <args...>`) consistently across startup, signal, and non-zero failure diagnostics.
+
+**Result:** Package-manager async command failures now provide richer invocation context, improving troubleshooting of install/update command failures.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2855,7 +2872,7 @@ to:
 - coding-agent package tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test`
 - coding-agent package-manager command-settlement regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes async settlement coverage, sync spawn-start failure diagnostics, and signal-exit rejection diagnostics)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes async settlement coverage, full async command-invocation diagnostics, sync spawn-start failure diagnostics, and signal-exit rejection diagnostics)
 - TUI package tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test`
 - Targeted reviewer parser tests pass:

@@ -51,6 +51,7 @@
 - Read tool now uses single-settlement abort cleanup during async filesystem operations, ensuring deterministic cancellation/error settlement behavior.
 - Edit tool now uses single-settlement abort cleanup across validation/read/write branches, ensuring deterministic cancellation/error settlement behavior.
 - Package-manager command execution now uses single-settlement handling for spawn `error`/`close` races and reports clearer startup/signal failures.
+- Package-manager async command failures now include the full invoked command line in startup/signal/non-zero diagnostics for easier troubleshooting.
 - Package-manager synchronous command execution now reports explicit startup failures when binaries cannot be spawned.
 - RPC extension TUI example now handles agent spawn failures explicitly and maps signal-terminated agent exits to non-zero process exits.
 - RPC extension TUI example now also uses single-settlement process exit handling across `error`/`exit` events to avoid duplicate shutdown paths.

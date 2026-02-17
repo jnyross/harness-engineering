@@ -1720,18 +1720,19 @@ export class DefaultPackageManager implements PackageManager {
 				stdio: "inherit",
 				shell: process.platform === "win32",
 			});
+			const invokedCommand = [command, ...args].join(" ");
 			child.on("error", (error) => {
-				rejectOnce(new Error(`Failed to start ${command}: ${error.message}`));
+				rejectOnce(new Error(`Failed to start ${invokedCommand}: ${error.message}`));
 			});
 			child.on("close", (code, signal) => {
 				if (signal) {
-					rejectOnce(new Error(`${command} ${args.join(" ")} exited due to signal ${signal}`));
+					rejectOnce(new Error(`${invokedCommand} exited due to signal ${signal}`));
 					return;
 				}
 				if (code === 0) {
 					resolveOnce();
 				} else {
-					rejectOnce(new Error(`${command} ${args.join(" ")} failed with code ${code}`));
+					rejectOnce(new Error(`${invokedCommand} failed with code ${code}`));
 				}
 			});
 		});
