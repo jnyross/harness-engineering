@@ -5985,6 +5985,27 @@ to:
 
 **Result:** built-in model configuration loading now fails safely on malformed `models.json` content instead of propagating incompatible runtime launch-config values.
 
+---
+
+### 320) mom settings loading accepted malformed value types/ranges from settings.json
+
+**Finding:** `packages/mom/src/context.ts` `MomSettingsManager` loaded settings JSON without runtime normalization; malformed value types/ranges (provider/model strings, thinking level, compaction/retry fields) could propagate incompatible runtime settings behavior.
+
+**Action:** Updated:
+
+- `packages/mom/src/context.ts`
+- `packages/mom/test/context-settings.test.ts` (new)
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- normalize settings-file values for provider/model/thinking-level fields,
+- normalize compaction/retry settings to valid booleans and positive safe integers with defaults fallback for malformed values,
+- normalize invalid thinking-level setter inputs to safe default (`off`),
+- add regression coverage for malformed fallback and valid-value preservation.
+
+**Result:** mom settings now load deterministically from malformed settings-file edits instead of forwarding incompatible values into runtime compaction/retry/model preference behavior.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5999,6 +6020,8 @@ to:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts`
 - mom channel-store timestamp parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/store.test.ts`
+- mom settings normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/context-settings.test.ts test/store.test.ts`
 - web-ui model discovery + archive-index numeric parsing regression tests pass:
   - `cd packages/web-ui && npx tsx --test test/model-discovery.test.ts test/archive-index.test.ts`
 - tui kitty CSI-u + overlay percentage parsing regression tests pass:
