@@ -1283,6 +1283,22 @@ to only treat backslashes as escapes for supported escaped characters (whitespac
 
 **Result:** Windows-style path arguments are now preserved correctly while existing escaped-space/quote behavior remains intact.
 
+---
+
+### 75) pods SSH shell parser stripped backslashes from Windows command paths
+
+**Finding:** Pods SSH command parsing treated all backslashes as generic escapes, which could strip backslashes from Windows-style `ssh.exe` command paths (`C:\Windows\...`) and break host/binary parsing.
+
+**Action:** Updated:
+
+- `packages/pods/src/ssh.ts`
+- `packages/pods/test/ssh-parse.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to preserve non-escape backslashes while still supporting escaped whitespace/quotes and to add regression coverage for Windows backslash-path parsing.
+
+**Result:** Pods SSH command parsing now supports Windows-style `ssh.exe` command paths using backslashes as well as forward slashes.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1415,6 +1431,8 @@ to only treat backslashes as escapes for supported escaped characters (whitespac
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/interactive-mode-status.test.ts test/parse-command-args.test.ts`
 - coding-agent Windows-path parser coverage:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/parse-command-args.test.ts test/prompt-templates.test.ts` (includes `C:\Users\...` argument preservation cases)
+- pods SSH Windows-backslash parser coverage:
+  - `npm --workspace "@mariozechner/pi" test -- test/ssh-parse.test.ts` (includes `C:\Windows\...\ssh.exe` parse and host extraction cases)
 - nested state-file write coverage:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/state-files.test.ts` (includes nested parent-dir creation case)
 - `pi agent` malformed SSH host guard:
