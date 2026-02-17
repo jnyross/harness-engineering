@@ -5448,6 +5448,26 @@ to:
 
 **Result:** one-shot events now avoid immediate execution from malformed timestamps or oversized delays and schedule safely across Node timer limits.
 
+---
+
+### 294) tui stdin buffering accepted invalid/oversized timeout options
+
+**Finding:** `packages/tui/src/stdin-buffer.ts` accepted `StdinBufferOptions.timeout` as-is and forwarded it directly to `setTimeout(...)`; non-positive/invalid values could force immediate flushes, and oversized values could be runtime-clamped into unintended near-immediate flush behavior.
+
+**Action:** Updated:
+
+- `packages/tui/src/stdin-buffer.ts`
+- `packages/tui/test/stdin-buffer.test.ts`
+- `packages/tui/CHANGELOG.md`
+
+to:
+
+- normalize buffer timeout options with positive/finite validation and default fallback behavior,
+- clamp oversized timeout values to Node timer bounds before scheduling flush timers,
+- add regression coverage ensuring oversized timeout inputs do not flush buffered escape sequences early.
+
+**Result:** stdin buffering now handles malformed/oversized timeout options deterministically without relying on implicit Node timer clamping semantics.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5471,6 +5491,8 @@ to:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/wrap-ansi.test.ts`
 - tui cell-size response parsing regression tests pass:
   - `cd packages/tui && node --test --import tsx test/tui-cell-size-response.test.ts`
+- tui stdin-buffer timeout normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi-tui" test -- test/stdin-buffer.test.ts`
 - coding-agent changelog/export-color parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/changelog-utils.test.ts test/export-html-color-parsing.test.ts`
 - coding-agent tool numeric-parameter safety regression tests pass:
