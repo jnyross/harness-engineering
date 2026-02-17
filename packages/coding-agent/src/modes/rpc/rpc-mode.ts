@@ -126,7 +126,17 @@ export async function runRpcMode(session: AgentSession): Promise<never> {
 
 			pendingExtensionRequests.set(id, {
 				resolve: (response: RpcExtensionUIResponse) => {
-					settle(parseResponse(response));
+					try {
+						settle(parseResponse(response));
+					} catch (parseError) {
+						const error = parseError instanceof Error ? parseError : new Error(String(parseError));
+						if (settled) {
+							return;
+						}
+						settled = true;
+						cleanup();
+						reject(error);
+					}
 				},
 				reject: (error: Error) => {
 					if (settled) {

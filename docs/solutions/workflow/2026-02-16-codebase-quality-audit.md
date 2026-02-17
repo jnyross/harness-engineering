@@ -2731,6 +2731,24 @@ to:
 
 **Result:** Local bash executor process handling now settles deterministically once across child lifecycle races, with preserved cancellation/output semantics.
 
+---
+
+### 155) RPC dialog response parsing could throw before promise settlement cleanup
+
+**Finding:** RPC dialog response callbacks invoked parser logic inline without guarding parser exceptions. Unexpected payload shapes could throw before settle/reject cleanup, leaving pending dialog promises unresolved.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/rpc/rpc-mode.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- guard dialog response parsing with try/catch,
+- reject dialog promises deterministically on parser failures with full cleanup.
+
+**Result:** RPC dialog request handling now remains settlement-safe even when response payload parsing fails unexpectedly.
+
 ## Validation Evidence
 
 - Root quality gate passes:
