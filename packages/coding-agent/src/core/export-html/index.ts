@@ -37,21 +37,45 @@ export interface ExportOptions {
 }
 
 /** Parse a color string to RGB values. Supports hex (#RRGGBB) and rgb(r,g,b) formats. */
-function parseColor(color: string): { r: number; g: number; b: number } | undefined {
+function parseRgbComponent(value: string): number | undefined {
+	if (!/^\d+$/.test(value)) {
+		return undefined;
+	}
+	const parsed = Number.parseInt(value, 10);
+	if (!Number.isSafeInteger(parsed) || parsed < 0 || parsed > 255) {
+		return undefined;
+	}
+	return parsed;
+}
+
+/** Parse export color strings to RGB values. Supports hex and rgb(r,g,b) formats. */
+export function parseExportColor(color: string): { r: number; g: number; b: number } | undefined {
 	const hexMatch = color.match(/^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$/);
 	if (hexMatch) {
+		const r = Number.parseInt(hexMatch[1], 16);
+		const g = Number.parseInt(hexMatch[2], 16);
+		const b = Number.parseInt(hexMatch[3], 16);
+		if (!Number.isSafeInteger(r) || !Number.isSafeInteger(g) || !Number.isSafeInteger(b)) {
+			return undefined;
+		}
 		return {
-			r: Number.parseInt(hexMatch[1], 16),
-			g: Number.parseInt(hexMatch[2], 16),
-			b: Number.parseInt(hexMatch[3], 16),
+			r,
+			g,
+			b,
 		};
 	}
 	const rgbMatch = color.match(/^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/);
 	if (rgbMatch) {
+		const r = parseRgbComponent(rgbMatch[1]);
+		const g = parseRgbComponent(rgbMatch[2]);
+		const b = parseRgbComponent(rgbMatch[3]);
+		if (r === undefined || g === undefined || b === undefined) {
+			return undefined;
+		}
 		return {
-			r: Number.parseInt(rgbMatch[1], 10),
-			g: Number.parseInt(rgbMatch[2], 10),
-			b: Number.parseInt(rgbMatch[3], 10),
+			r,
+			g,
+			b,
 		};
 	}
 	return undefined;
@@ -68,7 +92,7 @@ function getLuminance(r: number, g: number, b: number): number {
 
 /** Adjust color brightness. Factor > 1 lightens, < 1 darkens. */
 function adjustBrightness(color: string, factor: number): string {
-	const parsed = parseColor(color);
+	const parsed = parseExportColor(color);
 	if (!parsed) return color;
 	const adjust = (c: number) => Math.min(255, Math.max(0, Math.round(c * factor)));
 	return `rgb(${adjust(parsed.r)}, ${adjust(parsed.g)}, ${adjust(parsed.b)})`;
@@ -76,7 +100,7 @@ function adjustBrightness(color: string, factor: number): string {
 
 /** Derive export background colors from a base color (e.g., userMessageBg). */
 function deriveExportColors(baseColor: string): { pageBg: string; cardBg: string; infoBg: string } {
-	const parsed = parseColor(baseColor);
+	const parsed = parseExportColor(baseColor);
 	if (!parsed) {
 		return {
 			pageBg: "rgb(24, 24, 30)",
