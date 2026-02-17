@@ -34,6 +34,63 @@ export type AuthCredential = ApiKeyCredential | OAuthCredential;
 
 export type AuthStorageData = Record<string, AuthCredential>;
 
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function normalizeAuthCredential(value: unknown): AuthCredential | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	const record = value as Record<string, unknown>;
+	const type = record.type;
+
+	if (type === "api_key") {
+		const key = parseNonEmptyString(record.key);
+		return key ? { type: "api_key", key } : undefined;
+	}
+
+	if (type === "oauth") {
+		const refresh = parseNonEmptyString(record.refresh);
+		const access = parseNonEmptyString(record.access);
+		const expires = record.expires;
+		if (!refresh || !access || typeof expires !== "number" || !Number.isSafeInteger(expires) || expires < 0) {
+			return undefined;
+		}
+		return {
+			...(record as OAuthCredentials),
+			type: "oauth",
+			refresh,
+			access,
+			expires,
+		};
+	}
+
+	return undefined;
+}
+
+function normalizeAuthStorageData(value: unknown): AuthStorageData {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return {};
+	}
+	const normalized: AuthStorageData = {};
+	for (const [provider, credential] of Object.entries(value as Record<string, unknown>)) {
+		const providerId = parseNonEmptyString(provider);
+		if (!providerId) {
+			continue;
+		}
+		const parsedCredential = normalizeAuthCredential(credential);
+		if (parsedCredential) {
+			normalized[providerId] = parsedCredential;
+		}
+	}
+	return normalized;
+}
+
 /**
  * Credential storage backed by a JSON file.
  */
@@ -78,7 +135,7 @@ export class AuthStorage {
 			return;
 		}
 		try {
-			this.data = JSON.parse(readFileSync(this.authPath, "utf-8"));
+			this.data = normalizeAuthStorageData(JSON.parse(readFileSync(this.authPath, "utf-8")));
 		} catch {
 			this.data = {};
 		}

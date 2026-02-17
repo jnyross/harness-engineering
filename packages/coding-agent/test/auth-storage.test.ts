@@ -30,6 +30,31 @@ describe("AuthStorage", () => {
 		writeFileSync(authJsonPath, JSON.stringify(data));
 	}
 
+	describe("auth.json normalization", () => {
+		test("ignores malformed credential entries while preserving valid ones", async () => {
+			writeAuthJson({
+				openai: { type: "api_key", key: " sk-valid-openai-key " },
+				bad1: null,
+				bad2: { type: "api_key", key: "" },
+				bad3: { type: "oauth", access: "a", refresh: "r", expires: "never" },
+				bad4: { type: "oauth", access: "a", refresh: "", expires: Date.now() + 60000 },
+			});
+
+			authStorage = new AuthStorage(authJsonPath);
+			expect(authStorage.list()).toEqual(["openai"]);
+			expect(await authStorage.getApiKey("openai")).toBe("sk-valid-openai-key");
+			expect(await authStorage.getApiKey("bad1")).toBeUndefined();
+		});
+
+		test("falls back to empty storage for malformed root shape", async () => {
+			writeFileSync(authJsonPath, JSON.stringify(["not-an-object"]));
+
+			authStorage = new AuthStorage(authJsonPath);
+			expect(authStorage.list()).toEqual([]);
+			expect(await authStorage.getApiKey("openai")).toBeUndefined();
+		});
+	});
+
 	describe("API key resolution", () => {
 		test("literal API key is returned directly", async () => {
 			writeAuthJson({

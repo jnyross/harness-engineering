@@ -46,6 +46,7 @@
 - String/list settings reads (`defaultProvider`, `defaultModel`, `theme`, shell path/prefix, extension/skill/prompt/theme paths, enabled model patterns, package source arrays) now normalize malformed values and trim/filter invalid entries from settings files instead of forwarding incompatible runtime types.
 - Keybindings config loading now normalizes parsed JSON structure and key values (including malformed root/value types), ignoring invalid entries while preserving valid overrides and explicit unbind arrays.
 - Markdown settings reads now normalize `markdown.codeBlockIndent` to string-only values, falling back to default indentation when malformed non-string values are present in settings files.
+- Auth storage reload now normalizes parsed `auth.json` credentials (api-key/oauth entry shapes), ignoring malformed entries/root types instead of forwarding incompatible credential objects into runtime auth lookup paths.
 - Interactive external-editor launch now reports startup/signal/non-zero exit failures explicitly (while preserving current editor content) instead of silently no-oping.
 - Interactive selector replacement now disposes previous disposable selector components before teardown, and session selector now cancels pending status timers/load updates on dispose, preventing stale async updates after selector close/switch.
 - Interactive chat/pending container clears now dispose disposable child components before removal, preventing leaked background timers/listeners from detached transient message components.
