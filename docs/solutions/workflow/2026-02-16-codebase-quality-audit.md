@@ -1818,6 +1818,22 @@ to base cancellation on caller abort signal state, map signal/null exits to non-
 
 **Result:** Bash executor now preserves failure semantics for signal/null exits while keeping true caller-driven cancellation behavior.
 
+---
+
+### 108) agent proxy stream dropped terminal SSE lines without trailing newline
+
+**Finding:** Proxy stream parsing buffered partial lines and only processed newline-delimited chunks, so a final `data:` event without trailing newline could be dropped, leaving stream completion events unprocessed.
+
+**Action:** Updated:
+
+- `packages/agent/src/proxy.ts`
+- `packages/agent/test/proxy.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to flush/process the final buffered SSE line after stream completion and added regression coverage for newline-less terminal `data:` events.
+
+**Result:** Proxy streams now correctly process final SSE events even when responses end without trailing newline delimiters.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1846,6 +1862,8 @@ to base cancellation on caller abort signal state, map signal/null exits to non-
   - `npm --workspace "@mariozechner/pi" test -- test/process-exit.test.ts` (includes signal-exit non-zero assertion)
 - coding-agent bash executor regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/bash-executor.test.ts` (includes signal/null exit non-zero semantics)
+- agent proxy stream regression tests pass:
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts` (includes trailing SSE line without newline)
 - coding-agent execCommand regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - coding-agent interactive status tests pass after share flow command-exec refactor:
