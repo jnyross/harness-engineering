@@ -2917,6 +2917,26 @@ to:
 
 **Result:** CLI stdin ingestion now settles deterministically across normal and error paths without dangling event listeners.
 
+---
+
+### 165) shared EventStream could leave `result()` pending forever on incomplete stream endings
+
+**Finding:** `EventStream.end()` only resolved final results when an explicit result was provided; streams ending without a completion event/result left `result()` promises unresolved, causing silent hangs in incomplete stream lifecycles.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/event-stream.ts`
+- `packages/ai/test/event-stream.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- add one-time final-result settlement guards,
+- reject `result()` with explicit diagnostics when streams end without completion payloads,
+- add regression tests for completion-event resolve, explicit end-result resolve, and incomplete-end rejection behavior.
+
+**Result:** Shared event streams now fail fast on incomplete endings instead of hanging `result()` consumers indefinitely.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2939,6 +2959,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/sleep.test.ts` (includes listener cleanup on resolve + abort paths)
 - ai abortable sleep + retry stream regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/abortable-sleep.test.ts test/google-gemini-cli-retry-delay.test.ts test/openai-codex-stream.test.ts`
+- ai shared event-stream lifecycle regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/event-stream.test.ts test/openai-codex-stream.test.ts test/google-gemini-cli-empty-stream.test.ts` (includes incomplete-end rejection and stream consumer compatibility coverage)
 - ai copilot/oauth-related regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/abortable-sleep.test.ts test/github-copilot-anthropic.test.ts`
 - ai oauth cancellation regression tests pass:

@@ -5,16 +5,35 @@ export class EventStream<T, R = T> implements AsyncIterable<T> {
 	private queue: T[] = [];
 	private waiting: ((value: IteratorResult<T>) => void)[] = [];
 	private done = false;
+	private finalResultSettled = false;
 	private finalResultPromise: Promise<R>;
 	private resolveFinalResult!: (result: R) => void;
+	private rejectFinalResult!: (error: Error) => void;
 
 	constructor(
 		private isComplete: (event: T) => boolean,
 		private extractResult: (event: T) => R,
 	) {
-		this.finalResultPromise = new Promise((resolve) => {
+		this.finalResultPromise = new Promise((resolve, reject) => {
 			this.resolveFinalResult = resolve;
+			this.rejectFinalResult = reject;
 		});
+	}
+
+	private resolveFinal(result: R): void {
+		if (this.finalResultSettled) {
+			return;
+		}
+		this.finalResultSettled = true;
+		this.resolveFinalResult(result);
+	}
+
+	private rejectFinal(error: Error): void {
+		if (this.finalResultSettled) {
+			return;
+		}
+		this.finalResultSettled = true;
+		this.rejectFinalResult(error);
 	}
 
 	push(event: T): void {
@@ -22,7 +41,7 @@ export class EventStream<T, R = T> implements AsyncIterable<T> {
 
 		if (this.isComplete(event)) {
 			this.done = true;
-			this.resolveFinalResult(this.extractResult(event));
+			this.resolveFinal(this.extractResult(event));
 		}
 
 		// Deliver to waiting consumer or queue it
@@ -37,7 +56,9 @@ export class EventStream<T, R = T> implements AsyncIterable<T> {
 	end(result?: R): void {
 		this.done = true;
 		if (result !== undefined) {
-			this.resolveFinalResult(result);
+			this.resolveFinal(result);
+		} else {
+			this.rejectFinal(new Error("Event stream ended without completion event"));
 		}
 		// Notify all waiting consumers that we're done
 		while (this.waiting.length > 0) {

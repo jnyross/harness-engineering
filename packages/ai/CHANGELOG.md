@@ -19,6 +19,7 @@
 - OAuth manual-input parsing for Anthropic/Codex/Gemini/Antigravity is now centralized in a shared helper, reducing parser drift across providers.
 - Google Gemini CLI SSE parsing now flushes terminal buffered `data:` lines when streams end without trailing newline delimiters.
 - OpenAI Codex SSE parsing now flushes terminal buffered event chunks when streams end without trailing `\n\n` separators.
+- Shared `EventStream.result()` now rejects when streams end without a completion event/result, preventing silent hangs from incomplete stream lifecycles.
 
 ## [0.52.12] - 2026-02-13
 
