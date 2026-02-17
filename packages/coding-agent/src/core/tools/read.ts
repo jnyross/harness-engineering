@@ -10,14 +10,27 @@ import { DEFAULT_MAX_BYTES, DEFAULT_MAX_LINES, formatSize, type TruncationResult
 
 const readSchema = Type.Object({
 	path: Type.String({ description: "Path to the file to read (relative or absolute)" }),
-	offset: Type.Optional(Type.Number({ description: "Line number to start reading from (1-indexed)" })),
-	limit: Type.Optional(Type.Number({ description: "Maximum number of lines to read" })),
+	offset: Type.Optional(Type.Integer({ minimum: 1, description: "Line number to start reading from (1-indexed)" })),
+	limit: Type.Optional(Type.Integer({ minimum: 1, description: "Maximum number of lines to read" })),
 });
 
 export type ReadToolInput = Static<typeof readSchema>;
 
 export interface ReadToolDetails {
 	truncation?: TruncationResult;
+}
+
+function parsePositiveIntegerParameter(
+	value: number | undefined,
+	parameterName: "offset" | "limit",
+): number | undefined {
+	if (value === undefined) {
+		return undefined;
+	}
+	if (!Number.isInteger(value) || value <= 0) {
+		throw new Error(`Parameter '${parameterName}' must be a positive integer.`);
+	}
+	return value;
 }
 
 function splitIntoLogicalLines(textContent: string): string[] {
@@ -72,6 +85,8 @@ export function createReadTool(cwd: string, options?: ReadToolOptions): AgentToo
 			{ path, offset, limit }: { path: string; offset?: number; limit?: number },
 			signal?: AbortSignal,
 		) => {
+			const normalizedOffset = parsePositiveIntegerParameter(offset, "offset");
+			const normalizedLimit = parsePositiveIntegerParameter(limit, "limit");
 			const absolutePath = resolveReadPath(path, cwd);
 
 			return new Promise<{ content: (TextContent | ImageContent)[]; details: ReadToolDetails | undefined }>(
@@ -155,19 +170,21 @@ export function createReadTool(cwd: string, options?: ReadToolOptions): AgentToo
 								const totalFileLines = allLines.length;
 
 								// Apply offset if specified (1-indexed to 0-indexed)
-								const startLine = offset ? Math.max(0, offset - 1) : 0;
+								const startLine = normalizedOffset ? normalizedOffset - 1 : 0;
 								const startLineDisplay = startLine + 1; // For display (1-indexed)
 
 								// Check if offset is out of bounds
-								if (offset !== undefined && startLine >= allLines.length) {
-									throw new Error(`Offset ${offset} is beyond end of file (${allLines.length} lines total)`);
+								if (normalizedOffset !== undefined && startLine >= allLines.length) {
+									throw new Error(
+										`Offset ${normalizedOffset} is beyond end of file (${allLines.length} lines total)`,
+									);
 								}
 
 								// If limit is specified by user, use it; otherwise we'll let truncateHead decide
 								let selectedContent: string;
 								let userLimitedLines: number | undefined;
-								if (limit !== undefined) {
-									const endLine = Math.min(startLine + limit, allLines.length);
+								if (normalizedLimit !== undefined) {
+									const endLine = Math.min(startLine + normalizedLimit, allLines.length);
 									selectedContent = allLines.slice(startLine, endLine).join("\n");
 									userLimitedLines = endLine - startLine;
 								} else {

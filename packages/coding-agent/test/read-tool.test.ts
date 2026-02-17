@@ -31,4 +31,17 @@ describe("createReadTool text line counting", () => {
 			"Offset 1 is beyond end of file (0 lines total)",
 		);
 	});
+
+	it("rejects non-positive and non-integer offset/limit values", async () => {
+		const tool = createTextReadTool("line one\nline two");
+		await expect(tool.execute("tool-4", { path: "demo.txt", offset: 0 }, undefined)).rejects.toThrow(
+			"Parameter 'offset' must be a positive integer.",
+		);
+		await expect(tool.execute("tool-5", { path: "demo.txt", offset: 1.2 }, undefined)).rejects.toThrow(
+			"Parameter 'offset' must be a positive integer.",
+		);
+		await expect(tool.execute("tool-6", { path: "demo.txt", limit: 0 }, undefined)).rejects.toThrow(
+			"Parameter 'limit' must be a positive integer.",
+		);
+	});
 });

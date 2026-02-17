@@ -156,6 +156,21 @@ describe("Coding Agent Tools", () => {
 			);
 		});
 
+		it("should reject non-positive or non-integer offset/limit values", async () => {
+			const testFile = join(testDir, "invalid-read-ranges.txt");
+			writeFileSync(testFile, "Line 1\nLine 2");
+
+			await expect(readTool.execute("test-call-8b", { path: testFile, offset: 0 })).rejects.toThrow(
+				"Parameter 'offset' must be a positive integer.",
+			);
+			await expect(readTool.execute("test-call-8c", { path: testFile, offset: 1.5 })).rejects.toThrow(
+				"Parameter 'offset' must be a positive integer.",
+			);
+			await expect(readTool.execute("test-call-8d", { path: testFile, limit: -3 })).rejects.toThrow(
+				"Parameter 'limit' must be a positive integer.",
+			);
+		});
+
 		it("should include truncation details when truncated", async () => {
 			const testFile = join(testDir, "large-file.txt");
 			const lines = Array.from({ length: 2500 }, (_, i) => `Line ${i + 1}`);
