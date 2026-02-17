@@ -182,6 +182,7 @@ export class ProvidersModelsTab extends SettingsTab {
 	}
 
 	private async refreshProvider(provider: CustomProvider) {
+		const loadSeq = this.customProvidersLoadSeq;
 		this.providerStatus.set(provider.id, { modelCount: 0, status: "checking" });
 		this.requestUpdate();
 
@@ -191,12 +192,18 @@ export class ProvidersModelsTab extends SettingsTab {
 				provider.baseUrl,
 				provider.apiKey,
 			);
+			if (!this.isConnected || loadSeq !== this.customProvidersLoadSeq) {
+				return;
+			}
 
 			this.providerStatus.set(provider.id, { modelCount: models.length, status: "connected" });
 			this.requestUpdate();
 
 			console.log(`Refreshed ${models.length} models from ${provider.name}`);
 		} catch (error) {
+			if (!this.isConnected || loadSeq !== this.customProvidersLoadSeq) {
+				return;
+			}
 			this.providerStatus.set(provider.id, { modelCount: 0, status: "disconnected" });
 			this.requestUpdate();
 

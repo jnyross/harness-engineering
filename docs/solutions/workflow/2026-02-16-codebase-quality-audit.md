@@ -3806,6 +3806,24 @@ to:
 
 **Result:** Session list dialog now preserves deterministic close/notification behavior even when consumer callbacks throw.
 
+---
+
+### 213) providers/models refresh action could apply stale async outcomes after disconnect
+
+**Finding:** Providers/models tab refresh flow (`refreshProvider`) awaited model discovery without stale-completion guards, allowing detached status updates and stale alerts after dialog unmount/remount races.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/dialogs/ProvidersModelsTab.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- sequence-guard async refresh completion paths with connectivity checks,
+- suppress stale success/error UI updates when refresh completes after disconnect/remount.
+
+**Result:** Provider refresh actions no longer apply stale async updates/alerts after component lifecycle races.
+
 ## Validation Evidence
 
 - Root quality gate passes:
