@@ -6,20 +6,34 @@ const mockState = vi.hoisted(() => ({
 	constructorOpts: undefined as Record<string, unknown> | undefined,
 	streamParams: undefined as Record<string, unknown> | undefined,
 	useStringUsage: false,
+	useMalformedUsage: false,
 }));
 
 vi.mock("@anthropic-ai/sdk", () => {
 	const fakeStream = {
 		async *[Symbol.asyncIterator]() {
-			const toUsageValue = (value: number): number | string => (mockState.useStringUsage ? String(value) : value);
+			const toUsageValue = (
+				value: number,
+				options?: { malformed?: string; malformedNumber?: number },
+			): number | string => {
+				if (mockState.useMalformedUsage) {
+					if (options?.malformed !== undefined) {
+						return options.malformed;
+					}
+					if (options?.malformedNumber !== undefined) {
+						return options.malformedNumber;
+					}
+				}
+				return mockState.useStringUsage ? String(value) : value;
+			};
 			yield {
 				type: "message_start",
 				message: {
 					usage: {
-						input_tokens: toUsageValue(10),
-						output_tokens: toUsageValue(0),
-						cache_creation_input_tokens: toUsageValue(1),
-						cache_read_input_tokens: toUsageValue(2),
+						input_tokens: toUsageValue(10, { malformed: "-4" }),
+						output_tokens: toUsageValue(0, { malformed: "1.9" }),
+						cache_creation_input_tokens: toUsageValue(1, { malformed: "-3" }),
+						cache_read_input_tokens: toUsageValue(2, { malformed: "oops" }),
 					},
 				},
 			};
@@ -27,9 +41,9 @@ vi.mock("@anthropic-ai/sdk", () => {
 				type: "message_delta",
 				delta: { stop_reason: "end_turn" },
 				usage: {
-					output_tokens: toUsageValue(5),
-					cache_creation_input_tokens: toUsageValue(1),
-					cache_read_input_tokens: toUsageValue(2),
+					output_tokens: toUsageValue(5, { malformed: "2.8" }),
+					cache_creation_input_tokens: toUsageValue(1, { malformed: "1.2" }),
+					cache_read_input_tokens: toUsageValue(2, { malformed: "2.7" }),
 				},
 			};
 		},
@@ -61,6 +75,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 
 	it("uses Bearer auth, Copilot headers, and valid Anthropic Messages payload", async () => {
 		mockState.useStringUsage = false;
+		mockState.useMalformedUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		expect(model.api).toBe("anthropic-messages");
 
@@ -100,6 +115,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 
 	it("includes interleaved-thinking beta when reasoning is enabled", async () => {
 		mockState.useStringUsage = false;
+		mockState.useMalformedUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const s = streamAnthropic(model, context, {
@@ -116,6 +132,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 
 	it("normalizes numeric-string usage counters from Anthropic stream events", async () => {
 		mockState.useStringUsage = true;
+		mockState.useMalformedUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const result = await streamAnthropic(model, context, { apiKey: "tid_copilot_session_test_token" }).result();
@@ -125,5 +142,19 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		expect(result.usage.cacheRead).toBe(2);
 		expect(result.usage.cacheWrite).toBe(1);
 		expect(result.usage.totalTokens).toBe(18);
+	});
+
+	it("ignores malformed and negative usage counters from Anthropic stream events", async () => {
+		mockState.useStringUsage = false;
+		mockState.useMalformedUsage = true;
+		const model = getModel("github-copilot", "claude-sonnet-4");
+		const { streamAnthropic } = await import("../src/providers/anthropic.js");
+		const result = await streamAnthropic(model, context, { apiKey: "tid_copilot_session_test_token" }).result();
+
+		expect(result.usage.input).toBe(0);
+		expect(result.usage.output).toBe(2);
+		expect(result.usage.cacheRead).toBe(2);
+		expect(result.usage.cacheWrite).toBe(1);
+		expect(result.usage.totalTokens).toBe(5);
 	});
 });

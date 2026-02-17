@@ -4,7 +4,14 @@ import { getModel } from "../src/models.js";
 import { streamSimple } from "../src/stream.js";
 import type { Tool } from "../src/types.js";
 
-const mockState = vi.hoisted(() => ({ lastParams: undefined as unknown, usageAsStrings: false }));
+const mockState = vi.hoisted(
+	() =>
+		({
+			lastParams: undefined as unknown,
+			usageAsStrings: false,
+			usageMalformed: false,
+		}) as { lastParams: unknown; usageAsStrings: boolean; usageMalformed: boolean },
+);
 
 vi.mock("openai", () => {
 	class FakeOpenAI {
@@ -14,10 +21,10 @@ vi.mock("openai", () => {
 					mockState.lastParams = params;
 					return {
 						async *[Symbol.asyncIterator]() {
-							const promptTokens = mockState.usageAsStrings ? "5" : 5;
-							const completionTokens = mockState.usageAsStrings ? "2" : 2;
-							const cachedTokens = mockState.usageAsStrings ? "3" : 3;
-							const reasoningTokens = mockState.usageAsStrings ? "4" : 4;
+							const promptTokens = mockState.usageMalformed ? "-4" : mockState.usageAsStrings ? "5" : 5;
+							const completionTokens = mockState.usageMalformed ? "2.9" : mockState.usageAsStrings ? "2" : 2;
+							const cachedTokens = mockState.usageMalformed ? "1.8" : mockState.usageAsStrings ? "3" : 3;
+							const reasoningTokens = mockState.usageMalformed ? "-7" : mockState.usageAsStrings ? "4" : 4;
 							yield {
 								choices: [{ delta: {}, finish_reason: "stop" }],
 								usage: {
@@ -40,6 +47,7 @@ vi.mock("openai", () => {
 describe("openai-completions tool_choice", () => {
 	it("forwards toolChoice from simple options to payload", async () => {
 		mockState.usageAsStrings = false;
+		mockState.usageMalformed = false;
 		const { compat: _compat, ...baseModel } = getModel("openai", "gpt-4o-mini")!;
 		const model = { ...baseModel, api: "openai-completions" } as const;
 		const tools: Tool[] = [
@@ -82,6 +90,7 @@ describe("openai-completions tool_choice", () => {
 
 	it("omits strict when compat disables strict mode", async () => {
 		mockState.usageAsStrings = false;
+		mockState.usageMalformed = false;
 		const { compat: _compat, ...baseModel } = getModel("openai", "gpt-4o-mini")!;
 		const model = {
 			...baseModel,
@@ -128,6 +137,7 @@ describe("openai-completions tool_choice", () => {
 
 	it("normalizes numeric-string usage counters from compatible APIs", async () => {
 		mockState.usageAsStrings = true;
+		mockState.usageMalformed = false;
 		const { compat: _compat, ...baseModel } = getModel("openai", "gpt-4o-mini")!;
 		const model = { ...baseModel, api: "openai-completions" } as const;
 
@@ -149,5 +159,31 @@ describe("openai-completions tool_choice", () => {
 		expect(stream.usage.output).toBe(6);
 		expect(stream.usage.cacheRead).toBe(3);
 		expect(stream.usage.totalTokens).toBe(11);
+	});
+
+	it("ignores malformed and negative usage counters from compatible APIs", async () => {
+		mockState.usageAsStrings = false;
+		mockState.usageMalformed = true;
+		const { compat: _compat, ...baseModel } = getModel("openai", "gpt-4o-mini")!;
+		const model = { ...baseModel, api: "openai-completions" } as const;
+
+		const stream = await streamSimple(
+			model,
+			{
+				messages: [
+					{
+						role: "user",
+						content: "hello",
+						timestamp: Date.now(),
+					},
+				],
+			},
+			{ apiKey: "test" },
+		).result();
+
+		expect(stream.usage.input).toBe(0);
+		expect(stream.usage.output).toBe(2);
+		expect(stream.usage.cacheRead).toBe(1);
+		expect(stream.usage.totalTokens).toBe(3);
 	});
 });

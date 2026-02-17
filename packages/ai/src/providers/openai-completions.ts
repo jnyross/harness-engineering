@@ -71,13 +71,13 @@ function hasToolHistory(messages: Message[]): boolean {
 }
 
 function parseUsageNumber(value: unknown): number {
-	if (typeof value === "number" && Number.isFinite(value)) {
-		return value;
+	if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
+		return Math.trunc(value);
 	}
 	if (typeof value === "string" && value.trim().length > 0) {
 		const parsed = Number(value);
-		if (Number.isFinite(parsed)) {
-			return parsed;
+		if (Number.isFinite(parsed) && parsed >= 0) {
+			return Math.trunc(parsed);
 		}
 	}
 	return 0;
