@@ -4974,6 +4974,26 @@ to:
 
 **Result:** settings-selector numeric options now reject malformed/unsafe integer payloads instead of forwarding permissive numeric coercions.
 
+---
+
+### 271) TUI ANSI wrap style tracker accepted malformed/unsafe SGR color payloads
+
+**Finding:** `packages/tui/src/utils.ts` tracked active wrap styles by parsing SGR parameters with permissive integer coercion, allowing malformed/unsafe 256-color/RGB numeric payloads to be re-emitted in continuation-line style state.
+
+**Action:** Updated:
+
+- `packages/tui/src/utils.ts`
+- `packages/tui/test/wrap-ansi.test.ts`
+- `packages/tui/CHANGELOG.md`
+
+to:
+
+- parse SGR tokens via strict decimal safe-integer parsing,
+- require byte-range validation for tracked 256-color/RGB parameters,
+- add regression coverage ensuring malformed/unsafe 256-color values are not carried into wrapped continuation segments.
+
+**Result:** wrap-style state tracking now ignores malformed/unsafe SGR color payloads instead of re-emitting invalid carried-over ANSI color sequences.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4989,6 +5009,8 @@ to:
   - `cd packages/tui && node --test --import tsx test/overlay-options.test.ts`
 - tui key parser Kitty unsafe-integer regression tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/keys.test.ts`
+- tui ANSI wrap style-tracker regression tests pass:
+  - `npm --workspace "@mariozechner/pi-tui" test -- test/wrap-ansi.test.ts`
 - tui cell-size response parsing regression tests pass:
   - `cd packages/tui && node --test --import tsx test/tui-cell-size-response.test.ts`
 - coding-agent changelog/export-color parsing regression tests pass:
