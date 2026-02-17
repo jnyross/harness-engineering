@@ -2111,6 +2111,26 @@ to:
 
 **Result:** Pods SSH execution wrappers now settle deterministically across spawn/close races and report missing-binary failures reliably.
 
+---
+
+### 123) coding-agent package-manager command runner could double-settle on process events
+
+**Finding:** `DefaultPackageManager.runCommand(...)` resolved/rejected from separate spawn `error` and process-exit paths without an explicit single-settlement guard. This can create duplicate settle attempts on edge cases and less precise startup failure diagnostics.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/package-manager.ts`
+- `packages/coding-agent/test/package-manager.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- add single-settlement (`resolveOnce`/`rejectOnce`) handling across `error` and `close` events,
+- surface clearer startup failures (`Failed to start ...`) and signal-termination failures,
+- add regression tests for zero-exit success, non-zero exits, and missing-binary spawn failures.
+
+**Result:** Package-manager command execution now settles deterministically and reports command startup/exit failures with clearer context.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2197,6 +2217,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/stream.test.ts -t "Mistral Provider (devstral-medium-latest via OpenAI Completions)"`
 - coding-agent package tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test`
+- coding-agent package-manager command-settlement regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts`
 - TUI package tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test`
 - Targeted reviewer parser tests pass:
