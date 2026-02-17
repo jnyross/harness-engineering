@@ -2191,6 +2191,27 @@ to:
 
 **Result:** RPC client shutdown now handles timeout/exit races deterministically with proper listener/timer cleanup.
 
+---
+
+### 127) rpc client pending requests could linger after unexpected process exit
+
+**Finding:** `RpcClient` rejected pending requests on explicit `stop()`, but unexpected child-process exits (crash/kill) could still leave in-flight requests waiting until per-request timeout.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/rpc/rpc-client.ts`
+- `packages/coding-agent/test/rpc-client.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- attach an RPC process exit listener during startup,
+- reject all pending requests immediately on unexpected child exit,
+- close readline and clear process references on exit listener path,
+- add regression coverage asserting pending requests are rejected/cleared on unexpected exit.
+
+**Result:** RPC clients now fail fast when the child process exits unexpectedly, avoiding unnecessary timeout waits for in-flight requests.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -2200,7 +2221,7 @@ to:
 - agent spawnScript regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts`
 - coding-agent RPC startup/shutdown regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures, pending-request rejection on stop, stop timeout forced-kill cleanup, send timeout/write-error cleanup, and closed-stdin send handling)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures, pending-request rejection on stop and unexpected exit, stop timeout forced-kill cleanup, send timeout/write-error cleanup, and closed-stdin send handling)
 - coding-agent sleep helper regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/sleep.test.ts` (includes listener cleanup on resolve + abort paths)
 - ai abortable sleep + retry stream regression tests pass:
