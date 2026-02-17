@@ -5574,6 +5574,29 @@ to:
 
 **Result:** Azure deployment mapping now ignores whitespace-only key/value entries instead of persisting empty-string map entries from malformed environment configuration.
 
+---
+
+### 300) coding-agent extension countdown dialogs accepted invalid/oversized timeout inputs
+
+**Finding:** `packages/coding-agent/src/modes/interactive/components/extension-input.ts` and `extension-selector.ts` passed extension-provided timeout values directly into `CountdownTimer`; malformed timeout values (`0`, negative, `NaN`, oversized) could create non-expiring countdown behavior or rely on implicit timer coercion/clamping.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/components/countdown-timer.ts`
+- `packages/coding-agent/src/modes/interactive/components/extension-input.ts`
+- `packages/coding-agent/src/modes/interactive/components/extension-selector.ts`
+- `packages/coding-agent/test/countdown-timer.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize extension countdown timeout values before timer creation,
+- reject invalid/non-positive/non-finite values and clamp oversized values to Node timer bounds,
+- only initialize countdown UI timers when normalized timeout input is valid,
+- add regression coverage for invalid, in-range, and oversized timeout normalization behavior.
+
+**Result:** extension dialog countdown timers now behave deterministically for malformed/oversized timeout inputs without relying on runtime timer coercion.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -5721,7 +5744,7 @@ to:
 - coding-agent gh auth-status classification regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/gh-auth-status.test.ts` (includes missing gh spawn failure, signal interruption, non-zero auth status, and success cases)
 - coding-agent countdown timer regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/countdown-timer.test.ts` (includes normal expiry, manual dispose stop, and onTick-throw safety coverage)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/countdown-timer.test.ts` (includes normal expiry, manual dispose stop, onTick-throw safety coverage, and timeout normalization coverage)
 - coding-agent extension dialog callback regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extension-dialog-callbacks.test.ts` (includes throwing selector/input/editor callback safety and post-dispose callback suppression across selector/input/editor dialogs)
 - coding-agent session selector disposal regression tests pass:
