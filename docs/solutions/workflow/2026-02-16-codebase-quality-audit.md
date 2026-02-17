@@ -3381,6 +3381,23 @@ to:
 
 **Result:** Agent interface no longer attaches post-render listeners/subscriptions after disconnect races.
 
+---
+
+### 190) ModelSelector post-render setup could run after disconnect
+
+**Finding:** Model selector `firstUpdated()` awaited `updateComplete` before focusing search and wiring keyboard/mouse handlers without a post-await connectivity guard, allowing late setup when dialogs closed quickly.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/dialogs/ModelSelector.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- short-circuit `firstUpdated()` setup when the component is no longer connected after `await updateComplete`.
+
+**Result:** Model selector no longer performs delayed post-render setup after disconnect races.
+
 ## Validation Evidence
 
 - Root quality gate passes:

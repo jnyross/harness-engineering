@@ -46,6 +46,9 @@ export class ModelSelector extends DialogBase {
 		super.firstUpdated(changedProperties);
 		// Wait for dialog to be fully rendered
 		await this.updateComplete;
+		if (!this.isConnected) {
+			return;
+		}
 		// Focus the search input when dialog opens
 		this.searchInputRef.value?.focus();
 
