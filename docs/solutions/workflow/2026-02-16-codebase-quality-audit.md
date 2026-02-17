@@ -1786,6 +1786,22 @@ to use single-settlement cleanup for abort/error/close paths and map signal-term
 
 **Result:** Bash tool execution now has deterministic settlement semantics and reports signal-terminated commands as failures instead of false success.
 
+---
+
+### 106) pods shared process-exit helper mapped signal exits to success
+
+**Finding:** `waitForProcessExit()` resolved `code ?? 0` on child `exit`, causing signal-terminated processes (`code === null`) to appear as successful exits.
+
+**Action:** Updated:
+
+- `packages/pods/src/process-exit.ts`
+- `packages/pods/test/process-exit.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to map signal-terminated exits to non-zero codes and added regression assertion coverage for signal path code semantics.
+
+**Result:** Shared process-exit helper now reports signal-terminated subprocesses as failures instead of false success.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1810,6 +1826,8 @@ to use single-settlement cleanup for abort/error/close paths and map signal-term
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted read + write + edit coverage)
 - coding-agent tools regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes signal-terminated bash command coverage)
+- pods process-exit regression tests pass:
+  - `npm --workspace "@mariozechner/pi" test -- test/process-exit.test.ts` (includes signal-exit non-zero assertion)
 - coding-agent execCommand regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - coding-agent interactive status tests pass after share flow command-exec refactor:
