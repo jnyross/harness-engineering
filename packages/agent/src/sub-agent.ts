@@ -101,6 +101,7 @@ export function spawnScript(
 			env: { ...process.env, ...options.env },
 			stdio: ["ignore", "pipe", "pipe"],
 		});
+		const invokedCommand = [command, ...args].join(" ");
 		const forceKillGraceMs = 1000;
 		let stdout = "";
 		let stderr = "";
@@ -166,13 +167,13 @@ export function spawnScript(
 			timeoutId = setTimeout(() => {
 				child.kill("SIGTERM");
 				scheduleForceKill();
-				rejectOnce(new Error(`Script timed out after ${timeoutMs}ms`));
+				rejectOnce(new Error(`Script '${invokedCommand}' timed out after ${timeoutMs}ms`));
 			}, timeoutMs);
 		}
 		options.signal?.addEventListener("abort", onAbort, { once: true });
 		child.on("error", (err) => {
 			clearForceKill();
-			rejectOnce(err);
+			rejectOnce(new Error(`Failed to start script '${invokedCommand}': ${err.message}`));
 		});
 		child.on("close", (code, closeSignal) => {
 			clearForceKill();

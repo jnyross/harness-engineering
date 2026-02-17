@@ -27,6 +27,7 @@
 - Decision log entries produced by `ExecutionEngine` now include a concise work summary for each review attempt.
 - Reset `ExecutionEngine` retry counters per invocation so repeated `runWithReview()` calls don't inherit retry exhaustion from earlier runs.
 - Proxy stream parsing now flushes a final buffered SSE `data:` line when responses end without trailing newline, preventing dropped terminal events/hanging result promises.
+- `spawnScript()` timeout/spawn failures now include invoked-command context in error messages, improving diagnostics for sub-agent script delegation failures.
 
 ## [0.52.12] - 2026-02-13
 

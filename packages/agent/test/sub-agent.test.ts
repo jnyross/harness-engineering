@@ -99,7 +99,13 @@ describe("spawnScript", () => {
 	it("rejects with timeout error when timeout is exceeded", async () => {
 		await expect(
 			spawnScript(process.execPath, ["-e", "setTimeout(() => {}, 5000);"], { timeoutMs: 25 }),
-		).rejects.toThrow("Script timed out after 25ms");
+		).rejects.toThrow(`Script '${process.execPath} -e setTimeout(() => {}, 5000);' timed out after 25ms`);
+	});
+
+	it("wraps spawn errors with command context", async () => {
+		await expect(spawnScript("/definitely-not-a-real-binary", ["--version"])).rejects.toThrow(
+			/Failed to start script '\/definitely-not-a-real-binary --version':/,
+		);
 	});
 
 	signalAwareIt("returns non-zero exit code when child exits by signal", async () => {
