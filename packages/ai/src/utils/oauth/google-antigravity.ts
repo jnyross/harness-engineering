@@ -135,14 +135,46 @@ function parseRedirectUrl(input: string): { code?: string; state?: string } {
 
 	try {
 		const url = new URL(value);
-		return {
-			code: url.searchParams.get("code") ?? undefined,
-			state: url.searchParams.get("state") ?? undefined,
-		};
-	} catch {
-		// Not a URL, return empty
+		const queryCode = url.searchParams.get("code") ?? undefined;
+		const queryState = url.searchParams.get("state") ?? undefined;
+		if (queryCode || queryState) {
+			return {
+				code: queryCode,
+				state: queryState,
+			};
+		}
+
+		const hash = url.hash.startsWith("#") ? url.hash.slice(1) : url.hash;
+		if (hash) {
+			const hashParams = new URLSearchParams(hash);
+			return {
+				code: hashParams.get("code") ?? undefined,
+				state: hashParams.get("state") ?? undefined,
+			};
+		}
+
 		return {};
+	} catch {
+		// Not a URL, continue with fallback parsing.
 	}
+
+	if (value.includes("#")) {
+		const [code, state] = value.split("#", 2);
+		return {
+			code: code || undefined,
+			state: state || undefined,
+		};
+	}
+
+	if (value.includes("code=")) {
+		const params = new URLSearchParams(value);
+		return {
+			code: params.get("code") ?? undefined,
+			state: params.get("state") ?? undefined,
+		};
+	}
+
+	return { code: value };
 }
 
 interface LoadCodeAssistPayload {

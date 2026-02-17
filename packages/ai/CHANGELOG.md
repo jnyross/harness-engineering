@@ -14,6 +14,7 @@
 - Anthropic OAuth login now honors `AbortSignal` cancellation (including pre-aborted signals) before prompting for user code and during token exchange.
 - Anthropic OAuth login now validates pasted OAuth state values and supports full redirect URL/query-string input by extracting `code`/`state` parameters before token exchange.
 - Anthropic and OpenAI Codex OAuth manual input parsing now accepts hash-fragment redirect formats (e.g. `#code=...&state=...`) in addition to query-string forms.
+- Google Gemini CLI and Antigravity OAuth manual input parsing now accepts hash-fragment redirect formats (e.g. `#code=...&state=...`) and bare `code#state` / query-string forms.
 - Google Gemini CLI SSE parsing now flushes terminal buffered `data:` lines when streams end without trailing newline delimiters.
 - OpenAI Codex SSE parsing now flushes terminal buffered event chunks when streams end without trailing `\n\n` separators.
 
