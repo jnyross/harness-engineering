@@ -68,7 +68,20 @@ export function createFindTool(cwd: string, options?: FindToolOptions): AgentToo
 					return;
 				}
 
-				const onAbort = () => reject(new Error("Operation aborted"));
+				let aborted = false;
+				let settled = false;
+				const settle = (fn: () => void) => {
+					if (!settled) {
+						settled = true;
+						signal?.removeEventListener("abort", onAbort);
+						fn();
+					}
+				};
+
+				const onAbort = () => {
+					aborted = true;
+					settle(() => reject(new Error("Operation aborted")));
+				};
 				signal?.addEventListener("abort", onAbort, { once: true });
 
 				(async () => {
@@ -79,23 +92,32 @@ export function createFindTool(cwd: string, options?: FindToolOptions): AgentToo
 
 						// If custom operations provided with glob, use that
 						if (customOps?.glob) {
+							if (aborted) {
+								return;
+							}
 							if (!(await ops.exists(searchPath))) {
-								reject(new Error(`Path not found: ${searchPath}`));
+								settle(() => reject(new Error(`Path not found: ${searchPath}`)));
 								return;
 							}
 
+							if (aborted) {
+								return;
+							}
 							const results = await ops.glob(pattern, searchPath, {
 								ignore: ["**/node_modules/**", "**/.git/**"],
 								limit: effectiveLimit,
 							});
-
-							signal?.removeEventListener("abort", onAbort);
+							if (aborted) {
+								return;
+							}
 
 							if (results.length === 0) {
-								resolve({
-									content: [{ type: "text", text: "No files found matching pattern" }],
-									details: undefined,
-								});
+								settle(() =>
+									resolve({
+										content: [{ type: "text", text: "No files found matching pattern" }],
+										details: undefined,
+									}),
+								);
 								return;
 							}
 
@@ -129,17 +151,25 @@ export function createFindTool(cwd: string, options?: FindToolOptions): AgentToo
 								resultOutput += `\n\n[${notices.join(". ")}]`;
 							}
 
-							resolve({
-								content: [{ type: "text", text: resultOutput }],
-								details: Object.keys(details).length > 0 ? details : undefined,
-							});
+							settle(() =>
+								resolve({
+									content: [{ type: "text", text: resultOutput }],
+									details: Object.keys(details).length > 0 ? details : undefined,
+								}),
+							);
 							return;
 						}
 
 						// Default: use fd
+						if (aborted) {
+							return;
+						}
 						const fdPath = await ensureTool("fd", true);
 						if (!fdPath) {
-							reject(new Error("fd is not available and could not be downloaded"));
+							settle(() => reject(new Error("fd is not available and could not be downloaded")));
+							return;
+						}
+						if (aborted) {
 							return;
 						}
 
@@ -178,16 +208,21 @@ export function createFindTool(cwd: string, options?: FindToolOptions): AgentToo
 						}
 
 						args.push(pattern, searchPath);
+						if (aborted) {
+							return;
+						}
 
 						const result = spawnSync(fdPath, args, {
 							encoding: "utf-8",
 							maxBuffer: 10 * 1024 * 1024,
 						});
+						if (aborted) {
+							return;
+						}
 
-						signal?.removeEventListener("abort", onAbort);
-
-						if (result.error) {
-							reject(new Error(`Failed to run fd: ${result.error.message}`));
+						const spawnError = result.error;
+						if (spawnError) {
+							settle(() => reject(new Error(`Failed to run fd: ${spawnError.message}`)));
 							return;
 						}
 
@@ -196,16 +231,18 @@ export function createFindTool(cwd: string, options?: FindToolOptions): AgentToo
 						if (result.status !== 0) {
 							const errorMsg = result.stderr?.trim() || `fd exited with code ${result.status}`;
 							if (!output) {
-								reject(new Error(errorMsg));
+								settle(() => reject(new Error(errorMsg)));
 								return;
 							}
 						}
 
 						if (!output) {
-							resolve({
-								content: [{ type: "text", text: "No files found matching pattern" }],
-								details: undefined,
-							});
+							settle(() =>
+								resolve({
+									content: [{ type: "text", text: "No files found matching pattern" }],
+									details: undefined,
+								}),
+							);
 							return;
 						}
 
@@ -255,14 +292,15 @@ export function createFindTool(cwd: string, options?: FindToolOptions): AgentToo
 							resultOutput += `\n\n[${notices.join(". ")}]`;
 						}
 
-						resolve({
-							content: [{ type: "text", text: resultOutput }],
-							details: Object.keys(details).length > 0 ? details : undefined,
-						});
+						settle(() =>
+							resolve({
+								content: [{ type: "text", text: resultOutput }],
+								details: Object.keys(details).length > 0 ? details : undefined,
+							}),
+						);
 						// biome-ignore lint/suspicious/noExplicitAny: migration
 					} catch (e: any) {
-						signal?.removeEventListener("abort", onAbort);
-						reject(e);
+						settle(() => reject(e));
 					}
 				})();
 			});

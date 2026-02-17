@@ -62,24 +62,46 @@ export function createLsTool(cwd: string, options?: LsToolOptions): AgentTool<ty
 					return;
 				}
 
-				const onAbort = () => reject(new Error("Operation aborted"));
+				let aborted = false;
+				let settled = false;
+				const settle = (fn: () => void) => {
+					if (!settled) {
+						settled = true;
+						signal?.removeEventListener("abort", onAbort);
+						fn();
+					}
+				};
+
+				const onAbort = () => {
+					aborted = true;
+					settle(() => reject(new Error("Operation aborted")));
+				};
 				signal?.addEventListener("abort", onAbort, { once: true });
 
 				(async () => {
 					try {
 						const dirPath = resolveToCwd(path || ".", cwd);
 						const effectiveLimit = limit ?? DEFAULT_LIMIT;
+						if (aborted) {
+							return;
+						}
 
 						// Check if path exists
 						if (!(await ops.exists(dirPath))) {
-							reject(new Error(`Path not found: ${dirPath}`));
+							settle(() => reject(new Error(`Path not found: ${dirPath}`)));
+							return;
+						}
+						if (aborted) {
 							return;
 						}
 
 						// Check if path is a directory
 						const stat = await ops.stat(dirPath);
 						if (!stat.isDirectory()) {
-							reject(new Error(`Not a directory: ${dirPath}`));
+							settle(() => reject(new Error(`Not a directory: ${dirPath}`)));
+							return;
+						}
+						if (aborted) {
 							return;
 						}
 
@@ -89,7 +111,10 @@ export function createLsTool(cwd: string, options?: LsToolOptions): AgentTool<ty
 							entries = await ops.readdir(dirPath);
 							// biome-ignore lint/suspicious/noExplicitAny: migration
 						} catch (e: any) {
-							reject(new Error(`Cannot read directory: ${e.message}`));
+							settle(() => reject(new Error(`Cannot read directory: ${e.message}`)));
+							return;
+						}
+						if (aborted) {
 							return;
 						}
 
@@ -104,6 +129,9 @@ export function createLsTool(cwd: string, options?: LsToolOptions): AgentTool<ty
 							if (results.length >= effectiveLimit) {
 								entryLimitReached = true;
 								break;
+							}
+							if (aborted) {
+								return;
 							}
 
 							const fullPath = nodePath.join(dirPath, entry);
@@ -122,10 +150,10 @@ export function createLsTool(cwd: string, options?: LsToolOptions): AgentTool<ty
 							results.push(entry + suffix);
 						}
 
-						signal?.removeEventListener("abort", onAbort);
-
 						if (results.length === 0) {
-							resolve({ content: [{ type: "text", text: "(empty directory)" }], details: undefined });
+							settle(() =>
+								resolve({ content: [{ type: "text", text: "(empty directory)" }], details: undefined }),
+							);
 							return;
 						}
 
@@ -153,14 +181,15 @@ export function createLsTool(cwd: string, options?: LsToolOptions): AgentTool<ty
 							output += `\n\n[${notices.join(". ")}]`;
 						}
 
-						resolve({
-							content: [{ type: "text", text: output }],
-							details: Object.keys(details).length > 0 ? details : undefined,
-						});
+						settle(() =>
+							resolve({
+								content: [{ type: "text", text: output }],
+								details: Object.keys(details).length > 0 ? details : undefined,
+							}),
+						);
 						// biome-ignore lint/suspicious/noExplicitAny: migration
 					} catch (e: any) {
-						signal?.removeEventListener("abort", onAbort);
-						reject(e);
+						settle(() => reject(e));
 					}
 				})();
 			});

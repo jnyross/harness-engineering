@@ -22,6 +22,7 @@
 - Bash executor helpers (`executeBash`, `executeBashWithOperations`) now short-circuit pre-aborted signals, avoiding unnecessary subprocess/remote execution when cancellation is already requested.
 - Built-in bash tool now short-circuits pre-aborted signals before shell spawn, preventing canceled calls from starting subprocesses.
 - Grep tool now registers abort handling before asynchronous tool resolution so cancellations during startup reliably stop execution instead of racing into ripgrep spawn.
+- Find/ls tools now use single-settlement abort cleanup and early cancellation checks during async startup/listing paths, reducing abort-related race/leak behavior.
 
 ## [0.52.12] - 2026-02-13
 

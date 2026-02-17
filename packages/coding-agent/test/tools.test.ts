@@ -442,6 +442,22 @@ describe("Coding Agent Tools", () => {
 			expect(output).toContain("kept.txt");
 			expect(output).not.toContain("ignored.txt");
 		});
+
+		it("should short-circuit when find signal is already aborted", async () => {
+			const controller = new AbortController();
+			controller.abort();
+
+			await expect(
+				findTool.execute(
+					"test-call-find-aborted",
+					{
+						pattern: "**/*.txt",
+						path: testDir,
+					},
+					controller.signal,
+				),
+			).rejects.toThrow(/Operation aborted/);
+		});
 	});
 
 	describe("ls tool", () => {
@@ -454,6 +470,21 @@ describe("Coding Agent Tools", () => {
 
 			expect(output).toContain(".hidden-file");
 			expect(output).toContain(".hidden-dir/");
+		});
+
+		it("should short-circuit when ls signal is already aborted", async () => {
+			const controller = new AbortController();
+			controller.abort();
+
+			await expect(
+				lsTool.execute(
+					"test-call-ls-aborted",
+					{
+						path: testDir,
+					},
+					controller.signal,
+				),
+			).rejects.toThrow(/Operation aborted/);
 		});
 	});
 });
