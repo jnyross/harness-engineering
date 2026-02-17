@@ -25,6 +25,7 @@
 - Find/ls tools now use single-settlement abort cleanup and early cancellation checks during async startup/listing paths, reducing abort-related race/leak behavior.
 - RPC client `stop()` now rejects pending in-flight requests immediately, preventing callers from hanging on responses that will never arrive after shutdown.
 - `sleep(ms, signal)` now cleans up abort listeners on resolve/reject and avoids double-settlement paths during abort timing races.
+- Write tool now uses single-settlement abort cleanup during async filesystem operations, preventing duplicate settle races and ensuring consistent cancellation behavior.
 
 ## [0.52.12] - 2026-02-13
 

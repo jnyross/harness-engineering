@@ -214,6 +214,22 @@ describe("Coding Agent Tools", () => {
 
 			expect(getTextOutput(result)).toContain("Successfully wrote");
 		});
+
+		it("should short-circuit pre-aborted write signals", async () => {
+			const testFile = join(testDir, "pre-aborted-write.txt");
+			const controller = new AbortController();
+			controller.abort();
+
+			await expect(
+				writeTool.execute(
+					"test-call-write-pre-abort",
+					{ path: testFile, content: "should-not-be-written" },
+					controller.signal,
+				),
+			).rejects.toThrow(/Operation aborted/);
+
+			expect(existsSync(testFile)).toBe(false);
+		});
 	});
 
 	describe("edit tool", () => {
