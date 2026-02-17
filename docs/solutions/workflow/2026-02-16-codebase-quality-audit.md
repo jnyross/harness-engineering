@@ -1897,6 +1897,21 @@ to run full cleanup on execute-time validation failure and unregister failed `lo
 
 **Result:** HTML validation failures now cleanly release sandbox router/listener state instead of leaking stale runtime registrations.
 
+---
+
+### 113) web-ui sandbox bootstrap listeners could leak on early termination
+
+**Finding:** In extension sandbox mode, `SandboxedIframe.execute()` registered `sandbox-ready`/`sandbox-error` window listeners that were removed only when one of those events fired; abort/timeout/validation-failure cleanup could leave pending listeners.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/components/SandboxedIframe.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to track bootstrap listener references and remove them from shared cleanup paths.
+
+**Result:** Sandbox execution cleanup now removes pending bootstrap listeners deterministically, avoiding cross-run listener accumulation when setup does not complete.
+
 ## Validation Evidence
 
 - Root quality gate passes:
