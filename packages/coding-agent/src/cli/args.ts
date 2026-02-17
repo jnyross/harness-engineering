@@ -51,10 +51,19 @@ export function isValidThinkingLevel(level: string): level is ThinkingLevel {
 	return VALID_THINKING_LEVELS.includes(level as ThinkingLevel);
 }
 
-function readFlagValue(args: string[], index: number, flagName: string): string | undefined {
+function readFlagValue(
+	args: string[],
+	index: number,
+	flagName: string,
+	options?: { allowOptionLike?: boolean },
+): string | undefined {
 	const value = args[index + 1];
 	if (value === undefined) {
 		console.error(chalk.yellow(`Warning: ${flagName} requires a value`));
+		return undefined;
+	}
+	if (!options?.allowOptionLike && value.startsWith("-")) {
+		console.error(chalk.yellow(`Warning: ${flagName} requires a non-flag value`));
 		return undefined;
 	}
 	return value;
@@ -105,13 +114,13 @@ export function parseArgs(args: string[], extensionFlags?: Map<string, { type: "
 				i++;
 			}
 		} else if (arg === "--system-prompt") {
-			const systemPrompt = readFlagValue(args, i, "--system-prompt");
+			const systemPrompt = readFlagValue(args, i, "--system-prompt", { allowOptionLike: true });
 			if (systemPrompt !== undefined) {
 				result.systemPrompt = systemPrompt;
 				i++;
 			}
 		} else if (arg === "--append-system-prompt") {
-			const appendSystemPrompt = readFlagValue(args, i, "--append-system-prompt");
+			const appendSystemPrompt = readFlagValue(args, i, "--append-system-prompt", { allowOptionLike: true });
 			if (appendSystemPrompt !== undefined) {
 				result.appendSystemPrompt = appendSystemPrompt;
 				i++;

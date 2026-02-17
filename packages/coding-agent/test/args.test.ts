@@ -318,5 +318,25 @@ describe("parseArgs", () => {
 				errorSpy.mockRestore();
 			}
 		});
+
+		test("does not consume the next flag as a value", () => {
+			const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+			try {
+				const result = parseArgs(["--model", "--print"]);
+				expect(result.model).toBeUndefined();
+				expect(result.print).toBe(true);
+				expect(errorSpy).toHaveBeenCalledWith(
+					expect.stringContaining("Warning: --model requires a non-flag value"),
+				);
+			} finally {
+				errorSpy.mockRestore();
+			}
+		});
+
+		test("allows option-like values for system prompts", () => {
+			const result = parseArgs(["--system-prompt", "--print"]);
+			expect(result.systemPrompt).toBe("--print");
+			expect(result.print).toBeUndefined();
+		});
 	});
 });
