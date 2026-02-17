@@ -142,6 +142,13 @@ function normalizeAutocompleteMaxVisible(value: number | undefined): number {
 	return Math.max(3, Math.min(20, normalized));
 }
 
+function normalizePositiveSafeInteger(value: number | undefined, fallback: number): number {
+	if (value === undefined || !Number.isSafeInteger(value) || value <= 0) {
+		return fallback;
+	}
+	return value;
+}
+
 /** Deep merge settings: project/overrides take precedence, nested objects merge recursively */
 function deepMergeSettings(base: Settings, overrides: Settings): Settings {
 	const result: Settings = { ...base };
@@ -517,11 +524,11 @@ export class SettingsManager {
 	}
 
 	getCompactionReserveTokens(): number {
-		return this.settings.compaction?.reserveTokens ?? 16384;
+		return normalizePositiveSafeInteger(this.settings.compaction?.reserveTokens, 16384);
 	}
 
 	getCompactionKeepRecentTokens(): number {
-		return this.settings.compaction?.keepRecentTokens ?? 20000;
+		return normalizePositiveSafeInteger(this.settings.compaction?.keepRecentTokens, 20000);
 	}
 
 	getCompactionSettings(): { enabled: boolean; reserveTokens: number; keepRecentTokens: number } {
@@ -534,7 +541,7 @@ export class SettingsManager {
 
 	getBranchSummarySettings(): { reserveTokens: number } {
 		return {
-			reserveTokens: this.settings.branchSummary?.reserveTokens ?? 16384,
+			reserveTokens: normalizePositiveSafeInteger(this.settings.branchSummary?.reserveTokens, 16384),
 		};
 	}
 

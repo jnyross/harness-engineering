@@ -294,4 +294,38 @@ describe("SettingsManager", () => {
 			expect(manager.getAutocompleteMaxVisible()).toBe(5);
 		});
 	});
+
+	describe("token budget settings normalization", () => {
+		it("falls back to defaults for invalid compaction and branch summary token settings", () => {
+			const manager = SettingsManager.inMemory({
+				compaction: {
+					reserveTokens: -1,
+					keepRecentTokens: Number.NaN,
+				},
+				branchSummary: {
+					reserveTokens: 0,
+				},
+			});
+
+			expect(manager.getCompactionReserveTokens()).toBe(16384);
+			expect(manager.getCompactionKeepRecentTokens()).toBe(20000);
+			expect(manager.getBranchSummarySettings()).toEqual({ reserveTokens: 16384 });
+		});
+
+		it("preserves valid positive safe integer token settings", () => {
+			const manager = SettingsManager.inMemory({
+				compaction: {
+					reserveTokens: 12000,
+					keepRecentTokens: 25000,
+				},
+				branchSummary: {
+					reserveTokens: 9000,
+				},
+			});
+
+			expect(manager.getCompactionReserveTokens()).toBe(12000);
+			expect(manager.getCompactionKeepRecentTokens()).toBe(25000);
+			expect(manager.getBranchSummarySettings()).toEqual({ reserveTokens: 9000 });
+		});
+	});
 });
