@@ -1866,6 +1866,22 @@ to centralize SSE chunk parsing and flush trailing buffered chunk after stream c
 
 **Result:** OpenAI Codex streaming now preserves final SSE events even when providers omit trailing chunk delimiters.
 
+---
+
+### 111) coding-agent execCommand could misreport signal exits as success
+
+**Finding:** `execCommand()` mapped `close` events with `code === null` to `0` unless the process was marked as caller-killed, causing externally signal-terminated subprocesses to appear successful.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/exec.ts`
+- `packages/coding-agent/test/exec.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to map signal-terminated closes to non-zero failures when not caller-cancelled, with regression coverage for self-signaled subprocess termination.
+
+**Result:** Shared command execution now preserves failure semantics for signal-terminated subprocesses instead of false success reporting.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -1900,6 +1916,8 @@ to centralize SSE chunk parsing and flush trailing buffered chunk after stream c
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-empty-stream.test.ts` (includes terminal `data:` line without trailing newline)
 - ai Codex/Gemini SSE regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-stream.test.ts test/google-gemini-cli-empty-stream.test.ts`
+- coding-agent exec regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts` (includes signal-terminated subprocess failure semantics)
 - coding-agent execCommand regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts`
 - coding-agent interactive status tests pass after share flow command-exec refactor:
