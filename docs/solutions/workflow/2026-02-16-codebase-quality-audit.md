@@ -4524,6 +4524,29 @@ to:
 
 **Result:** grep tool now rejects malformed numeric range inputs deterministically instead of silently coercing them.
 
+---
+
+### 249) coding-agent/mom bash tools silently accepted non-positive timeout values
+
+**Finding:** coding-agent and mom bash tools accepted non-positive timeout values, which silently disabled timeout behavior instead of rejecting malformed inputs.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/bash.ts`
+- `packages/coding-agent/test/tools.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+- `packages/mom/src/tools/bash.ts`
+- `packages/mom/test/bash-tool.test.ts` (new)
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- constrain timeout schema to positive numbers (`exclusiveMinimum: 0`),
+- add runtime timeout validation with explicit parse errors for non-positive values,
+- add regression coverage for invalid timeout values in both packages.
+
+**Result:** coding-agent and mom bash tools now reject malformed timeout values deterministically instead of silently running without timeout limits.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -4551,12 +4574,16 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/read-tool.test.ts test/tools.test.ts`
 - coding-agent grep range validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
+- coding-agent bash timeout validation regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
 - mom CLI args/model regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/cli-args.test.ts test/agent-model.test.ts`
 - mom CLI args parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/cli-args.test.ts`
 - mom read-tool line-count regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/read-tool.test.ts`
+- mom bash timeout validation regression tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/bash-tool.test.ts`
 - agent project-runner args regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/project-runner.test.ts`
 - mom sandbox regression tests pass:
