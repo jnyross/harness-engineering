@@ -8613,6 +8613,27 @@ to:
 
 **Result:** Resource-loader additional-path resolution now preserves strict path identifier identity and rejects whitespace-padded additional paths instead of silently normalizing malformed entries.
 
+---
+
+### 448) coding-agent package-manager local path resolution normalized whitespace-padded source paths
+
+**Finding:** `packages/coding-agent/src/core/package-manager.ts` trimmed local package source paths during path resolution, so whitespace-padded local source paths could be silently accepted instead of rejected as malformed source-path identifiers.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/package-manager.ts`
+- `packages/coding-agent/test/package-manager.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- resolve local package paths using exact input identity (no trim-based coalescing) for settings/source matching paths,
+- reject whitespace-padded local package source paths instead of trimming/coalescing malformed path identifiers,
+- preserve existing `~`/`~/` home path handling for exact path inputs,
+- add regression coverage for whitespace-padded local package source path rejection.
+
+**Result:** Package-manager local path resolution now preserves strict source-path identity and rejects whitespace-padded local package paths instead of silently normalizing malformed source-path values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8909,7 +8930,7 @@ to:
 - coding-agent package-manager command-settlement regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes async settlement coverage, full async command-invocation diagnostics, sync spawn-start failure diagnostics, and signal-exit rejection diagnostics)
 - coding-agent package-manager manifest normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes malformed `pi.extensions` entry filtering, whitespace-padded manifest pattern rejection, mixed valid+invalid manifest pattern handling, and installed-version shape normalization coverage)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes malformed `pi.extensions` entry filtering, whitespace-padded manifest pattern rejection, whitespace-padded local source-path rejection, mixed valid+invalid manifest pattern handling, and installed-version shape normalization coverage)
 - coding-agent package-manager npm-registry version parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager-registry-version.test.ts test/package-manager.test.ts` (includes malformed npm-registry `version` root/field-shape rejection, strict semver acceptance, and whitespace-padded/non-semver version literal rejection coverage)
 - coding-agent managed-tool release-version parsing regression tests pass:

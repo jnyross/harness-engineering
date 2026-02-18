@@ -671,6 +671,13 @@ export class DefaultPackageManager implements PackageManager {
 
 	addSourceToSettings(source: string, options?: { local?: boolean }): boolean {
 		const scope: SourceScope = options?.local ? "project" : "user";
+		const parsedSource = this.parseSource(source);
+		if (parsedSource.type === "local") {
+			const trimmed = parsedSource.path.trim();
+			if (trimmed.length === 0 || trimmed !== parsedSource.path) {
+				return false;
+			}
+		}
 		const currentSettings =
 			scope === "project" ? this.settingsManager.getProjectSettings() : this.settingsManager.getGlobalSettings();
 		const currentPackages = currentSettings.packages ?? [];
@@ -1367,19 +1374,17 @@ export class DefaultPackageManager implements PackageManager {
 	}
 
 	private resolvePath(input: string): string {
-		const trimmed = input.trim();
-		if (trimmed === "~") return homedir();
-		if (trimmed.startsWith("~/")) return join(homedir(), trimmed.slice(2));
-		if (trimmed.startsWith("~")) return join(homedir(), trimmed.slice(1));
-		return resolve(this.cwd, trimmed);
+		if (input === "~") return homedir();
+		if (input.startsWith("~/")) return join(homedir(), input.slice(2));
+		if (input.startsWith("~")) return join(homedir(), input.slice(1));
+		return resolve(this.cwd, input);
 	}
 
 	private resolvePathFromBase(input: string, baseDir: string): string {
-		const trimmed = input.trim();
-		if (trimmed === "~") return homedir();
-		if (trimmed.startsWith("~/")) return join(homedir(), trimmed.slice(2));
-		if (trimmed.startsWith("~")) return join(homedir(), trimmed.slice(1));
-		return resolve(baseDir, trimmed);
+		if (input === "~") return homedir();
+		if (input.startsWith("~/")) return join(homedir(), input.slice(2));
+		if (input.startsWith("~")) return join(homedir(), input.slice(1));
+		return resolve(baseDir, input);
 	}
 
 	private collectPackageResources(

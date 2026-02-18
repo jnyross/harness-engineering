@@ -380,6 +380,16 @@ Content`,
 			expect(removed).toBe(true);
 			expect(settingsManager.getGlobalSettings().packages ?? []).toHaveLength(0);
 		});
+
+		it("should reject whitespace-padded local package paths instead of trimming", () => {
+			const pkgDir = join(tempDir, "padded-local-pkg");
+			mkdirSync(join(pkgDir, "extensions"), { recursive: true });
+			writeFileSync(join(pkgDir, "extensions", "index.ts"), "export default function() {}");
+
+			const added = packageManager.addSourceToSettings(` ${pkgDir} `);
+			expect(added).toBe(false);
+			expect(settingsManager.getGlobalSettings().packages ?? []).toHaveLength(0);
+		});
 	});
 
 	describe("HTTPS git URL parsing (old behavior)", () => {

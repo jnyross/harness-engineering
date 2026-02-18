@@ -63,6 +63,7 @@
 - Extension discovery now treats explicit `pi.extensions` declarations as authoritative (even when they normalize to no valid entries), avoiding unintended fallback loading of `index.ts`/`index.js` when manifests declare only malformed/missing extension paths.
 - Package manager manifest loading now normalizes `package.json` `pi.*` resource arrays (string-only, trimmed, non-empty), ignoring malformed entry shapes so package resource resolution no longer crashes on invalid manifest values.
 - Package manager manifest loading now also rejects whitespace-padded `package.json` `pi.*` resource entries instead of trimming/coalescing malformed manifest path/pattern identifiers.
+- Package manager local source-path resolution now also rejects whitespace-padded local package paths instead of trimming/coalescing malformed path identifiers during package source matching/settings normalization.
 - Package manager installed-version checks now normalize `package.json` `version` to non-empty strings only, ignoring malformed/blank version values so update detection avoids propagating invalid version shapes.
 - Package manager npm-registry latest-version parsing now validates `version` as a non-empty string, treating malformed registry payload shapes as fetch failures instead of propagating invalid version values into update decisions.
 - Package manager npm-registry and installed-package version parsing now requires strict semver strings without surrounding whitespace, rejecting malformed version literals instead of trimming/coercing invalid version metadata.
