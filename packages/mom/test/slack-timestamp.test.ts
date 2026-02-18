@@ -11,6 +11,7 @@ describe("parseSlackTimestampToMilliseconds", () => {
 	it("parses decimal Slack timestamps as milliseconds", () => {
 		assert.equal(parseSlackTimestampToMilliseconds("1700000000.123456"), 1700000000123);
 		assert.equal(parseSlackTimestampToMilliseconds(" 1700000000.999999 "), 1700000000999);
+		assert.equal(parseSlackTimestampToMilliseconds("9007199254740.001123"), 9007199254740001);
 	});
 
 	it("parses integer millisecond timestamps", () => {

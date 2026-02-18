@@ -31,6 +31,7 @@
 - Slack timestamp normalization now also handles integer-second timestamp variants correctly (in addition to decimal-second / epoch-ms forms), avoiding 1970-era date skew when decimals are omitted.
 - Slack integer timestamp normalization now uses value-magnitude detection (instead of string length), correctly handling integer-second variants even when strings include leading zeros.
 - Slack timestamp millisecond normalization now rejects values that exceed safe integer precision (including oversized decimal/integer-second forms), preventing rounded timestamp coercion.
+- Slack decimal timestamp millisecond normalization now uses exact string/BigInt conversion (instead of floating-point math), preserving correct floor-to-millisecond behavior near safe-integer precision boundaries.
 - Slack timestamp comparisons now preserve microsecond precision (including startup/backfill age checks), preventing ordering drift for same-millisecond events.
 - Slack timestamp comparison helpers now ignore malformed non-string iterable entries at runtime, preventing backfill cursor selection crashes when persisted timestamp sets contain incompatible values.
 - Slack backfill existing-log timestamp reads now validate `log.jsonl` line shapes (`ts` string + parseable Slack timestamp), ignoring malformed entries instead of forwarding incompatible values into backfill cursor selection.
