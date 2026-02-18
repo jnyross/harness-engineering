@@ -501,7 +501,7 @@ describe("SettingsManager", () => {
 				"shellCommandPrefix": [],
 				"extensions": "/tmp/ext.ts",
 				"skills": [1, "skill-a", "", "   "],
-				"prompts": ["  /tmp/prompt.md  ", null],
+				"prompts": [" /tmp/prompt.md ", null],
 				"themes": [{}, "dark"],
 				"enabledModels": [1, "", "openai/gpt-5"],
 				"packages": [
@@ -521,7 +521,7 @@ describe("SettingsManager", () => {
 			expect(manager.getShellCommandPrefix()).toBeUndefined();
 			expect(manager.getExtensionPaths()).toEqual([]);
 			expect(manager.getSkillPaths()).toEqual(["skill-a"]);
-			expect(manager.getPromptTemplatePaths()).toEqual(["/tmp/prompt.md"]);
+			expect(manager.getPromptTemplatePaths()).toEqual([]);
 			expect(manager.getThemePaths()).toEqual(["dark"]);
 			expect(manager.getEnabledModels()).toEqual(["openai/gpt-5"]);
 			expect(manager.getPackages()).toEqual([
@@ -530,18 +530,18 @@ describe("SettingsManager", () => {
 			]);
 		});
 
-		it("preserves valid string/list settings values with trimming", () => {
+		it("preserves valid string/list settings values without string normalization", () => {
 			const manager = SettingsManager.inMemory({
-				defaultProvider: "  openai  ",
-				defaultModel: " gpt-5 ",
-				theme: " dark ",
-				shellPath: " /bin/zsh ",
-				shellCommandPrefix: " set -e ",
-				extensions: [" ./ext.ts "],
-				skills: [" ./skills "],
-				prompts: [" ./prompts "],
-				themes: [" ./themes "],
-				enabledModels: [" openai/gpt-5 ", " anthropic/claude-sonnet "],
+				defaultProvider: "openai",
+				defaultModel: "gpt-5",
+				theme: "dark",
+				shellPath: "/bin/zsh",
+				shellCommandPrefix: "set -e",
+				extensions: ["./ext.ts"],
+				skills: ["./skills"],
+				prompts: ["./prompts"],
+				themes: ["./themes"],
+				enabledModels: ["openai/gpt-5", "anthropic/claude-sonnet"],
 			});
 
 			expect(manager.getDefaultProvider()).toBe("openai");
@@ -554,6 +554,43 @@ describe("SettingsManager", () => {
 			expect(manager.getPromptTemplatePaths()).toEqual(["./prompts"]);
 			expect(manager.getThemePaths()).toEqual(["./themes"]);
 			expect(manager.getEnabledModels()).toEqual(["openai/gpt-5", "anthropic/claude-sonnet"]);
+		});
+
+		it("rejects whitespace-padded string/list settings values", () => {
+			const manager = SettingsManager.inMemory({
+				defaultProvider: " openai ",
+				defaultModel: " gpt-5 ",
+				theme: " dark ",
+				shellPath: " /bin/zsh ",
+				shellCommandPrefix: " set -e ",
+				extensions: [" ./ext.ts "],
+				skills: [" ./skills "],
+				prompts: [" ./prompts "],
+				themes: [" ./themes "],
+				enabledModels: [" openai/gpt-5 ", " anthropic/claude-sonnet "],
+				packages: [
+					" npm:invalid-leading-space ",
+					{
+						source: " npm:scoped-package ",
+						extensions: [" ext.ts "],
+						skills: [" skill.ts "],
+						prompts: [" prompt.md "],
+						themes: [" theme.json "],
+					},
+				],
+			});
+
+			expect(manager.getDefaultProvider()).toBeUndefined();
+			expect(manager.getDefaultModel()).toBeUndefined();
+			expect(manager.getTheme()).toBeUndefined();
+			expect(manager.getShellPath()).toBeUndefined();
+			expect(manager.getShellCommandPrefix()).toBeUndefined();
+			expect(manager.getExtensionPaths()).toEqual([]);
+			expect(manager.getSkillPaths()).toEqual([]);
+			expect(manager.getPromptTemplatePaths()).toEqual([]);
+			expect(manager.getThemePaths()).toEqual([]);
+			expect(manager.getEnabledModels()).toBeUndefined();
+			expect(manager.getPackages()).toEqual([]);
 		});
 	});
 

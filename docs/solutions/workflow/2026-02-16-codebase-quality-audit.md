@@ -8041,6 +8041,27 @@ to:
 
 **Result:** Slack timestamp parsing and ordering now preserves strict timestamp-identifier identity and rejects whitespace-padded timestamp strings instead of silently normalizing malformed values.
 
+---
+
+### 421) coding-agent settings-manager string/list parsing normalized whitespace-padded identifiers
+
+**Finding:** `packages/coding-agent/src/core/settings-manager.ts` normalized optional string fields by trimming whitespace, so malformed whitespace-padded identifiers/path entries in settings (`defaultProvider`, `defaultModel`, `theme`, shell path/prefix, package sources, extension/skill/prompt/theme arrays, enabled-model patterns) were silently accepted after normalization.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/settings-manager.ts`
+- `packages/coding-agent/test/settings-manager.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require strict non-empty string identity (`trimmed === value`) for normalized optional strings,
+- reject whitespace-padded string/list settings entries instead of trimming/coalescing malformed values,
+- preserve existing malformed-type filtering behavior,
+- add regression coverage for strict rejection of whitespace-padded settings values across scalar, array, and package-source parsing paths.
+
+**Result:** Settings-manager string/list parsing now preserves strict identifier/path identity and drops whitespace-padded malformed settings entries instead of silently normalizing them.
+
 ## Validation Evidence
 
 - Root quality gate passes:
