@@ -38,6 +38,14 @@ function parseNonEmptyString(value: unknown): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function parseConfigKey(value: string): string | undefined {
+	const trimmed = value.trim();
+	if (trimmed.length === 0) {
+		return undefined;
+	}
+	return trimmed === value ? value : undefined;
+}
+
 function normalizeGpu(value: unknown): GPU | undefined {
 	const record = asRecord(value);
 	if (!record) {
@@ -98,13 +106,13 @@ function normalizePod(value: unknown): Pod | undefined {
 	}
 	const models: Record<string, Model> = {};
 	for (const [name, modelValue] of Object.entries(modelsRecord)) {
-		const trimmedName = name.trim();
-		if (!trimmedName) {
+		const modelName = parseConfigKey(name);
+		if (!modelName) {
 			continue;
 		}
 		const model = normalizeModel(modelValue);
 		if (model) {
-			models[trimmedName] = model;
+			models[modelName] = model;
 		}
 	}
 
@@ -134,17 +142,17 @@ function normalizeConfig(value: unknown): Config {
 
 	const pods: Record<string, Pod> = {};
 	for (const [name, podValue] of Object.entries(podsRecord)) {
-		const trimmedName = name.trim();
-		if (!trimmedName) {
+		const podName = parseConfigKey(name);
+		if (!podName) {
 			continue;
 		}
 		const pod = normalizePod(podValue);
 		if (pod) {
-			pods[trimmedName] = pod;
+			pods[podName] = pod;
 		}
 	}
 
-	const active = parseNonEmptyString(record.active);
+	const active = typeof record.active === "string" ? parseConfigKey(record.active) : undefined;
 	return active && pods[active] ? { pods, active } : { pods };
 }
 

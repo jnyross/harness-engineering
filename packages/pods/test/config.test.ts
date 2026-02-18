@@ -34,7 +34,7 @@ describe("pods config normalization", () => {
 		assert.equal(getActivePod(), null);
 	});
 
-	it("normalizes pod/model/gpu entries and keeps only valid active pods", () => {
+	it("normalizes pod/model/gpu entries while rejecting whitespace-padded key names", () => {
 		writeFileSync(
 			configPath,
 			JSON.stringify({
@@ -48,6 +48,16 @@ describe("pods config normalization", () => {
 						models: {
 							" model-a ": { model: "llama", port: 8001, gpu: [0], pid: 1234 },
 							"model-b": { model: "bad", port: 8002, gpu: [], pid: 5678 },
+						},
+						modelsPath: " /models ",
+						vllmVersion: "release",
+					},
+					"good-pod": {
+						ssh: "ssh host",
+						gpus: [{ id: 0, name: "GPU 0", memory: "80GiB" }],
+						models: {
+							" model-a ": { model: "llama", port: 8001, gpu: [0], pid: 1234 },
+							"model-a": { model: "llama", port: 8001, gpu: [0], pid: 1234 },
 						},
 						modelsPath: " /models ",
 						vllmVersion: "release",
@@ -73,6 +83,26 @@ describe("pods config normalization", () => {
 		assert.equal(config.pods["good-pod"]?.vllmVersion, "release");
 		assert.equal(config.active, "good-pod");
 		assert.deepEqual(getActivePod(), { name: "good-pod", pod: config.pods["good-pod"]! });
+	});
+
+	it("drops active pod when active key has surrounding whitespace", () => {
+		writeFileSync(
+			configPath,
+			JSON.stringify({
+				pods: {
+					valid: {
+						ssh: "ssh host",
+						gpus: [{ id: 0, name: "GPU", memory: "80GiB" }],
+						models: {},
+					},
+				},
+				active: " valid ",
+			}),
+		);
+
+		const config = loadConfig();
+		assert.equal(config.active, undefined);
+		assert.equal(getActivePod(), null);
 	});
 
 	it("drops active pod when referenced pod is invalid", () => {
