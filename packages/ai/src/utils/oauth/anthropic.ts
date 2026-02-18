@@ -20,12 +20,15 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
 	return value as Record<string, unknown>;
 }
 
-function parseNonEmptyString(value: unknown): string | undefined {
+function parseStrictNonEmptyString(value: unknown): string | undefined {
 	if (typeof value !== "string") {
 		return undefined;
 	}
 	const trimmed = value.trim();
-	return trimmed.length > 0 ? trimmed : undefined;
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
 }
 
 function parsePositiveFiniteNumber(value: unknown): number | undefined {
@@ -44,8 +47,8 @@ function parseTokenResponsePayload(
 	expiresIn: number;
 } {
 	const payload = asRecord(data);
-	const accessToken = parseNonEmptyString(payload?.access_token);
-	const refreshToken = parseNonEmptyString(payload?.refresh_token);
+	const accessToken = parseStrictNonEmptyString(payload?.access_token);
+	const refreshToken = parseStrictNonEmptyString(payload?.refresh_token);
 	const expiresIn = parsePositiveFiniteNumber(payload?.expires_in);
 	if (!accessToken || !refreshToken || !expiresIn) {
 		throw new Error(`Invalid token ${context} response payload`);
