@@ -6949,6 +6949,26 @@ to:
 
 **Result:** GitHub Copilot OAuth polling now handles malformed poll payloads deterministically and only transitions on validated success/error fields.
 
+---
+
+### 367) tui overlay numeric size parsing propagated non-finite values into layout calculations
+
+**Finding:** `packages/tui/src/tui.ts` accepted raw numeric overlay `width` / `maxHeight` values without finite-number validation. Passing `NaN`/`Infinity` could propagate invalid numeric state into overlay layout resolution and silently suppress overlay rendering.
+
+**Action:** Updated:
+
+- `packages/tui/src/tui.ts`
+- `packages/tui/test/overlay-options.test.ts`
+- `packages/tui/CHANGELOG.md`
+
+to:
+
+- validate numeric `SizeValue` inputs as finite numbers before use,
+- treat non-finite numeric `width` / `maxHeight` values as invalid and fall back to default sizing behavior,
+- add regression coverage for non-finite width/max-height handling.
+
+**Result:** Overlay layout now rejects non-finite numeric size inputs deterministically and preserves default overlay rendering behavior.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6978,7 +6998,7 @@ to:
 - tui kitty CSI-u + overlay percentage parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/editor-kitty-csiu.test.ts`
   - `cd packages/tui && node --test --import tsx test/overlay-options.test.ts`
-- tui overlay precision-overflow percentage regression tests pass:
+- tui overlay precision-overflow and non-finite numeric size regression tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/overlay-options.test.ts`
 - tui key parser Kitty unsafe-integer regression tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/keys.test.ts`
