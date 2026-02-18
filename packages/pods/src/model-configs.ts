@@ -33,6 +33,17 @@ function parseNonEmptyString(value: unknown): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function parseStrictNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
+}
+
 function parseConfigKey(value: string): string | undefined {
 	const trimmed = value.trim();
 	if (trimmed.length === 0) {
@@ -87,7 +98,7 @@ function normalizeModelConfig(value: unknown): ModelConfig | undefined {
 		const env: Record<string, string> = {};
 		for (const [key, rawValue] of Object.entries(record.env as Record<string, unknown>)) {
 			const parsedKey = parseConfigKey(key);
-			const parsedValue = parseNonEmptyString(rawValue);
+			const parsedValue = parseStrictNonEmptyString(rawValue);
 			if (parsedKey && parsedValue !== undefined) {
 				env[parsedKey] = parsedValue;
 			}

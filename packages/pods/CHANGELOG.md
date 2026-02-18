@@ -97,6 +97,7 @@
 - Pods config loading now also rejects whitespace-padded `ssh` command values instead of trimming/coalescing malformed persisted pod-connection identifiers.
 - Built-in models config loading now normalizes parsed `models.json` structure/content and drops malformed model/config entries instead of forwarding invalid runtime launch config shapes.
 - Built-in models config loading now also rejects whitespace-padded model IDs and env keys during normalization, preventing malformed key coalescing when parsing `models.json`.
+- Built-in models config loading now also rejects whitespace-padded env values during normalization, preserving strict env-value identity in `models.json` launch configuration.
 - `models` command listing now reuses normalized built-in models parsing, so malformed `models.json` content no longer crashes known-model display paths.
 - Pods CLI package metadata/version loading now validates `package.json` parsing and falls back safely when malformed metadata is encountered, preventing startup/help/version crashes from invalid package-json shapes.
 - Pods package-metadata version parsing now requires strict semver version strings without surrounding whitespace, rejecting malformed/non-semver version values instead of trimming/coercing them during CLI metadata fallback parsing.
