@@ -18,6 +18,17 @@ import { buildBaseOptions, clampReasoning } from "./simple-options.js";
 const DEFAULT_AZURE_API_VERSION = "v1";
 const AZURE_TOOL_CALL_PROVIDERS = new Set(["openai", "openai-codex", "opencode", "azure-openai-responses"]);
 
+function parseStrictOptionalConfigString(value: string | undefined): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
+}
+
 export function parseDeploymentNameMap(value: string | undefined): Map<string, string> {
 	const map = new Map<string, string>();
 	if (!value) return map;
@@ -160,8 +171,12 @@ function resolveAzureConfig(
 ): { baseUrl: string; apiVersion: string } {
 	const apiVersion = options?.azureApiVersion || process.env.AZURE_OPENAI_API_VERSION || DEFAULT_AZURE_API_VERSION;
 
-	const baseUrl = options?.azureBaseUrl?.trim() || process.env.AZURE_OPENAI_BASE_URL?.trim() || undefined;
-	const resourceName = options?.azureResourceName || process.env.AZURE_OPENAI_RESOURCE_NAME;
+	const baseUrl =
+		parseStrictOptionalConfigString(options?.azureBaseUrl) ??
+		parseStrictOptionalConfigString(process.env.AZURE_OPENAI_BASE_URL);
+	const resourceName =
+		parseStrictOptionalConfigString(options?.azureResourceName) ??
+		parseStrictOptionalConfigString(process.env.AZURE_OPENAI_RESOURCE_NAME);
 
 	let resolvedBaseUrl = baseUrl;
 

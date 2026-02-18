@@ -8655,6 +8655,27 @@ to:
 
 **Result:** Package-manager source parsing now preserves strict source identifier identity and rejects whitespace-padded npm/git source strings instead of silently normalizing malformed package source literals.
 
+---
+
+### 450) ai Azure base-url/resource-name resolver normalized whitespace-padded option/env values
+
+**Finding:** `packages/ai/src/providers/azure-openai-responses.ts` trimmed Azure base URL option/env values before resolution, so whitespace-padded endpoint config values could be silently accepted instead of rejected as malformed endpoint identifiers.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/azure-openai-responses.ts`
+- `packages/ai/test/azure-openai-responses-headers.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require strict option/env string identity (`trimmed === value`) for Azure `azureBaseUrl` / `AZURE_OPENAI_BASE_URL` and `azureResourceName` / `AZURE_OPENAI_RESOURCE_NAME` parsing,
+- reject whitespace-padded endpoint config values instead of trimming/coalescing malformed endpoint identifiers,
+- preserve existing fallback precedence (`options` → `env` → `resource` → `model.baseUrl`) and base URL normalization behavior,
+- add regression coverage for whitespace-padded option/env base URL rejection fallback.
+
+**Result:** Azure endpoint config resolution now preserves strict endpoint identifier identity and rejects whitespace-padded base-url/resource-name values instead of silently normalizing malformed config.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8664,7 +8685,7 @@ to:
 - ai model-generator numeric parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/generate-models.test.ts`
 - ai Azure deployment-map parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/azure-openai-responses-deployment-map.test.ts test/azure-openai-responses-headers.test.ts` (includes Azure OpenAI Responses whitespace-padded deployment-map segment rejection and custom-header rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/azure-openai-responses-deployment-map.test.ts test/azure-openai-responses-headers.test.ts` (includes Azure OpenAI Responses whitespace-padded deployment-map segment rejection, whitespace-padded base-url option/env rejection fallback coverage, and custom-header rejection coverage)
 - ai auth-file parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/auth-file.test.ts` (includes whitespace-padded provider-key rejection and oauth token-field rejection coverage)
 - mom slack timestamp normalization regression tests pass:

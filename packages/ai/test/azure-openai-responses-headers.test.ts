@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { getModel } from "../src/models.js";
 import { streamAzureOpenAIResponses } from "../src/providers/azure-openai-responses.js";
 import type { Context } from "../src/types.js";
@@ -37,6 +37,23 @@ vi.mock("openai", () => {
 });
 
 describe("Azure OpenAI Responses custom header validation", () => {
+	const originalAzureBaseUrl = process.env.AZURE_OPENAI_BASE_URL;
+	const originalAzureResourceName = process.env.AZURE_OPENAI_RESOURCE_NAME;
+
+	afterEach(() => {
+		mockState.constructorOpts = undefined;
+		if (originalAzureBaseUrl === undefined) {
+			delete process.env.AZURE_OPENAI_BASE_URL;
+		} else {
+			process.env.AZURE_OPENAI_BASE_URL = originalAzureBaseUrl;
+		}
+		if (originalAzureResourceName === undefined) {
+			delete process.env.AZURE_OPENAI_RESOURCE_NAME;
+		} else {
+			process.env.AZURE_OPENAI_RESOURCE_NAME = originalAzureResourceName;
+		}
+	});
+
 	it("drops whitespace-padded custom header names from model/options headers", async () => {
 		const model = getModel("azure-openai-responses", "gpt-4o-mini");
 		const modelWithHeaders = {
@@ -69,5 +86,48 @@ describe("Azure OpenAI Responses custom header validation", () => {
 		expect(Object.keys(headers)).not.toContain(" x-model-invalid ");
 		expect(Object.keys(headers)).not.toContain(" x-option-invalid ");
 		expect(Object.keys(headers)).not.toContain("");
+	});
+
+	it("ignores whitespace-padded option base URLs and falls back to model baseUrl", async () => {
+		delete process.env.AZURE_OPENAI_BASE_URL;
+		delete process.env.AZURE_OPENAI_RESOURCE_NAME;
+		const model = getModel("azure-openai-responses", "gpt-4o-mini");
+		const modelWithBaseUrl = {
+			...model,
+			baseUrl: "https://model.azure.com/openai/v1/",
+		};
+		const context: Context = {
+			messages: [{ role: "user", content: "hello", timestamp: Date.now() }],
+		};
+
+		const result = await streamAzureOpenAIResponses(modelWithBaseUrl, context, {
+			apiKey: "test",
+			azureBaseUrl: " https://option.azure.com/openai/v1 ",
+			azureDeploymentName: "gpt-4o-mini-deployment",
+		}).result();
+
+		expect(result.stopReason).toBe("stop");
+		expect(mockState.constructorOpts?.baseURL).toBe("https://model.azure.com/openai/v1");
+	});
+
+	it("ignores whitespace-padded env base URLs and falls back to model baseUrl", async () => {
+		process.env.AZURE_OPENAI_BASE_URL = " https://env.azure.com/openai/v1 ";
+		delete process.env.AZURE_OPENAI_RESOURCE_NAME;
+		const model = getModel("azure-openai-responses", "gpt-4o-mini");
+		const modelWithBaseUrl = {
+			...model,
+			baseUrl: "https://model.azure.com/openai/v1/",
+		};
+		const context: Context = {
+			messages: [{ role: "user", content: "hello", timestamp: Date.now() }],
+		};
+
+		const result = await streamAzureOpenAIResponses(modelWithBaseUrl, context, {
+			apiKey: "test",
+			azureDeploymentName: "gpt-4o-mini-deployment",
+		}).result();
+
+		expect(result.stopReason).toBe("stop");
+		expect(mockState.constructorOpts?.baseURL).toBe("https://model.azure.com/openai/v1");
 	});
 });

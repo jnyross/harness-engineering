@@ -80,6 +80,7 @@
 - Model-catalog generator now only parses decimal numeric pricing strings (rejecting non-decimal forms like `0x10` / `1e2`) and no longer auto-executes network fetches when imported for tests.
 - Azure OpenAI deployment-name map parsing now trims model/deployment segments before validation, skipping blank-key/value entries instead of registering empty-string mappings from whitespace-padded config tokens.
 - Azure OpenAI deployment-name map parsing now also rejects whitespace-padded model/deployment mapping entries instead of trimming/coalescing malformed deployment-map identifiers.
+- Azure OpenAI base URL/resource-name resolution now also rejects whitespace-padded option/env values instead of trimming/coalescing malformed endpoint configuration identifiers.
 - OAuth CLI auth-file loading now normalizes parsed credential entries (root shape, provider keys, oauth credential fields), dropping malformed entries instead of forwarding incompatible auth data into login/session credential reads.
 - OAuth CLI auth-file parsing now rejects provider keys with surrounding whitespace (instead of trimming/coalescing them), preventing malformed provider-key normalization collisions during credential loading.
 - OAuth CLI auth-file parsing now also rejects whitespace-padded oauth `refresh`/`access` token fields instead of trimming/coalescing them, preserving strict persisted credential token identity.
