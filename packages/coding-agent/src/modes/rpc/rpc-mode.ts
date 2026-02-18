@@ -41,6 +41,56 @@ export function normalizeDialogTimeoutMs(timeout: number | undefined): number | 
 	return timeout > MAX_TIMEOUT_MS ? MAX_TIMEOUT_MS : timeout;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
+}
+
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+type ParsedRpcLine =
+	| { kind: "command"; command: RpcCommand }
+	| { kind: "extension_ui_response"; response: RpcExtensionUIResponse }
+	| { kind: "error"; message: string };
+
+export function parseRpcLine(line: string): ParsedRpcLine {
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(line);
+	} catch (error) {
+		const details = error instanceof Error ? error.message : String(error);
+		return { kind: "error", message: `Invalid JSON payload: ${details}` };
+	}
+
+	const record = asRecord(parsed);
+	if (!record) {
+		return { kind: "error", message: "Expected command object payload" };
+	}
+
+	const type = parseNonEmptyString(record.type);
+	if (!type) {
+		return { kind: "error", message: "Missing command type" };
+	}
+
+	if (type === "extension_ui_response") {
+		const responseId = parseNonEmptyString(record.id);
+		if (!responseId) {
+			return { kind: "error", message: "extension_ui_response requires non-empty string id" };
+		}
+		return { kind: "extension_ui_response", response: record as RpcExtensionUIResponse };
+	}
+
+	return { kind: "command", command: record as RpcCommand };
+}
+
 // Re-export types for consumers
 export type {
 	RpcCommand,
@@ -699,11 +749,15 @@ export async function runRpcMode(session: AgentSession): Promise<never> {
 
 	rl.on("line", async (line: string) => {
 		try {
-			const parsed = JSON.parse(line);
+			const parsed = parseRpcLine(line);
+			if (parsed.kind === "error") {
+				output(error(undefined, "parse", `Failed to parse command: ${parsed.message}`));
+				return;
+			}
 
 			// Handle extension UI responses
-			if (parsed.type === "extension_ui_response") {
-				const response = parsed as RpcExtensionUIResponse;
+			if (parsed.kind === "extension_ui_response") {
+				const response = parsed.response;
 				const pending = pendingExtensionRequests.get(response.id);
 				if (pending) {
 					pendingExtensionRequests.delete(response.id);
@@ -713,15 +767,14 @@ export async function runRpcMode(session: AgentSession): Promise<never> {
 			}
 
 			// Handle regular commands
-			const command = parsed as RpcCommand;
-			const response = await handleCommand(command);
+			const response = await handleCommand(parsed.command);
 			output(response);
 
 			// Check for deferred shutdown request (idle between commands)
 			await checkShutdownRequested();
-			// biome-ignore lint/suspicious/noExplicitAny: migration
-		} catch (e: any) {
-			output(error(undefined, "parse", `Failed to parse command: ${e.message}`));
+		} catch (errorCaught) {
+			const details = errorCaught instanceof Error ? errorCaught.message : String(errorCaught);
+			output(error(undefined, "parse", `Failed to parse command: ${details}`));
 		}
 	});
 
