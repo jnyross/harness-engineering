@@ -3,10 +3,19 @@ import { describe, it } from "node:test";
 import { getMomApiKey, resolveMomModel } from "../src/agent.js";
 
 describe("resolveMomModel", () => {
-	it("uses trimmed env overrides when provided", () => {
+	it("uses exact env overrides when provided", () => {
 		const model = resolveMomModel({
-			PI_MOM_PROVIDER: " anthropic ",
-			PI_MOM_MODEL: " claude-sonnet-4-5 ",
+			PI_MOM_PROVIDER: "anthropic",
+			PI_MOM_MODEL: "claude-sonnet-4-5",
+		});
+		assert.equal(model.provider, "anthropic");
+		assert.equal(model.id, "claude-sonnet-4-5");
+	});
+
+	it("rejects whitespace-padded env overrides and falls back to defaults", () => {
+		const model = resolveMomModel({
+			PI_MOM_PROVIDER: " invalid-provider ",
+			PI_MOM_MODEL: " invalid-model ",
 		});
 		assert.equal(model.provider, "anthropic");
 		assert.equal(model.id, "claude-sonnet-4-5");

@@ -29,7 +29,7 @@ const DEFAULT_MODEL_ID = "claude-sonnet-4-5";
 function resolveConfiguredValue(values: Array<string | undefined>): string | undefined {
 	for (const value of values) {
 		const trimmed = value?.trim();
-		if (trimmed) {
+		if (trimmed && trimmed === value) {
 			return trimmed;
 		}
 	}

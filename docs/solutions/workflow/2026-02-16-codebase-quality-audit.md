@@ -8339,6 +8339,27 @@ to:
 
 **Result:** AI CLI provider selection parsing now preserves strict selection identifier identity and rejects whitespace-padded numeric selections instead of silently normalizing malformed input.
 
+---
+
+### 435) mom model env override parsing normalized whitespace-padded identifiers
+
+**Finding:** `packages/mom/src/agent.ts` trimmed model provider/id environment override values before selection, so whitespace-padded provider/model override identifiers could be silently accepted instead of rejected as malformed override identifiers.
+
+**Action:** Updated:
+
+- `packages/mom/src/agent.ts`
+- `packages/mom/test/agent-model.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- require strict override-string identity (`trimmed === value`) when resolving environment-provided model provider/id overrides,
+- reject whitespace-padded provider/model overrides instead of trimming/coalescing malformed override identifiers,
+- preserve existing fallback-to-default behavior for missing/blank overrides,
+- add regression coverage demonstrating whitespace-padded invalid override identifiers are ignored in favor of defaults.
+
+**Result:** Mom model override parsing now preserves strict provider/model override identifier identity and rejects whitespace-padded override values instead of silently normalizing malformed env input.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8418,7 +8439,7 @@ to:
 - ai OpenAI Responses header validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-responses-headers.test.ts` (includes model/options whitespace-padded custom-header rejection coverage)
 - mom model/key resolution regression tests pass:
-  - `npm --workspace "@mariozechner/pi-mom" test -- test/agent-model.test.ts`
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/agent-model.test.ts` (includes whitespace-padded provider/model env override rejection coverage)
 - pods required-option parser regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/cli-options.test.ts test/cli-args.test.ts`
 - pods model-option parsing regression tests pass:
