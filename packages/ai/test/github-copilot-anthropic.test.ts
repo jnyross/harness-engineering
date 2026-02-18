@@ -10,6 +10,7 @@ const mockState = vi.hoisted(() => ({
 	useNonDecimalUsage: false,
 	useUnsafeUsage: false,
 	useFractionalNumberUsage: false,
+	usePaddedUsage: false,
 }));
 
 vi.mock("@anthropic-ai/sdk", () => {
@@ -33,6 +34,9 @@ vi.mock("@anthropic-ai/sdk", () => {
 				}
 				if (mockState.useUnsafeUsage) {
 					return "9007199254740993";
+				}
+				if (mockState.usePaddedUsage) {
+					return ` ${value} `;
 				}
 				if (mockState.useMalformedUsage) {
 					if (options?.malformed !== undefined) {
@@ -97,6 +101,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		mockState.useNonDecimalUsage = false;
 		mockState.useUnsafeUsage = false;
 		mockState.useFractionalNumberUsage = false;
+		mockState.usePaddedUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		expect(model.api).toBe("anthropic-messages");
 
@@ -140,6 +145,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		mockState.useNonDecimalUsage = false;
 		mockState.useUnsafeUsage = false;
 		mockState.useFractionalNumberUsage = false;
+		mockState.usePaddedUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const s = streamAnthropic(model, context, {
@@ -160,6 +166,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		mockState.useNonDecimalUsage = false;
 		mockState.useUnsafeUsage = false;
 		mockState.useFractionalNumberUsage = false;
+		mockState.usePaddedUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const s = streamAnthropic(model, context, {
@@ -186,6 +193,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		mockState.useNonDecimalUsage = false;
 		mockState.useUnsafeUsage = false;
 		mockState.useFractionalNumberUsage = false;
+		mockState.usePaddedUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const result = await streamAnthropic(model, context, { apiKey: "tid_copilot_session_test_token" }).result();
@@ -203,6 +211,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		mockState.useNonDecimalUsage = false;
 		mockState.useUnsafeUsage = false;
 		mockState.useFractionalNumberUsage = false;
+		mockState.usePaddedUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const result = await streamAnthropic(model, context, { apiKey: "tid_copilot_session_test_token" }).result();
@@ -220,6 +229,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		mockState.useNonDecimalUsage = true;
 		mockState.useUnsafeUsage = false;
 		mockState.useFractionalNumberUsage = false;
+		mockState.usePaddedUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const result = await streamAnthropic(model, context, { apiKey: "tid_copilot_session_test_token" }).result();
@@ -237,6 +247,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		mockState.useNonDecimalUsage = false;
 		mockState.useUnsafeUsage = true;
 		mockState.useFractionalNumberUsage = false;
+		mockState.usePaddedUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const result = await streamAnthropic(model, context, { apiKey: "tid_copilot_session_test_token" }).result();
@@ -254,6 +265,25 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		mockState.useNonDecimalUsage = false;
 		mockState.useUnsafeUsage = false;
 		mockState.useFractionalNumberUsage = true;
+		mockState.usePaddedUsage = false;
+		const model = getModel("github-copilot", "claude-sonnet-4");
+		const { streamAnthropic } = await import("../src/providers/anthropic.js");
+		const result = await streamAnthropic(model, context, { apiKey: "tid_copilot_session_test_token" }).result();
+
+		expect(result.usage.input).toBe(0);
+		expect(result.usage.output).toBe(0);
+		expect(result.usage.cacheRead).toBe(0);
+		expect(result.usage.cacheWrite).toBe(0);
+		expect(result.usage.totalTokens).toBe(0);
+	});
+
+	it("ignores whitespace-padded numeric usage counters from Anthropic stream events", async () => {
+		mockState.useStringUsage = false;
+		mockState.useMalformedUsage = false;
+		mockState.useNonDecimalUsage = false;
+		mockState.useUnsafeUsage = false;
+		mockState.useFractionalNumberUsage = false;
+		mockState.usePaddedUsage = true;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const result = await streamAnthropic(model, context, { apiKey: "tid_copilot_session_test_token" }).result();

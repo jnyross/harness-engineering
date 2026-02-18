@@ -52,6 +52,9 @@ function parseUsageNumber(value: unknown): number {
 	}
 	if (typeof value === "string" && value.trim().length > 0) {
 		const trimmed = value.trim();
+		if (trimmed !== value) {
+			return 0;
+		}
 		if (!/^\d+$/.test(trimmed)) {
 			return 0;
 		}

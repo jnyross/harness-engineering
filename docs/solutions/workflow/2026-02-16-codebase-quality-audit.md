@@ -8124,6 +8124,27 @@ to:
 
 **Result:** OpenAI Completions usage parsing now preserves strict token-value identity and rejects whitespace-padded numeric-string usage counters instead of silently normalizing malformed metadata.
 
+---
+
+### 425) ai anthropic usage parsing normalized whitespace-padded numeric-string counters
+
+**Finding:** `packages/ai/src/providers/anthropic.ts` trimmed usage-counter strings before decimal validation, so whitespace-padded numeric-string token counters in Anthropic stream usage payloads could be silently accepted instead of rejected as malformed token metadata.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/anthropic.ts`
+- `packages/ai/test/github-copilot-anthropic.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require strict numeric-string identity (`trimmed === value`) for Anthropic usage-token parsing,
+- reject whitespace-padded numeric-string usage counters instead of trimming/coalescing malformed token values,
+- preserve existing integer-only, non-decimal, and safe-integer usage validation behavior,
+- add regression coverage for whitespace-padded Anthropic usage-counter rejection.
+
+**Result:** Anthropic stream usage parsing now preserves strict token-value identity and rejects whitespace-padded numeric-string usage counters instead of silently normalizing malformed metadata.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8199,7 +8220,7 @@ to:
 - ai OpenAI Completions thought-signature normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-result-images.test.ts`
 - ai OpenAI/Anthropic usage parser regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts` (includes OpenAI Completions + Anthropic fractional usage-token rejection coverage, OpenAI Completions whitespace-padded usage-token rejection coverage, and OpenAI Completions + Anthropic whitespace-padded custom-header rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts` (includes OpenAI Completions + Anthropic fractional usage-token rejection coverage, OpenAI Completions + Anthropic whitespace-padded usage-token rejection coverage, and OpenAI Completions + Anthropic whitespace-padded custom-header rejection coverage)
 - ai OpenAI Responses header validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-responses-headers.test.ts` (includes model/options whitespace-padded custom-header rejection coverage)
 - mom model/key resolution regression tests pass:
