@@ -6188,9 +6188,10 @@ to:
 - normalize JSON task entries through runtime shape checks,
 - trim/validate task title/description strings and acceptance criteria arrays,
 - ignore non-object JSON list entries while preserving valid tasks,
+- ignore empty JSON task entries and fall back to markdown task parsing when JSON snippets yield no actionable tasks,
 - add regression coverage for mixed valid+malformed JSON task arrays.
 
-**Result:** project-loop JSON decomposition now fails safely on malformed task entry fields and preserves deterministic normalized task payloads for downstream TDD execution.
+**Result:** project-loop JSON decomposition now fails safely on malformed task entry fields and preserves deterministic fallback behavior to markdown task extraction when JSON snippets are non-actionable.
 
 ---
 
@@ -6376,7 +6377,7 @@ to:
 - agent runner args regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/runner.test.ts`
 - agent project-loop JSON task normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/project-loop.test.ts`
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/project-loop.test.ts` (includes malformed JSON entry filtering and markdown fallback when JSON snippets contain no actionable tasks)
 - agent proxy SSE data-prefix parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts`
 - mom sandbox regression tests pass:
