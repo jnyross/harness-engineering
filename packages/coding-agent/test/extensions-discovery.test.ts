@@ -185,6 +185,26 @@ describe("extensions discovery", () => {
 		expect(result.extensions).toHaveLength(0);
 	});
 
+	it("rejects whitespace-padded manifest extension entries", async () => {
+		const subdir = path.join(extensionsDir, "manifest-padded-only");
+		fs.mkdirSync(subdir);
+		fs.writeFileSync(path.join(subdir, "index.ts"), extensionCodeWithTool("from-index"));
+		fs.writeFileSync(path.join(subdir, "valid.ts"), extensionCodeWithTool("from-manifest"));
+		fs.writeFileSync(
+			path.join(subdir, "package.json"),
+			JSON.stringify({
+				pi: {
+					extensions: [" ./valid.ts "],
+				},
+			}),
+		);
+
+		const result = await discoverAndLoadExtensions([], tempDir, tempDir);
+
+		expect(result.errors).toHaveLength(0);
+		expect(result.extensions).toHaveLength(0);
+	});
+
 	it("package.json with pi field takes precedence over index.ts", async () => {
 		const subdir = path.join(extensionsDir, "my-package");
 		fs.mkdirSync(subdir);

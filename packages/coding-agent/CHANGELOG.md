@@ -57,6 +57,7 @@
 - CLI package metadata loading now also rejects whitespace-padded `piConfig.name`/`piConfig.configDir`/`version` values instead of trimming malformed identifier/version fields.
 - Model-registry `models.json` loading now rejects blank/whitespace provider keys, preventing malformed provider-map keys from being treated as valid provider identifiers during custom model/override loading.
 - Extension discovery now normalizes `package.json` `pi.*` manifest entry arrays (string-only, trimmed, non-empty), ignoring malformed extension entry shapes instead of allowing bad values to disrupt package extension resolution.
+- Extension discovery now also rejects whitespace-padded `package.json` `pi.*` manifest entry values instead of trimming/coalescing malformed extension path/pattern identifiers.
 - Extension discovery now treats explicit `pi.extensions` declarations as authoritative (even when they normalize to no valid entries), avoiding unintended fallback loading of `index.ts`/`index.js` when manifests declare only malformed/missing extension paths.
 - Package manager manifest loading now normalizes `package.json` `pi.*` resource arrays (string-only, trimmed, non-empty), ignoring malformed entry shapes so package resource resolution no longer crashes on invalid manifest values.
 - Package manager manifest loading now also rejects whitespace-padded `package.json` `pi.*` resource entries instead of trimming/coalescing malformed manifest path/pattern identifiers.

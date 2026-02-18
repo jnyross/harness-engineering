@@ -395,8 +395,10 @@ function normalizeManifestEntryList(value: unknown): string[] | undefined {
 	}
 	const entries = value
 		.filter((entry): entry is string => typeof entry === "string")
-		.map((entry) => entry.trim())
-		.filter((entry) => entry.length > 0);
+		.filter((entry) => {
+			const trimmed = entry.trim();
+			return trimmed.length > 0 && trimmed === entry;
+		});
 	return entries.length > 0 ? entries : undefined;
 }
 

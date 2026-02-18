@@ -8466,6 +8466,27 @@ to:
 
 **Result:** Package-manager manifest parsing now preserves strict manifest entry identity and rejects whitespace-padded path/pattern entries instead of silently normalizing malformed `pi.*` manifest identifiers.
 
+---
+
+### 441) coding-agent extension-loader manifest entry parsing normalized whitespace-padded path/pattern values
+
+**Finding:** `packages/coding-agent/src/core/extensions/loader.ts` normalized `package.json` `pi.*` manifest entries by trimming each string entry, so whitespace-padded manifest extension paths/patterns could be silently accepted instead of rejected as malformed manifest identifiers.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/extensions/loader.ts`
+- `packages/coding-agent/test/extensions-discovery.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require strict manifest-entry string identity (`trimmed === value`) in extension-loader manifest list parsing,
+- reject whitespace-padded manifest entries instead of trimming/coalescing malformed extension path/pattern identifiers,
+- preserve existing string-only/non-empty manifest entry filtering and no-fallback behavior for explicitly-declared-but-invalid `pi.extensions`,
+- add regression coverage for whitespace-padded `pi.extensions` entry rejection.
+
+**Result:** Extension-loader manifest parsing now preserves strict manifest entry identity and rejects whitespace-padded extension path/pattern entries instead of silently normalizing malformed `pi.*` manifest identifiers.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8652,7 +8673,7 @@ to:
 - coding-agent package metadata normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/config-package-metadata.test.ts test/settings-manager.test.ts` (includes whitespace-padded package-metadata field rejection coverage)
 - coding-agent extension discovery manifest normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extensions-discovery.test.ts` (includes malformed-only `pi.extensions` declaration no-fallback-to-index coverage)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extensions-discovery.test.ts` (includes malformed-only/whitespace-padded `pi.extensions` declaration no-fallback-to-index coverage)
 - coding-agent keybindings config normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/keybindings.test.ts test/settings-manager.test.ts` (includes whitespace-padded keybinding identifier rejection coverage)
 - coding-agent auth storage normalization regression tests pass:
