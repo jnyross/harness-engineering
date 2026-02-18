@@ -1,5 +1,12 @@
 import { parse as partialParse } from "partial-json";
 
+function normalizeParsedJsonValue<T>(value: unknown): T {
+	if (value && typeof value === "object" && !Array.isArray(value)) {
+		return value as T;
+	}
+	return {} as T;
+}
+
 /**
  * Attempts to parse potentially incomplete JSON during streaming.
  * Always returns a valid object, even if the JSON is incomplete.
@@ -15,12 +22,12 @@ export function parseStreamingJson<T = any>(partialJson: string | undefined): T 
 
 	// Try standard parsing first (fastest for complete JSON)
 	try {
-		return JSON.parse(partialJson) as T;
+		return normalizeParsedJsonValue<T>(JSON.parse(partialJson));
 	} catch {
 		// Try partial-json for incomplete JSON
 		try {
 			const result = partialParse(partialJson);
-			return (result ?? {}) as T;
+			return normalizeParsedJsonValue<T>(result);
 		} catch {
 			// If all parsing fails, return empty object
 			return {} as T;

@@ -8,6 +8,7 @@
 - OpenAI Responses history conversion now ignores malformed/non-reasoning `thinkingSignature` payloads instead of throwing during JSON parsing, preventing malformed persisted reasoning signatures from crashing replay message conversion.
 - OpenAI Codex Responses token parsing now accepts base64url JWT payload segments (including missing padding and `-`/`_` characters) when extracting account IDs, preventing malformed-token decode failures during Codex request header construction.
 - Google Gemini CLI / Antigravity credential parsing now requires non-empty string `token` and `projectId` fields in JSON apiKey payloads, rejecting malformed credential shapes before request dispatch.
+- Streaming tool-argument JSON parsing now normalizes non-object JSON payloads (primitives/arrays) to empty objects, preventing malformed tool-call argument roots from propagating incompatible runtime shapes.
 - OpenAI Completions stream usage parsing now also accepts numeric-string token counters for prompt/completion/cache/reasoning fields, preventing arithmetic drift when OpenAI-compatible backends serialize usage values as strings.
 - Anthropic Messages stream usage parsing now accepts numeric-string token counters for input/output/cache fields, preserving accurate usage totals when proxy layers serialize token counts as strings.
 - OpenAI Completions and Anthropic stream usage parsing now ignore negative token values and truncate fractional numeric values to integers, preventing malformed usage metadata from producing negative/fractional accounting.
