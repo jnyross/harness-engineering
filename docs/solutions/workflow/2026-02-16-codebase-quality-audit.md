@@ -7049,6 +7049,26 @@ to:
 
 **Result:** pods built-in model-config parsing now preserves strict key identity for model IDs and env keys, rejecting malformed whitespace-padded key entries.
 
+---
+
+### 372) pods config normalization trimmed whitespace-padded pod/model key names and active selector values
+
+**Finding:** `packages/pods/src/config.ts` trimmed pod/model map keys (and `active` selector values) during persisted config normalization. Whitespace-padded key values could be silently coalesced into canonical identifiers, masking malformed persisted config keys and creating key-collision risk.
+
+**Action:** Updated:
+
+- `packages/pods/src/config.ts`
+- `packages/pods/test/config.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- require pod/model keys and active pod selectors to be non-empty strings without surrounding whitespace,
+- drop whitespace-padded key entries/selectors instead of trimming/coalescing them,
+- add regression coverage for whitespace-padded pod/model key rejection and active-selector rejection.
+
+**Result:** pods config normalization now preserves strict pod/model key identity and rejects malformed whitespace-padded active selectors during persisted config loading.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7139,7 +7159,7 @@ to:
 - pods GPU CSV parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/pods-gpu-output.test.ts`
 - pods config normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi" test -- test/config.test.ts`
+  - `npm --workspace "@mariozechner/pi" test -- test/config.test.ts` (includes whitespace-padded pod/model key and active-selector rejection coverage)
 - pods model-config normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/model-configs.test.ts test/config.test.ts` (includes whitespace-padded model/env key rejection coverage)
 - pods package-metadata normalization regression tests pass:
