@@ -46,9 +46,34 @@ describe("parseMomEventPayload", () => {
 		assert.equal(parseMomEventPayload([]), undefined);
 		assert.equal(
 			parseMomEventPayload({
+				type: " immediate ",
+				channelId: "C123",
+				text: "ok",
+			}),
+			undefined,
+		);
+		assert.equal(
+			parseMomEventPayload({
+				type: "immediate",
+				channelId: " C123 ",
+				text: "ok",
+			}),
+			undefined,
+		);
+		assert.equal(
+			parseMomEventPayload({
 				type: "immediate",
 				channelId: "",
 				text: "ok",
+			}),
+			undefined,
+		);
+		assert.equal(
+			parseMomEventPayload({
+				type: "one-shot",
+				channelId: "C123",
+				text: "run later",
+				at: " 2026-02-16T12:00:00.000Z ",
 			}),
 			undefined,
 		);
@@ -66,6 +91,16 @@ describe("parseMomEventPayload", () => {
 				channelId: "C123",
 				text: "run later",
 				at: "2026-02-16T12:00:00",
+			}),
+			undefined,
+		);
+		assert.equal(
+			parseMomEventPayload({
+				type: "periodic",
+				channelId: "C123",
+				text: "daily check",
+				schedule: " 0 9 * * * ",
+				timezone: "UTC",
 			}),
 			undefined,
 		);

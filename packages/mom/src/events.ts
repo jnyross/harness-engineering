@@ -57,13 +57,24 @@ function parseNonEmptyString(value: unknown): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function parseStrictNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
+}
+
 export function parseMomEventPayload(value: unknown): MomEvent | undefined {
 	const data = asRecord(value);
 	if (!data) {
 		return undefined;
 	}
-	const type = parseNonEmptyString(data.type);
-	const channelId = parseNonEmptyString(data.channelId);
+	const type = parseStrictNonEmptyString(data.type);
+	const channelId = parseStrictNonEmptyString(data.channelId);
 	const text = parseNonEmptyString(data.text);
 	if (!type || !channelId || !text) {
 		return undefined;
@@ -73,15 +84,15 @@ export function parseMomEventPayload(value: unknown): MomEvent | undefined {
 		case "immediate":
 			return { type: "immediate", channelId, text };
 		case "one-shot": {
-			const at = parseNonEmptyString(data.at);
+			const at = parseStrictNonEmptyString(data.at);
 			if (!at || parseOneShotTimestampMs(at) === undefined) {
 				return undefined;
 			}
 			return { type: "one-shot", channelId, text, at };
 		}
 		case "periodic": {
-			const schedule = parseNonEmptyString(data.schedule);
-			const timezone = parseNonEmptyString(data.timezone);
+			const schedule = parseStrictNonEmptyString(data.schedule);
+			const timezone = parseStrictNonEmptyString(data.timezone);
 			if (!schedule || !timezone) {
 				return undefined;
 			}
@@ -101,11 +112,10 @@ export function parseMomEventContent(content: string): MomEvent | undefined {
 }
 
 export function parseOneShotTimestampMs(value: string): number | undefined {
-	const normalized = value.trim();
-	if (!ONE_SHOT_TIMESTAMP_REGEX.test(normalized)) {
+	if (value.trim() !== value || !ONE_SHOT_TIMESTAMP_REGEX.test(value)) {
 		return undefined;
 	}
-	const parsed = new Date(normalized).getTime();
+	const parsed = new Date(value).getTime();
 	return Number.isFinite(parsed) ? parsed : undefined;
 }
 

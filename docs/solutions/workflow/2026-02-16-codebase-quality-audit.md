@@ -7229,6 +7229,26 @@ to:
 
 **Result:** OpenAI Codex Responses header construction now preserves strict custom-header key identity and safely ignores malformed whitespace-padded header names.
 
+---
+
+### 381) mom event parsing normalized whitespace-padded event identifiers and schedules
+
+**Finding:** `packages/mom/src/events.ts` trimmed event `type`/`channelId`/one-shot timestamp/schedule/timezone strings before validation. Whitespace-padded event identifiers and scheduling fields could be silently normalized into canonical values.
+
+**Action:** Updated:
+
+- `packages/mom/src/events.ts`
+- `packages/mom/test/events-parse.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- require strict non-empty strings without surrounding whitespace for event identifiers and scheduling fields,
+- reject whitespace-padded identifiers (`type`, `channelId`) and one-shot/periodic schedule fields instead of trimming/coalescing them,
+- add regression coverage for whitespace-padded payload rejection cases.
+
+**Result:** mom event parsing now preserves strict event identifier/schedule identity and rejects malformed whitespace-padded event payload fields.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7370,7 +7390,7 @@ to:
 - mom one-shot scheduling helper tests pass (including positive-infinite delay clamping/chunking):
   - `npm --workspace "@mariozechner/pi-mom" test -- test/events-scheduling.test.ts`
 - mom events payload parsing normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-mom" test -- test/events-parse.test.ts test/events-scheduling.test.ts` (includes one-shot ISO-8601 timezone requirement and timezone-less/numeric timestamp rejection coverage)
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/events-parse.test.ts test/events-scheduling.test.ts` (includes one-shot ISO-8601 timezone requirement, timezone-less/numeric timestamp rejection, and whitespace-padded identifier/schedule field rejection coverage)
 - mom read-tool line-count regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/read-tool.test.ts`
 - mom bash timeout validation regression tests pass:
