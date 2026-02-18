@@ -8,11 +8,15 @@ describe("parseModelsData", () => {
 		assert.deepEqual(parseModelsData("[]"), { models: {} });
 	});
 
-	it("normalizes model entries and drops malformed configs", () => {
+	it("normalizes model entries, rejects whitespace-padded keys, and drops malformed configs", () => {
 		const parsed = parseModelsData(
 			JSON.stringify({
 				models: {
 					" model-a ": {
+						name: " Should Drop Due To Whitespace Key ",
+						configs: [{ gpuCount: 1, args: ["--bad"] }],
+					},
+					"model-a": {
 						name: " Demo Model ",
 						notes: " Notes ",
 						configs: [
@@ -20,7 +24,7 @@ describe("parseModelsData", () => {
 								gpuCount: 1,
 								args: [" --tensor-parallel-size ", "", "--dtype=bfloat16"],
 								gpuTypes: ["H100", "", " H200 "],
-								env: { CUDA_VISIBLE_DEVICES: "0", BAD: 1 },
+								env: { CUDA_VISIBLE_DEVICES: "0", " BAD ": "1", BAD_VALUE: " 1 " },
 								notes: " config-note ",
 							},
 							{ gpuCount: 0, args: ["--bad"] },
@@ -44,7 +48,7 @@ describe("parseModelsData", () => {
 							gpuCount: 1,
 							args: ["--tensor-parallel-size", "--dtype=bfloat16"],
 							gpuTypes: ["H100", "H200"],
-							env: { CUDA_VISIBLE_DEVICES: "0" },
+							env: { CUDA_VISIBLE_DEVICES: "0", BAD_VALUE: "1" },
 							notes: "config-note",
 						},
 					],

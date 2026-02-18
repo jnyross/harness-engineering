@@ -33,6 +33,14 @@ function parseNonEmptyString(value: unknown): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function parseConfigKey(value: string): string | undefined {
+	const trimmed = value.trim();
+	if (trimmed.length === 0) {
+		return undefined;
+	}
+	return trimmed === value ? value : undefined;
+}
+
 function parsePositiveSafeInteger(value: unknown): number | undefined {
 	if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) {
 		return undefined;
@@ -78,7 +86,7 @@ function normalizeModelConfig(value: unknown): ModelConfig | undefined {
 	if (record.env && typeof record.env === "object" && !Array.isArray(record.env)) {
 		const env: Record<string, string> = {};
 		for (const [key, rawValue] of Object.entries(record.env as Record<string, unknown>)) {
-			const parsedKey = parseNonEmptyString(key);
+			const parsedKey = parseConfigKey(key);
 			const parsedValue = parseNonEmptyString(rawValue);
 			if (parsedKey && parsedValue !== undefined) {
 				env[parsedKey] = parsedValue;
@@ -115,7 +123,7 @@ export function parseModelsData(content: string): ModelsData {
 
 	const models: Record<string, ModelInfo> = {};
 	for (const [modelId, rawModelInfo] of Object.entries(modelsRecord as Record<string, unknown>)) {
-		const parsedModelId = parseNonEmptyString(modelId);
+		const parsedModelId = parseConfigKey(modelId);
 		if (!parsedModelId || !rawModelInfo || typeof rawModelInfo !== "object" || Array.isArray(rawModelInfo)) {
 			continue;
 		}
