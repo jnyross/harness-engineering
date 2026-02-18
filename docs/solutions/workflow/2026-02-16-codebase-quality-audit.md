@@ -7510,6 +7510,26 @@ to:
 
 **Result:** Logged Slack timestamp parsing now preserves strict timestamp identity and rejects whitespace-padded `ts` values instead of silently normalizing malformed persisted timestamps.
 
+---
+
+### 395) coding-agent agent-root session migration accepted whitespace-padded session header identifiers
+
+**Finding:** `packages/coding-agent/src/migrations.ts` used trimmed non-empty parsing for legacy agent-root session header `type`/`cwd` fields during relocation. Whitespace-padded values could be normalized and migrated instead of being rejected as malformed legacy session headers.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/migrations.ts`
+- `packages/coding-agent/test/migrations.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require strict non-empty string identity (no surrounding whitespace) for migrated session header `type` and `cwd`,
+- skip relocation of legacy agent-root session files whose header identifiers are whitespace-padded,
+- add regression coverage ensuring malformed whitespace-padded session headers remain unmigrated while valid headers still relocate.
+
+**Result:** Agent-root session relocation now preserves strict session-header identifier identity and rejects whitespace-padded legacy header fields instead of trimming them.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7810,7 +7830,7 @@ to:
 - coding-agent model-registry provider-key validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/model-registry.test.ts` (includes blank and whitespace-padded provider-key rejection coverage for malformed `models.json` provider maps)
 - coding-agent migration parsing normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/migrations.test.ts` (includes oauth legacy-file preservation and whitespace-padded provider-key rejection coverage)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/migrations.test.ts` (includes oauth legacy-file preservation, whitespace-padded provider-key rejection, and whitespace-padded session-header relocation rejection coverage)
 - coding-agent session-manager JSONL line-shape normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/session-manager/file-operations.test.ts` (includes non-object/type-less line filtering, whitespace-padded entry-type rejection, and blank/whitespace-padded session-id header rejection in load/list/recent-session checks)
 - TUI package tests pass:

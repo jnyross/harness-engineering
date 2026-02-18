@@ -26,6 +26,17 @@ function parseNonEmptyString(value: unknown): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function parseStrictNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
+}
+
 function parseProviderId(value: string): string | undefined {
 	const trimmed = value.trim();
 	if (trimmed.length === 0) {
@@ -138,8 +149,8 @@ export function migrateSessionsFromAgentRoot(): void {
 			if (!firstLine?.trim()) continue;
 
 			const header = asRecord(JSON.parse(firstLine));
-			const type = parseNonEmptyString(header?.type);
-			const cwd = parseNonEmptyString(header?.cwd);
+			const type = parseStrictNonEmptyString(header?.type);
+			const cwd = parseStrictNonEmptyString(header?.cwd);
 			if (type !== "session" || !cwd) continue;
 
 			// Compute the correct session directory (same encoding as session-manager.ts)
