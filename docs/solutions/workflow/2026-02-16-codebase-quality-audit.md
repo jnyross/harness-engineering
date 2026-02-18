@@ -6760,6 +6760,27 @@ to:
 
 **Result:** Slack timestamp millisecond normalization now preserves exact flooring behavior near safe-integer precision limits instead of drifting by 1ms from floating-point rounding.
 
+---
+
+### 358) web-ui model-discovery parsing accepted malformed discovery payload rows
+
+**Finding:** `packages/web-ui/src/utils/model-discovery.ts` trusted `llama.cpp`/`vLLM` `/v1/models` row shapes and model IDs. Non-object rows or blank/malformed `id` values could produce invalid discovered model entries or fail parsing paths unexpectedly.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/utils/model-discovery.ts`
+- `packages/web-ui/test/model-discovery.test.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- validate discovery response roots as object payloads with array `data`,
+- ignore malformed/non-object model rows and rows missing non-empty string `id`,
+- preserve strict numeric parsing fallbacks for context/token metadata,
+- add regression coverage for malformed response roots and mixed valid+invalid row filtering.
+
+**Result:** web-ui model discovery now rejects malformed response-root shapes deterministically and filters invalid row entries instead of returning malformed model IDs.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6785,7 +6806,7 @@ to:
 - mom context sync timestamp regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/context-sync.test.ts test/context-settings.test.ts test/store.test.ts`
 - web-ui model discovery + archive-index numeric parsing regression tests pass:
-  - `cd packages/web-ui && npx tsx --test test/model-discovery.test.ts test/archive-index.test.ts`
+  - `cd packages/web-ui && npx tsx --test test/model-discovery.test.ts test/archive-index.test.ts` (includes malformed llama.cpp/vLLM response-root rejection and mixed valid+invalid model-row filtering coverage)
 - tui kitty CSI-u + overlay percentage parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/editor-kitty-csiu.test.ts`
   - `cd packages/tui && node --test --import tsx test/overlay-options.test.ts`
