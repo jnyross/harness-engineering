@@ -7899,6 +7899,26 @@ to:
 
 **Result:** Pods config parsing now preserves strict persisted SSH command identity and rejects whitespace-padded `ssh` values instead of silently normalizing malformed pod-connection identifiers.
 
+---
+
+### 414) ai OpenAI Codex OAuth token parser accepted fractional expires_in values
+
+**Finding:** `packages/ai/src/utils/oauth/openai-codex.ts` parsed token payload `expires_in` with positive-finite numeric validation, so fractional expiry durations could be silently accepted instead of rejected as malformed OAuth token metadata.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/openai-codex.ts`
+- `packages/ai/test/openai-codex-oauth-abort.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require positive safe-integer `expires_in` values for Codex token exchange/refresh payloads,
+- preserve existing strict token-field validation and malformed-payload failure behavior,
+- add regression coverage for fractional `expires_in` rejection in exchange and refresh flows.
+
+**Result:** OpenAI Codex OAuth token parsing now preserves strict integer expiry semantics and rejects fractional `expires_in` values instead of silently accepting malformed token expiry metadata.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8127,7 +8147,7 @@ to:
 - ai github-copilot oauth payload parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/github-copilot-oauth-payload.test.ts` (includes malformed device-code/poll/token payload field rejection and whitespace-padded token/code/error identifier rejection coverage)
 - ai openai-codex oauth startup/manual-flow/cancellation/base64url-decoding/hash-fragment/non-object-token-payload parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-oauth-abort.test.ts` (includes malformed exchange/refresh JSON-body parse failure normalization and whitespace-padded token-field rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-oauth-abort.test.ts` (includes malformed exchange/refresh JSON-body parse failure normalization, whitespace-padded token-field rejection, and fractional `expires_in` rejection coverage)
 - coding-agent tools regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted write coverage)
 - coding-agent tools regression tests pass:

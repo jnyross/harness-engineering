@@ -73,11 +73,11 @@ function parseStrictNonEmptyString(value: unknown): string | undefined {
 	return value;
 }
 
-function parsePositiveFiniteNumber(value: unknown): number | undefined {
+function parsePositiveSafeInteger(value: unknown): number | undefined {
 	if (typeof value !== "number") {
 		return undefined;
 	}
-	return Number.isFinite(value) && value > 0 ? value : undefined;
+	return Number.isSafeInteger(value) && value > 0 ? value : undefined;
 }
 
 function parseOpenAICodexTokenPayload(value: unknown):
@@ -90,7 +90,7 @@ function parseOpenAICodexTokenPayload(value: unknown):
 	const tokenResponse = asRecord(value);
 	const accessToken = parseStrictNonEmptyString(tokenResponse?.access_token);
 	const refreshToken = parseStrictNonEmptyString(tokenResponse?.refresh_token);
-	const expiresIn = parsePositiveFiniteNumber(tokenResponse?.expires_in);
+	const expiresIn = parsePositiveSafeInteger(tokenResponse?.expires_in);
 	if (!accessToken || !refreshToken || !expiresIn) {
 		return undefined;
 	}
