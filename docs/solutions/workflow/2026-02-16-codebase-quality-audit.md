@@ -6376,6 +6376,27 @@ to:
 
 **Result:** session loading/discovery now ignores malformed blank-id session headers and only treats valid persisted session IDs as discoverable sessions.
 
+---
+
+### 339) coding-agent RPC mode command parsing accepted malformed non-object command payload shapes
+
+**Finding:** `packages/coding-agent/src/modes/rpc/rpc-mode.ts` parsed each stdin line with `JSON.parse(...)` and immediately treated the result as a command/extension-response object. Valid JSON primitives (numbers/arrays/null) and object payloads missing `type` were accepted into downstream command handling, producing low-signal errors and malformed unknown-command responses.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/rpc/rpc-mode.ts`
+- `packages/coding-agent/test/rpc-mode-timeout.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- add `parseRpcLine(...)` parsing/normalization with explicit object-shape and non-empty `type` validation,
+- require non-empty string `id` values for `extension_ui_response` payloads before resolving pending extension UI requests,
+- return explicit parse diagnostics for malformed JSON and malformed command payload shapes,
+- add regression tests for malformed payload rejection and valid command/extension-response parsing.
+
+**Result:** RPC mode now rejects malformed command payload shapes up front and emits clear parse errors, while preserving normal handling of valid command and extension UI response payloads.
+
 ## Validation Evidence
 
 - Root quality gate passes:
