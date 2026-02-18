@@ -6518,6 +6518,26 @@ to:
 
 **Result:** streaming tool-argument parsing now enforces object-shaped argument roots and safely falls back to empty objects for malformed root shapes.
 
+---
+
+### 346) ai OpenAI Completions reasoning-detail replay accepted malformed non-object `thoughtSignature` payload roots
+
+**Finding:** `packages/ai/src/providers/openai-completions.ts` parsed tool-call `thoughtSignature` JSON and accepted any truthy parsed value into `reasoning_details`. Malformed non-object signature roots (for example JSON strings/numbers) could propagate invalid reasoning-detail payload shapes into completions request construction.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/openai-completions.ts`
+- `packages/ai/test/openai-completions-tool-result-images.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- parse `thoughtSignature` payloads with object-root validation,
+- ignore malformed/non-object parsed signature roots when building `reasoning_details`,
+- add regression coverage for malformed signature suppression and valid object-signature preservation.
+
+**Result:** OpenAI Completions history conversion now filters malformed `thoughtSignature` payload roots and only forwards valid object-shaped reasoning details.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6589,6 +6609,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts test/amazon-bedrock-usage.test.ts test/openai-responses-shared-usage.test.ts` (includes OpenAI Responses malformed `thinkingSignature` replay suppression coverage)
 - ai streaming JSON parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/json-parse.test.ts`
+- ai OpenAI Completions thought-signature normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-result-images.test.ts`
 - ai OpenAI/Anthropic usage parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts`
 - mom model/key resolution regression tests pass:
