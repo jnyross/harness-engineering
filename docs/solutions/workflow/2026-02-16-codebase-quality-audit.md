@@ -8508,6 +8508,27 @@ to:
 
 **Result:** CLI comma-list parsing now preserves strict model/tool identifier identity and rejects whitespace-padded entries instead of silently normalizing malformed flag values.
 
+---
+
+### 443) pods built-in model-config parser normalized whitespace-padded args/gpu-type values
+
+**Finding:** `packages/pods/src/model-configs.ts` trimmed `models.json` `args` and `gpuTypes` array entries before normalization, so whitespace-padded launch args/GPU-type values could be silently accepted instead of rejected as malformed config identifiers.
+
+**Action:** Updated:
+
+- `packages/pods/src/model-configs.ts`
+- `packages/pods/test/model-configs.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- require strict arg/GPU-type entry identity (`trimmed === value`) when normalizing `models.json` config arrays,
+- reject whitespace-padded arg/GPU-type entries instead of trimming/coalescing malformed entries,
+- preserve existing string-only/non-empty entry filtering behavior for arg/GPU-type arrays,
+- add regression coverage for whitespace-padded arg/GPU-type rejection in built-in model config normalization.
+
+**Result:** Pods built-in model-config parsing now preserves strict arg/GPU-type entry identity and rejects whitespace-padded launch arg/type values instead of silently normalizing malformed configuration entries.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8603,7 +8624,7 @@ to:
 - pods config normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/config.test.ts` (includes whitespace-padded pod/model key rejection, whitespace-padded persisted model-identifier rejection, whitespace-padded `modelsPath` rejection, whitespace-padded `ssh` rejection, and active-selector rejection coverage)
 - pods model-config normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi" test -- test/model-configs.test.ts test/config.test.ts` (includes whitespace-padded model/env key and env-value rejection coverage)
+  - `npm --workspace "@mariozechner/pi" test -- test/model-configs.test.ts test/config.test.ts` (includes whitespace-padded model/env key, env-value, args, and GPU-type rejection coverage)
 - pods package-metadata normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/package-metadata.test.ts test/model-configs.test.ts test/config.test.ts` (includes strict semver version parsing + whitespace/non-semver fallback coverage)
 - pods required-option smoke checks pass:

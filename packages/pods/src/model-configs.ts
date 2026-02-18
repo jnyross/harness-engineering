@@ -73,8 +73,10 @@ function normalizeModelConfig(value: unknown): ModelConfig | undefined {
 	}
 	const args = record.args
 		.filter((entry): entry is string => typeof entry === "string")
-		.map((entry) => entry.trim())
-		.filter((entry) => entry.length > 0);
+		.filter((entry) => {
+			const trimmed = entry.trim();
+			return trimmed.length > 0 && trimmed === entry;
+		});
 	if (args.length === 0) {
 		return undefined;
 	}
@@ -87,8 +89,10 @@ function normalizeModelConfig(value: unknown): ModelConfig | undefined {
 	if (Array.isArray(record.gpuTypes)) {
 		const gpuTypes = record.gpuTypes
 			.filter((entry): entry is string => typeof entry === "string")
-			.map((entry) => entry.trim())
-			.filter((entry) => entry.length > 0);
+			.filter((entry) => {
+				const trimmed = entry.trim();
+				return trimmed.length > 0 && trimmed === entry;
+			});
 		if (gpuTypes.length > 0) {
 			normalized.gpuTypes = gpuTypes;
 		}

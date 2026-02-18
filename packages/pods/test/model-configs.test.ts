@@ -46,8 +46,8 @@ describe("parseModelsData", () => {
 					configs: [
 						{
 							gpuCount: 1,
-							args: ["--tensor-parallel-size", "--dtype=bfloat16"],
-							gpuTypes: ["H100", "H200"],
+							args: ["--dtype=bfloat16"],
+							gpuTypes: ["H100"],
 							env: { CUDA_VISIBLE_DEVICES: "0" },
 							notes: "config-note",
 						},
