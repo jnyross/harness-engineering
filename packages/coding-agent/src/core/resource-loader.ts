@@ -575,14 +575,13 @@ export class DefaultResourceLoader implements ResourceLoader {
 	}
 
 	private resolveResourcePath(p: string): string {
-		const trimmed = p.trim();
-		let expanded = trimmed;
-		if (trimmed === "~") {
+		let expanded = p;
+		if (p === "~") {
 			expanded = homedir();
-		} else if (trimmed.startsWith("~/")) {
-			expanded = join(homedir(), trimmed.slice(2));
-		} else if (trimmed.startsWith("~")) {
-			expanded = join(homedir(), trimmed.slice(1));
+		} else if (p.startsWith("~/")) {
+			expanded = join(homedir(), p.slice(2));
+		} else if (p.startsWith("~")) {
+			expanded = join(homedir(), p.slice(1));
 		}
 		return resolve(this.cwd, expanded);
 	}

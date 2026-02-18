@@ -8592,6 +8592,27 @@ to:
 
 **Result:** Azure deployment-map parsing now preserves strict model/deployment identifier identity and rejects whitespace-padded mapping entries instead of silently normalizing malformed deployment-map config values.
 
+---
+
+### 447) coding-agent resource-loader path resolution normalized whitespace-padded additional paths
+
+**Finding:** `packages/coding-agent/src/core/resource-loader.ts` trimmed additional resource paths before path resolution, so whitespace-padded additional path entries could be silently accepted instead of rejected as malformed resource path identifiers.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/resource-loader.ts`
+- `packages/coding-agent/test/resource-loader.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require strict additional-path identity by resolving raw path entries (without trim-based normalization),
+- reject whitespace-padded additional path entries instead of trimming/coalescing malformed resource path identifiers,
+- preserve existing `~`/`~/` home expansion behavior for exact path inputs,
+- add regression coverage for whitespace-padded additional skill-path rejection.
+
+**Result:** Resource-loader additional-path resolution now preserves strict path identifier identity and rejects whitespace-padded additional paths instead of silently normalizing malformed entries.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8883,6 +8904,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/stream.test.ts -t "Mistral Provider (devstral-medium-latest via OpenAI Completions)"`
 - coding-agent package tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test`
+- coding-agent resource-loader additional-path normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/resource-loader.test.ts` (includes whitespace-padded additional skill-path rejection coverage)
 - coding-agent package-manager command-settlement regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes async settlement coverage, full async command-invocation diagnostics, sync spawn-start failure diagnostics, and signal-exit rejection diagnostics)
 - coding-agent package-manager manifest normalization regression tests pass:

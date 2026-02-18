@@ -276,6 +276,30 @@ Content`,
 			const { skills } = loader.getSkills();
 			expect(skills.some((s) => s.name === "custom")).toBe(true);
 		});
+
+		it("should reject whitespace-padded additional skill paths", async () => {
+			const customSkillDir = join(tempDir, "custom-skills");
+			mkdirSync(customSkillDir, { recursive: true });
+			writeFileSync(
+				join(customSkillDir, "custom.md"),
+				`---
+name: custom
+description: Custom skill
+---
+Content`,
+			);
+
+			const loader = new DefaultResourceLoader({
+				cwd,
+				agentDir,
+				noSkills: true,
+				additionalSkillPaths: [` ${customSkillDir} `],
+			});
+			await loader.reload();
+
+			const { skills } = loader.getSkills();
+			expect(skills.some((s) => s.name === "custom")).toBe(false);
+		});
 	});
 
 	describe("override functions", () => {
