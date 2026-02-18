@@ -142,6 +142,14 @@ function emptyCustomModelsResult(error?: string): CustomModelsResult {
 	return { models: [], overrides: new Map(), modelOverrides: new Map(), error };
 }
 
+function parseProviderConfigName(value: string): string | undefined {
+	const trimmed = value.trim();
+	if (trimmed.length === 0) {
+		return undefined;
+	}
+	return trimmed === value ? trimmed : undefined;
+}
+
 function mergeCompat(
 	baseCompat: Model<Api>["compat"],
 	overrideCompat: ModelOverride["compat"],
@@ -393,6 +401,12 @@ export class ModelRegistry {
 
 	private validateConfig(config: ModelsConfig): void {
 		for (const [providerName, providerConfig] of Object.entries(config.providers)) {
+			const normalizedProviderName = parseProviderConfigName(providerName);
+			if (!normalizedProviderName) {
+				throw new Error(
+					`Provider key "${providerName}" is invalid. Provider keys must be non-empty strings without surrounding whitespace.`,
+				);
+			}
 			const hasProviderApi = !!providerConfig.api;
 			const models = providerConfig.models ?? [];
 			const hasModelOverrides =
@@ -401,15 +415,19 @@ export class ModelRegistry {
 			if (models.length === 0) {
 				// Override-only config: needs baseUrl OR modelOverrides (or both)
 				if (!providerConfig.baseUrl && !hasModelOverrides) {
-					throw new Error(`Provider ${providerName}: must specify "baseUrl", "modelOverrides", or "models".`);
+					throw new Error(
+						`Provider ${normalizedProviderName}: must specify "baseUrl", "modelOverrides", or "models".`,
+					);
 				}
 			} else {
 				// Custom models are merged into provider models and require endpoint + auth.
 				if (!providerConfig.baseUrl) {
-					throw new Error(`Provider ${providerName}: "baseUrl" is required when defining custom models.`);
+					throw new Error(
+						`Provider ${normalizedProviderName}: "baseUrl" is required when defining custom models.`,
+					);
 				}
 				if (!providerConfig.apiKey) {
-					throw new Error(`Provider ${providerName}: "apiKey" is required when defining custom models.`);
+					throw new Error(`Provider ${normalizedProviderName}: "apiKey" is required when defining custom models.`);
 				}
 			}
 
@@ -418,16 +436,16 @@ export class ModelRegistry {
 
 				if (!hasProviderApi && !hasModelApi) {
 					throw new Error(
-						`Provider ${providerName}, model ${modelDef.id}: no "api" specified. Set at provider or model level.`,
+						`Provider ${normalizedProviderName}, model ${modelDef.id}: no "api" specified. Set at provider or model level.`,
 					);
 				}
 
-				if (!modelDef.id) throw new Error(`Provider ${providerName}: model missing "id"`);
+				if (!modelDef.id) throw new Error(`Provider ${normalizedProviderName}: model missing "id"`);
 				// Validate contextWindow/maxTokens only if provided (they have defaults)
 				if (modelDef.contextWindow !== undefined && modelDef.contextWindow <= 0)
-					throw new Error(`Provider ${providerName}, model ${modelDef.id}: invalid contextWindow`);
+					throw new Error(`Provider ${normalizedProviderName}, model ${modelDef.id}: invalid contextWindow`);
 				if (modelDef.maxTokens !== undefined && modelDef.maxTokens <= 0)
-					throw new Error(`Provider ${providerName}, model ${modelDef.id}: invalid maxTokens`);
+					throw new Error(`Provider ${normalizedProviderName}, model ${modelDef.id}: invalid maxTokens`);
 			}
 		}
 	}

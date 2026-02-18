@@ -65,6 +65,36 @@ describe("ModelRegistry", () => {
 		writeFileSync(modelsJsonPath, JSON.stringify({ providers }));
 	}
 
+	describe("provider key validation", () => {
+		test("rejects blank provider keys", () => {
+			writeRawModelsJson({
+				" ": {
+					baseUrl: "https://example.com/v1",
+					modelOverrides: {
+						"anthropic/claude-sonnet-4": { name: "Ignored" },
+					},
+				},
+			});
+
+			const registry = new ModelRegistry(authStorage, modelsJsonPath);
+			expect(registry.getError()).toContain('Provider key " " is invalid');
+		});
+
+		test("rejects provider keys with surrounding whitespace", () => {
+			writeRawModelsJson({
+				" openrouter ": {
+					baseUrl: "https://example.com/v1",
+					modelOverrides: {
+						"anthropic/claude-sonnet-4": { name: "Ignored" },
+					},
+				},
+			});
+
+			const registry = new ModelRegistry(authStorage, modelsJsonPath);
+			expect(registry.getError()).toContain('Provider key " openrouter " is invalid');
+		});
+	});
+
 	describe("baseUrl override (no custom models)", () => {
 		test("overriding baseUrl keeps all built-in models", () => {
 			writeRawModelsJson({
