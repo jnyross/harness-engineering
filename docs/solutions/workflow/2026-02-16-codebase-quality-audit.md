@@ -6067,6 +6067,28 @@ to:
 
 **Result:** known-model listing now shares the same malformed-input-safe models parsing path as launch config selection.
 
+---
+
+### 324) ai OAuth CLI auth-file loading accepted malformed credential entry shapes
+
+**Finding:** `packages/ai/src/cli.ts` loaded `auth.json` via direct `JSON.parse(...)` without runtime normalization; malformed root/provider/credential shapes could propagate incompatible auth data into CLI credential reads.
+
+**Action:** Updated:
+
+- `packages/ai/src/auth-file.ts` (new)
+- `packages/ai/src/cli.ts`
+- `packages/ai/test/auth-file.test.ts` (new)
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- add auth-file parsing normalization for provider keys and oauth credential fields,
+- drop malformed root/entry shapes during CLI auth-file reads,
+- trim non-empty provider/token fields,
+- add focused regression coverage for malformed fallback and valid-entry preservation behavior.
+
+**Result:** OAuth CLI auth-file loading now fails safely on malformed `auth.json` content and only preserves valid normalized credential entries.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6077,6 +6099,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/generate-models.test.ts`
 - ai Azure deployment-map parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/azure-openai-responses-deployment-map.test.ts`
+- ai auth-file parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/auth-file.test.ts test/cli-selection.test.ts`
 - mom slack timestamp normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts`
 - mom channel-store timestamp parsing regression tests pass:
