@@ -10,6 +10,31 @@ import {
 } from "./slack-timestamp.js";
 import type { Attachment, ChannelStore } from "./store.js";
 
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+export function parseLoggedSlackTimestamp(line: string): string | undefined {
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(line);
+	} catch {
+		return undefined;
+	}
+	if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+		return undefined;
+	}
+	const timestamp = parseNonEmptyString((parsed as { ts?: unknown }).ts);
+	if (!timestamp || parseSlackTimestampToMilliseconds(timestamp) === undefined) {
+		return undefined;
+	}
+	return timestamp;
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -461,10 +486,10 @@ export class SlackBot {
 		const content = readFileSync(logPath, "utf-8");
 		const lines = content.trim().split("\n").filter(Boolean);
 		for (const line of lines) {
-			try {
-				const entry = JSON.parse(line);
-				if (entry.ts) timestamps.add(entry.ts);
-			} catch {}
+			const timestamp = parseLoggedSlackTimestamp(line);
+			if (timestamp) {
+				timestamps.add(timestamp);
+			}
 		}
 		return timestamps;
 	}
