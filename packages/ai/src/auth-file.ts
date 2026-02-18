@@ -11,6 +11,14 @@ function parseNonEmptyString(value: unknown): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function parseProviderId(value: string): string | undefined {
+	const trimmed = value.trim();
+	if (trimmed.length === 0) {
+		return undefined;
+	}
+	return trimmed === value ? value : undefined;
+}
+
 function parseStoredOAuthCredential(value: unknown): StoredOAuthCredential | undefined {
 	if (!value || typeof value !== "object" || Array.isArray(value)) {
 		return undefined;
@@ -50,7 +58,7 @@ export function parseAuthFileContent(content: string): StoredOAuthMap {
 
 	const normalized: StoredOAuthMap = {};
 	for (const [provider, rawCredential] of Object.entries(parsed as Record<string, unknown>)) {
-		const providerId = parseNonEmptyString(provider);
+		const providerId = parseProviderId(provider);
 		if (!providerId) {
 			continue;
 		}

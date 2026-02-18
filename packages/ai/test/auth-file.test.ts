@@ -41,4 +41,17 @@ describe("parseAuthFileContent", () => {
 			valid: { type: "oauth", refresh: "r", access: "a", expires: 1 },
 		});
 	});
+
+	it("drops provider names with surrounding whitespace", () => {
+		const parsed = parseAuthFileContent(
+			JSON.stringify({
+				" anthropic ": { type: "oauth", refresh: "r", access: "a", expires: 1 },
+				openai: { type: "oauth", refresh: "r", access: "a", expires: 1 },
+			}),
+		);
+
+		expect(parsed).toEqual({
+			openai: { type: "oauth", refresh: "r", access: "a", expires: 1 },
+		});
+	});
 });
