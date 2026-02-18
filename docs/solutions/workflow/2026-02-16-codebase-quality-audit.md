@@ -7189,6 +7189,26 @@ to:
 
 **Result:** OpenAI Completions usage parsing now enforces strict integer token accounting and rejects malformed fractional usage values.
 
+---
+
+### 379) web-ui model discovery normalized whitespace-padded remote model IDs
+
+**Finding:** `packages/web-ui/src/utils/model-discovery.ts` trimmed discovered model IDs from llama.cpp/vLLM payload rows. Whitespace-padded IDs could be silently normalized into canonical IDs during discovery, masking malformed upstream metadata.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/utils/model-discovery.ts`
+- `packages/web-ui/test/model-discovery.test.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- require discovered model IDs to be non-empty strings without surrounding whitespace,
+- drop whitespace-padded malformed model IDs instead of trimming/coalescing them,
+- extend regression coverage to ensure malformed/whitespace-padded rows are filtered while valid rows remain discoverable.
+
+**Result:** web-ui remote model discovery now preserves strict discovered-model identifier identity and rejects whitespace-padded malformed IDs.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7214,7 +7234,7 @@ to:
 - mom context sync timestamp regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/context-sync.test.ts test/context-settings.test.ts test/store.test.ts`
 - web-ui model discovery + archive-index numeric parsing regression tests pass:
-  - `cd packages/web-ui && npx tsx --test test/model-discovery.test.ts test/archive-index.test.ts` (includes malformed llama.cpp/vLLM response-root rejection and mixed valid+invalid model-row filtering coverage)
+  - `cd packages/web-ui && npx tsx --test test/model-discovery.test.ts test/archive-index.test.ts` (includes malformed llama.cpp/vLLM response-root rejection, whitespace-padded model-id rejection, and mixed valid+invalid model-row filtering coverage)
 - tui kitty CSI-u + overlay percentage parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/editor-kitty-csiu.test.ts`
   - `cd packages/tui && node --test --import tsx test/overlay-options.test.ts`

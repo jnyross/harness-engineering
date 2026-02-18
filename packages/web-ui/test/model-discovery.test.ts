@@ -71,7 +71,12 @@ describe("model discovery numeric parsing", () => {
 		globalThis.fetch = async () =>
 			new Response(
 				JSON.stringify({
-					data: [null, { id: "", max_model_len: 2048 }, { id: "vllm-local", max_model_len: "16384" }],
+					data: [
+						null,
+						{ id: "", max_model_len: 2048 },
+						{ id: " vllm-whitespace ", max_model_len: 4096 },
+						{ id: "vllm-local", max_model_len: "16384" },
+					],
 				}),
 				{ status: 200, headers: { "Content-Type": "application/json" } },
 			);
