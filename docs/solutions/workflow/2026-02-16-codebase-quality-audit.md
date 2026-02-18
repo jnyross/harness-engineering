@@ -6678,6 +6678,26 @@ to:
 
 **Result:** extension discovery now honors explicit manifest intent and avoids unintended index fallback loading when `pi.extensions` declarations are present but invalid.
 
+---
+
+### 354) coding-agent npm update checks accepted malformed npm-registry `version` payload shapes
+
+**Finding:** `packages/coding-agent/src/core/package-manager.ts` assumed npm registry `/latest` responses always provided a string `version` field. Malformed registry payload shapes could propagate invalid version values into update comparisons, producing unstable npm package update decisions.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/package-manager.ts`
+- `packages/coding-agent/test/package-manager-registry-version.test.ts` (new)
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- parse npm-registry `version` from object payloads as non-empty trimmed strings only,
+- treat malformed/missing/non-string `version` payloads as explicit fetch failures,
+- add regression coverage for malformed registry response roots/fields and valid trimmed version parsing.
+
+**Result:** npm update checks now reject malformed registry version payloads deterministically and avoid propagating invalid latest-version values into package update logic.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6962,6 +6982,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes async settlement coverage, full async command-invocation diagnostics, sync spawn-start failure diagnostics, and signal-exit rejection diagnostics)
 - coding-agent package-manager manifest normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes malformed `pi.extensions` entry filtering, mixed valid+invalid manifest pattern handling, and installed-version shape normalization coverage)
+- coding-agent package-manager npm-registry version parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager-registry-version.test.ts test/package-manager.test.ts` (includes malformed npm-registry `version` root/field-shape rejection and trimmed valid-version parsing coverage)
 - coding-agent migration parsing normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/migrations.test.ts` (includes oauth legacy-file preservation when no valid oauth providers are migrated)
 - coding-agent session-manager JSONL line-shape normalization regression tests pass:
