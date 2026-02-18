@@ -7775,6 +7775,26 @@ to:
 
 **Result:** OpenAI Codex Responses usage-limit parsing now preserves strict error-identifier identity and rejects whitespace-padded error metadata fields instead of silently normalizing malformed identifiers.
 
+---
+
+### 408) mom log-to-session sync normalized whitespace-padded persisted Slack timestamp values
+
+**Finding:** `packages/mom/src/context.ts` parsed persisted `log.jsonl` `ts` values for sync by trimming non-empty strings, so whitespace-padded Slack timestamp values could be silently accepted during `syncLogToSessionManager(...)`.
+
+**Action:** Updated:
+
+- `packages/mom/src/context.ts`
+- `packages/mom/test/context-sync.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- require strict timestamp-string identity (no surrounding whitespace) when parsing persisted `ts` values during log-to-session sync,
+- preserve existing malformed timestamp shape rejection and fallback-date behavior,
+- add regression coverage for whitespace-padded persisted `ts` rejection in sync ingestion.
+
+**Result:** Log-to-session sync now preserves strict persisted timestamp identity and rejects whitespace-padded `ts` values instead of silently normalizing malformed sync cursor values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7798,7 +7818,7 @@ to:
 - mom settings normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/context-settings.test.ts test/store.test.ts`
 - mom context sync timestamp regression tests pass:
-  - `npm --workspace "@mariozechner/pi-mom" test -- test/context-sync.test.ts test/context-settings.test.ts test/store.test.ts`
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/context-sync.test.ts test/context-settings.test.ts test/store.test.ts` (includes whitespace-padded persisted `ts` rejection coverage during log-to-session sync)
 - web-ui model discovery + archive-index numeric parsing regression tests pass:
   - `cd packages/web-ui && npx tsx --test test/model-discovery.test.ts test/archive-index.test.ts` (includes malformed llama.cpp/vLLM response-root rejection, whitespace-padded model-id rejection, and mixed valid+invalid model-row filtering coverage)
 - tui kitty CSI-u + overlay percentage parsing regression tests pass:

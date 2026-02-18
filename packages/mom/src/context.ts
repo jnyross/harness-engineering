@@ -52,7 +52,7 @@ function parseSyncLogMessage(line: string): ParsedSyncLogMessage | undefined {
 		return undefined;
 	}
 	const slackTs = record.ts.trim();
-	if (!slackTs) {
+	if (!slackTs || slackTs !== record.ts) {
 		return undefined;
 	}
 

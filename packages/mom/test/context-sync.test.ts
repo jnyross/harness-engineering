@@ -80,6 +80,25 @@ describe("syncLogToSessionManager", () => {
 		assert.equal(typeof timestamp, "number");
 		assert.ok((timestamp ?? 0) >= before && (timestamp ?? 0) <= after);
 	});
+
+	it("skips whitespace-padded timestamp strings during sync", () => {
+		const channelDir = createChannelDir(tempDirs, "C789");
+		writeLogLines(channelDir, [
+			{
+				ts: " 3.000000 ",
+				date: "2025-01-01T00:00:00.000Z",
+				userName: "alice",
+				text: "skip me",
+				isBot: false,
+			},
+		]);
+
+		const fake = new FakeSessionManager();
+		const synced = syncLogToSessionManager(fake as unknown as SessionManager, channelDir);
+
+		assert.equal(synced, 0);
+		assert.equal(fake.appendedMessages.length, 0);
+	});
 });
 
 function createChannelDir(tempDirs: string[], channelId: string): string {
