@@ -42,6 +42,14 @@ function parseNonEmptyString(value: unknown): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function parseProviderId(value: string): string | undefined {
+	const trimmed = value.trim();
+	if (trimmed.length === 0) {
+		return undefined;
+	}
+	return trimmed === value ? value : undefined;
+}
+
 function normalizeAuthCredential(value: unknown): AuthCredential | undefined {
 	if (!value || typeof value !== "object" || Array.isArray(value)) {
 		return undefined;
@@ -79,7 +87,7 @@ function normalizeAuthStorageData(value: unknown): AuthStorageData {
 	}
 	const normalized: AuthStorageData = {};
 	for (const [provider, credential] of Object.entries(value as Record<string, unknown>)) {
-		const providerId = parseNonEmptyString(provider);
+		const providerId = parseProviderId(provider);
 		if (!providerId) {
 			continue;
 		}

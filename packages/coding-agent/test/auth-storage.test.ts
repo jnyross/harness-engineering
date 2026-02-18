@@ -53,6 +53,18 @@ describe("AuthStorage", () => {
 			expect(authStorage.list()).toEqual([]);
 			expect(await authStorage.getApiKey("openai")).toBeUndefined();
 		});
+
+		test("drops provider keys with surrounding whitespace", async () => {
+			writeAuthJson({
+				" anthropic ": { type: "api_key", key: "sk-anthropic-whitespace" },
+				openai: { type: "api_key", key: "sk-openai" },
+			});
+
+			authStorage = new AuthStorage(authJsonPath);
+			expect(authStorage.list()).toEqual(["openai"]);
+			expect(await authStorage.getApiKey("openai")).toBe("sk-openai");
+			expect(await authStorage.getApiKey("anthropic")).toBeUndefined();
+		});
 	});
 
 	describe("API key resolution", () => {
