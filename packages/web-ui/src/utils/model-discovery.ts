@@ -26,6 +26,9 @@ function parsePositiveInteger(value: unknown): number | undefined {
 	}
 	if (typeof value === "string") {
 		const trimmed = value.trim();
+		if (trimmed !== value) {
+			return undefined;
+		}
 		if (/^\d+$/.test(trimmed)) {
 			const parsed = Number.parseInt(trimmed, 10);
 			if (Number.isSafeInteger(parsed) && parsed > 0) {

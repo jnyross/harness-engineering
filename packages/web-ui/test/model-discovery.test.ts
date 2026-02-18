@@ -39,6 +39,21 @@ describe("model discovery numeric parsing", () => {
 		assert.equal(models[0]?.maxTokens, 4096);
 	});
 
+	it("falls back when model metadata contains whitespace-padded integer strings", async () => {
+		globalThis.fetch = async () =>
+			new Response(
+				JSON.stringify({
+					data: [{ id: "llama-local", context_length: " 16384 ", max_tokens: " 2048 " }],
+				}),
+				{ status: 200, headers: { "Content-Type": "application/json" } },
+			);
+
+		const models = await discoverLlamaCppModels("http://localhost:8080");
+		assert.equal(models.length, 1);
+		assert.equal(models[0]?.contextWindow, 8192);
+		assert.equal(models[0]?.maxTokens, 4096);
+	});
+
 	it("falls back when vLLM metadata contains unsafe integer values", async () => {
 		globalThis.fetch = async () =>
 			new Response(

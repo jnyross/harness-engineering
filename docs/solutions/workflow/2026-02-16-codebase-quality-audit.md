@@ -8191,6 +8191,27 @@ to:
 
 **Result:** Bedrock and OpenAI Responses usage parsing now preserves strict token-value identity and rejects whitespace-padded numeric-string usage counters instead of silently normalizing malformed metadata.
 
+---
+
+### 428) web-ui model-discovery numeric parsing normalized whitespace-padded metadata values
+
+**Finding:** `packages/web-ui/src/utils/model-discovery.ts` trimmed numeric-string metadata values before integer validation, so whitespace-padded `context_length` / `max_tokens` / related numeric metadata from remote discovery payloads could be silently accepted instead of rejected as malformed numeric metadata.
+
+**Action:** Updated:
+
+- `packages/web-ui/src/utils/model-discovery.ts`
+- `packages/web-ui/test/model-discovery.test.ts`
+- `packages/web-ui/CHANGELOG.md`
+
+to:
+
+- require strict numeric-string identity (`trimmed === value`) before numeric parsing in model discovery metadata normalization,
+- reject whitespace-padded numeric-string metadata values instead of trimming/coalescing malformed values,
+- preserve existing safe-integer and malformed-format fallback behavior,
+- add regression coverage for whitespace-padded numeric metadata fallback behavior.
+
+**Result:** Web UI model-discovery metadata parsing now preserves strict numeric value identity and rejects whitespace-padded numeric-string metadata values instead of silently normalizing malformed provider metadata.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8216,7 +8237,7 @@ to:
 - mom context sync timestamp regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/context-sync.test.ts test/context-settings.test.ts test/store.test.ts` (includes whitespace-padded persisted `ts` rejection coverage during log-to-session sync)
 - web-ui model discovery + archive-index numeric parsing regression tests pass:
-  - `cd packages/web-ui && npx tsx --test test/model-discovery.test.ts test/archive-index.test.ts` (includes malformed llama.cpp/vLLM response-root rejection, whitespace-padded model-id rejection, and mixed valid+invalid model-row filtering coverage)
+  - `cd packages/web-ui && npx tsx --test test/model-discovery.test.ts test/archive-index.test.ts` (includes malformed llama.cpp/vLLM response-root rejection, whitespace-padded model-id rejection, whitespace-padded numeric metadata fallback coverage, and mixed valid+invalid model-row filtering coverage)
 - tui kitty CSI-u + overlay percentage parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/editor-kitty-csiu.test.ts`
   - `cd packages/tui && node --test --import tsx test/overlay-options.test.ts`

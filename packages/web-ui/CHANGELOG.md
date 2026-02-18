@@ -51,6 +51,7 @@
 - `MessageEditor` now sequence-guards async attachment ingestion (paste/file-select/drag-drop) across disconnects, preventing stale detached state updates from in-flight file processing.
 - Model-discovery numeric parsing now validates remote context/token/port values strictly before fallback, avoiding `NaN` propagation from malformed provider metadata.
 - Model-discovery numeric parsing now also rejects unsafe integers (greater than `Number.MAX_SAFE_INTEGER`) before fallback, avoiding rounded context/token metadata coercions.
+- Model-discovery numeric parsing now also rejects whitespace-padded numeric-string context/token metadata values instead of trimming/coalescing malformed remote metadata.
 - Model-discovery llama.cpp/vLLM response parsing now validates response-root shape and filters malformed model entries (`id`), preventing malformed payload rows from crashing or producing invalid discovered model IDs.
 - Model-discovery llama.cpp/vLLM model-id parsing now rejects whitespace-padded IDs instead of trimming/coalescing them, preserving strict discovered-model identifier identity.
 - PPTX slide/notes archive index parsing now rejects unsafe integers before sorting, avoiding rounded slide-order coercions from oversized XML entry numbers.
