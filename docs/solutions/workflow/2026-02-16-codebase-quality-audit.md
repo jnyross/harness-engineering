@@ -6698,6 +6698,27 @@ to:
 
 **Result:** npm update checks now reject malformed registry version payloads deterministically and avoid propagating invalid latest-version values into package update logic.
 
+---
+
+### 355) mom one-shot event parsing accepted ambiguous non-timezone timestamps
+
+**Finding:** `packages/mom/src/events.ts` accepted any non-empty one-shot `at` string in payload parsing, deferring validation until scheduling. Ambiguous timestamps without timezone offsets (or numeric timestamp-like strings) could pass initial parsing and be interpreted with local timezone semantics.
+
+**Action:** Updated:
+
+- `packages/mom/src/events.ts`
+- `packages/mom/test/events-parse.test.ts`
+- `packages/mom/test/events-scheduling.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- require one-shot timestamps to match ISO-8601 datetime format with explicit timezone (`Z` or `±HH:MM`),
+- reject malformed/ambiguous `at` values directly in payload parsing,
+- add regression coverage for timezone-less and numeric timestamp rejection while preserving valid timestamp parsing and delay normalization.
+
+**Result:** one-shot events now require explicit timezone-aware timestamps at parse time, preventing ambiguous local-time scheduling semantics.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6839,7 +6860,7 @@ to:
 - mom one-shot scheduling helper tests pass (including positive-infinite delay clamping/chunking):
   - `npm --workspace "@mariozechner/pi-mom" test -- test/events-scheduling.test.ts`
 - mom events payload parsing normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-mom" test -- test/events-parse.test.ts test/events-scheduling.test.ts`
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/events-parse.test.ts test/events-scheduling.test.ts` (includes one-shot ISO-8601 timezone requirement and timezone-less/numeric timestamp rejection coverage)
 - mom read-tool line-count regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/read-tool.test.ts`
 - mom bash timeout validation regression tests pass:
