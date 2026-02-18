@@ -89,6 +89,42 @@ interface PiManifest {
 	themes?: string[];
 }
 
+function normalizeManifestEntries(value: unknown): string[] | undefined {
+	if (!Array.isArray(value)) {
+		return undefined;
+	}
+	return value
+		.filter((entry): entry is string => typeof entry === "string")
+		.map((entry) => entry.trim())
+		.filter((entry) => entry.length > 0);
+}
+
+function normalizePiManifest(value: unknown): PiManifest | null {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return null;
+	}
+	const record = value as { extensions?: unknown; skills?: unknown; prompts?: unknown; themes?: unknown };
+	return {
+		extensions: normalizeManifestEntries(record.extensions),
+		skills: normalizeManifestEntries(record.skills),
+		prompts: normalizeManifestEntries(record.prompts),
+		themes: normalizeManifestEntries(record.themes),
+	};
+}
+
+function parsePiManifestFromPackageJson(content: string): PiManifest | null {
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(content);
+	} catch {
+		return null;
+	}
+	if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+		return null;
+	}
+	return normalizePiManifest((parsed as { pi?: unknown }).pi);
+}
+
 interface ResourceAccumulator {
 	extensions: Map<string, { metadata: PathMetadata; enabled: boolean }>;
 	skills: Map<string, { metadata: PathMetadata; enabled: boolean }>;
@@ -368,8 +404,7 @@ function collectAutoThemeEntries(dir: string): string[] {
 function readPiManifestFile(packageJsonPath: string): PiManifest | null {
 	try {
 		const content = readFileSync(packageJsonPath, "utf-8");
-		const pkg = JSON.parse(content) as { pi?: PiManifest };
-		return pkg.pi ?? null;
+		return parsePiManifestFromPackageJson(content);
 	} catch {
 		return null;
 	}
@@ -1452,8 +1487,7 @@ export class DefaultPackageManager implements PackageManager {
 
 		try {
 			const content = readFileSync(packageJsonPath, "utf-8");
-			const pkg = JSON.parse(content) as { pi?: PiManifest };
-			return pkg.pi ?? null;
+			return parsePiManifestFromPackageJson(content);
 		} catch {
 			return null;
 		}

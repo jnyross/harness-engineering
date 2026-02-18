@@ -145,6 +145,30 @@ Content`,
 			// Should NOT find helper.ts (not declared in manifest)
 			expect(result.extensions.some((r) => r.path.endsWith("helper.ts"))).toBe(false);
 		});
+
+		it("should ignore malformed pi.extensions entries and keep valid entries", async () => {
+			const pkgDir = join(tempDir, "malformed-extensions-pkg");
+			mkdirSync(join(pkgDir, "extensions"), { recursive: true });
+			writeFileSync(join(pkgDir, "extensions", "valid.ts"), "export default function() {}");
+			writeFileSync(join(pkgDir, "index.ts"), "export default function() {}");
+			writeFileSync(
+				join(pkgDir, "package.json"),
+				JSON.stringify({
+					name: "malformed-extensions-pkg",
+					pi: {
+						extensions: [42, " ", "./extensions/valid.ts"],
+					},
+				}),
+			);
+
+			settingsManager.setExtensionPaths([pkgDir]);
+
+			const result = await packageManager.resolve();
+			expect(result.extensions.some((r) => r.path === join(pkgDir, "extensions", "valid.ts") && r.enabled)).toBe(
+				true,
+			);
+			expect(result.extensions.some((r) => r.path === join(pkgDir, "index.ts"))).toBe(false);
+		});
 	});
 
 	describe("ignore files", () => {
@@ -612,6 +636,26 @@ Content`,
 			const result = await packageManager.resolveExtensionSources([pkgDir]);
 			expect(result.skills.some((r) => isEnabled(r, "good-skill", "includes"))).toBe(true);
 			expect(result.skills.some((r) => r.path.includes("bad-skill"))).toBe(false);
+		});
+
+		it("should ignore malformed manifest pattern entries while applying valid ones", async () => {
+			const pkgDir = join(tempDir, "mixed-manifest-patterns");
+			mkdirSync(join(pkgDir, "extensions"), { recursive: true });
+			writeFileSync(join(pkgDir, "extensions", "keep.ts"), "export default function() {}");
+			writeFileSync(join(pkgDir, "extensions", "drop.ts"), "export default function() {}");
+			writeFileSync(
+				join(pkgDir, "package.json"),
+				JSON.stringify({
+					name: "mixed-manifest-patterns",
+					pi: {
+						extensions: ["extensions", "!**/drop.ts", 123, ""],
+					},
+				}),
+			);
+
+			const result = await packageManager.resolveExtensionSources([pkgDir]);
+			expect(result.extensions.some((r) => isEnabled(r, "keep.ts"))).toBe(true);
+			expect(result.extensions.some((r) => r.path.endsWith("drop.ts"))).toBe(false);
 		});
 	});
 
