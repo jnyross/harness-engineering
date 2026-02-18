@@ -6866,6 +6866,27 @@ to:
 
 **Result:** Antigravity OAuth token exchange/refresh now rejects malformed token payload shapes deterministically before credential persistence.
 
+---
+
+### 363) ai Gemini CLI OAuth accepted malformed token exchange/refresh payload shapes
+
+**Finding:** `packages/ai/src/utils/oauth/google-gemini-cli.ts` parsed OAuth token exchange/refresh and onboarding payloads with direct shape assumptions. Malformed/non-object token payload roots could produce low-signal runtime errors or propagate invalid credential fields.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/google-gemini-cli.ts`
+- `packages/ai/test/google-gemini-cli-oauth-abort.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- validate token payload roots before field extraction and require non-empty `access_token` + positive finite `expires_in`,
+- keep explicit refresh-token requirement for exchange while allowing refresh fallback to existing refresh token,
+- normalize onboarding/userinfo payload roots before reading project/email string fields,
+- add regression coverage for malformed exchange-root and malformed refresh-field payload rejection.
+
+**Result:** Gemini CLI OAuth token exchange/refresh now rejects malformed token payload shapes deterministically before credential persistence.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7086,6 +7107,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts` (includes malformed exchange-root and malformed refresh-field payload rejection coverage)
 - ai antigravity oauth token payload parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-antigravity-oauth-abort.test.ts` (includes malformed exchange-root and malformed refresh-field payload rejection coverage)
+- ai gemini-cli oauth token payload parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-oauth-abort.test.ts` (includes malformed exchange-root and malformed refresh-field payload rejection coverage)
 - ai openai-codex oauth startup/manual-flow/cancellation/base64url-decoding/hash-fragment/non-object-token-payload parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-oauth-abort.test.ts`
 - coding-agent tools regression tests pass:
