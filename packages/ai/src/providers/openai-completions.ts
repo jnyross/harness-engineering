@@ -89,6 +89,22 @@ function parseUsageNumber(value: unknown): number {
 	return 0;
 }
 
+function parseReasoningDetail(value: string | undefined): Record<string, unknown> | undefined {
+	if (!value) {
+		return undefined;
+	}
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(value);
+	} catch {
+		return undefined;
+	}
+	if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+		return undefined;
+	}
+	return parsed as Record<string, unknown>;
+}
+
 export interface OpenAICompletionsOptions extends StreamOptions {
 	toolChoice?: "auto" | "none" | "required" | { type: "function"; function: { name: string } };
 	reasoningEffort?: "minimal" | "low" | "medium" | "high" | "xhigh";
@@ -654,15 +670,8 @@ export function convertMessages(
 					},
 				}));
 				const reasoningDetails = toolCalls
-					.filter((tc) => tc.thoughtSignature)
-					.map((tc) => {
-						try {
-							return JSON.parse(tc.thoughtSignature!);
-						} catch {
-							return null;
-						}
-					})
-					.filter(Boolean);
+					.map((tc) => parseReasoningDetail(tc.thoughtSignature))
+					.filter((detail): detail is Record<string, unknown> => detail !== undefined);
 				if (reasoningDetails.length > 0) {
 					// biome-ignore lint/suspicious/noExplicitAny: migration
 					(assistantMsg as any).reasoning_details = reasoningDetails;

@@ -95,4 +95,82 @@ describe("openai-completions convertMessages", () => {
 		);
 		expect(imageParts.length).toBe(2);
 	});
+
+	it("ignores malformed non-object thought signatures in tool call reasoning details", () => {
+		const baseModel = getModel("openai", "gpt-4o-mini");
+		const model: Model<"openai-completions"> = {
+			...baseModel,
+			api: "openai-completions",
+		};
+
+		const now = Date.now();
+		const assistantMessage: AssistantMessage = {
+			role: "assistant",
+			content: [
+				{
+					type: "toolCall",
+					id: "tool-1",
+					name: "read",
+					arguments: { path: "img-1.png" },
+					thoughtSignature: '"malformed"',
+				},
+			],
+			api: model.api,
+			provider: model.provider,
+			model: model.id,
+			usage: emptyUsage,
+			stopReason: "toolUse",
+			timestamp: now,
+		};
+
+		const context: Context = {
+			messages: [{ role: "user", content: "Read the image", timestamp: now - 1 }, assistantMessage],
+		};
+
+		const messages = convertMessages(model, context, compat);
+		const assistant = messages.find((message) => message.role === "assistant");
+		expect(assistant).toBeDefined();
+		const assistantWithDetails = assistant as unknown as { reasoning_details?: unknown };
+		expect(assistantWithDetails.reasoning_details).toBeUndefined();
+	});
+
+	it("preserves valid object thought signatures in reasoning details", () => {
+		const baseModel = getModel("openai", "gpt-4o-mini");
+		const model: Model<"openai-completions"> = {
+			...baseModel,
+			api: "openai-completions",
+		};
+
+		const now = Date.now();
+		const assistantMessage: AssistantMessage = {
+			role: "assistant",
+			content: [
+				{
+					type: "toolCall",
+					id: "tool-1",
+					name: "read",
+					arguments: { path: "img-1.png" },
+					thoughtSignature: JSON.stringify({ type: "reasoning.encrypted", id: "tool-1", data: "enc" }),
+				},
+			],
+			api: model.api,
+			provider: model.provider,
+			model: model.id,
+			usage: emptyUsage,
+			stopReason: "toolUse",
+			timestamp: now,
+		};
+
+		const context: Context = {
+			messages: [{ role: "user", content: "Read the image", timestamp: now - 1 }, assistantMessage],
+		};
+
+		const messages = convertMessages(model, context, compat);
+		const assistant = messages.find((message) => message.role === "assistant");
+		expect(assistant).toBeDefined();
+		const assistantWithDetails = assistant as unknown as { reasoning_details?: unknown[] };
+		expect(assistantWithDetails.reasoning_details).toEqual([
+			{ type: "reasoning.encrypted", id: "tool-1", data: "enc" },
+		]);
+	});
 });
