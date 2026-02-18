@@ -142,4 +142,60 @@ describe("openai-codex responses parsing", () => {
 		expect(result.errorMessage).not.toContain("You have hit your ChatGPT usage limit");
 		expect(result.errorMessage).toContain("usage_limit_reached");
 	});
+
+	it("ignores whitespace-padded codex baseUrl values and falls back to default endpoint", async () => {
+		process.env.PI_CODING_AGENT_DIR = mkdtempSync(join(tmpdir(), "pi-codex-parse-"));
+		const token = createToken("acc_test");
+
+		const fetchMock = vi.fn(async (input: string | URL) => {
+			const url = typeof input === "string" ? input : input.toString();
+			if (url === "https://api.github.com/repos/openai/codex/releases/latest") {
+				return new Response(JSON.stringify({ tag_name: "rust-v0.0.0" }), { status: 200 });
+			}
+			if (url.startsWith("https://raw.githubusercontent.com/openai/codex/")) {
+				return new Response("PROMPT", { status: 200, headers: { etag: '"etag"' } });
+			}
+			if (url === "https://chatgpt.com/backend-api/codex/responses") {
+				return new Response(
+					JSON.stringify({
+						error: {
+							message: "default endpoint used",
+						},
+					}),
+					{ status: 400, headers: { "content-type": "application/json" } },
+				);
+			}
+			return new Response(`unexpected url: ${url}`, { status: 500 });
+		});
+		global.fetch = fetchMock as typeof fetch;
+
+		const model: Model<"openai-codex-responses"> = {
+			id: "gpt-5.1-codex",
+			name: "GPT-5.1 Codex",
+			api: "openai-codex-responses",
+			provider: "openai-codex",
+			baseUrl: " https://example.invalid/backend-api ",
+			reasoning: true,
+			input: ["text"],
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+			contextWindow: 400000,
+			maxTokens: 128000,
+		};
+
+		const context: Context = {
+			systemPrompt: "You are a helpful assistant.",
+			messages: [{ role: "user", content: "hello", timestamp: Date.now() }],
+		};
+
+		const result = await streamOpenAICodexResponses(model, context, { apiKey: token }).result();
+		expect(result.stopReason).toBe("error");
+		expect(result.errorMessage).toContain("default endpoint used");
+		expect(
+			fetchMock.mock.calls.some(([requestInput]) =>
+				String(typeof requestInput === "string" ? requestInput : requestInput.toString()).includes(
+					"example.invalid",
+				),
+			),
+		).toBe(false);
+	});
 });

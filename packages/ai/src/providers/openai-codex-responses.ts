@@ -384,7 +384,7 @@ function clampReasoningEffort(modelId: string, effort: string): string {
 }
 
 function resolveCodexUrl(baseUrl?: string): string {
-	const raw = baseUrl && baseUrl.trim().length > 0 ? baseUrl : DEFAULT_CODEX_BASE_URL;
+	const raw = parseStrictNonEmptyString(baseUrl) ?? DEFAULT_CODEX_BASE_URL;
 	const normalized = raw.replace(/\/+$/, "");
 	if (normalized.endsWith("/codex/responses")) return normalized;
 	if (normalized.endsWith("/codex")) return `${normalized}/responses`;

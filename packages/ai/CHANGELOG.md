@@ -59,6 +59,7 @@
 - OpenAI Codex OAuth token exchange/refresh parsing now also treats invalid JSON response bodies as structured exchange/refresh failures (with diagnostics) instead of surfacing raw JSON parse exceptions.
 - OpenAI Codex Responses SSE/WebSocket event parsing now ignores malformed non-object JSON payload roots, and usage-limit error parsing now preserves friendly limit guidance when error fields have malformed non-string/non-numeric shapes.
 - OpenAI Codex Responses usage-limit error parsing now also rejects whitespace-padded `error.code`/`error.type`/`error.plan_type` identifiers instead of trimming malformed error metadata.
+- OpenAI Codex Responses endpoint resolution now also rejects whitespace-padded model `baseUrl` values instead of trimming/coalescing malformed endpoint identifiers.
 - Anthropic OAuth login now honors `AbortSignal` cancellation (including pre-aborted signals) before prompting for user code and during token exchange.
 - Anthropic OAuth login now validates pasted OAuth state values and supports full redirect URL/query-string input by extracting `code`/`state` parameters before token exchange.
 - Anthropic OAuth token exchange/refresh parsing now requires object JSON roots with non-empty token strings and positive numeric `expires_in` values, rejecting malformed token payload shapes before credential persistence.

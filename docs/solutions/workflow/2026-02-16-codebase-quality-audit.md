@@ -8718,6 +8718,27 @@ to:
 
 **Result:** Google Gemini CLI endpoint resolution now preserves strict model endpoint identifier identity and rejects whitespace-padded `baseUrl` values instead of silently normalizing malformed endpoint config.
 
+---
+
+### 453) ai OpenAI Codex endpoint resolver normalized whitespace-padded model base URLs
+
+**Finding:** `packages/ai/src/providers/openai-codex-responses.ts` accepted model `baseUrl` values with trim-based non-empty checks, so whitespace-padded endpoint identifiers could be silently normalized/used instead of rejected as malformed endpoint values.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/openai-codex-responses.ts`
+- `packages/ai/test/openai-codex-responses-parsing.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require strict model `baseUrl` identity (`trimmed === value`) before Codex endpoint URL construction,
+- reject whitespace-padded model `baseUrl` values instead of trimming/coalescing malformed endpoint identifiers,
+- preserve existing Codex endpoint normalization behavior for valid base URLs,
+- add regression coverage proving whitespace-padded model `baseUrl` values fall back to the default Codex endpoint.
+
+**Result:** OpenAI Codex endpoint resolution now preserves strict endpoint identifier identity and rejects whitespace-padded model `baseUrl` values instead of silently normalizing malformed endpoint config.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8968,7 +8989,7 @@ to:
 - ai Codex/Gemini SSE regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-stream.test.ts test/google-gemini-cli-empty-stream.test.ts` (includes Codex base64url JWT payload account-id extraction coverage and malformed custom-header-name rejection coverage)
 - ai Codex Responses payload-shape parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-responses-parsing.test.ts test/openai-codex-stream.test.ts` (includes malformed non-object SSE/WebSocket event-root filtering, malformed usage-limit error-field-shape friendly-message coverage, and whitespace-padded usage-limit identifier rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-responses-parsing.test.ts test/openai-codex-stream.test.ts` (includes malformed non-object SSE/WebSocket event-root filtering, malformed usage-limit error-field-shape friendly-message coverage, whitespace-padded usage-limit identifier rejection coverage, and whitespace-padded model `baseUrl` rejection fallback coverage)
 - coding-agent exec regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts` (includes signal-terminated subprocess failure semantics and forced-kill fallback for SIGTERM-resistant processes)
 - coding-agent execCommand regression tests pass:
