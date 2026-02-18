@@ -124,6 +124,50 @@ describe("google-gemini-cli oauth login", () => {
 		}
 	});
 
+	it("rejects whitespace-padded discovered project identifiers", async () => {
+		let authState = "";
+		const fetchMock = vi.fn(async (input: unknown) => {
+			const url = String(input);
+			if (url === "https://oauth2.googleapis.com/token") {
+				return new Response(
+					JSON.stringify({
+						access_token: "access-token",
+						refresh_token: "refresh-token",
+						expires_in: 3600,
+					}),
+					{ status: 200, headers: { "content-type": "application/json" } },
+				);
+			}
+			if (url === "https://www.googleapis.com/oauth2/v1/userinfo?alt=json") {
+				return new Response(JSON.stringify({ email: "user@example.com" }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			}
+			if (url.includes("/v1internal:loadCodeAssist")) {
+				return new Response(
+					JSON.stringify({
+						currentTier: { id: "free-tier" },
+						cloudaicompanionProject: " gemini-project ",
+					}),
+					{ status: 200, headers: { "content-type": "application/json" } },
+				);
+			}
+			throw new Error(`Unexpected fetch URL: ${url}`);
+		});
+		vi.stubGlobal("fetch", fetchMock);
+
+		await expect(
+			loginGeminiCli(
+				(info) => {
+					authState = new URL(info.url).searchParams.get("state") ?? "";
+				},
+				undefined,
+				async () => `http://localhost:8085/oauth2callback?code=manual-code&state=${authState}`,
+			),
+		).rejects.toThrow("requires setting the GOOGLE_CLOUD_PROJECT");
+	});
+
 	it("rejects malformed token exchange payload roots", async () => {
 		let authState = "";
 		vi.stubGlobal(

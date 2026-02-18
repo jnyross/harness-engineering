@@ -281,14 +281,14 @@ async function discoverProject(
 
 			if (loadResponse.ok) {
 				const data = asRecord((await loadResponse.json()) as LoadCodeAssistPayload);
-				const projectId = parseNonEmptyString(data?.cloudaicompanionProject);
+				const projectId = parseStrictNonEmptyString(data?.cloudaicompanionProject);
 				if (projectId) {
 					return projectId;
 				}
 
 				// Handle both string and object formats
 				const projectObject = asRecord(data?.cloudaicompanionProject);
-				const objectProjectId = parseNonEmptyString(projectObject?.id);
+				const objectProjectId = parseStrictNonEmptyString(projectObject?.id);
 				if (objectProjectId) {
 					return objectProjectId;
 				}

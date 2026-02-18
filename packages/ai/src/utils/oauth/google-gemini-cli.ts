@@ -224,9 +224,9 @@ function parsePositiveFiniteNumber(value: unknown): number | undefined {
 
 function parseLoadCodeAssistPayload(value: unknown): LoadCodeAssistPayload {
 	const payload = asRecord(value);
-	const projectId = parseNonEmptyString(payload?.cloudaicompanionProject);
+	const projectId = parseStrictNonEmptyString(payload?.cloudaicompanionProject);
 	const currentTierRecord = asRecord(payload?.currentTier);
-	const currentTierId = parseNonEmptyString(currentTierRecord?.id);
+	const currentTierId = parseStrictNonEmptyString(currentTierRecord?.id);
 	const allowedTiersRaw = Array.isArray(payload?.allowedTiers) ? payload.allowedTiers : [];
 	const allowedTiers = allowedTiersRaw
 		.map((tier): { id?: string; isDefault?: boolean } | undefined => {
@@ -234,7 +234,7 @@ function parseLoadCodeAssistPayload(value: unknown): LoadCodeAssistPayload {
 			if (!tierRecord) {
 				return undefined;
 			}
-			const id = parseNonEmptyString(tierRecord.id);
+			const id = parseStrictNonEmptyString(tierRecord.id);
 			const isDefault = typeof tierRecord.isDefault === "boolean" ? tierRecord.isDefault : undefined;
 			if (!id && isDefault === undefined) {
 				return undefined;
@@ -252,11 +252,11 @@ function parseLoadCodeAssistPayload(value: unknown): LoadCodeAssistPayload {
 
 function parseLongRunningOperationResponse(value: unknown): LongRunningOperationResponse {
 	const payload = asRecord(value);
-	const name = parseNonEmptyString(payload?.name);
+	const name = parseStrictNonEmptyString(payload?.name);
 	const done = typeof payload?.done === "boolean" ? payload.done : undefined;
 	const responseRecord = asRecord(payload?.response);
 	const projectRecord = asRecord(responseRecord?.cloudaicompanionProject);
-	const projectId = parseNonEmptyString(projectRecord?.id);
+	const projectId = parseStrictNonEmptyString(projectRecord?.id);
 	const response = projectId ? { cloudaicompanionProject: { id: projectId } } : undefined;
 	return {
 		...(name ? { name } : {}),
