@@ -7859,6 +7859,26 @@ to:
 
 **Result:** Google OAuth profile parsing now preserves strict email-identifier identity and rejects whitespace-padded profile email values instead of silently normalizing malformed profile metadata.
 
+---
+
+### 412) pods config parsing normalized whitespace-padded persisted modelsPath identifiers
+
+**Finding:** `packages/pods/src/config.ts` parsed persisted `modelsPath` values with trimmed non-empty normalization, so whitespace-padded model-directory identifiers could be silently accepted instead of rejected as malformed persisted path identifiers.
+
+**Action:** Updated:
+
+- `packages/pods/src/config.ts`
+- `packages/pods/test/config.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- require strict non-empty identity (no surrounding whitespace) for persisted `modelsPath` values,
+- preserve existing pod/model key, selector, and model-id strictness behavior,
+- add regression coverage confirming whitespace-padded `modelsPath` values are rejected.
+
+**Result:** Pods config parsing now preserves strict persisted model-directory identifier identity and rejects whitespace-padded `modelsPath` values instead of silently normalizing malformed path identifiers.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7952,7 +7972,7 @@ to:
 - pods GPU CSV parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/pods-gpu-output.test.ts`
 - pods config normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi" test -- test/config.test.ts` (includes whitespace-padded pod/model key rejection, whitespace-padded persisted model-identifier rejection, and active-selector rejection coverage)
+  - `npm --workspace "@mariozechner/pi" test -- test/config.test.ts` (includes whitespace-padded pod/model key rejection, whitespace-padded persisted model-identifier rejection, whitespace-padded `modelsPath` rejection, and active-selector rejection coverage)
 - pods model-config normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/model-configs.test.ts test/config.test.ts` (includes whitespace-padded model/env key rejection coverage)
 - pods package-metadata normalization regression tests pass:

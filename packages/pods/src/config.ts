@@ -128,7 +128,7 @@ function normalizePod(value: unknown): Pod | undefined {
 	}
 
 	const normalized: Pod = { ssh, gpus, models };
-	const modelsPath = parseNonEmptyString(record.modelsPath);
+	const modelsPath = parseStrictNonEmptyString(record.modelsPath);
 	if (modelsPath) {
 		normalized.modelsPath = modelsPath;
 	}

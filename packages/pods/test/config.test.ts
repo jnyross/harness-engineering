@@ -80,7 +80,7 @@ describe("pods config normalization", () => {
 		assert.deepEqual(config.pods["good-pod"]?.models, {
 			"model-a": { model: "llama", port: 8001, gpu: [0], pid: 1234 },
 		});
-		assert.equal(config.pods["good-pod"]?.modelsPath, "/models");
+		assert.equal(config.pods["good-pod"]?.modelsPath, undefined);
 		assert.equal(config.pods["good-pod"]?.vllmVersion, "release");
 		assert.equal(config.active, "good-pod");
 		assert.deepEqual(getActivePod(), { name: "good-pod", pod: config.pods["good-pod"]! });
