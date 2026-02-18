@@ -34,6 +34,9 @@ function parseIntegerSlackTimestampMilliseconds(timestamp: string): number | und
 
 export function parseSlackTimestampToMilliseconds(timestamp: string): number | undefined {
 	const trimmed = timestamp.trim();
+	if (trimmed.length === 0 || trimmed !== timestamp) {
+		return undefined;
+	}
 	const decimalMilliseconds = parseDecimalSlackTimestampMilliseconds(trimmed);
 	if (decimalMilliseconds !== undefined) {
 		return decimalMilliseconds;
@@ -51,6 +54,9 @@ function parseSlackTimestampSortValue(timestamp: unknown): bigint | undefined {
 		return undefined;
 	}
 	const trimmed = timestamp.trim();
+	if (trimmed.length === 0 || trimmed !== timestamp) {
+		return undefined;
+	}
 	const decimalMatch = trimmed.match(/^(\d+)\.(\d+)$/);
 	if (decimalMatch) {
 		const seconds = BigInt(decimalMatch[1]);

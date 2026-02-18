@@ -8021,6 +8021,26 @@ to:
 
 **Result:** Startup auth migration now preserves strict oauth credential-shape requirements and skips malformed legacy oauth entries instead of forwarding incompatible credentials into migrated auth storage.
 
+---
+
+### 420) mom slack timestamp parser normalized whitespace-padded timestamp identifiers
+
+**Finding:** `packages/mom/src/slack-timestamp.ts` trimmed input timestamp strings before parsing/sorting, so whitespace-padded timestamp identifiers could be silently accepted as valid Slack timestamps instead of rejected as malformed identifiers.
+
+**Action:** Updated:
+
+- `packages/mom/src/slack-timestamp.ts`
+- `packages/mom/test/slack-timestamp.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- require strict timestamp-string identity (no surrounding whitespace) for parse/sort helpers,
+- preserve existing integer/decimal parsing behavior and malformed-format rejection,
+- add regression coverage for whitespace-padded timestamp rejection in parsing and latest-timestamp selection helpers.
+
+**Result:** Slack timestamp parsing and ordering now preserves strict timestamp-identifier identity and rejects whitespace-padded timestamp strings instead of silently normalizing malformed values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8034,7 +8054,7 @@ to:
 - ai auth-file parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/auth-file.test.ts` (includes whitespace-padded provider-key rejection and oauth token-field rejection coverage)
 - mom slack timestamp normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts` (includes near-safe-integer decimal timestamp exact millisecond flooring coverage without floating-point drift)
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts` (includes near-safe-integer decimal timestamp exact millisecond flooring coverage without floating-point drift and whitespace-padded timestamp rejection coverage)
 - mom slack timestamp runtime-shape guard regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts test/store.test.ts`
 - mom slack log-line timestamp extraction regression tests pass:

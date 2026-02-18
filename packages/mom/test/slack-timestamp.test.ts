@@ -10,7 +10,6 @@ import {
 describe("parseSlackTimestampToMilliseconds", () => {
 	it("parses decimal Slack timestamps as milliseconds", () => {
 		assert.equal(parseSlackTimestampToMilliseconds("1700000000.123456"), 1700000000123);
-		assert.equal(parseSlackTimestampToMilliseconds(" 1700000000.999999 "), 1700000000999);
 		assert.equal(parseSlackTimestampToMilliseconds("9007199254740.001123"), 9007199254740001);
 	});
 
@@ -30,6 +29,7 @@ describe("parseSlackTimestampToMilliseconds", () => {
 		assert.equal(parseSlackTimestampToMilliseconds("1700000000oops"), undefined);
 		assert.equal(parseSlackTimestampToMilliseconds("-1"), undefined);
 		assert.equal(parseSlackTimestampToMilliseconds(""), undefined);
+		assert.equal(parseSlackTimestampToMilliseconds(" 1700000000.999999 "), undefined);
 		assert.equal(parseSlackTimestampToMilliseconds("9007199254740.993"), undefined);
 		assert.equal(parseSlackTimestampToMilliseconds("9007199254740993"), undefined);
 	});
@@ -48,6 +48,11 @@ describe("getLatestSlackTimestamp", () => {
 
 	it("returns undefined when no timestamps are valid", () => {
 		assert.equal(getLatestSlackTimestamp(["abc", "ts", "-1"]), undefined);
+	});
+
+	it("ignores whitespace-padded timestamps while selecting latest", () => {
+		const latest = getLatestSlackTimestamp(["1700000000.200000", " 1700000000.500000 ", "1700000000.300000"]);
+		assert.equal(latest, "1700000000.300000");
 	});
 
 	it("compares mixed integer-seconds and decimal-second timestamps correctly", () => {
