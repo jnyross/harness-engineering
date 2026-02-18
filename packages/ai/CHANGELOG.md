@@ -36,6 +36,7 @@
 - Google and Google Vertex shared usage parsing now rejects fractional token values (number and numeric-string forms) instead of truncating them, preventing malformed usage metadata from silently coercing decimal token counts.
 - Google/Bedrock/OpenAI-compatible usage parsers now reject non-decimal numeric-string formats (for example `0x10` and `1e2`) instead of accepting broad numeric coercions.
 - OpenAI/Anthropic/Google/Bedrock usage parsers now reject unsafe integer token values (greater than `Number.MAX_SAFE_INTEGER`) before normalization, preventing rounded oversized token accounting coercions.
+- OpenAI Completions stream usage parsing now also rejects whitespace-padded numeric-string token counters instead of trimming/coalescing malformed usage values.
 - Google Gemini CLI / Antigravity stream usage parsing now accepts numeric-string usage metadata values and computes fallback totals when `totalTokenCount` is omitted, preserving non-zero accounting for Cloud Code Assist responses that serialize token counts as strings.
 - Google Gemini CLI / Antigravity usage metadata parsing now rejects fractional token values (number and numeric-string forms) instead of truncating them, preventing malformed usage payloads from silently coercing decimal token counts.
 - Bedrock stream usage parsing now accepts numeric-string usage metadata values and computes fallback totals when `totalTokens` is omitted, preserving stable usage accounting for compatible intermediary responses.
