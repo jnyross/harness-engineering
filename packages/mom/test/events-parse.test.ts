@@ -62,6 +62,15 @@ describe("parseMomEventPayload", () => {
 		);
 		assert.equal(
 			parseMomEventPayload({
+				type: "one-shot",
+				channelId: "C123",
+				text: "run later",
+				at: "2026-02-16T12:00:00",
+			}),
+			undefined,
+		);
+		assert.equal(
+			parseMomEventPayload({
 				type: "periodic",
 				channelId: "C123",
 				text: "daily check",

@@ -40,6 +40,7 @@ const DEBOUNCE_MS = 100;
 const MAX_RETRIES = 3;
 const RETRY_BASE_MS = 100;
 const MAX_TIMER_DELAY_MS = 2_147_483_647;
+const ONE_SHOT_TIMESTAMP_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
 	if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -73,7 +74,7 @@ export function parseMomEventPayload(value: unknown): MomEvent | undefined {
 			return { type: "immediate", channelId, text };
 		case "one-shot": {
 			const at = parseNonEmptyString(data.at);
-			if (!at) {
+			if (!at || parseOneShotTimestampMs(at) === undefined) {
 				return undefined;
 			}
 			return { type: "one-shot", channelId, text, at };
@@ -100,7 +101,11 @@ export function parseMomEventContent(content: string): MomEvent | undefined {
 }
 
 export function parseOneShotTimestampMs(value: string): number | undefined {
-	const parsed = new Date(value).getTime();
+	const normalized = value.trim();
+	if (!ONE_SHOT_TIMESTAMP_REGEX.test(normalized)) {
+		return undefined;
+	}
+	const parsed = new Date(normalized).getTime();
 	return Number.isFinite(parsed) ? parsed : undefined;
 }
 

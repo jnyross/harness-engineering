@@ -12,6 +12,8 @@ describe("one-shot event scheduling helpers", () => {
 	it("rejects invalid one-shot timestamps", () => {
 		assert.equal(parseOneShotTimestampMs("not-a-date"), undefined);
 		assert.equal(parseOneShotTimestampMs("2026-99-99"), undefined);
+		assert.equal(parseOneShotTimestampMs("2026-02-16T12:00:00"), undefined);
+		assert.equal(parseOneShotTimestampMs("1700000000"), undefined);
 	});
 
 	it("normalizes one-shot delay values", () => {
