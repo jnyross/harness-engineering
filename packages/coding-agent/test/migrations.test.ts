@@ -28,7 +28,7 @@ describe("migrations", () => {
 		}
 	});
 
-	it("migrates only valid auth providers and trims provider/key strings", () => {
+	it("migrates only valid auth providers and rejects whitespace-padded provider keys", () => {
 		const oauthPath = join(agentDir, "oauth.json");
 		const settingsPath = join(agentDir, "settings.json");
 		const authPath = join(agentDir, "auth.json");
@@ -47,7 +47,8 @@ describe("migrations", () => {
 			settingsPath,
 			JSON.stringify({
 				apiKeys: {
-					" gemini ": "  key-123  ",
+					gemini: "  key-123  ",
+					" vertex ": "  should-be-dropped  ",
 					" ": "ignored",
 					anthropic: "should-not-overwrite-oauth",
 					badType: 7,
@@ -57,12 +58,11 @@ describe("migrations", () => {
 		);
 
 		const migratedProviders = migrateAuthToAuthJson();
-		expect(migratedProviders).toEqual(["anthropic", "openai", "gemini"]);
+		expect(migratedProviders).toEqual(["anthropic", "gemini"]);
 		expect(existsSync(join(agentDir, "oauth.json.migrated"))).toBe(true);
 
 		expect(readJson(authPath)).toEqual({
 			anthropic: { type: "oauth", refresh: "token-1" },
-			openai: { type: "oauth", access: "token-2" },
 			gemini: { type: "api_key", key: "key-123" },
 		});
 		expect(readJson(settingsPath)).toEqual({ keep: true });

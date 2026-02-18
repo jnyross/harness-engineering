@@ -26,6 +26,14 @@ function parseNonEmptyString(value: unknown): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function parseProviderId(value: string): string | undefined {
+	const trimmed = value.trim();
+	if (trimmed.length === 0) {
+		return undefined;
+	}
+	return trimmed === value ? value : undefined;
+}
+
 /**
  * Migrate legacy oauth.json and settings.json apiKeys to auth.json.
  *
@@ -49,7 +57,7 @@ export function migrateAuthToAuthJson(): string[] {
 			let migratedOauthProviders = 0;
 			const oauth = asRecord(JSON.parse(readFileSync(oauthPath, "utf-8")));
 			for (const [provider, cred] of Object.entries(oauth ?? {})) {
-				const normalizedProvider = parseNonEmptyString(provider);
+				const normalizedProvider = parseProviderId(provider);
 				const normalizedCredential = asRecord(cred);
 				if (!normalizedProvider || !normalizedCredential) {
 					continue;
@@ -74,7 +82,7 @@ export function migrateAuthToAuthJson(): string[] {
 			const apiKeys = asRecord(settings?.apiKeys);
 			if (settings && apiKeys) {
 				for (const [provider, key] of Object.entries(apiKeys)) {
-					const normalizedProvider = parseNonEmptyString(provider);
+					const normalizedProvider = parseProviderId(provider);
 					const normalizedKey = parseNonEmptyString(key);
 					if (!normalizedProvider || !normalizedKey || migrated[normalizedProvider]) {
 						continue;
