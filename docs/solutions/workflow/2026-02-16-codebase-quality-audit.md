@@ -6234,6 +6234,26 @@ to:
 
 **Result:** proxy stream event parsing now handles both valid SSE `data:` line formats and no longer drops events when servers omit the optional post-colon space.
 
+---
+
+### 332) agent proxy SSE malformed JSON payloads produced low-signal parse diagnostics
+
+**Finding:** `packages/agent/src/proxy.ts` forwarded raw `JSON.parse` failures for proxy SSE lines, producing low-context syntax errors that made malformed-stream debugging difficult.
+
+**Action:** Updated:
+
+- `packages/agent/src/proxy.ts`
+- `packages/agent/test/proxy.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to:
+
+- wrap SSE data-line JSON parsing with explicit malformed-payload diagnostics,
+- include parse-error details and payload previews in failure messages,
+- add regression coverage for malformed SSE JSON payload handling in proxy streams.
+
+**Result:** malformed proxy SSE payloads now return clear, actionable error diagnostics instead of ambiguous JSON parse failures.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6379,7 +6399,7 @@ to:
 - agent project-loop JSON task normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/project-loop.test.ts` (includes malformed JSON entry filtering and markdown fallback when JSON snippets contain no actionable tasks)
 - agent proxy SSE data-prefix parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts`
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts` (includes `data:<json>` parsing and malformed-SSE-JSON diagnostic coverage)
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
 - pods SSH/SCP parser regression tests pass:
