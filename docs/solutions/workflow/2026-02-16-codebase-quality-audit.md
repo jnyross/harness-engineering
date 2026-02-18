@@ -6739,6 +6739,27 @@ to:
 
 **Result:** model-registry now rejects malformed provider-map keys in `models.json`, preventing invalid provider identifier shapes from entering custom model/override resolution.
 
+---
+
+### 357) mom decimal Slack timestamp parsing used floating-point conversion near safe-integer boundary
+
+**Finding:** `packages/mom/src/slack-timestamp.ts` converted decimal Slack timestamps with `Number.parseFloat(...)*1000`, which can round near `Number.MAX_SAFE_INTEGER` boundaries and produce off-by-one millisecond values for otherwise valid timestamps.
+
+**Action:** Updated:
+
+- `packages/mom/src/slack-timestamp.ts`
+- `packages/mom/test/slack-timestamp.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- parse decimal/integer Slack timestamps with exact string + `BigInt` conversion,
+- preserve floor-to-millisecond semantics without floating-point rounding drift,
+- keep safe-integer overflow rejection and integer-second magnitude handling,
+- add regression coverage for a near-boundary decimal timestamp (`9007199254740.001123`).
+
+**Result:** Slack timestamp millisecond normalization now preserves exact flooring behavior near safe-integer precision limits instead of drifting by 1ms from floating-point rounding.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6752,7 +6773,7 @@ to:
 - ai auth-file parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/auth-file.test.ts test/cli-selection.test.ts`
 - mom slack timestamp normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts`
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts` (includes near-safe-integer decimal timestamp exact millisecond flooring coverage without floating-point drift)
 - mom slack timestamp runtime-shape guard regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts test/store.test.ts`
 - mom slack log-line timestamp extraction regression tests pass:
