@@ -6928,6 +6928,27 @@ to:
 
 **Result:** OpenAI Codex OAuth now treats malformed token JSON bodies as structured exchange/refresh failures instead of bubbling raw parse exceptions through login/refresh flows.
 
+---
+
+### 366) ai GitHub Copilot OAuth poll responses accepted malformed access/error payload fields
+
+**Finding:** `packages/ai/src/utils/oauth/github-copilot.ts` polled device-token responses using loose shape checks. Blank access tokens or malformed `error`/`interval` fields could pass inconsistent branches during device-flow polling.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/github-copilot.ts`
+- `packages/ai/test/github-copilot-oauth-payload.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- add strict poll-payload parsing that distinguishes success (`access_token`) vs error (`error`, optional positive interval),
+- reject malformed poll payload roots/fields before poll-loop branching,
+- normalize slow-down interval handling by combining server-provided interval (when valid) with required backoff growth,
+- add regression coverage for valid and malformed poll payloads.
+
+**Result:** GitHub Copilot OAuth polling now handles malformed poll payloads deterministically and only transitions on validated success/error fields.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7151,7 +7172,7 @@ to:
 - ai gemini-cli oauth token payload parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-oauth-abort.test.ts` (includes malformed exchange-root and malformed refresh-field payload rejection coverage)
 - ai github-copilot oauth payload parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/github-copilot-oauth-payload.test.ts` (includes malformed device-code/token payload field rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/github-copilot-oauth-payload.test.ts` (includes malformed device-code/poll/token payload field rejection coverage)
 - ai openai-codex oauth startup/manual-flow/cancellation/base64url-decoding/hash-fragment/non-object-token-payload parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-oauth-abort.test.ts` (includes malformed exchange/refresh JSON-body parse failure normalization coverage)
 - coding-agent tools regression tests pass:
