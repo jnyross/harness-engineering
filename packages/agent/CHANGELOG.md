@@ -37,6 +37,7 @@
 - Proxy SSE event parsing now validates per-event payload fields (`contentIndex`/`delta`/tool metadata/usage), ignoring malformed typed frames instead of throwing during partial-message reconstruction.
 - `runner.ts` / `project-runner.ts` numeric option parsing now rejects malformed or non-positive values (for example `--iterations 3rounds`, `PI_MAX_REDO_ROUNDS=0`) instead of silently coercing via `parseInt` fallback behavior.
 - Shared CLI positive-integer option parsing now rejects unsafe integer values (greater than `Number.MAX_SAFE_INTEGER`) instead of accepting rounded coercions.
+- Shared CLI positive-integer option parsing now also rejects whitespace-padded numeric values instead of trimming/coalescing malformed option identifiers.
 - `runner.ts` CLI entrypoint now guards direct execution behind `import.meta.url` checks and exposes argument parsing as a reusable helper, preventing side-effectful `main()` execution when imported in tests.
 - `spawnScript()` timeout/spawn failures now include invoked-command context in error messages, improving diagnostics for sub-agent script delegation failures.
 - `spawnScript()` now ignores oversized timeout values above Node.js timer limits, avoiding implicit runtime timer clamping that could prematurely abort delegated scripts.

@@ -8233,6 +8233,28 @@ to:
 
 **Result:** Changelog last-version parsing now preserves strict version identifier identity and rejects whitespace-padded `lastVersion` values instead of silently normalizing malformed state.
 
+---
+
+### 430) agent CLI integer option parsing normalized whitespace-padded values
+
+**Finding:** `packages/agent/src/cli-number.ts` trimmed CLI numeric option values before integer validation, so whitespace-padded values could be silently accepted instead of rejected as malformed numeric option identifiers.
+
+**Action:** Updated:
+
+- `packages/agent/src/cli-number.ts`
+- `packages/agent/test/cli-number.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to:
+
+- require strict numeric-string identity (`trimmed === value`) for non-blank CLI integer option values,
+- preserve fallback behavior for truly blank option values,
+- reject whitespace-padded numeric option values instead of trimming/coalescing malformed inputs,
+- keep existing non-numeric, non-positive, and unsafe-integer rejection behavior,
+- add regression coverage for whitespace-padded CLI integer option rejection.
+
+**Result:** Agent CLI integer option parsing now preserves strict numeric option identity and rejects whitespace-padded numeric option values instead of silently normalizing malformed inputs.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8358,6 +8380,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client-timeout.test.ts`
 - agent spawnScript oversized-timeout regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts`
+- agent CLI integer option parser regression tests pass:
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/cli-number.test.ts` (includes whitespace-padded numeric option rejection coverage)
 - ai abortable sleep oversized-timeout regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/abortable-sleep.test.ts`
 - coding-agent find limit validation regression tests pass:

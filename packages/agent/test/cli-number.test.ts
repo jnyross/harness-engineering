@@ -9,10 +9,10 @@ describe("parsePositiveIntegerOption", () => {
 
 	it("parses positive integer values", () => {
 		expect(parsePositiveIntegerOption({ value: "5", fallback: 1, optionName: "--iterations" })).toBe(5);
-		expect(parsePositiveIntegerOption({ value: " 12 ", fallback: 1, optionName: "--max-tasks" })).toBe(12);
+		expect(parsePositiveIntegerOption({ value: "12", fallback: 1, optionName: "--max-tasks" })).toBe(12);
 	});
 
-	it("rejects non-numeric and non-positive values", () => {
+	it("rejects non-numeric, non-positive, and whitespace-padded values", () => {
 		expect(() => parsePositiveIntegerOption({ value: "1task", fallback: 1, optionName: "--iterations" })).toThrow(
 			"Invalid --iterations value '1task'. Use a positive integer.",
 		);
@@ -29,5 +29,8 @@ describe("parsePositiveIntegerOption", () => {
 				optionName: "--iterations",
 			}),
 		).toThrow("Invalid --iterations value '9007199254740993'. Use a positive integer.");
+		expect(() => parsePositiveIntegerOption({ value: " 12 ", fallback: 1, optionName: "--max-tasks" })).toThrow(
+			"Invalid --max-tasks value ' 12 '. Use a positive integer.",
+		);
 	});
 });
