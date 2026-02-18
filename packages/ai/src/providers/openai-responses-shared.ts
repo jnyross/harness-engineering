@@ -78,6 +78,28 @@ interface OpenAIResponsesUsageShape {
 	} | null;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
+}
+
+function parseReasoningItemSignature(signature: string): ResponseReasoningItem | undefined {
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(signature);
+	} catch {
+		return undefined;
+	}
+
+	const record = asRecord(parsed);
+	if (!record || record.type !== "reasoning") {
+		return undefined;
+	}
+	return parsed as ResponseReasoningItem;
+}
+
 function asNumber(value: unknown): number | undefined {
 	if (typeof value === "number") {
 		if (!Number.isFinite(value) || value < 0) {
@@ -214,8 +236,10 @@ export function convertResponsesMessages<TApi extends Api>(
 			for (const block of msg.content) {
 				if (block.type === "thinking") {
 					if (block.thinkingSignature) {
-						const reasoningItem = JSON.parse(block.thinkingSignature) as ResponseReasoningItem;
-						output.push(reasoningItem);
+						const reasoningItem = parseReasoningItemSignature(block.thinkingSignature);
+						if (reasoningItem) {
+							output.push(reasoningItem);
+						}
 					}
 				} else if (block.type === "text") {
 					const textBlock = block as TextContent;

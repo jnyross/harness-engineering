@@ -5,6 +5,7 @@
 ### Fixed
 
 - OpenAI Responses stream usage parsing now falls back to `prompt_tokens`/`completion_tokens` payloads (including cached prompt-token details) and accepts numeric-string token values, preventing zeroed usage accounting with OpenAI-compatible backends that omit `input_tokens`/`output_tokens` or serialize usage counts as strings.
+- OpenAI Responses history conversion now ignores malformed/non-reasoning `thinkingSignature` payloads instead of throwing during JSON parsing, preventing malformed persisted reasoning signatures from crashing replay message conversion.
 - OpenAI Completions stream usage parsing now also accepts numeric-string token counters for prompt/completion/cache/reasoning fields, preventing arithmetic drift when OpenAI-compatible backends serialize usage values as strings.
 - Anthropic Messages stream usage parsing now accepts numeric-string token counters for input/output/cache fields, preserving accurate usage totals when proxy layers serialize token counts as strings.
 - OpenAI Completions and Anthropic stream usage parsing now ignore negative token values and truncate fractional numeric values to integers, preventing malformed usage metadata from producing negative/fractional accounting.

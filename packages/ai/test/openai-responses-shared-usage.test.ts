@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { extractOpenAIResponsesUsage } from "../src/providers/openai-responses-shared.js";
+import { getModel } from "../src/models.js";
+import { convertResponsesMessages, extractOpenAIResponsesUsage } from "../src/providers/openai-responses-shared.js";
+import type { AssistantMessage, Context } from "../src/types.js";
 
 describe("extractOpenAIResponsesUsage", () => {
 	it("normalizes standard OpenAI usage fields", () => {
@@ -130,5 +132,77 @@ describe("extractOpenAIResponsesUsage", () => {
 	it("returns undefined for non-object payloads", () => {
 		expect(extractOpenAIResponsesUsage(null)).toBeUndefined();
 		expect(extractOpenAIResponsesUsage("not-usage")).toBeUndefined();
+	});
+});
+
+describe("convertResponsesMessages reasoning signature parsing", () => {
+	const model = getModel("openai", "gpt-5-mini");
+	const usage = {
+		input: 0,
+		output: 0,
+		cacheRead: 0,
+		cacheWrite: 0,
+		totalTokens: 0,
+		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+	};
+
+	function createContext(thinkingSignature: string): Context {
+		const assistant: AssistantMessage = {
+			role: "assistant",
+			content: [
+				{ type: "thinking", thinking: "internal", thinkingSignature },
+				{ type: "text", text: "done" },
+			],
+			api: "openai-responses",
+			provider: "openai",
+			model: "gpt-5-mini",
+			usage,
+			stopReason: "stop",
+			timestamp: Date.now(),
+		};
+
+		return {
+			messages: [{ role: "user", content: "hello", timestamp: Date.now() - 1 }, assistant],
+		};
+	}
+
+	it("skips malformed thinking signatures instead of throwing", () => {
+		const converted = convertResponsesMessages(model, createContext("{"), new Set(["openai"]), {
+			includeSystemPrompt: false,
+		});
+
+		expect(
+			converted.some(
+				(item) => typeof item === "object" && item !== null && "type" in item && item.type === "reasoning",
+			),
+		).toBe(false);
+		expect(converted.some((item) => typeof item === "object" && item !== null && "role" in item)).toBe(true);
+	});
+
+	it("preserves valid reasoning signatures", () => {
+		const converted = convertResponsesMessages(
+			model,
+			createContext(
+				JSON.stringify({
+					type: "reasoning",
+					id: "rs_test",
+					summary: [{ type: "summary_text", text: "chain of thought summary" }],
+				}),
+			),
+			new Set(["openai"]),
+			{ includeSystemPrompt: false },
+		);
+
+		expect(
+			converted.some(
+				(item) =>
+					typeof item === "object" &&
+					item !== null &&
+					"type" in item &&
+					item.type === "reasoning" &&
+					"id" in item &&
+					item.id === "rs_test",
+			),
+		).toBe(true);
 	});
 });
