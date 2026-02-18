@@ -6355,6 +6355,27 @@ to:
 
 **Result:** session-manager now safely ignores malformed JSONL line shapes and only processes valid session entry objects in migration/discovery paths.
 
+---
+
+### 338) coding-agent session header validation accepted blank session IDs
+
+**Finding:** `packages/coding-agent/src/core/session-manager.ts` accepted session headers with blank `id` strings as valid during load/recent/list checks, allowing malformed headers to appear as valid persisted sessions.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/session-manager.ts`
+- `packages/coding-agent/test/session-manager/file-operations.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require non-empty session IDs in session-header validation paths,
+- reject blank-id headers in `loadEntriesFromFile` and `findMostRecentSession` checks,
+- skip blank-id sessions in `SessionManager.list(...)` discovery paths,
+- add regression coverage for blank-id header rejection behavior.
+
+**Result:** session loading/discovery now ignores malformed blank-id session headers and only treats valid persisted session IDs as discoverable sessions.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6636,7 +6657,7 @@ to:
 - coding-agent migration parsing normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/migrations.test.ts`
 - coding-agent session-manager JSONL line-shape normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/session-manager/file-operations.test.ts`
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/session-manager/file-operations.test.ts` (includes non-object/type-less line filtering and blank session-id header rejection in load/list/recent-session checks)
 - TUI package tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test`
 - Targeted reviewer parser tests pass:
