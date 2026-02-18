@@ -7449,6 +7449,26 @@ to:
 
 **Result:** Proxy SSE typed-event parsing now preserves strict identifier identity and rejects whitespace-padded event/type/tool identifiers instead of silently normalizing them.
 
+---
+
+### 392) coding-agent session-manager normalized whitespace-padded session IDs and entry types
+
+**Finding:** `packages/coding-agent/src/core/session-manager.ts` treated trimmed non-empty strings as valid for session header IDs and entry `type` fields when loading/listing JSONL sessions. Whitespace-padded identifiers/types could be normalized instead of rejected as malformed persisted session metadata.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/session-manager.ts`
+- `packages/coding-agent/test/session-manager/file-operations.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require strict non-empty string identity (no surrounding whitespace) for session header ID parsing and entry `type` parsing,
+- reject whitespace-padded session IDs in load/list/recent-session discovery flows,
+- add regression coverage for whitespace-padded session IDs and entry types in session file parsing and session listing.
+
+**Result:** Session-manager persisted-file parsing now rejects whitespace-padded session identifiers/type values instead of silently normalizing malformed session metadata.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7751,7 +7771,7 @@ to:
 - coding-agent migration parsing normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/migrations.test.ts` (includes oauth legacy-file preservation and whitespace-padded provider-key rejection coverage)
 - coding-agent session-manager JSONL line-shape normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/session-manager/file-operations.test.ts` (includes non-object/type-less line filtering and blank session-id header rejection in load/list/recent-session checks)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/session-manager/file-operations.test.ts` (includes non-object/type-less line filtering, whitespace-padded entry-type rejection, and blank/whitespace-padded session-id header rejection in load/list/recent-session checks)
 - TUI package tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test`
 - Targeted reviewer parser tests pass:

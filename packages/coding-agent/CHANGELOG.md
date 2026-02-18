@@ -64,6 +64,7 @@
 - Managed-tool release-version parsing now also rejects whitespace-padded `tag_name` values, preserving strict release-tag identity instead of trimming/coalescing malformed tag payloads.
 - Session-manager JSONL parsing now filters malformed/non-object/type-less lines before migration/loading/listing checks, preventing malformed persisted session lines from propagating incompatible entry shapes into migration and session-discovery paths.
 - Session-manager session-header validation now requires non-empty session IDs during load/list/recent-session checks, preventing malformed blank-id headers from being treated as valid persisted sessions.
+- Session-manager load/list/recent-session checks now also reject whitespace-padded session IDs and whitespace-padded entry `type` strings, preserving strict session-file identifier/type identity instead of trimming malformed values.
 - RPC mode command-line parsing now requires object payloads with non-empty `type` values (and non-empty IDs for `extension_ui_response`), returning explicit parse errors for malformed command shapes.
 - RPC client stream-line parsing now ignores malformed/non-object payloads and drops unmatched/invalid response IDs instead of forwarding malformed response shapes through event listeners.
 - Grep tool ripgrep-line JSON parsing now validates event payload roots/types and match metadata (`path.text`, `line_number`) before formatting, preventing malformed runtime rg-event shapes from propagating incompatible match metadata.

@@ -277,7 +277,10 @@ function parseNonEmptyString(value: unknown): string | undefined {
 		return undefined;
 	}
 	const trimmed = value.trim();
-	return trimmed.length > 0 ? trimmed : undefined;
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
 }
 
 function parseFileEntryLine(line: string): FileEntry | undefined {
@@ -291,7 +294,7 @@ function parseFileEntryLine(line: string): FileEntry | undefined {
 		return undefined;
 	}
 	const type = (parsed as { type?: unknown }).type;
-	if (typeof type !== "string" || type.trim().length === 0) {
+	if (!parseNonEmptyString(type)) {
 		return undefined;
 	}
 	return parsed as FileEntry;

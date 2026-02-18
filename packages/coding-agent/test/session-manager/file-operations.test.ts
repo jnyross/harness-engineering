@@ -39,6 +39,12 @@ describe("loadEntriesFromFile", () => {
 		expect(loadEntriesFromFile(file)).toEqual([]);
 	});
 
+	it("returns empty array for file with whitespace-padded session id", () => {
+		const file = join(tempDir, "whitespace-id-header.jsonl");
+		writeFileSync(file, '{"type":"session","id":" abc ","timestamp":"2025-01-01T00:00:00Z","cwd":"/tmp"}\n');
+		expect(loadEntriesFromFile(file)).toEqual([]);
+	});
+
 	it("returns empty array for malformed JSON", () => {
 		const file = join(tempDir, "malformed.jsonl");
 		writeFileSync(file, "not json\n");
@@ -79,6 +85,7 @@ describe("loadEntriesFromFile", () => {
 				'"hello"\n' +
 				"{}\n" +
 				'{"id":"missing-type"}\n' +
+				'{"type":" message ","id":"2","parentId":"1","timestamp":"2025-01-01T00:00:02Z","message":{"role":"assistant","content":"bad","timestamp":2}}\n' +
 				'{"type":"message","id":"1","parentId":null,"timestamp":"2025-01-01T00:00:01Z","message":{"role":"user","content":"hi","timestamp":1}}\n',
 		);
 		const entries = loadEntriesFromFile(file);
@@ -123,6 +130,14 @@ describe("findMostRecentSession", () => {
 		writeFileSync(
 			join(tempDir, "blank-id.jsonl"),
 			'{"type":"session","id":" ","timestamp":"2025-01-01T00:00:00Z","cwd":"/tmp"}\n',
+		);
+		expect(findMostRecentSession(tempDir)).toBeNull();
+	});
+
+	it("ignores session files with whitespace-padded header id", () => {
+		writeFileSync(
+			join(tempDir, "whitespace-id.jsonl"),
+			'{"type":"session","id":" abc ","timestamp":"2025-01-01T00:00:00Z","cwd":"/tmp"}\n',
 		);
 		expect(findMostRecentSession(tempDir)).toBeNull();
 	});
@@ -252,13 +267,19 @@ describe("SessionManager.list header validation", () => {
 
 	it("ignores session files with blank session ids", async () => {
 		const invalid = join(tempDir, "invalid.jsonl");
+		const invalidWhitespace = join(tempDir, "invalid-whitespace.jsonl");
 		const valid = join(tempDir, "valid.jsonl");
 
 		writeFileSync(invalid, '{"type":"session","id":" ","timestamp":"2025-01-01T00:00:00Z","cwd":"/tmp"}\n');
+		writeFileSync(
+			invalidWhitespace,
+			'{"type":"session","id":" abc ","timestamp":"2025-01-01T00:00:00Z","cwd":"/tmp"}\n',
+		);
 		writeFileSync(valid, '{"type":"session","id":"abc","timestamp":"2025-01-01T00:00:00Z","cwd":"/tmp"}\n');
 
 		const sessions = await SessionManager.list("/tmp", tempDir);
 		expect(sessions.some((session) => session.path === valid)).toBe(true);
 		expect(sessions.some((session) => session.path === invalid)).toBe(false);
+		expect(sessions.some((session) => session.path === invalidWhitespace)).toBe(false);
 	});
 });
