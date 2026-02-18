@@ -239,6 +239,20 @@ describe("TUI overlay options", () => {
 			assert.strictEqual(overlay.requestedWidth, 80);
 			tui.stop();
 		});
+
+		it("should ignore non-finite minWidth values", async () => {
+			const terminal = new VirtualTerminal(100, 24);
+			const tui = new TUI(terminal);
+			const overlay = new StaticOverlay(["test"]);
+
+			tui.addChild(new EmptyContent());
+			tui.showOverlay(overlay, { width: "10%", minWidth: Number.NaN });
+			tui.start();
+			await renderAndFlush(tui, terminal);
+
+			assert.strictEqual(overlay.requestedWidth, 10);
+			tui.stop();
+		});
 	});
 
 	describe("anchor positioning", () => {
@@ -357,6 +371,26 @@ describe("TUI overlay options", () => {
 			assert.ok(viewport[2]?.includes("MARGIN"), `Expected MARGIN on row 2, got: ${viewport[2]}`);
 			const colIndex = viewport[2]?.indexOf("MARGIN") ?? -1;
 			assert.strictEqual(colIndex, 3, `Expected col 3, got ${colIndex}`);
+			tui.stop();
+		});
+
+		it("should ignore non-finite margin values", async () => {
+			const terminal = new VirtualTerminal(80, 24);
+			const tui = new TUI(terminal);
+			const overlay = new StaticOverlay(["MARGIN-FALLBACK"]);
+
+			tui.addChild(new EmptyContent());
+			tui.showOverlay(overlay, {
+				anchor: "top-left",
+				width: 20,
+				margin: { top: Number.NaN, left: Number.POSITIVE_INFINITY, right: 0, bottom: 0 },
+			});
+			tui.start();
+			await renderAndFlush(tui, terminal);
+
+			const viewport = terminal.getViewport();
+			const colIndex = viewport[0]?.indexOf("MARGIN-FALLBACK") ?? -1;
+			assert.strictEqual(colIndex, 0, `Expected col 0 fallback, got ${colIndex}`);
 			tui.stop();
 		});
 	});
@@ -482,6 +516,33 @@ describe("TUI overlay options", () => {
 			}
 
 			assert.ok(foundRow >= 10 && foundRow <= 13, `Expected centered row fallback, got ${foundRow}`);
+			tui.stop();
+		});
+
+		it("should ignore non-finite numeric row/col values and fall back to centered position", async () => {
+			const terminal = new VirtualTerminal(80, 24);
+			const tui = new TUI(terminal);
+			const overlay = new StaticOverlay(["FINITE-FALLBACK"]);
+
+			tui.addChild(new EmptyContent());
+			tui.showOverlay(overlay, { width: 20, row: Number.NaN, col: Number.POSITIVE_INFINITY });
+			tui.start();
+			await renderAndFlush(tui, terminal);
+
+			const viewport = terminal.getViewport();
+			let foundRow = -1;
+			let foundCol = -1;
+			for (let i = 0; i < viewport.length; i++) {
+				const col = viewport[i]?.indexOf("FINITE-FALLBACK") ?? -1;
+				if (col >= 0) {
+					foundRow = i;
+					foundCol = col;
+					break;
+				}
+			}
+
+			assert.ok(foundRow >= 10 && foundRow <= 13, `Expected centered row fallback, got ${foundRow}`);
+			assert.ok(foundCol >= 28 && foundCol <= 32, `Expected centered col fallback, got ${foundCol}`);
 			tui.stop();
 		});
 	});

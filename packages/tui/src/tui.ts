@@ -130,6 +130,21 @@ function parsePositiveSafeInteger(value: string): number | undefined {
 	return parsed;
 }
 
+function parseFiniteNumber(value: unknown): number | undefined {
+	if (typeof value !== "number" || !Number.isFinite(value)) {
+		return undefined;
+	}
+	return value;
+}
+
+function parseNonNegativeFiniteNumber(value: unknown, fallback = 0): number {
+	const parsed = parseFiniteNumber(value);
+	if (parsed === undefined || parsed < 0) {
+		return fallback;
+	}
+	return parsed;
+}
+
 /** Parse a SizeValue into absolute value given a reference size */
 function parseSizeValue(value: SizeValue | undefined, referenceSize: number): number | undefined {
 	if (value === undefined) return undefined;
@@ -591,10 +606,10 @@ export class TUI extends Container {
 			typeof opt.margin === "number"
 				? { top: opt.margin, right: opt.margin, bottom: opt.margin, left: opt.margin }
 				: (opt.margin ?? {});
-		const marginTop = Math.max(0, margin.top ?? 0);
-		const marginRight = Math.max(0, margin.right ?? 0);
-		const marginBottom = Math.max(0, margin.bottom ?? 0);
-		const marginLeft = Math.max(0, margin.left ?? 0);
+		const marginTop = parseNonNegativeFiniteNumber(margin.top);
+		const marginRight = parseNonNegativeFiniteNumber(margin.right);
+		const marginBottom = parseNonNegativeFiniteNumber(margin.bottom);
+		const marginLeft = parseNonNegativeFiniteNumber(margin.left);
 
 		// Available space after margins
 		const availWidth = Math.max(1, termWidth - marginLeft - marginRight);
@@ -603,8 +618,9 @@ export class TUI extends Container {
 		// === Resolve width ===
 		let width = parseSizeValue(opt.width, termWidth) ?? Math.min(80, availWidth);
 		// Apply minWidth
-		if (opt.minWidth !== undefined) {
-			width = Math.max(width, opt.minWidth);
+		const minWidth = parseFiniteNumber(opt.minWidth);
+		if (minWidth !== undefined) {
+			width = Math.max(width, minWidth);
 		}
 		// Clamp to available space
 		width = Math.max(1, Math.min(width, availWidth));
@@ -636,7 +652,8 @@ export class TUI extends Container {
 				}
 			} else {
 				// Absolute row position
-				row = opt.row;
+				const absoluteRow = parseFiniteNumber(opt.row);
+				row = absoluteRow ?? this.resolveAnchorRow("center", effectiveHeight, availHeight, marginTop);
 			}
 		} else {
 			// Anchor-based (default: center)
@@ -657,7 +674,8 @@ export class TUI extends Container {
 				}
 			} else {
 				// Absolute column position
-				col = opt.col;
+				const absoluteCol = parseFiniteNumber(opt.col);
+				col = absoluteCol ?? this.resolveAnchorCol("center", width, availWidth, marginLeft);
 			}
 		} else {
 			// Anchor-based (default: center)
@@ -666,8 +684,10 @@ export class TUI extends Container {
 		}
 
 		// Apply offsets
-		if (opt.offsetY !== undefined) row += opt.offsetY;
-		if (opt.offsetX !== undefined) col += opt.offsetX;
+		const offsetY = parseFiniteNumber(opt.offsetY);
+		const offsetX = parseFiniteNumber(opt.offsetX);
+		if (offsetY !== undefined) row += offsetY;
+		if (offsetX !== undefined) col += offsetX;
 
 		// Clamp to terminal bounds (respecting margins)
 		row = Math.max(marginTop, Math.min(row, termHeight - marginBottom - effectiveHeight));
