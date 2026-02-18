@@ -6823,6 +6823,27 @@ to:
 
 **Result:** proxy streaming now rejects malformed typed SSE frames safely and continues processing subsequent valid events without collapsing the stream.
 
+---
+
+### 361) coding-agent managed-tool version checks accepted malformed GitHub release payload shapes
+
+**Finding:** `packages/coding-agent/src/utils/tools-manager.ts` assumed GitHub latest-release responses always contained a string `tag_name` and called `.replace(...)` directly. Malformed/non-object payload roots (or non-string/blank tags) surfaced low-signal runtime errors instead of explicit version-parse failures.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/utils/tools-manager.ts`
+- `packages/coding-agent/test/tools-manager-version-parse.test.ts` (new)
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize release payload roots as objects before extracting `tag_name`,
+- require non-empty string tags and normalize optional `v` prefixes safely,
+- reject malformed/missing tag shapes with explicit latest-release parse errors,
+- add regression coverage for valid tag normalization and malformed payload rejection.
+
+**Result:** managed-tool version checks now validate GitHub release payload shape deterministically and avoid null-property runtime parsing errors from malformed latest-release responses.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7109,6 +7130,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes malformed `pi.extensions` entry filtering, mixed valid+invalid manifest pattern handling, and installed-version shape normalization coverage)
 - coding-agent package-manager npm-registry version parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager-registry-version.test.ts test/package-manager.test.ts` (includes malformed npm-registry `version` root/field-shape rejection and trimmed valid-version parsing coverage)
+- coding-agent managed-tool release-version parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools-manager-version-parse.test.ts` (includes malformed GitHub latest-release payload rejection and trimmed/`v`-prefixed tag normalization coverage)
 - coding-agent model-registry provider-key validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/model-registry.test.ts` (includes blank and whitespace-padded provider-key rejection coverage for malformed `models.json` provider maps)
 - coding-agent migration parsing normalization regression tests pass:
