@@ -328,6 +328,15 @@ Content`,
 			expect((packageManager as any).parseSource("../relative/path/to/package").type).toBe("local");
 		});
 
+		it("should reject whitespace-padded npm/git source identifiers", () => {
+			// biome-ignore lint/suspicious/noExplicitAny: migration
+			expect((packageManager as any).parseSource("npm: pkg").type).toBe("local");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
+			expect((packageManager as any).parseSource(" git:github.com/user/repo").type).toBe("local");
+			// biome-ignore lint/suspicious/noExplicitAny: migration
+			expect((packageManager as any).parseSource("https://github.com/user/repo ").type).toBe("local");
+		});
+
 		it("should never parse dot-relative paths as git", () => {
 			// biome-ignore lint/suspicious/noExplicitAny: migration
 			const dotSlash = (packageManager as any).parseSource("./packages/agent-timers");

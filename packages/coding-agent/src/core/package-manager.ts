@@ -1037,7 +1037,10 @@ export class DefaultPackageManager implements PackageManager {
 
 	private parseSource(source: string): ParsedSource {
 		if (source.startsWith("npm:")) {
-			const spec = source.slice("npm:".length).trim();
+			const spec = source.slice("npm:".length);
+			if (spec.trim().length === 0 || spec.trim() !== spec) {
+				return { type: "local", path: source };
+			}
 			const { name, version } = this.parseNpmSpec(spec);
 			return {
 				type: "npm",
@@ -1048,6 +1051,9 @@ export class DefaultPackageManager implements PackageManager {
 		}
 
 		const trimmed = source.trim();
+		if (trimmed !== source) {
+			return { type: "local", path: source };
+		}
 		const isWindowsAbsolutePath = /^[A-Za-z]:[\\/]|^\\\\/.test(trimmed);
 		const isLocalPathLike =
 			trimmed.startsWith(".") ||
