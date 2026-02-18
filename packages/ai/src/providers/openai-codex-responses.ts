@@ -87,6 +87,32 @@ function parseNonEmptyString(value: unknown): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function parseHeaderName(value: string): string | undefined {
+	const trimmed = value.trim();
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
+}
+
+function applyValidatedHeaders(headers: Headers, source: Record<string, string> | undefined): void {
+	if (!source) {
+		return;
+	}
+
+	for (const [rawKey, value] of Object.entries(source)) {
+		const headerName = parseHeaderName(rawKey);
+		if (!headerName) {
+			continue;
+		}
+		try {
+			headers.set(headerName, value);
+		} catch {
+			// Ignore malformed header names rejected by runtime header validation.
+		}
+	}
+}
+
 function parsePositiveFiniteNumber(value: unknown): number | undefined {
 	if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
 		return undefined;
@@ -874,7 +900,8 @@ function buildHeaders(
 	token: string,
 	sessionId?: string,
 ): Headers {
-	const headers = new Headers(initHeaders);
+	const headers = new Headers();
+	applyValidatedHeaders(headers, initHeaders);
 	headers.set("Authorization", `Bearer ${token}`);
 	headers.set("chatgpt-account-id", accountId);
 	headers.set("OpenAI-Beta", "responses=experimental");
@@ -883,9 +910,7 @@ function buildHeaders(
 	headers.set("User-Agent", userAgent);
 	headers.set("accept", "text/event-stream");
 	headers.set("content-type", "application/json");
-	for (const [key, value] of Object.entries(additionalHeaders || {})) {
-		headers.set(key, value);
-	}
+	applyValidatedHeaders(headers, additionalHeaders);
 
 	if (sessionId) {
 		headers.set("session_id", sessionId);

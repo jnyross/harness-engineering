@@ -7209,6 +7209,26 @@ to:
 
 **Result:** web-ui remote model discovery now preserves strict discovered-model identifier identity and rejects whitespace-padded malformed IDs.
 
+---
+
+### 380) ai OpenAI Codex request-header construction accepted whitespace-padded custom header names
+
+**Finding:** `packages/ai/src/providers/openai-codex-responses.ts` built request headers by passing model/options header maps directly to `Headers`/`headers.set(...)`. Whitespace-padded custom header keys could be forwarded as malformed header names, causing runtime header-set failures or malformed-key normalization.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/openai-codex-responses.ts`
+- `packages/ai/test/openai-codex-stream.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- validate custom header keys (non-empty string, no surrounding whitespace) before applying model/options headers,
+- ignore malformed header keys rejected by runtime header validation instead of failing request construction,
+- add regression coverage that malformed whitespace-padded model/options header keys are dropped while valid keys remain.
+
+**Result:** OpenAI Codex Responses header construction now preserves strict custom-header key identity and safely ignores malformed whitespace-padded header names.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7452,7 +7472,7 @@ to:
 - ai Gemini CLI SSE regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-empty-stream.test.ts` (includes terminal `data:` line without trailing newline, malformed credential-shape rejection, and malformed non-object SSE chunk-root filtering coverage)
 - ai Codex/Gemini SSE regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-stream.test.ts test/google-gemini-cli-empty-stream.test.ts` (includes Codex base64url JWT payload account-id extraction coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-stream.test.ts test/google-gemini-cli-empty-stream.test.ts` (includes Codex base64url JWT payload account-id extraction coverage and malformed custom-header-name rejection coverage)
 - ai Codex Responses payload-shape parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-responses-parsing.test.ts test/openai-codex-stream.test.ts` (includes malformed non-object SSE/WebSocket event-root filtering and malformed usage-limit error-field-shape friendly-message coverage)
 - coding-agent exec regression tests pass:
