@@ -22,12 +22,20 @@ export function parseDeploymentNameMap(value: string | undefined): Map<string, s
 	const map = new Map<string, string>();
 	if (!value) return map;
 	for (const entry of value.split(",")) {
-		const trimmed = entry.trim();
-		if (!trimmed) continue;
-		const [modelIdRaw, deploymentNameRaw] = trimmed.split("=", 2);
-		const modelId = modelIdRaw?.trim();
-		const deploymentName = deploymentNameRaw?.trim();
-		if (!modelId || !deploymentName) continue;
+		const trimmedEntry = entry.trim();
+		if (!trimmedEntry || trimmedEntry !== entry) continue;
+		const [modelIdRaw, deploymentNameRaw] = entry.split("=", 2);
+		if (!modelIdRaw || !deploymentNameRaw) continue;
+		const modelId = modelIdRaw.trim();
+		const deploymentName = deploymentNameRaw.trim();
+		if (
+			modelId.length === 0 ||
+			deploymentName.length === 0 ||
+			modelId !== modelIdRaw ||
+			deploymentName !== deploymentNameRaw
+		) {
+			continue;
+		}
 		map.set(modelId, deploymentName);
 	}
 	return map;

@@ -8571,6 +8571,27 @@ to:
 
 **Result:** Pods `--pod=<name>` parsing now preserves strict pod override identifier identity and rejects whitespace-padded override values instead of silently normalizing malformed CLI inputs.
 
+---
+
+### 446) ai Azure deployment-map parser normalized whitespace-padded model/deployment segments
+
+**Finding:** `packages/ai/src/providers/azure-openai-responses.ts` trimmed deployment-map entries/segments before validation, so whitespace-padded model/deployment identifiers could be silently accepted instead of rejected as malformed deployment-map identifiers.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/azure-openai-responses.ts`
+- `packages/ai/test/azure-openai-responses-deployment-map.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require strict deployment-map entry/segment identity (`trimmed === value`) for model/deployment pairs,
+- reject whitespace-padded mapping entries/segments instead of trimming/coalescing malformed identifiers,
+- preserve existing blank-key/value entry rejection behavior,
+- add regression coverage for whitespace-padded deployment-map segment rejection.
+
+**Result:** Azure deployment-map parsing now preserves strict model/deployment identifier identity and rejects whitespace-padded mapping entries instead of silently normalizing malformed deployment-map config values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8580,7 +8601,7 @@ to:
 - ai model-generator numeric parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/generate-models.test.ts`
 - ai Azure deployment-map parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/azure-openai-responses-deployment-map.test.ts test/azure-openai-responses-headers.test.ts` (includes Azure OpenAI Responses whitespace-padded custom-header rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/azure-openai-responses-deployment-map.test.ts test/azure-openai-responses-headers.test.ts` (includes Azure OpenAI Responses whitespace-padded deployment-map segment rejection and custom-header rejection coverage)
 - ai auth-file parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/auth-file.test.ts` (includes whitespace-padded provider-key rejection and oauth token-field rejection coverage)
 - mom slack timestamp normalization regression tests pass:
