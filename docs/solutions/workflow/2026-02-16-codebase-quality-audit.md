@@ -6438,6 +6438,26 @@ to:
 
 **Result:** OpenAI Responses replay conversion now tolerates malformed persisted thinking signatures and continues message conversion without crashing.
 
+---
+
+### 342) coding-agent settings manager accepted malformed non-object settings-file roots in migration/load paths
+
+**Finding:** `packages/coding-agent/src/core/settings-manager.ts` passed parsed JSON roots directly into migration/load paths as object-shaped settings. Non-object roots (for example scalar/array JSON roots) could propagate incompatible shapes into settings merges or throw during migration checks, disabling persistence flows for otherwise recoverable malformed files.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/settings-manager.ts`
+- `packages/coding-agent/test/settings-manager.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize parsed settings roots to object records before migration/load processing,
+- treat non-object roots as empty settings objects in both global and project settings file loaders,
+- add regression coverage for malformed global/project settings root shapes (including persistence behavior after recovery).
+
+**Result:** settings loading now tolerates malformed non-object settings-file roots safely, preserving persistence and merge behavior with normalized empty settings fallbacks.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6610,7 +6630,7 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/gh-auth-status.test.ts` (includes missing gh spawn failure, signal interruption, non-zero auth status, and success cases)
 - coding-agent countdown timer regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/countdown-timer.test.ts` (includes normal expiry, manual dispose stop, onTick-throw safety coverage, and timeout normalization coverage including positive-infinite clamping)
-- coding-agent settings manager normalization regression tests pass (numeric + boolean + enum + string/list settings):
+- coding-agent settings manager normalization regression tests pass (numeric + boolean + enum + string/list settings + malformed root-shape handling):
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/settings-manager.test.ts`
 - coding-agent package metadata normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/config-package-metadata.test.ts test/settings-manager.test.ts`
