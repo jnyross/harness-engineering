@@ -6294,6 +6294,27 @@ to:
 
 **Result:** events watcher payload parsing now fails safely on malformed runtime JSON shapes and only schedules valid normalized event payloads.
 
+---
+
+### 335) coding-agent startup migrations accepted malformed auth/session JSON shapes
+
+**Finding:** `packages/coding-agent/src/migrations.ts` migrated legacy auth/session files using unchecked JSON casts; malformed provider keys/api-key values/session-header `cwd` payloads could inject invalid entries into migrated auth data or trigger brittle session relocation behavior.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/migrations.ts`
+- `packages/coding-agent/test/migrations.test.ts` (new)
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize oauth/settings migration provider keys to non-empty strings,
+- normalize migrated api key values to non-empty strings and ignore malformed entries,
+- normalize session-header migration payloads (type/cwd) before path derivation,
+- add focused regression coverage for malformed auth/session migration payloads.
+
+**Result:** startup migrations now tolerate malformed auth/session JSON shapes safely and only persist normalized migration entries.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6570,6 +6591,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes async settlement coverage, full async command-invocation diagnostics, sync spawn-start failure diagnostics, and signal-exit rejection diagnostics)
 - coding-agent package-manager manifest normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes malformed `pi.extensions` entry filtering, mixed valid+invalid manifest pattern handling, and installed-version shape normalization coverage)
+- coding-agent migration parsing normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/migrations.test.ts`
 - TUI package tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test`
 - Targeted reviewer parser tests pass:
