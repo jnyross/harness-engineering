@@ -70,6 +70,34 @@ function parseNonEmptyString(value: unknown): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function parsePositiveFiniteNumber(value: unknown): number | undefined {
+	if (typeof value !== "number") {
+		return undefined;
+	}
+	return Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+function parseOpenAICodexTokenPayload(value: unknown):
+	| {
+			accessToken: string;
+			refreshToken: string;
+			expiresIn: number;
+	  }
+	| undefined {
+	const tokenResponse = asRecord(value);
+	const accessToken = parseNonEmptyString(tokenResponse?.access_token);
+	const refreshToken = parseNonEmptyString(tokenResponse?.refresh_token);
+	const expiresIn = parsePositiveFiniteNumber(tokenResponse?.expires_in);
+	if (!accessToken || !refreshToken || !expiresIn) {
+		return undefined;
+	}
+	return {
+		accessToken,
+		refreshToken,
+		expiresIn,
+	};
+}
+
 function assertNotAborted(signal?: AbortSignal): void {
 	if (signal?.aborted) {
 		throw new Error("Login cancelled");
@@ -159,31 +187,24 @@ async function exchangeAuthorizationCode(
 		return { type: "failed" };
 	}
 
-	const json = (await response.json()) as {
-		access_token?: unknown;
-		refresh_token?: unknown;
-		expires_in?: unknown;
-	};
-	const tokenResponse = asRecord(json);
-	const accessToken = parseNonEmptyString(tokenResponse?.access_token);
-	const refreshToken = parseNonEmptyString(tokenResponse?.refresh_token);
-	const expiresIn = tokenResponse?.expires_in;
-	if (
-		!accessToken ||
-		!refreshToken ||
-		typeof expiresIn !== "number" ||
-		!Number.isFinite(expiresIn) ||
-		expiresIn <= 0
-	) {
-		console.error("[openai-codex] token response missing fields:", json);
+	let payload: unknown;
+	try {
+		payload = await response.json();
+	} catch (error) {
+		console.error("[openai-codex] failed to parse code->token response JSON:", error);
+		return { type: "failed" };
+	}
+	const tokenPayload = parseOpenAICodexTokenPayload(payload);
+	if (!tokenPayload) {
+		console.error("[openai-codex] token response missing fields:", payload);
 		return { type: "failed" };
 	}
 
 	return {
 		type: "success",
-		access: accessToken,
-		refresh: refreshToken,
-		expires: Date.now() + expiresIn * 1000,
+		access: tokenPayload.accessToken,
+		refresh: tokenPayload.refreshToken,
+		expires: Date.now() + tokenPayload.expiresIn * 1000,
 	};
 }
 
@@ -205,31 +226,24 @@ async function refreshAccessToken(refreshToken: string): Promise<TokenResult> {
 			return { type: "failed" };
 		}
 
-		const json = (await response.json()) as {
-			access_token?: unknown;
-			refresh_token?: unknown;
-			expires_in?: unknown;
-		};
-		const tokenResponse = asRecord(json);
-		const accessToken = parseNonEmptyString(tokenResponse?.access_token);
-		const returnedRefreshToken = parseNonEmptyString(tokenResponse?.refresh_token);
-		const expiresIn = tokenResponse?.expires_in;
-		if (
-			!accessToken ||
-			!returnedRefreshToken ||
-			typeof expiresIn !== "number" ||
-			!Number.isFinite(expiresIn) ||
-			expiresIn <= 0
-		) {
-			console.error("[openai-codex] Token refresh response missing fields:", json);
+		let payload: unknown;
+		try {
+			payload = await response.json();
+		} catch (error) {
+			console.error("[openai-codex] Failed to parse refresh response JSON:", error);
+			return { type: "failed" };
+		}
+		const tokenPayload = parseOpenAICodexTokenPayload(payload);
+		if (!tokenPayload) {
+			console.error("[openai-codex] Token refresh response missing fields:", payload);
 			return { type: "failed" };
 		}
 
 		return {
 			type: "success",
-			access: accessToken,
-			refresh: returnedRefreshToken,
-			expires: Date.now() + expiresIn * 1000,
+			access: tokenPayload.accessToken,
+			refresh: tokenPayload.refreshToken,
+			expires: Date.now() + tokenPayload.expiresIn * 1000,
 		};
 	} catch (error) {
 		console.error("[openai-codex] Token refresh error:", error);

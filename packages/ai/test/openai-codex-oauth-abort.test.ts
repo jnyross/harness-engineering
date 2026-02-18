@@ -161,10 +161,42 @@ describe("openai-codex oauth login", () => {
 		).rejects.toThrow("Token exchange failed");
 	});
 
+	it("treats invalid token exchange JSON payloads as failed exchanges", async () => {
+		const fetchMock = vi.fn(
+			async (_input: unknown, _init?: RequestInit) =>
+				new Response("{", {
+					status: 200,
+					headers: { "Content-Type": "application/json" },
+				}),
+		);
+		vi.stubGlobal("fetch", fetchMock);
+
+		await expect(
+			loginOpenAICodex({
+				onAuth: () => {},
+				onPrompt: async () => "",
+				onManualCodeInput: async () => "manual-code",
+			}),
+		).rejects.toThrow("Token exchange failed");
+	});
+
 	it("treats non-object refresh payload roots as failed refreshes", async () => {
 		const fetchMock = vi.fn(
 			async (_input: unknown, _init?: RequestInit) =>
 				new Response("42", {
+					status: 200,
+					headers: { "Content-Type": "application/json" },
+				}),
+		);
+		vi.stubGlobal("fetch", fetchMock);
+
+		await expect(refreshOpenAICodexToken("refresh-token")).rejects.toThrow("Failed to refresh OpenAI Codex token");
+	});
+
+	it("treats invalid refresh JSON payloads as failed refreshes", async () => {
+		const fetchMock = vi.fn(
+			async (_input: unknown, _init?: RequestInit) =>
+				new Response("{", {
 					status: 200,
 					headers: { "Content-Type": "application/json" },
 				}),
