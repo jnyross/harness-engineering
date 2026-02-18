@@ -6538,6 +6538,26 @@ to:
 
 **Result:** OpenAI Completions history conversion now filters malformed `thoughtSignature` payload roots and only forwards valid object-shaped reasoning details.
 
+---
+
+### 347) coding-agent grep tool accepted malformed ripgrep JSON event payload shapes
+
+**Finding:** `packages/coding-agent/src/core/tools/grep.ts` parsed ripgrep JSON lines with broad `any` casts and accessed nested match fields without root-shape validation. Malformed non-object/missing-type event payloads could bypass strict shape expectations and propagate incompatible match metadata.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/tools/grep.ts`
+- `packages/coding-agent/test/grep-json-parse.test.ts` (new)
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- add strict JSON-line parsing helper with object/type validation for ripgrep events,
+- validate `match` event metadata (`data.path.text`, `data.line_number`) before formatting blocks,
+- add regression coverage for malformed JSON roots, malformed metadata fields, and valid match-event parsing.
+
+**Result:** grep tool event parsing now enforces ripgrep event payload shape expectations and safely ignores malformed line payloads.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6645,7 +6665,7 @@ to:
 - coding-agent read-tool range validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/read-tool.test.ts test/tools.test.ts`
 - coding-agent grep range validation regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts test/grep-json-parse.test.ts`
 - coding-agent bash timeout validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts`
 - coding-agent bash oversized-timeout regression tests pass:
