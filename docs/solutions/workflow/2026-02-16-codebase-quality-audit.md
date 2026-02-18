@@ -7530,6 +7530,28 @@ to:
 
 **Result:** Agent-root session relocation now preserves strict session-header identifier identity and rejects whitespace-padded legacy header fields instead of trimming them.
 
+---
+
+### 396) coding-agent RPC protocol parsing normalized whitespace-padded type/response identifiers
+
+**Finding:** `packages/coding-agent/src/modes/rpc/rpc-mode.ts` and `packages/coding-agent/src/modes/rpc/rpc-client.ts` parsed command/event `type` and response IDs as trimmed non-empty strings. Whitespace-padded protocol identifiers could be normalized and accepted instead of being rejected as malformed RPC frames.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/rpc/rpc-mode.ts`
+- `packages/coding-agent/src/modes/rpc/rpc-client.ts`
+- `packages/coding-agent/test/rpc-mode-timeout.test.ts`
+- `packages/coding-agent/test/rpc-client.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require strict non-empty string identity (no surrounding whitespace) for RPC `type` and response/extension-response `id` parsing,
+- drop whitespace-padded response IDs/types in RPC client stream handling instead of forwarding normalized identifiers,
+- add regression coverage for whitespace-padded command/event/response identifier rejection while preserving valid frame handling.
+
+**Result:** RPC mode/client protocol parsing now preserves strict identifier identity and rejects whitespace-padded RPC frame identifiers instead of silently normalizing malformed protocol fields.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7650,7 +7672,7 @@ to:
 - coding-agent shared sleep oversized-timeout regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/sleep.test.ts`
 - coding-agent RPC dialog timeout normalization tests pass (including positive-infinite timeout clamping):
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-mode-timeout.test.ts`
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-mode-timeout.test.ts` (includes whitespace-padded command-type and extension-response-id rejection coverage)
 - coding-agent RPC client timeout normalization tests pass (including invalid non-positive fallback behavior):
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client-timeout.test.ts`
 - agent spawnScript oversized-timeout regression tests pass:
@@ -7696,7 +7718,7 @@ to:
 - agent spawnScript regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts` (includes signal-exit non-zero semantics and forced-kill fallback for SIGTERM-resistant children)
 - coding-agent RPC startup/shutdown regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures, pending-request rejection on stop and unexpected exit, stop timeout forced-kill cleanup, send timeout/write-error cleanup, closed-stdin send handling, exit-listener cleanup assertions, malformed/non-object stream payload suppression, and unmatched response-frame filtering)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures, pending-request rejection on stop and unexpected exit, stop timeout forced-kill cleanup, send timeout/write-error cleanup, closed-stdin send handling, exit-listener cleanup assertions, malformed/non-object stream payload suppression, unmatched response-frame filtering, and whitespace-padded response/event-type identifier rejection)
 - coding-agent login dialog browser-invocation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/login-dialog-url-open.test.ts` (includes macOS/Windows/Linux command invocation mapping)
 - coding-agent login dialog lifecycle regression tests pass:

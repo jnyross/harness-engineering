@@ -237,7 +237,11 @@ describe("RpcClient.handleLine", () => {
 		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
 		(client as any).handleLine('{"type":"response","id":" ","success":true}');
 		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).handleLine('{"type":"response","id":" req_1 ","success":true}');
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
 		(client as any).handleLine('{"type":"response","id":123,"success":true}');
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).handleLine('{"type":" response ","id":"req_1","success":true}');
 
 		expect(receivedEvents).toEqual([]);
 	});
@@ -260,5 +264,20 @@ describe("RpcClient.handleLine", () => {
 		expect(resolved).toEqual({ type: "response", id: "req_1", success: true });
 		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
 		expect((client as any).pendingRequests.size).toBe(0);
+	});
+
+	it("ignores event payloads with whitespace-padded type identifiers", () => {
+		const client = new RpcClient();
+		const receivedEvents: unknown[] = [];
+		client.onEvent((event) => {
+			receivedEvents.push(event);
+		});
+
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).handleLine('{"type":" event ","foo":"bar"}');
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).handleLine('{"type":"event","foo":"bar"}');
+
+		expect(receivedEvents).toEqual([{ type: "event", foo: "bar" }]);
 	});
 });

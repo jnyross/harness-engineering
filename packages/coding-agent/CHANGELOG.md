@@ -69,6 +69,7 @@
 - Session-manager load/list/recent-session checks now also reject whitespace-padded session IDs and whitespace-padded entry `type` strings, preserving strict session-file identifier/type identity instead of trimming malformed values.
 - RPC mode command-line parsing now requires object payloads with non-empty `type` values (and non-empty IDs for `extension_ui_response`), returning explicit parse errors for malformed command shapes.
 - RPC client stream-line parsing now ignores malformed/non-object payloads and drops unmatched/invalid response IDs instead of forwarding malformed response shapes through event listeners.
+- RPC mode/client command-response parsing now also rejects whitespace-padded `type` and response/extension-response `id` identifiers, preserving strict RPC protocol identifier identity instead of trimming malformed values.
 - Grep tool ripgrep-line JSON parsing now validates event payload roots/types and match metadata (`path.text`, `line_number`) before formatting, preventing malformed runtime rg-event shapes from propagating incompatible match metadata.
 - Interactive external-editor launch now reports startup/signal/non-zero exit failures explicitly (while preserving current editor content) instead of silently no-oping.
 - Interactive selector replacement now disposes previous disposable selector components before teardown, and session selector now cancels pending status timers/load updates on dispose, preventing stale async updates after selector close/switch.

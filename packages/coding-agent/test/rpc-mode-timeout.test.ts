@@ -47,12 +47,20 @@ describe("parseRpcLine", () => {
 			kind: "error",
 			message: "extension_ui_response requires non-empty string id",
 		});
+		expect(parseRpcLine('{"type":"extension_ui_response","id":" abc ","cancelled":true}')).toEqual({
+			kind: "error",
+			message: "extension_ui_response requires non-empty string id",
+		});
 	});
 
 	it("parses regular commands", () => {
 		expect(parseRpcLine('{"type":"abort","id":"req_1"}')).toEqual({
 			kind: "command",
 			command: { type: "abort", id: "req_1" },
+		});
+		expect(parseRpcLine('{"type":" abort ","id":"req_2"}')).toEqual({
+			kind: "error",
+			message: "Missing command type",
 		});
 	});
 });
