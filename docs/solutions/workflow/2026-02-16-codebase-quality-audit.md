@@ -6908,6 +6908,26 @@ to:
 
 **Result:** GitHub Copilot OAuth now validates device/token payload fields deterministically and rejects malformed payload shapes before they influence polling or credential persistence.
 
+---
+
+### 365) ai OpenAI Codex OAuth surfaced raw JSON-parse exceptions on malformed token bodies
+
+**Finding:** `packages/ai/src/utils/oauth/openai-codex.ts` expected successful token responses to contain parseable JSON. Invalid JSON response bodies from exchange/refresh endpoints surfaced raw parser exceptions instead of deterministic OAuth failure handling.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/openai-codex.ts`
+- `packages/ai/test/openai-codex-oauth-abort.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- parse token payloads through a shared validator requiring non-empty token fields and positive finite `expires_in`,
+- catch JSON parse failures for exchange/refresh responses and convert them into structured failed-token outcomes with diagnostics,
+- add regression coverage for invalid JSON exchange and refresh response bodies.
+
+**Result:** OpenAI Codex OAuth now treats malformed token JSON bodies as structured exchange/refresh failures instead of bubbling raw parse exceptions through login/refresh flows.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7133,7 +7153,7 @@ to:
 - ai github-copilot oauth payload parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/github-copilot-oauth-payload.test.ts` (includes malformed device-code/token payload field rejection coverage)
 - ai openai-codex oauth startup/manual-flow/cancellation/base64url-decoding/hash-fragment/non-object-token-payload parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-oauth-abort.test.ts`
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-oauth-abort.test.ts` (includes malformed exchange/refresh JSON-body parse failure normalization coverage)
 - coding-agent tools regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted write coverage)
 - coding-agent tools regression tests pass:
