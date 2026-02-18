@@ -6213,6 +6213,26 @@ to:
 
 **Result:** package-manager manifest loading now tolerates malformed `pi.*` entry shapes without crashing while preserving valid manifest resource directives.
 
+---
+
+### 331) agent proxy SSE parser rejected valid `data:` lines without a post-colon space
+
+**Finding:** `packages/agent/src/proxy.ts` parsed SSE chunks only when lines started with `data: ` (space required), so compliant `data:<json>` lines were silently ignored and could drop terminal proxy events.
+
+**Action:** Updated:
+
+- `packages/agent/src/proxy.ts`
+- `packages/agent/test/proxy.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to:
+
+- accept both `data: <json>` and `data:<json>` SSE data-line variants,
+- preserve existing buffer/end-of-stream handling semantics,
+- add focused regression coverage for no-space `data:` SSE payload parsing.
+
+**Result:** proxy stream event parsing now handles both valid SSE `data:` line formats and no longer drops events when servers omit the optional post-colon space.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6357,6 +6377,8 @@ to:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/runner.test.ts`
 - agent project-loop JSON task normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/project-loop.test.ts`
+- agent proxy SSE data-prefix parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
 - pods SSH/SCP parser regression tests pass:
