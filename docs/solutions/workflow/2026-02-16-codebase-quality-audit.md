@@ -6274,6 +6274,26 @@ to:
 
 **Result:** package-manager npm installed-version detection now handles malformed package metadata safely and consistently.
 
+---
+
+### 334) mom events payload parsing accepted malformed runtime JSON shapes
+
+**Finding:** `packages/mom/src/events.ts` parsed event files with unchecked JSON field access; malformed runtime payloads (non-object roots or non-string `type/channelId/text/schedule` fields) could propagate incompatible values into event scheduling/execution paths.
+
+**Action:** Updated:
+
+- `packages/mom/src/events.ts`
+- `packages/mom/test/events-parse.test.ts` (new)
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- normalize event payload parsing with runtime object/string shape validation,
+- reject malformed event payloads before scheduling logic,
+- add regression coverage for valid immediate/one-shot/periodic payloads and malformed JSON/payload fallback behavior.
+
+**Result:** events watcher payload parsing now fails safely on malformed runtime JSON shapes and only schedules valid normalized event payloads.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6408,6 +6428,8 @@ to:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
 - mom one-shot scheduling helper tests pass (including positive-infinite delay clamping/chunking):
   - `npm --workspace "@mariozechner/pi-mom" test -- test/events-scheduling.test.ts`
+- mom events payload parsing normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/events-parse.test.ts test/events-scheduling.test.ts`
 - mom read-tool line-count regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/read-tool.test.ts`
 - mom bash timeout validation regression tests pass:
