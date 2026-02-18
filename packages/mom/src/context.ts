@@ -218,7 +218,10 @@ function normalizeOptionalNonEmptyString(value: unknown): string | undefined {
 		return undefined;
 	}
 	const trimmed = value.trim();
-	return trimmed.length > 0 ? trimmed : undefined;
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
 }
 
 function normalizeThinkingLevel(value: unknown): MomSettings["defaultThinkingLevel"] | undefined {

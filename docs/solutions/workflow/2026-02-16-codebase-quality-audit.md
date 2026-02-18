@@ -8062,6 +8062,26 @@ to:
 
 **Result:** Settings-manager string/list parsing now preserves strict identifier/path identity and drops whitespace-padded malformed settings entries instead of silently normalizing them.
 
+---
+
+### 422) mom settings-manager normalized whitespace-padded provider/model identifiers
+
+**Finding:** `packages/mom/src/context.ts` normalized `defaultProvider` and `defaultModel` settings values by trimming whitespace, so malformed whitespace-padded provider/model identifiers in `settings.json` were silently accepted after normalization.
+
+**Action:** Updated:
+
+- `packages/mom/src/context.ts`
+- `packages/mom/test/context-settings.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- require strict non-empty string identity (`trimmed === value`) for optional string settings normalization,
+- reject whitespace-padded `defaultProvider`/`defaultModel` settings entries instead of trimming/coalescing malformed identifiers,
+- add regression coverage confirming strict rejection of padded provider/model settings while preserving valid setting values and existing thinking-level behavior.
+
+**Result:** Mom settings loading now preserves strict provider/model identifier identity and drops whitespace-padded malformed settings values instead of silently normalizing them.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8083,7 +8103,7 @@ to:
 - mom channel-store timestamp parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/store.test.ts` (includes whitespace-padded last-log-line `ts` rejection coverage)
 - mom settings normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-mom" test -- test/context-settings.test.ts test/store.test.ts`
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/context-settings.test.ts test/store.test.ts` (includes whitespace-padded `defaultProvider`/`defaultModel` rejection coverage)
 - mom context sync timestamp regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/context-sync.test.ts test/context-settings.test.ts test/store.test.ts` (includes whitespace-padded persisted `ts` rejection coverage during log-to-session sync)
 - web-ui model discovery + archive-index numeric parsing regression tests pass:

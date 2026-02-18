@@ -44,6 +44,7 @@
 - Channel store `getLastTimestamp()` now validates last-log-line timestamp shape (string + non-empty) and returns `null` for malformed entries instead of propagating invalid timestamp values.
 - Channel store `getLastTimestamp()` now also rejects whitespace-padded last-log-line `ts` values instead of trimming/coalescing malformed persisted timestamps.
 - Mom settings loading now normalizes malformed settings-file values (provider/model/thinking-level + compaction/retry fields), falling back to defaults for invalid types/ranges instead of propagating incompatible runtime settings.
+- Mom settings loading now also rejects whitespace-padded `defaultProvider`/`defaultModel` values instead of trimming/coalescing malformed provider/model identifiers.
 - Log-to-session sync now validates parsed log-line timestamp shapes and preserves valid epoch timestamps (`0`) while falling back malformed dates to current time, preventing malformed line payloads from injecting invalid sync timestamps.
 - Log-to-session sync now also rejects whitespace-padded persisted log-line `ts` values instead of trimming/coalescing malformed sync cursor timestamps.
 - Read-tool line counting now validates `wc -l` output strictly and throws explicit parse errors for malformed output instead of continuing with `NaN`-derived offsets/line ranges.

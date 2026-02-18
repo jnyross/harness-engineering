@@ -48,7 +48,7 @@ describe("MomSettingsManager settings normalization", () => {
 		});
 	});
 
-	it("preserves valid settings values", () => {
+	it("preserves valid settings values without string normalization", () => {
 		const workspaceDir = join(tmpdir(), `mom-settings-test-${Date.now()}-${Math.random().toString(16).slice(2)}`);
 		tempDirs.push(workspaceDir);
 		mkdirSync(workspaceDir, { recursive: true });
@@ -56,8 +56,8 @@ describe("MomSettingsManager settings normalization", () => {
 		writeFileSync(
 			join(workspaceDir, "settings.json"),
 			JSON.stringify({
-				defaultProvider: " anthropic ",
-				defaultModel: " claude-sonnet ",
+				defaultProvider: "anthropic",
+				defaultModel: "claude-sonnet",
 				defaultThinkingLevel: "high",
 				compaction: { enabled: false, reserveTokens: 12000, keepRecentTokens: 25000 },
 				retry: { enabled: false, maxRetries: 5, baseDelayMs: 5000 },
@@ -78,6 +78,26 @@ describe("MomSettingsManager settings normalization", () => {
 			maxRetries: 5,
 			baseDelayMs: 5000,
 		});
+	});
+
+	it("rejects whitespace-padded provider/model settings values", () => {
+		const workspaceDir = join(tmpdir(), `mom-settings-test-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+		tempDirs.push(workspaceDir);
+		mkdirSync(workspaceDir, { recursive: true });
+
+		writeFileSync(
+			join(workspaceDir, "settings.json"),
+			JSON.stringify({
+				defaultProvider: " anthropic ",
+				defaultModel: " claude-sonnet ",
+				defaultThinkingLevel: "high",
+			}),
+		);
+
+		const manager = new MomSettingsManager(workspaceDir);
+		assert.equal(manager.getDefaultProvider(), undefined);
+		assert.equal(manager.getDefaultModel(), undefined);
+		assert.equal(manager.getDefaultThinkingLevel(), "high");
 	});
 
 	it("normalizes invalid thinking level updates to off", () => {
