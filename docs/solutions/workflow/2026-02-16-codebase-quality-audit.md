@@ -6397,6 +6397,27 @@ to:
 
 **Result:** RPC mode now rejects malformed command payload shapes up front and emits clear parse errors, while preserving normal handling of valid command and extension UI response payloads.
 
+---
+
+### 340) coding-agent RPC client stream parser accepted malformed payload shapes and leaked unmatched responses into event listeners
+
+**Finding:** `packages/coding-agent/src/modes/rpc/rpc-client.ts` parsed each stdout line with `JSON.parse(...)` and forwarded non-object payloads and unmatched `response` frames into event listeners as if they were valid `AgentEvent` payloads.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/rpc/rpc-client.ts`
+- `packages/coding-agent/test/rpc-client.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require object payloads with non-empty `type` values before processing parsed stream lines,
+- require non-empty string response IDs and matching pending request IDs before resolving response waiters,
+- ignore unmatched/malformed response frames instead of forwarding them to event listeners,
+- add regression coverage for non-object payload rejection, unmatched response-frame suppression, and valid pending-response resolution.
+
+**Result:** RPC client event streams now ignore malformed line payload shapes and only resolve matching pending responses, preventing malformed response leakage into event listeners.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6556,7 +6577,7 @@ to:
 - agent spawnScript regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/sub-agent.test.ts` (includes signal-exit non-zero semantics and forced-kill fallback for SIGTERM-resistant children)
 - coding-agent RPC startup/shutdown regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures, pending-request rejection on stop and unexpected exit, stop timeout forced-kill cleanup, send timeout/write-error cleanup, closed-stdin send handling, and exit-listener cleanup assertions)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/rpc-client.test.ts` (includes startup failures, pending-request rejection on stop and unexpected exit, stop timeout forced-kill cleanup, send timeout/write-error cleanup, closed-stdin send handling, exit-listener cleanup assertions, malformed/non-object stream payload suppression, and unmatched response-frame filtering)
 - coding-agent login dialog browser-invocation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/login-dialog-url-open.test.ts` (includes macOS/Windows/Linux command invocation mapping)
 - coding-agent login dialog lifecycle regression tests pass:
