@@ -6458,6 +6458,26 @@ to:
 
 **Result:** settings loading now tolerates malformed non-object settings-file roots safely, preserving persistence and merge behavior with normalized empty settings fallbacks.
 
+---
+
+### 343) ai OpenAI Codex Responses JWT account-id extraction rejected base64url payload segments
+
+**Finding:** `packages/ai/src/providers/openai-codex-responses.ts` extracted Codex JWT payloads with direct `atob(...)` decoding, which assumes padded standard base64 input. Base64url JWT payload segments (unpadded and using `-` / `_`) could fail account-id extraction and abort Codex request setup.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/openai-codex-responses.ts`
+- `packages/ai/test/openai-codex-stream.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- normalize/decode JWT payload segments using base64url-safe decoding with padding restoration,
+- validate decoded payload and auth-claim object shapes before reading `chatgpt_account_id`,
+- add regression coverage for base64url token payload decoding in Codex streaming request setup.
+
+**Result:** Codex request setup now accepts base64url JWT payload segments reliably when extracting ChatGPT account IDs.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6691,7 +6711,7 @@ to:
 - ai Gemini CLI SSE regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-empty-stream.test.ts` (includes terminal `data:` line without trailing newline)
 - ai Codex/Gemini SSE regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-stream.test.ts test/google-gemini-cli-empty-stream.test.ts`
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-stream.test.ts test/google-gemini-cli-empty-stream.test.ts` (includes Codex base64url JWT payload account-id extraction coverage)
 - coding-agent exec regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts` (includes signal-terminated subprocess failure semantics and forced-kill fallback for SIGTERM-resistant processes)
 - coding-agent execCommand regression tests pass:
