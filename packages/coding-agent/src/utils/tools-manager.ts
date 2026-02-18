@@ -61,6 +61,31 @@ const TOOLS: Record<string, ToolConfig> = {
 	},
 };
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
+}
+
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+export function parseLatestReleaseVersion(payload: unknown): string | undefined {
+	const response = asRecord(payload);
+	const tagName = parseNonEmptyString(response?.tag_name);
+	if (!tagName) {
+		return undefined;
+	}
+	const normalized = tagName.replace(/^v/, "");
+	return normalized.length > 0 ? normalized : undefined;
+}
+
 // Check if a command exists in PATH by trying to run it
 function commandExists(cmd: string): boolean {
 	try {
@@ -103,8 +128,11 @@ async function getLatestVersion(repo: string): Promise<string> {
 		throw new Error(`GitHub API error: ${response.status}`);
 	}
 
-	const data = (await response.json()) as { tag_name: string };
-	return data.tag_name.replace(/^v/, "");
+	const version = parseLatestReleaseVersion(await response.json());
+	if (!version) {
+		throw new Error("Invalid GitHub API response: missing tag_name");
+	}
+	return version;
 }
 
 // Download a file from URL
