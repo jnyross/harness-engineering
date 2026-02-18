@@ -21,7 +21,7 @@
 - OpenAI Completions stream usage parsing now rejects fractional token values (number and numeric-string forms) instead of truncating them, preventing malformed usage metadata from silently coercing decimal token counts.
 - Anthropic stream usage parsing now ignores negative token values and truncates fractional numeric values to integers, preventing malformed usage metadata from producing negative/fractional accounting.
 - Google and Google Vertex stream usage parsing now accepts numeric-string usage metadata values and computes fallback totals when `totalTokenCount` is omitted, preserving non-zero accounting for compatible proxy layers.
-- Bedrock shared usage parsing now ignores negative token values and truncates fractional numeric values to integers, preventing malformed provider metadata from producing negative/fractional usage accounting.
+- Bedrock shared usage parsing now rejects fractional token values (number and numeric-string forms) instead of truncating them, preventing malformed provider metadata from silently coercing decimal token counts.
 - Google and Google Vertex shared usage parsing now rejects fractional token values (number and numeric-string forms) instead of truncating them, preventing malformed usage metadata from silently coercing decimal token counts.
 - Google/Bedrock/OpenAI-compatible usage parsers now reject non-decimal numeric-string formats (for example `0x10` and `1e2`) instead of accepting broad numeric coercions.
 - OpenAI/Anthropic/Google/Bedrock usage parsers now reject unsafe integer token values (greater than `Number.MAX_SAFE_INTEGER`) before normalization, preventing rounded oversized token accounting coercions.

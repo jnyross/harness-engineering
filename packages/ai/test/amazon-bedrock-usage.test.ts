@@ -68,11 +68,11 @@ describe("extractBedrockUsageMetadata", () => {
 				totalTokens: "invalid",
 			}),
 		).toEqual({
-			input: 4,
+			input: 0,
 			output: 0,
 			cacheRead: 0,
 			cacheWrite: 0,
-			totalTokens: 4,
+			totalTokens: 0,
 			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
 		});
 	});
@@ -89,9 +89,28 @@ describe("extractBedrockUsageMetadata", () => {
 		).toEqual({
 			input: 0,
 			output: 0,
-			cacheRead: 4,
+			cacheRead: 0,
 			cacheWrite: 0,
-			totalTokens: 4,
+			totalTokens: 0,
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+		});
+	});
+
+	it("ignores fractional numeric usage values", () => {
+		expect(
+			extractBedrockUsageMetadata({
+				inputTokens: 8.8,
+				outputTokens: 3.4,
+				cacheReadInputTokens: 2.2,
+				cacheWriteInputTokens: 1.1,
+				totalTokens: 14.7,
+			}),
+		).toEqual({
+			input: 0,
+			output: 0,
+			cacheRead: 0,
+			cacheWrite: 0,
+			totalTokens: 0,
 			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
 		});
 	});
