@@ -33,6 +33,7 @@
 - Project-loop JSON task parsing now normalizes malformed task entry shapes (title/description/acceptance fields), ignores non-object JSON items, and falls back to markdown task parsing when JSON snippets contain no valid tasks, preventing malformed plan JSON from dropping actionable task decomposition.
 - Proxy SSE parsing now accepts both `data: <json>` and `data:<json>` line prefixes, preventing dropped proxy events when servers omit the optional post-colon space.
 - Proxy SSE parsing errors now report explicit malformed-JSON diagnostics (including payload previews) instead of generic parse failures, improving proxy stream failure debugging.
+- Proxy SSE event parsing now ignores non-object/missing-type JSON payload roots before event dispatch, preventing malformed `data: null`-style frames from crashing stream processing.
 - `runner.ts` / `project-runner.ts` numeric option parsing now rejects malformed or non-positive values (for example `--iterations 3rounds`, `PI_MAX_REDO_ROUNDS=0`) instead of silently coercing via `parseInt` fallback behavior.
 - Shared CLI positive-integer option parsing now rejects unsafe integer values (greater than `Number.MAX_SAFE_INTEGER`) instead of accepting rounded coercions.
 - `runner.ts` CLI entrypoint now guards direct execution behind `import.meta.url` checks and exposes argument parsing as a reusable helper, preventing side-effectful `main()` execution when imported in tests.

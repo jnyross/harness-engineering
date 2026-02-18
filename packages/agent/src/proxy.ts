@@ -64,6 +64,26 @@ export interface ProxyStreamOptions extends SimpleStreamOptions {
 	proxyUrl: string;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
+}
+
+export function parseProxyEventPayload(data: string): ProxyAssistantMessageEvent | undefined {
+	const parsed = JSON.parse(data) as unknown;
+	const record = asRecord(parsed);
+	if (!record) {
+		return undefined;
+	}
+	const type = typeof record.type === "string" ? record.type : undefined;
+	if (!type || type.trim().length === 0) {
+		return undefined;
+	}
+	return record as ProxyAssistantMessageEvent;
+}
+
 /**
  * Stream function that proxies through a server instead of calling LLM providers directly.
  * The server strips the partial field from delta events to reduce bandwidth.
@@ -165,13 +185,16 @@ export function streamProxy(model: Model<Api>, context: Context, options: ProxyS
 				if (!data) {
 					return;
 				}
-				let proxyEvent: ProxyAssistantMessageEvent;
+				let proxyEvent: ProxyAssistantMessageEvent | undefined;
 				try {
-					proxyEvent = JSON.parse(data) as ProxyAssistantMessageEvent;
+					proxyEvent = parseProxyEventPayload(data);
 				} catch (error) {
 					const details = error instanceof Error ? error.message : String(error);
 					const payloadPreview = data.length > 200 ? `${data.slice(0, 200)}…` : data;
 					throw new Error(`Proxy error: invalid SSE event JSON (${details}): ${payloadPreview}`);
+				}
+				if (!proxyEvent) {
+					return;
 				}
 				const event = processProxyEvent(proxyEvent, partial);
 				if (event) {

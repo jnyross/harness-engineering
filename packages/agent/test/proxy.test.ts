@@ -138,4 +138,48 @@ describe("streamProxy", () => {
 		expect(result.errorMessage).toContain("Proxy error: invalid SSE event JSON");
 		expect(result.errorMessage).toContain("invalid-json");
 	});
+
+	it("ignores malformed JSON root shapes and continues processing valid events", async () => {
+		const doneEvent = {
+			type: "done",
+			reason: "stop",
+			usage: emptyUsage,
+		};
+
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(
+				async () =>
+					new Response(
+						[
+							"data: null",
+							"",
+							"data: 42",
+							"",
+							'data: {"foo":"bar"}',
+							"",
+							`data: ${JSON.stringify(doneEvent)}`,
+						].join("\n"),
+						{
+							status: 200,
+							headers: { "Content-Type": "text/event-stream" },
+						},
+					),
+			),
+		);
+
+		const stream = streamProxy(
+			getModel("openai", "gpt-4o-mini"),
+			{ messages: [] },
+			{ authToken: "token", proxyUrl: "https://proxy.example.com" },
+		);
+
+		const result = await Promise.race([
+			stream.result(),
+			new Promise<never>((_resolve, reject) => setTimeout(() => reject(new Error("timed out")), 1000)),
+		]);
+
+		expect(result.stopReason).toBe("stop");
+		expect(result.errorMessage).toBeUndefined();
+	});
 });
