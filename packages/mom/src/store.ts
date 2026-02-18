@@ -37,7 +37,10 @@ function parseLoggedMessageTimestamp(line: string): string | undefined {
 		return undefined;
 	}
 	const trimmed = parsed.ts.trim();
-	return trimmed.length > 0 ? trimmed : undefined;
+	if (trimmed.length === 0 || trimmed !== parsed.ts) {
+		return undefined;
+	}
+	return parsed.ts;
 }
 
 export class ChannelStore {

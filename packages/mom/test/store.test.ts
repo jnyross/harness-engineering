@@ -106,4 +106,18 @@ describe("ChannelStore timestamp normalization", () => {
 		const store = new ChannelStore({ workingDir: tempDir, botToken: "test-token" });
 		assert.equal(store.getLastTimestamp(channelId), null);
 	});
+
+	it("returns null for whitespace-padded timestamp strings on last log line", () => {
+		const tempDir = mkdtempSync(join(tmpdir(), "mom-store-test-"));
+		tempDirs.push(tempDir);
+		const channelId = "C1001";
+		const channelDir = join(tempDir, channelId);
+		mkdirSync(channelDir, { recursive: true });
+		const logPath = join(channelDir, "log.jsonl");
+
+		writeFileSync(logPath, `${JSON.stringify({ ts: " 1700000000.123456 ", text: "padded ts" })}\n`, "utf-8");
+
+		const store = new ChannelStore({ workingDir: tempDir, botToken: "test-token" });
+		assert.equal(store.getLastTimestamp(channelId), null);
+	});
 });

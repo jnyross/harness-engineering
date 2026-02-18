@@ -7715,6 +7715,26 @@ to:
 
 **Result:** coding-agent package metadata parsing now preserves strict app/config/version field identity and rejects whitespace-padded metadata values instead of silently normalizing malformed package metadata.
 
+---
+
+### 405) mom channel-store last-log timestamp parsing normalized whitespace-padded timestamp values
+
+**Finding:** `packages/mom/src/store.ts` parsed last-log-line `ts` values by trimming non-empty strings, so whitespace-padded persisted timestamps could be silently accepted instead of rejected as malformed channel-store cursor values.
+
+**Action:** Updated:
+
+- `packages/mom/src/store.ts`
+- `packages/mom/test/store.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- require strict non-empty timestamp-string identity (no surrounding whitespace) when parsing last-log-line `ts` values,
+- preserve existing malformed timestamp fallback behavior (`null`) for non-string/blank timestamps,
+- add regression coverage for whitespace-padded persisted `ts` rejection in `getLastTimestamp()`.
+
+**Result:** Channel-store last-log timestamp parsing now preserves strict persisted timestamp identity and rejects whitespace-padded `ts` values instead of silently normalizing malformed cursor values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7734,7 +7754,7 @@ to:
 - mom slack log-line timestamp extraction regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-log-timestamp-parse.test.ts test/slack-timestamp.test.ts` (includes whitespace-padded persisted-log `ts` rejection coverage)
 - mom channel-store timestamp parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-mom" test -- test/store.test.ts`
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/store.test.ts` (includes whitespace-padded last-log-line `ts` rejection coverage)
 - mom settings normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/context-settings.test.ts test/store.test.ts`
 - mom context sync timestamp regression tests pass:
