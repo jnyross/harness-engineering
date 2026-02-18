@@ -293,6 +293,13 @@ function normalizeThinkingBudgets(budgets: ThinkingBudgetsSettings | undefined):
 	return Object.keys(normalized).length > 0 ? normalized : undefined;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
+}
+
 /** Deep merge settings: project/overrides take precedence, nested objects merge recursively */
 function deepMergeSettings(base: Settings, overrides: Settings): Settings {
 	const result: Settings = { ...base };
@@ -381,7 +388,8 @@ export class SettingsManager {
 			return {};
 		}
 		const content = readFileSync(path, "utf-8");
-		const settings = JSON.parse(content);
+		const parsed = JSON.parse(content) as unknown;
+		const settings = asRecord(parsed) ?? {};
 		return SettingsManager.migrateSettings(settings);
 	}
 
@@ -435,7 +443,8 @@ export class SettingsManager {
 
 		try {
 			const content = readFileSync(this.projectSettingsPath, "utf-8");
-			const settings = JSON.parse(content);
+			const parsed = JSON.parse(content) as unknown;
+			const settings = asRecord(parsed) ?? {};
 			return SettingsManager.migrateSettings(settings);
 		} catch (error) {
 			console.error(`Warning: Could not read project settings file: ${error}`);

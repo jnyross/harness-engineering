@@ -193,6 +193,33 @@ describe("SettingsManager", () => {
 		});
 	});
 
+	describe("settings root shape normalization", () => {
+		it("normalizes non-object global settings roots and still persists edits", () => {
+			const settingsPath = join(agentDir, "settings.json");
+			writeFileSync(settingsPath, "42");
+
+			const manager = SettingsManager.create(projectDir, agentDir);
+			expect(manager.getTheme()).toBeUndefined();
+
+			manager.setTheme("light");
+
+			const savedSettings = JSON.parse(readFileSync(settingsPath, "utf-8"));
+			expect(savedSettings).toEqual({ theme: "light" });
+		});
+
+		it("ignores non-object project settings roots", () => {
+			const settingsPath = join(agentDir, "settings.json");
+			const projectSettingsPath = join(projectDir, ".pi", "settings.json");
+			writeFileSync(settingsPath, JSON.stringify({ theme: "dark" }));
+			writeFileSync(projectSettingsPath, '"invalid-project-root"');
+
+			const manager = SettingsManager.create(projectDir, agentDir);
+
+			expect(manager.getTheme()).toBe("dark");
+			expect(manager.getProjectSettings()).toEqual({});
+		});
+	});
+
 	describe("shellCommandPrefix", () => {
 		it("should load shellCommandPrefix from settings", () => {
 			const settingsPath = join(agentDir, "settings.json");
