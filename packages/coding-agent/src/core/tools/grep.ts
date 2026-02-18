@@ -42,6 +42,52 @@ export interface GrepToolDetails {
 	linesTruncated?: boolean;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
+}
+
+interface ParsedRipgrepEvent {
+	type: string;
+	filePath?: string;
+	lineNumber?: number;
+}
+
+export function parseRipgrepEventLine(line: string): ParsedRipgrepEvent | undefined {
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(line);
+	} catch {
+		return undefined;
+	}
+
+	const record = asRecord(parsed);
+	if (!record) {
+		return undefined;
+	}
+
+	const eventType = typeof record.type === "string" ? record.type : undefined;
+	if (!eventType) {
+		return undefined;
+	}
+	if (eventType !== "match") {
+		return { type: eventType };
+	}
+
+	const data = asRecord(record.data);
+	const pathValue = asRecord(data?.path)?.text;
+	const filePath = typeof pathValue === "string" && pathValue.length > 0 ? pathValue : undefined;
+	const rawLineNumber = data?.line_number;
+	const lineNumber =
+		typeof rawLineNumber === "number" && Number.isSafeInteger(rawLineNumber) && rawLineNumber > 0
+			? rawLineNumber
+			: undefined;
+
+	return { type: eventType, filePath, lineNumber };
+}
+
 function parseContextValue(context: number | undefined): number {
 	if (context === undefined) {
 		return 0;
@@ -268,27 +314,19 @@ export function createGrepTool(cwd: string, options?: GrepToolOptions): AgentToo
 								return;
 							}
 
-							// biome-ignore lint/suspicious/noExplicitAny: migration
-							let event: any;
-							try {
-								event = JSON.parse(line);
-							} catch {
+							const event = parseRipgrepEventLine(line);
+							if (!event || event.type !== "match") {
 								return;
 							}
 
-							if (event.type === "match") {
-								matchCount++;
-								const filePath = event.data?.path?.text;
-								const lineNumber = event.data?.line_number;
+							matchCount++;
+							if (event.filePath && event.lineNumber !== undefined) {
+								matches.push({ filePath: event.filePath, lineNumber: event.lineNumber });
+							}
 
-								if (filePath && typeof lineNumber === "number") {
-									matches.push({ filePath, lineNumber });
-								}
-
-								if (matchCount >= effectiveLimit) {
-									matchLimitReached = true;
-									stopChild(true);
-								}
+							if (matchCount >= effectiveLimit) {
+								matchLimitReached = true;
+								stopChild(true);
 							}
 						});
 

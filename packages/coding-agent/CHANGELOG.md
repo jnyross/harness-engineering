@@ -57,6 +57,7 @@
 - Session-manager session-header validation now requires non-empty session IDs during load/list/recent-session checks, preventing malformed blank-id headers from being treated as valid persisted sessions.
 - RPC mode command-line parsing now requires object payloads with non-empty `type` values (and non-empty IDs for `extension_ui_response`), returning explicit parse errors for malformed command shapes.
 - RPC client stream-line parsing now ignores malformed/non-object payloads and drops unmatched/invalid response IDs instead of forwarding malformed response shapes through event listeners.
+- Grep tool ripgrep-line JSON parsing now validates event payload roots/types and match metadata (`path.text`, `line_number`) before formatting, preventing malformed runtime rg-event shapes from propagating incompatible match metadata.
 - Interactive external-editor launch now reports startup/signal/non-zero exit failures explicitly (while preserving current editor content) instead of silently no-oping.
 - Interactive selector replacement now disposes previous disposable selector components before teardown, and session selector now cancels pending status timers/load updates on dispose, preventing stale async updates after selector close/switch.
 - Interactive chat/pending container clears now dispose disposable child components before removal, preventing leaked background timers/listeners from detached transient message components.
