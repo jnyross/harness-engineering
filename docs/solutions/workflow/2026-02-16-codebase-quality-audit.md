@@ -7309,6 +7309,26 @@ to:
 
 **Result:** Bedrock shared usage parsing now enforces strict integer token accounting and rejects malformed fractional usage values.
 
+---
+
+### 385) ai Anthropic stream usage parsing truncated fractional token counters
+
+**Finding:** `packages/ai/src/providers/anthropic.ts` normalized Anthropic stream usage counters by truncating fractional numeric values (numbers and numeric strings). Malformed decimal token fields were silently coerced into integer usage accounting.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/anthropic.ts`
+- `packages/ai/test/github-copilot-anthropic.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require usage token values to be non-negative safe integers for Anthropic stream usage parsing,
+- reject fractional token values instead of truncating them,
+- expand Copilot Anthropic stream regression coverage with a dedicated fractional-number rejection case and stricter malformed decimal expectations.
+
+**Result:** Anthropic stream usage parsing now enforces strict integer token accounting and rejects malformed fractional usage values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7384,7 +7404,7 @@ to:
 - ai OpenAI Completions thought-signature normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-result-images.test.ts`
 - ai OpenAI/Anthropic usage parser regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts` (includes OpenAI Completions fractional usage-token rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts` (includes OpenAI Completions and Anthropic fractional usage-token rejection coverage)
 - mom model/key resolution regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/agent-model.test.ts`
 - pods required-option parser regression tests pass:

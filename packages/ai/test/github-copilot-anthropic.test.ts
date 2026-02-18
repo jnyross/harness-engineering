@@ -9,6 +9,7 @@ const mockState = vi.hoisted(() => ({
 	useMalformedUsage: false,
 	useNonDecimalUsage: false,
 	useUnsafeUsage: false,
+	useFractionalNumberUsage: false,
 }));
 
 vi.mock("@anthropic-ai/sdk", () => {
@@ -23,6 +24,12 @@ vi.mock("@anthropic-ai/sdk", () => {
 						return String(options.malformedNumber);
 					}
 					return "0x10";
+				}
+				if (mockState.useFractionalNumberUsage) {
+					if (options?.malformedNumber !== undefined) {
+						return options.malformedNumber;
+					}
+					return value + 0.5;
 				}
 				if (mockState.useUnsafeUsage) {
 					return "9007199254740993";
@@ -89,6 +96,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		mockState.useMalformedUsage = false;
 		mockState.useNonDecimalUsage = false;
 		mockState.useUnsafeUsage = false;
+		mockState.useFractionalNumberUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		expect(model.api).toBe("anthropic-messages");
 
@@ -131,6 +139,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		mockState.useMalformedUsage = false;
 		mockState.useNonDecimalUsage = false;
 		mockState.useUnsafeUsage = false;
+		mockState.useFractionalNumberUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const s = streamAnthropic(model, context, {
@@ -150,6 +159,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		mockState.useMalformedUsage = false;
 		mockState.useNonDecimalUsage = false;
 		mockState.useUnsafeUsage = false;
+		mockState.useFractionalNumberUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const result = await streamAnthropic(model, context, { apiKey: "tid_copilot_session_test_token" }).result();
@@ -166,15 +176,16 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		mockState.useMalformedUsage = true;
 		mockState.useNonDecimalUsage = false;
 		mockState.useUnsafeUsage = false;
+		mockState.useFractionalNumberUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const result = await streamAnthropic(model, context, { apiKey: "tid_copilot_session_test_token" }).result();
 
 		expect(result.usage.input).toBe(0);
-		expect(result.usage.output).toBe(2);
-		expect(result.usage.cacheRead).toBe(2);
-		expect(result.usage.cacheWrite).toBe(1);
-		expect(result.usage.totalTokens).toBe(5);
+		expect(result.usage.output).toBe(0);
+		expect(result.usage.cacheRead).toBe(0);
+		expect(result.usage.cacheWrite).toBe(0);
+		expect(result.usage.totalTokens).toBe(0);
 	});
 
 	it("ignores non-decimal numeric string usage counters from Anthropic stream events", async () => {
@@ -182,6 +193,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		mockState.useMalformedUsage = false;
 		mockState.useNonDecimalUsage = true;
 		mockState.useUnsafeUsage = false;
+		mockState.useFractionalNumberUsage = false;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const result = await streamAnthropic(model, context, { apiKey: "tid_copilot_session_test_token" }).result();
@@ -198,6 +210,24 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		mockState.useMalformedUsage = false;
 		mockState.useNonDecimalUsage = false;
 		mockState.useUnsafeUsage = true;
+		mockState.useFractionalNumberUsage = false;
+		const model = getModel("github-copilot", "claude-sonnet-4");
+		const { streamAnthropic } = await import("../src/providers/anthropic.js");
+		const result = await streamAnthropic(model, context, { apiKey: "tid_copilot_session_test_token" }).result();
+
+		expect(result.usage.input).toBe(0);
+		expect(result.usage.output).toBe(0);
+		expect(result.usage.cacheRead).toBe(0);
+		expect(result.usage.cacheWrite).toBe(0);
+		expect(result.usage.totalTokens).toBe(0);
+	});
+
+	it("ignores fractional numeric usage counters from Anthropic stream events", async () => {
+		mockState.useStringUsage = false;
+		mockState.useMalformedUsage = false;
+		mockState.useNonDecimalUsage = false;
+		mockState.useUnsafeUsage = false;
+		mockState.useFractionalNumberUsage = true;
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const result = await streamAnthropic(model, context, { apiKey: "tid_copilot_session_test_token" }).result();
