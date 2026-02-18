@@ -6171,6 +6171,27 @@ to:
 
 **Result:** Slack backfill/latest timestamp selection now skips malformed runtime entry types safely instead of throwing during comparison.
 
+---
+
+### 329) agent project-loop JSON task parsing accepted malformed runtime task entry shapes
+
+**Finding:** `packages/agent/src/project-loop.ts` parsed JSON task lists using static casts only; malformed task entry shapes (non-object entries, non-string title/description/criteria values) could propagate invalid task payloads into downstream TDD execution/commit flows.
+
+**Action:** Updated:
+
+- `packages/agent/src/project-loop.ts`
+- `packages/agent/test/project-loop.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to:
+
+- normalize JSON task entries through runtime shape checks,
+- trim/validate task title/description strings and acceptance criteria arrays,
+- ignore non-object JSON list entries while preserving valid tasks,
+- add regression coverage for mixed valid+malformed JSON task arrays.
+
+**Result:** project-loop JSON decomposition now fails safely on malformed task entry fields and preserves deterministic normalized task payloads for downstream TDD execution.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6313,6 +6334,8 @@ to:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/project-runner.test.ts`
 - agent runner args regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/runner.test.ts`
+- agent project-loop JSON task normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/project-loop.test.ts`
 - mom sandbox regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/sandbox.test.ts`
 - pods SSH/SCP parser regression tests pass:
