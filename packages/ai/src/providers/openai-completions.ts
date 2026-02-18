@@ -87,6 +87,27 @@ function parseUsageNumber(value: unknown): number {
 	return 0;
 }
 
+function parseHeaderName(value: string): string | undefined {
+	const trimmed = value.trim();
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
+}
+
+function applyValidatedHeaders(target: Record<string, string>, source: Record<string, string> | undefined): void {
+	if (!source) {
+		return;
+	}
+	for (const [rawKey, value] of Object.entries(source)) {
+		const headerName = parseHeaderName(rawKey);
+		if (!headerName) {
+			continue;
+		}
+		target[headerName] = value;
+	}
+}
+
 function parseReasoningDetail(value: string | undefined): Record<string, unknown> | undefined {
 	if (!value) {
 		return undefined;
@@ -400,20 +421,19 @@ function createClient(
 		apiKey = process.env.OPENAI_API_KEY;
 	}
 
-	const headers = { ...model.headers };
+	const headers: Record<string, string> = {};
+	applyValidatedHeaders(headers, model.headers);
 	if (model.provider === "github-copilot") {
 		const hasImages = hasCopilotVisionInput(context.messages);
 		const copilotHeaders = buildCopilotDynamicHeaders({
 			messages: context.messages,
 			hasImages,
 		});
-		Object.assign(headers, copilotHeaders);
+		applyValidatedHeaders(headers, copilotHeaders);
 	}
 
 	// Merge options headers last so they can override defaults
-	if (optionsHeaders) {
-		Object.assign(headers, optionsHeaders);
-	}
+	applyValidatedHeaders(headers, optionsHeaders);
 
 	return new OpenAI({
 		apiKey,

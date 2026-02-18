@@ -7349,6 +7349,26 @@ to:
 
 **Result:** Anthropic header merge now preserves strict header-key identity and rejects malformed custom header names before request construction.
 
+---
+
+### 387) ai OpenAI Completions client header merge accepted whitespace-padded custom header names
+
+**Finding:** `packages/ai/src/providers/openai-completions.ts` merged provider/model/options headers via broad object assignment and accepted whitespace-padded/blank custom header keys in merged default headers.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/openai-completions.ts`
+- `packages/ai/test/openai-completions-tool-choice.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- introduce strict header-name validation (non-empty and no surrounding whitespace),
+- validate header names for model headers, Copilot dynamic headers, and options headers before merge,
+- add regression coverage asserting malformed option header keys are excluded while valid keys remain.
+
+**Result:** OpenAI Completions header merge now preserves strict header-key identity and rejects malformed custom header names before client initialization.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7424,7 +7444,7 @@ to:
 - ai OpenAI Completions thought-signature normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-result-images.test.ts`
 - ai OpenAI/Anthropic usage parser regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts` (includes OpenAI Completions and Anthropic fractional usage-token rejection coverage plus Anthropic whitespace-padded custom-header rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts` (includes OpenAI Completions + Anthropic fractional usage-token rejection coverage and OpenAI Completions + Anthropic whitespace-padded custom-header rejection coverage)
 - mom model/key resolution regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/agent-model.test.ts`
 - pods required-option parser regression tests pass:

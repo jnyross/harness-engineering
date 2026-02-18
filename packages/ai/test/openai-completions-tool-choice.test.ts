@@ -8,12 +8,14 @@ const mockState = vi.hoisted(
 	() =>
 		({
 			lastParams: undefined as unknown,
+			constructorOpts: undefined as Record<string, unknown> | undefined,
 			usageAsStrings: false,
 			usageMalformed: false,
 			usageNonDecimal: false,
 			usageUnsafe: false,
 		}) as {
 			lastParams: unknown;
+			constructorOpts: Record<string, unknown> | undefined;
 			usageAsStrings: boolean;
 			usageMalformed: boolean;
 			usageNonDecimal: boolean;
@@ -23,6 +25,10 @@ const mockState = vi.hoisted(
 
 vi.mock("openai", () => {
 	class FakeOpenAI {
+		constructor(opts: Record<string, unknown>) {
+			mockState.constructorOpts = opts;
+		}
+
 		chat = {
 			completions: {
 				create: async (params: unknown) => {
@@ -177,6 +183,41 @@ describe("openai-completions tool_choice", () => {
 		expect(tool).toBeTruthy();
 		expect(tool?.strict).toBeUndefined();
 		expect("strict" in (tool ?? {})).toBe(false);
+	});
+
+	it("drops whitespace-padded custom header names from OpenAI client options", async () => {
+		mockState.usageAsStrings = false;
+		mockState.usageMalformed = false;
+		mockState.usageNonDecimal = false;
+		mockState.usageUnsafe = false;
+		const { compat: _compat, ...baseModel } = getModel("openai", "gpt-4o-mini")!;
+		const model = { ...baseModel, api: "openai-completions" } as const;
+
+		await streamSimple(
+			model,
+			{
+				messages: [
+					{
+						role: "user",
+						content: "hello",
+						timestamp: Date.now(),
+					},
+				],
+			},
+			{
+				apiKey: "test",
+				headers: {
+					"x-option-valid": "yes",
+					" x-option-invalid ": "no",
+					"": "blank",
+				},
+			},
+		).result();
+
+		const headers = mockState.constructorOpts?.defaultHeaders as Record<string, string>;
+		expect(headers["x-option-valid"]).toBe("yes");
+		expect(Object.keys(headers)).not.toContain(" x-option-invalid ");
+		expect(Object.keys(headers)).not.toContain("");
 	});
 
 	it("normalizes numeric-string usage counters from compatible APIs", async () => {
