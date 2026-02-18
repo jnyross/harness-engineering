@@ -2,6 +2,7 @@
 
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { createInterface } from "readline";
+import { parseAuthFileContent } from "./auth-file.js";
 import { parseProviderSelection } from "./cli-selection.js";
 import { getOAuthProvider, getOAuthProviders } from "./utils/oauth/index.js";
 import type { OAuthCredentials, OAuthProviderId } from "./utils/oauth/types.js";
@@ -17,7 +18,7 @@ function prompt(rl: ReturnType<typeof createInterface>, question: string): Promi
 function loadAuth(): Record<string, { type: "oauth" } & OAuthCredentials> {
 	if (!existsSync(AUTH_FILE)) return {};
 	try {
-		return JSON.parse(readFileSync(AUTH_FILE, "utf-8"));
+		return parseAuthFileContent(readFileSync(AUTH_FILE, "utf-8"));
 	} catch {
 		return {};
 	}

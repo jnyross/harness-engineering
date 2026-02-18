@@ -40,6 +40,7 @@
 - Model-catalog generation now parses external pricing metadata with strict numeric conversion, ignoring malformed numeric strings instead of partially coercing prefixed values.
 - Model-catalog generator now only parses decimal numeric pricing strings (rejecting non-decimal forms like `0x10` / `1e2`) and no longer auto-executes network fetches when imported for tests.
 - Azure OpenAI deployment-name map parsing now trims model/deployment segments before validation, skipping blank-key/value entries instead of registering empty-string mappings from whitespace-padded config tokens.
+- OAuth CLI auth-file loading now normalizes parsed credential entries (root shape, provider keys, oauth credential fields), dropping malformed entries instead of forwarding incompatible auth data into login/session credential reads.
 - Shared `EventStream.result()` now rejects when streams end without a completion event/result, preventing silent hangs from incomplete stream lifecycles.
 - AI CLI readline prompts now resolve with safe fallbacks when interfaces close early (including already-closed prompts), preventing hangs during interrupted interactive provider selection/login flows.
 - Gemini CLI, Antigravity, and OpenAI Codex OAuth callback waiters now use event-driven settlement (instead of polling loops), improving cancellation/close responsiveness and reducing timer churn during local callback waits.
