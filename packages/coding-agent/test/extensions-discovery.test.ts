@@ -144,6 +144,28 @@ describe("extensions discovery", () => {
 		expect(result.extensions).toHaveLength(2);
 	});
 
+	it("ignores malformed manifest extension entries and keeps valid ones", async () => {
+		const subdir = path.join(extensionsDir, "my-package");
+		fs.mkdirSync(subdir);
+		fs.writeFileSync(path.join(subdir, "index.ts"), extensionCodeWithTool("from-index"));
+		fs.writeFileSync(path.join(subdir, "valid.ts"), extensionCodeWithTool("from-manifest"));
+		fs.writeFileSync(
+			path.join(subdir, "package.json"),
+			JSON.stringify({
+				pi: {
+					extensions: [42, "   ", "./valid.ts"],
+				},
+			}),
+		);
+
+		const result = await discoverAndLoadExtensions([], tempDir, tempDir);
+
+		expect(result.errors).toHaveLength(0);
+		expect(result.extensions).toHaveLength(1);
+		expect(result.extensions[0].tools.has("from-manifest")).toBe(true);
+		expect(result.extensions[0].tools.has("from-index")).toBe(false);
+	});
+
 	it("package.json with pi field takes precedence over index.ts", async () => {
 		const subdir = path.join(extensionsDir, "my-package");
 		fs.mkdirSync(subdir);

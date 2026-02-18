@@ -389,12 +389,32 @@ interface PiManifest {
 	prompts?: string[];
 }
 
+function normalizeManifestEntryList(value: unknown): string[] | undefined {
+	if (!Array.isArray(value)) {
+		return undefined;
+	}
+	const entries = value
+		.filter((entry): entry is string => typeof entry === "string")
+		.map((entry) => entry.trim())
+		.filter((entry) => entry.length > 0);
+	return entries.length > 0 ? entries : undefined;
+}
+
 function readPiManifest(packageJsonPath: string): PiManifest | null {
 	try {
 		const content = fs.readFileSync(packageJsonPath, "utf-8");
-		const pkg = JSON.parse(content);
-		if (pkg.pi && typeof pkg.pi === "object") {
-			return pkg.pi as PiManifest;
+		const pkg = JSON.parse(content) as { pi?: unknown };
+		const pi =
+			pkg.pi && typeof pkg.pi === "object" && !Array.isArray(pkg.pi)
+				? (pkg.pi as { extensions?: unknown; themes?: unknown; skills?: unknown; prompts?: unknown })
+				: undefined;
+		if (pi) {
+			return {
+				extensions: normalizeManifestEntryList(pi.extensions),
+				themes: normalizeManifestEntryList(pi.themes),
+				skills: normalizeManifestEntryList(pi.skills),
+				prompts: normalizeManifestEntryList(pi.prompts),
+			};
 		}
 		return null;
 	} catch {
