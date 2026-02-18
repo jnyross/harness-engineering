@@ -6802,6 +6802,27 @@ to:
 
 **Result:** Anthropic OAuth token exchange/refresh now rejects malformed token payload roots/fields deterministically before credential persistence.
 
+---
+
+### 360) agent proxy SSE typed-event parsing accepted malformed required field shapes
+
+**Finding:** `packages/agent/src/proxy.ts` only validated SSE payload root/type before casting to `ProxyAssistantMessageEvent`. Typed frames with malformed required fields (for example non-numeric `contentIndex`, non-string `delta`, blank tool metadata, malformed usage objects) could still reach `processProxyEvent(...)` and throw during partial-message reconstruction.
+
+**Action:** Updated:
+
+- `packages/agent/src/proxy.ts`
+- `packages/agent/test/proxy.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to:
+
+- validate required fields per proxy event type before dispatch (`contentIndex`, deltas, tool metadata, done/error reasons, usage objects),
+- ignore malformed typed proxy frames instead of throwing stream-level runtime errors,
+- normalize proxy HTTP error payload parsing to require non-empty string `error` fields,
+- add regression coverage proving malformed typed events are skipped while subsequent valid `done` events still complete.
+
+**Result:** proxy streaming now rejects malformed typed SSE frames safely and continues processing subsequent valid events without collapsing the stream.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7035,7 +7056,7 @@ to:
 - coding-agent bash executor regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/bash-executor.test.ts` (includes signal/null exit non-zero semantics and shell spawn-startup failure coverage)
 - agent proxy stream regression tests pass:
-  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts` (includes trailing SSE line without newline, malformed JSON diagnostics, and malformed JSON-root-shape filtering coverage)
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts` (includes trailing SSE line without newline, malformed JSON diagnostics, malformed JSON-root-shape filtering, and malformed typed-event field-shape filtering coverage)
 - ai Gemini CLI SSE regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-empty-stream.test.ts` (includes terminal `data:` line without trailing newline, malformed credential-shape rejection, and malformed non-object SSE chunk-root filtering coverage)
 - ai Codex/Gemini SSE regression tests pass:
