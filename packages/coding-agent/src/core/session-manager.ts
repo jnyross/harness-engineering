@@ -272,6 +272,23 @@ export function migrateSessionEntries(entries: FileEntry[]): void {
 	migrateToCurrentVersion(entries);
 }
 
+function parseFileEntryLine(line: string): FileEntry | undefined {
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(line);
+	} catch {
+		return undefined;
+	}
+	if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+		return undefined;
+	}
+	const type = (parsed as { type?: unknown }).type;
+	if (typeof type !== "string" || type.trim().length === 0) {
+		return undefined;
+	}
+	return parsed as FileEntry;
+}
+
 /** Exported for compaction.test.ts */
 export function parseSessionEntries(content: string): FileEntry[] {
 	const entries: FileEntry[] = [];
@@ -279,11 +296,9 @@ export function parseSessionEntries(content: string): FileEntry[] {
 
 	for (const line of lines) {
 		if (!line.trim()) continue;
-		try {
-			const entry = JSON.parse(line) as FileEntry;
+		const entry = parseFileEntryLine(line);
+		if (entry) {
 			entries.push(entry);
-		} catch {
-			// Skip malformed lines
 		}
 	}
 
@@ -436,11 +451,9 @@ export function loadEntriesFromFile(filePath: string): FileEntry[] {
 
 	for (const line of lines) {
 		if (!line.trim()) continue;
-		try {
-			const entry = JSON.parse(line) as FileEntry;
+		const entry = parseFileEntryLine(line);
+		if (entry) {
 			entries.push(entry);
-		} catch {
-			// Skip malformed lines
 		}
 	}
 
@@ -463,7 +476,10 @@ function isValidSessionFile(filePath: string): boolean {
 		closeSync(fd);
 		const firstLine = buffer.toString("utf8", 0, bytesRead).split("\n")[0];
 		if (!firstLine) return false;
-		const header = JSON.parse(firstLine);
+		const header = parseFileEntryLine(firstLine);
+		if (!header || header.type !== "session") {
+			return false;
+		}
 		return header.type === "session" && typeof header.id === "string";
 	} catch {
 		return false;
@@ -547,10 +563,9 @@ async function buildSessionInfo(filePath: string): Promise<SessionInfo | null> {
 
 		for (const line of lines) {
 			if (!line.trim()) continue;
-			try {
-				entries.push(JSON.parse(line) as FileEntry);
-			} catch {
-				// Skip malformed lines
+			const entry = parseFileEntryLine(line);
+			if (entry) {
+				entries.push(entry);
 			}
 		}
 

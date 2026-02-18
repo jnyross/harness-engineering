@@ -63,6 +63,23 @@ describe("loadEntriesFromFile", () => {
 		const entries = loadEntriesFromFile(file);
 		expect(entries).toHaveLength(2);
 	});
+
+	it("skips non-object and missing-type JSON lines", () => {
+		const file = join(tempDir, "mixed-shapes.jsonl");
+		writeFileSync(
+			file,
+			'{"type":"session","id":"abc","timestamp":"2025-01-01T00:00:00Z","cwd":"/tmp"}\n' +
+				"123\n" +
+				'"hello"\n' +
+				"{}\n" +
+				'{"id":"missing-type"}\n' +
+				'{"type":"message","id":"1","parentId":null,"timestamp":"2025-01-01T00:00:01Z","message":{"role":"user","content":"hi","timestamp":1}}\n',
+		);
+		const entries = loadEntriesFromFile(file);
+		expect(entries).toHaveLength(2);
+		expect(entries[0].type).toBe("session");
+		expect(entries[1].type).toBe("message");
+	});
 });
 
 describe("findMostRecentSession", () => {
