@@ -207,11 +207,11 @@ function parseStrictNonEmptyString(value: unknown): string | undefined {
 	return value;
 }
 
-function parsePositiveFiniteNumber(value: unknown): number | undefined {
+function parsePositiveSafeInteger(value: unknown): number | undefined {
 	if (typeof value !== "number") {
 		return undefined;
 	}
-	return Number.isFinite(value) && value > 0 ? value : undefined;
+	return Number.isSafeInteger(value) && value > 0 ? value : undefined;
 }
 
 function parseLoadCodeAssistPayload(value: unknown): LoadCodeAssistPayload {
@@ -267,7 +267,7 @@ function parseGoogleCloudTokenPayload(
 } {
 	const tokenPayload = asRecord(value);
 	const accessToken = parseStrictNonEmptyString(tokenPayload?.access_token);
-	const expiresIn = parsePositiveFiniteNumber(tokenPayload?.expires_in);
+	const expiresIn = parsePositiveSafeInteger(tokenPayload?.expires_in);
 	const refreshToken = parseStrictNonEmptyString(tokenPayload?.refresh_token);
 	if (!accessToken || !expiresIn) {
 		throw new Error(`Google Cloud token ${context} payload missing required fields`);

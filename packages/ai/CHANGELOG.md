@@ -17,6 +17,7 @@
 - Google Gemini CLI credential parsing now also rejects whitespace-padded JSON apiKey `token`/`projectId` fields, preserving strict credential-field identity instead of trimming malformed values.
 - Antigravity OAuth token exchange/refresh parsing now validates JSON payload roots and required token fields (`access_token`, positive `expires_in`), rejecting malformed token-response shapes before credential persistence.
 - Google Gemini CLI OAuth token exchange/refresh parsing now validates JSON payload roots and required token fields (`access_token`, positive `expires_in`), rejecting malformed token-response shapes before credential persistence.
+- Antigravity and Google Gemini CLI OAuth token exchange/refresh parsing now requires positive safe-integer `expires_in` values (rejecting fractional/unsafe values) in addition to strict required token-field validation.
 - Antigravity and Google Gemini CLI OAuth token exchange/refresh parsing now also rejects whitespace-padded `access_token` values, and ignores whitespace-padded `refresh_token` values (retaining the existing refresh token on refresh flows) instead of trimming malformed token payload fields.
 - Antigravity and Google Gemini CLI OAuth project-discovery parsing now also rejects whitespace-padded discovered project/tier/operation identifier fields instead of trimming malformed Cloud Code Assist metadata.
 - Antigravity and Google Gemini CLI OAuth user-profile parsing now also rejects whitespace-padded `email` values instead of trimming malformed profile identifiers.

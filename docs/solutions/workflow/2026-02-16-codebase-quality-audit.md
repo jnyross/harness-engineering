@@ -7939,6 +7939,28 @@ to:
 
 **Result:** Anthropic OAuth token parsing now preserves strict integer expiry semantics and rejects fractional `expires_in` values instead of silently accepting malformed token expiry metadata.
 
+---
+
+### 416) ai Google OAuth token parsers accepted fractional expires_in values
+
+**Finding:** `packages/ai/src/utils/oauth/google-gemini-cli.ts` and `packages/ai/src/utils/oauth/google-antigravity.ts` parsed token payload `expires_in` with positive-finite numeric validation, so fractional expiry durations could be silently accepted instead of rejected as malformed OAuth token metadata.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/google-gemini-cli.ts`
+- `packages/ai/src/utils/oauth/google-antigravity.ts`
+- `packages/ai/test/google-gemini-cli-oauth-abort.test.ts`
+- `packages/ai/test/google-antigravity-oauth-abort.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require positive safe-integer `expires_in` values for Gemini CLI and Antigravity token exchange/refresh payloads,
+- preserve existing strict token-field, profile, and project-discovery parsing behavior,
+- add regression coverage for fractional `expires_in` rejection in both providers’ exchange and refresh flows.
+
+**Result:** Google OAuth token parsing now preserves strict integer expiry semantics and rejects fractional `expires_in` values instead of silently accepting malformed token expiry metadata.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8161,9 +8183,9 @@ to:
 - ai anthropic oauth parsing/state-validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts` (includes malformed exchange-root, malformed refresh-field payload, whitespace-padded token-field rejection, and fractional `expires_in` rejection coverage)
 - ai antigravity oauth token payload parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-antigravity-oauth-abort.test.ts` (includes malformed exchange-root, malformed refresh-field payload, whitespace-padded access-token rejection, whitespace-padded refresh-token fallback-retention coverage, whitespace-padded discovered-project identifier rejection coverage, and whitespace-padded profile-email rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-antigravity-oauth-abort.test.ts` (includes malformed exchange-root, malformed refresh-field payload, whitespace-padded access-token rejection, whitespace-padded refresh-token fallback-retention coverage, whitespace-padded discovered-project identifier rejection coverage, whitespace-padded profile-email rejection coverage, and fractional `expires_in` rejection coverage)
 - ai gemini-cli oauth token payload parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-oauth-abort.test.ts` (includes malformed exchange-root, malformed refresh-field payload, whitespace-padded access-token rejection, whitespace-padded refresh-token fallback-retention coverage, whitespace-padded discovered-project identifier rejection coverage, and whitespace-padded profile-email rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-oauth-abort.test.ts` (includes malformed exchange-root, malformed refresh-field payload, whitespace-padded access-token rejection, whitespace-padded refresh-token fallback-retention coverage, whitespace-padded discovered-project identifier rejection coverage, whitespace-padded profile-email rejection coverage, and fractional `expires_in` rejection coverage)
 - ai github-copilot oauth payload parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/github-copilot-oauth-payload.test.ts` (includes malformed device-code/poll/token payload field rejection and whitespace-padded token/code/error identifier rejection coverage)
 - ai openai-codex oauth startup/manual-flow/cancellation/base64url-decoding/hash-fragment/non-object-token-payload parsing regression tests pass:
