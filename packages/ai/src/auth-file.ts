@@ -3,12 +3,15 @@ import type { OAuthCredentials } from "./utils/oauth/types.js";
 export type StoredOAuthCredential = { type: "oauth" } & OAuthCredentials;
 export type StoredOAuthMap = Record<string, StoredOAuthCredential>;
 
-function parseNonEmptyString(value: unknown): string | undefined {
+function parseStrictNonEmptyString(value: unknown): string | undefined {
 	if (typeof value !== "string") {
 		return undefined;
 	}
 	const trimmed = value.trim();
-	return trimmed.length > 0 ? trimmed : undefined;
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
 }
 
 function parseProviderId(value: string): string | undefined {
@@ -28,8 +31,8 @@ function parseStoredOAuthCredential(value: unknown): StoredOAuthCredential | und
 		return undefined;
 	}
 
-	const refresh = parseNonEmptyString(record.refresh);
-	const access = parseNonEmptyString(record.access);
+	const refresh = parseStrictNonEmptyString(record.refresh);
+	const access = parseStrictNonEmptyString(record.access);
 	const expires = record.expires;
 	if (!refresh || !access || typeof expires !== "number" || !Number.isSafeInteger(expires) || expires < 0) {
 		return undefined;

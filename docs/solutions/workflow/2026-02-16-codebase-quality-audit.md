@@ -7552,6 +7552,46 @@ to:
 
 **Result:** RPC mode/client protocol parsing now preserves strict identifier identity and rejects whitespace-padded RPC frame identifiers instead of silently normalizing malformed protocol fields.
 
+---
+
+### 397) ai OAuth auth-file parsing normalized whitespace-padded oauth token fields
+
+**Finding:** `packages/ai/src/auth-file.ts` validated oauth credential token fields with trimmed non-empty parsing, so whitespace-padded `refresh`/`access` token values could be silently normalized instead of rejected as malformed persisted credentials.
+
+**Action:** Updated:
+
+- `packages/ai/src/auth-file.ts`
+- `packages/ai/test/auth-file.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require strict non-empty token strings (no surrounding whitespace) for oauth `refresh` and `access` fields,
+- keep strict provider-key validation behavior,
+- add regression coverage for whitespace-padded oauth token-field rejection.
+
+**Result:** OAuth auth-file parsing now preserves strict oauth token identity and rejects whitespace-padded persisted token values instead of silently normalizing them.
+
+---
+
+### 398) coding-agent auth-storage normalization normalized whitespace-padded credential token fields
+
+**Finding:** `packages/coding-agent/src/core/auth-storage.ts` normalized `auth.json` credential fields with trimmed non-empty parsing, so whitespace-padded api-key and oauth `refresh`/`access` values could be silently coalesced during runtime credential loading.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/auth-storage.ts`
+- `packages/coding-agent/test/auth-storage.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require strict non-empty credential strings (no surrounding whitespace) for api-key values and oauth `refresh`/`access` token fields,
+- keep strict provider-key normalization behavior,
+- add regression coverage for whitespace-padded credential-field rejection while preserving valid credential loading.
+
+**Result:** Auth-storage credential normalization now preserves strict persisted credential token identity and rejects whitespace-padded credential fields instead of silently trimming malformed values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7563,7 +7603,7 @@ to:
 - ai Azure deployment-map parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/azure-openai-responses-deployment-map.test.ts test/azure-openai-responses-headers.test.ts` (includes Azure OpenAI Responses whitespace-padded custom-header rejection coverage)
 - ai auth-file parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/auth-file.test.ts` (includes whitespace-padded provider-key rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/auth-file.test.ts` (includes whitespace-padded provider-key rejection and oauth token-field rejection coverage)
 - mom slack timestamp normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts` (includes near-safe-integer decimal timestamp exact millisecond flooring coverage without floating-point drift)
 - mom slack timestamp runtime-shape guard regression tests pass:
@@ -7740,7 +7780,7 @@ to:
 - coding-agent keybindings config normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/keybindings.test.ts test/settings-manager.test.ts`
 - coding-agent auth storage normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/auth-storage.test.ts` (includes whitespace-padded provider-key rejection coverage)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/auth-storage.test.ts` (includes whitespace-padded provider-key plus api-key/oauth token-field rejection coverage)
 - coding-agent extension dialog callback regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extension-dialog-callbacks.test.ts` (includes throwing selector/input/editor callback safety and post-dispose callback suppression across selector/input/editor dialogs)
 - coding-agent session selector disposal regression tests pass:

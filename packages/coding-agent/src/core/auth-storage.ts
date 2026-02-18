@@ -34,12 +34,15 @@ export type AuthCredential = ApiKeyCredential | OAuthCredential;
 
 export type AuthStorageData = Record<string, AuthCredential>;
 
-function parseNonEmptyString(value: unknown): string | undefined {
+function parseStrictNonEmptyString(value: unknown): string | undefined {
 	if (typeof value !== "string") {
 		return undefined;
 	}
 	const trimmed = value.trim();
-	return trimmed.length > 0 ? trimmed : undefined;
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
 }
 
 function parseProviderId(value: string): string | undefined {
@@ -58,13 +61,13 @@ function normalizeAuthCredential(value: unknown): AuthCredential | undefined {
 	const type = record.type;
 
 	if (type === "api_key") {
-		const key = parseNonEmptyString(record.key);
+		const key = parseStrictNonEmptyString(record.key);
 		return key ? { type: "api_key", key } : undefined;
 	}
 
 	if (type === "oauth") {
-		const refresh = parseNonEmptyString(record.refresh);
-		const access = parseNonEmptyString(record.access);
+		const refresh = parseStrictNonEmptyString(record.refresh);
+		const access = parseStrictNonEmptyString(record.access);
 		const expires = record.expires;
 		if (!refresh || !access || typeof expires !== "number" || !Number.isSafeInteger(expires) || expires < 0) {
 			return undefined;

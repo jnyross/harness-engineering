@@ -33,7 +33,7 @@ describe("AuthStorage", () => {
 	describe("auth.json normalization", () => {
 		test("ignores malformed credential entries while preserving valid ones", async () => {
 			writeAuthJson({
-				openai: { type: "api_key", key: " sk-valid-openai-key " },
+				openai: { type: "api_key", key: "sk-valid-openai-key" },
 				bad1: null,
 				bad2: { type: "api_key", key: "" },
 				bad3: { type: "oauth", access: "a", refresh: "r", expires: "never" },
@@ -44,6 +44,21 @@ describe("AuthStorage", () => {
 			expect(authStorage.list()).toEqual(["openai"]);
 			expect(await authStorage.getApiKey("openai")).toBe("sk-valid-openai-key");
 			expect(await authStorage.getApiKey("bad1")).toBeUndefined();
+		});
+
+		test("drops credentials with whitespace-padded key/token fields", async () => {
+			writeAuthJson({
+				anthropic: { type: "api_key", key: " sk-anthropic " },
+				openai: { type: "oauth", refresh: " refresh-token ", access: "access-token", expires: Date.now() + 60_000 },
+				gemini: { type: "oauth", refresh: "refresh-token", access: " access-token ", expires: Date.now() + 60_000 },
+				vertex: { type: "oauth", refresh: "refresh-token", access: "access-token", expires: Date.now() + 60_000 },
+			});
+
+			authStorage = new AuthStorage(authJsonPath);
+			expect(authStorage.list()).toEqual(["vertex"]);
+			expect(await authStorage.getApiKey("anthropic")).toBeUndefined();
+			expect(await authStorage.getApiKey("openai")).toBeUndefined();
+			expect(await authStorage.getApiKey("gemini")).toBeUndefined();
 		});
 
 		test("falls back to empty storage for malformed root shape", async () => {

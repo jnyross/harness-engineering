@@ -11,7 +11,7 @@ describe("parseAuthFileContent", () => {
 	it("keeps valid oauth entries and drops malformed ones", () => {
 		const parsed = parseAuthFileContent(
 			JSON.stringify({
-				anthropic: { type: "oauth", refresh: " refresh-token ", access: " access-token ", expires: 1234567890 },
+				anthropic: { type: "oauth", refresh: "refresh-token", access: "access-token", expires: 1234567890 },
 				openai: { type: "oauth", refresh: "", access: "token", expires: 123 },
 				badType: { type: "api_key", key: "sk-test" },
 				badExpires: { type: "oauth", refresh: "r", access: "a", expires: "never" },
@@ -25,6 +25,25 @@ describe("parseAuthFileContent", () => {
 				refresh: "refresh-token",
 				access: "access-token",
 				expires: 1234567890,
+			},
+		});
+	});
+
+	it("drops oauth credentials with whitespace-padded token fields", () => {
+		const parsed = parseAuthFileContent(
+			JSON.stringify({
+				anthropic: { type: "oauth", refresh: " refresh-token ", access: "access-token", expires: 1234567890 },
+				openai: { type: "oauth", refresh: "refresh-token", access: " access-token ", expires: 1234567891 },
+				gemini: { type: "oauth", refresh: "refresh-token", access: "access-token", expires: 1234567892 },
+			}),
+		);
+
+		expect(parsed).toEqual({
+			gemini: {
+				type: "oauth",
+				refresh: "refresh-token",
+				access: "access-token",
+				expires: 1234567892,
 			},
 		});
 	});
