@@ -7069,6 +7069,26 @@ to:
 
 **Result:** pods config normalization now preserves strict pod/model key identity and rejects malformed whitespace-padded active selectors during persisted config loading.
 
+---
+
+### 373) tui overlay layout options accepted non-finite numeric positioning/margin inputs
+
+**Finding:** `packages/tui/src/tui.ts` only normalized non-finite numeric values for overlay width/max-height. Other numeric layout inputs (`minWidth`, numeric `row`/`col`, `margin`, `offsetX`/`offsetY`) still accepted `NaN`/`Infinity`, allowing invalid numeric state to propagate through overlay layout resolution.
+
+**Action:** Updated:
+
+- `packages/tui/src/tui.ts`
+- `packages/tui/test/overlay-options.test.ts`
+- `packages/tui/CHANGELOG.md`
+
+to:
+
+- normalize all numeric overlay layout inputs to finite values (`width`, `minWidth`, `maxHeight`, numeric `row`/`col`, margins, offsets),
+- fall back to default/anchor positioning and default margins when non-finite values are provided,
+- add regression coverage for non-finite `minWidth`, `margin`, and numeric `row`/`col` handling.
+
+**Result:** Overlay layout now rejects non-finite numeric sizing/positioning inputs consistently across all numeric layout options.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7098,7 +7118,7 @@ to:
 - tui kitty CSI-u + overlay percentage parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/editor-kitty-csiu.test.ts`
   - `cd packages/tui && node --test --import tsx test/overlay-options.test.ts`
-- tui overlay precision-overflow and non-finite numeric size regression tests pass:
+- tui overlay precision-overflow and non-finite numeric layout-input regression tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/overlay-options.test.ts`
 - tui key parser Kitty unsafe-integer regression tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test -- test/keys.test.ts`
