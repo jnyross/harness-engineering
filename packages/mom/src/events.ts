@@ -41,6 +41,64 @@ const MAX_RETRIES = 3;
 const RETRY_BASE_MS = 100;
 const MAX_TIMER_DELAY_MS = 2_147_483_647;
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
+}
+
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+export function parseMomEventPayload(value: unknown): MomEvent | undefined {
+	const data = asRecord(value);
+	if (!data) {
+		return undefined;
+	}
+	const type = parseNonEmptyString(data.type);
+	const channelId = parseNonEmptyString(data.channelId);
+	const text = parseNonEmptyString(data.text);
+	if (!type || !channelId || !text) {
+		return undefined;
+	}
+
+	switch (type) {
+		case "immediate":
+			return { type: "immediate", channelId, text };
+		case "one-shot": {
+			const at = parseNonEmptyString(data.at);
+			if (!at) {
+				return undefined;
+			}
+			return { type: "one-shot", channelId, text, at };
+		}
+		case "periodic": {
+			const schedule = parseNonEmptyString(data.schedule);
+			const timezone = parseNonEmptyString(data.timezone);
+			if (!schedule || !timezone) {
+				return undefined;
+			}
+			return { type: "periodic", channelId, text, schedule, timezone };
+		}
+		default:
+			return undefined;
+	}
+}
+
+export function parseMomEventContent(content: string): MomEvent | undefined {
+	try {
+		return parseMomEventPayload(JSON.parse(content));
+	} catch {
+		return undefined;
+	}
+}
+
 export function parseOneShotTimestampMs(value: string): number | undefined {
 	const parsed = new Date(value).getTime();
 	return Number.isFinite(parsed) ? parsed : undefined;
@@ -235,40 +293,11 @@ export class EventsWatcher {
 	}
 
 	private parseEvent(content: string, filename: string): MomEvent | null {
-		const data = JSON.parse(content);
-
-		if (!data.type || !data.channelId || !data.text) {
-			throw new Error(`Missing required fields (type, channelId, text) in ${filename}`);
+		const event = parseMomEventContent(content);
+		if (!event) {
+			throw new Error(`Invalid event payload in ${filename}`);
 		}
-
-		switch (data.type) {
-			case "immediate":
-				return { type: "immediate", channelId: data.channelId, text: data.text };
-
-			case "one-shot":
-				if (!data.at) {
-					throw new Error(`Missing 'at' field for one-shot event in ${filename}`);
-				}
-				return { type: "one-shot", channelId: data.channelId, text: data.text, at: data.at };
-
-			case "periodic":
-				if (!data.schedule) {
-					throw new Error(`Missing 'schedule' field for periodic event in ${filename}`);
-				}
-				if (!data.timezone) {
-					throw new Error(`Missing 'timezone' field for periodic event in ${filename}`);
-				}
-				return {
-					type: "periodic",
-					channelId: data.channelId,
-					text: data.text,
-					schedule: data.schedule,
-					timezone: data.timezone,
-				};
-
-			default:
-				throw new Error(`Unknown event type '${data.type}' in ${filename}`);
-		}
+		return event;
 	}
 
 	private handleImmediate(filename: string, event: ImmediateEvent): void {
