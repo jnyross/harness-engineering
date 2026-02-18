@@ -6598,6 +6598,26 @@ to:
 
 **Result:** OpenAI Codex OAuth now converts malformed token payload roots into deterministic login/refresh failures with stable error semantics.
 
+---
+
+### 350) coding-agent auth migration renamed oauth.json even when no oauth entries were migrated
+
+**Finding:** `packages/coding-agent/src/migrations.ts` always renamed legacy `oauth.json` to `oauth.json.migrated` whenever parsing succeeded, even when no valid oauth provider entries were migrated. This could hide malformed/empty legacy oauth files despite producing no migrated auth state.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/migrations.ts`
+- `packages/coding-agent/test/migrations.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- track whether any oauth providers were actually migrated from legacy `oauth.json`,
+- only rename `oauth.json` to `.migrated` when at least one provider entry was migrated,
+- add regression coverage for non-migratable oauth payloads to ensure legacy file preservation when migration yields no credentials.
+
+**Result:** oauth migration now preserves unmigrated legacy oauth files and only archives legacy auth data when actual provider migration occurred.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6881,7 +6901,7 @@ to:
 - coding-agent package-manager manifest normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes malformed `pi.extensions` entry filtering, mixed valid+invalid manifest pattern handling, and installed-version shape normalization coverage)
 - coding-agent migration parsing normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/migrations.test.ts`
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/migrations.test.ts` (includes oauth legacy-file preservation when no valid oauth providers are migrated)
 - coding-agent session-manager JSONL line-shape normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/session-manager/file-operations.test.ts` (includes non-object/type-less line filtering and blank session-id header rejection in load/list/recent-session checks)
 - TUI package tests pass:
