@@ -41,6 +41,64 @@ type DeviceTokenErrorResponse = {
 	interval?: number;
 };
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
+}
+
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function parsePositiveFiniteNumber(value: unknown): number | undefined {
+	if (typeof value !== "number") {
+		return undefined;
+	}
+	return Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+function parsePositiveSafeInteger(value: unknown): number | undefined {
+	if (typeof value !== "number") {
+		return undefined;
+	}
+	return Number.isSafeInteger(value) && value > 0 ? value : undefined;
+}
+
+export function parseDeviceCodeResponsePayload(value: unknown): DeviceCodeResponse | undefined {
+	const payload = asRecord(value);
+	const deviceCode = parseNonEmptyString(payload?.device_code);
+	const userCode = parseNonEmptyString(payload?.user_code);
+	const verificationUri = parseNonEmptyString(payload?.verification_uri);
+	const interval = parsePositiveFiniteNumber(payload?.interval);
+	const expiresIn = parsePositiveFiniteNumber(payload?.expires_in);
+	if (!deviceCode || !userCode || !verificationUri || !interval || !expiresIn) {
+		return undefined;
+	}
+	return {
+		device_code: deviceCode,
+		user_code: userCode,
+		verification_uri: verificationUri,
+		interval,
+		expires_in: expiresIn,
+	};
+}
+
+export function parseCopilotTokenResponsePayload(value: unknown): { token: string; expiresAt: number } | undefined {
+	const payload = asRecord(value);
+	const token = parseNonEmptyString(payload?.token);
+	const expiresAt = parsePositiveSafeInteger(payload?.expires_at);
+	if (!token || !expiresAt) {
+		return undefined;
+	}
+	return { token, expiresAt };
+}
+
 export function normalizeDomain(input: string): string | null {
 	const trimmed = input.trim();
 	if (!trimmed) return null;
@@ -113,33 +171,11 @@ async function startDeviceFlow(domain: string): Promise<DeviceCodeResponse> {
 		}),
 	});
 
-	if (!data || typeof data !== "object") {
-		throw new Error("Invalid device code response");
-	}
-
-	const deviceCode = (data as Record<string, unknown>).device_code;
-	const userCode = (data as Record<string, unknown>).user_code;
-	const verificationUri = (data as Record<string, unknown>).verification_uri;
-	const interval = (data as Record<string, unknown>).interval;
-	const expiresIn = (data as Record<string, unknown>).expires_in;
-
-	if (
-		typeof deviceCode !== "string" ||
-		typeof userCode !== "string" ||
-		typeof verificationUri !== "string" ||
-		typeof interval !== "number" ||
-		typeof expiresIn !== "number"
-	) {
+	const payload = parseDeviceCodeResponsePayload(data);
+	if (!payload) {
 		throw new Error("Invalid device code response fields");
 	}
-
-	return {
-		device_code: deviceCode,
-		user_code: userCode,
-		verification_uri: verificationUri,
-		interval,
-		expires_in: expiresIn,
-	};
+	return payload;
 }
 
 async function pollForGitHubAccessToken(
@@ -219,18 +255,15 @@ export async function refreshGitHubCopilotToken(
 	if (!raw || typeof raw !== "object") {
 		throw new Error("Invalid Copilot token response");
 	}
-
-	const token = (raw as Record<string, unknown>).token;
-	const expiresAt = (raw as Record<string, unknown>).expires_at;
-
-	if (typeof token !== "string" || typeof expiresAt !== "number") {
+	const payload = parseCopilotTokenResponsePayload(raw);
+	if (!payload) {
 		throw new Error("Invalid Copilot token response fields");
 	}
 
 	return {
 		refresh: refreshToken,
-		access: token,
-		expires: expiresAt * 1000 - 5 * 60 * 1000,
+		access: payload.token,
+		expires: payload.expiresAt * 1000 - 5 * 60 * 1000,
 		enterpriseUrl: enterpriseDomain,
 	};
 }
