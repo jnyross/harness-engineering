@@ -114,6 +114,17 @@ function parseNonEmptyString(value: unknown): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function parseStrictNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
+}
+
 export function parseCloudCodeAssistChunk(value: string): CloudCodeAssistResponseChunk | undefined {
 	let parsed: unknown;
 	try {
@@ -408,8 +419,8 @@ function parseGoogleCloudCredentials(value: string): { token: string; projectId:
 		return undefined;
 	}
 	const record = asRecord(parsed) as { token?: unknown; projectId?: unknown } | undefined;
-	const token = parseNonEmptyString(record?.token);
-	const projectId = parseNonEmptyString(record?.projectId);
+	const token = parseStrictNonEmptyString(record?.token);
+	const projectId = parseStrictNonEmptyString(record?.projectId);
 	if (!token || !projectId) {
 		return undefined;
 	}

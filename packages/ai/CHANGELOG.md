@@ -14,6 +14,7 @@
 - OpenAI Responses client header merge now rejects whitespace-padded/blank custom header names from model/options headers, preventing malformed header-key normalization in merged default headers.
 - Azure OpenAI Responses client header merge now rejects whitespace-padded/blank custom header names from model/options headers, preventing malformed header-key normalization in merged default headers.
 - Google Gemini CLI / Antigravity credential parsing now requires non-empty string `token` and `projectId` fields in JSON apiKey payloads, rejecting malformed credential shapes before request dispatch.
+- Google Gemini CLI credential parsing now also rejects whitespace-padded JSON apiKey `token`/`projectId` fields, preserving strict credential-field identity instead of trimming malformed values.
 - Antigravity OAuth token exchange/refresh parsing now validates JSON payload roots and required token fields (`access_token`, positive `expires_in`), rejecting malformed token-response shapes before credential persistence.
 - Google Gemini CLI OAuth token exchange/refresh parsing now validates JSON payload roots and required token fields (`access_token`, positive `expires_in`), rejecting malformed token-response shapes before credential persistence.
 - GitHub Copilot OAuth device-code/poll/token payload parsing now validates required response field shapes (non-empty token/code strings plus positive numeric interval/expiry values), rejecting malformed payload roots/fields before polling or credential persistence.

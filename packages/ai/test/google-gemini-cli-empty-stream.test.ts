@@ -279,4 +279,37 @@ describe("google-gemini-cli empty stream retry", () => {
 		expect(result.errorMessage).toContain("Invalid Google Cloud Code Assist credentials");
 		expect(fetchMock).not.toHaveBeenCalled();
 	});
+
+	it("rejects credential payloads with whitespace-padded token fields before issuing requests", async () => {
+		const fetchMock = vi.fn(async () => {
+			throw new Error("should not be called");
+		});
+		global.fetch = fetchMock as typeof fetch;
+
+		const model: Model<"google-gemini-cli"> = {
+			id: "gemini-2.5-flash",
+			name: "Gemini 2.5 Flash",
+			api: "google-gemini-cli",
+			provider: "google-gemini-cli",
+			baseUrl: "https://cloudcode-pa.googleapis.com",
+			reasoning: false,
+			input: ["text"],
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+			contextWindow: 128000,
+			maxTokens: 8192,
+		};
+
+		const context: Context = {
+			messages: [{ role: "user", content: "Say tail", timestamp: Date.now() }],
+		};
+
+		const stream = streamGoogleGeminiCli(model, context, {
+			apiKey: JSON.stringify({ token: " token ", projectId: "project-id" }),
+		});
+
+		const result = await stream.result();
+		expect(result.stopReason).toBe("error");
+		expect(result.errorMessage).toContain("Invalid Google Cloud Code Assist credentials");
+		expect(fetchMock).not.toHaveBeenCalled();
+	});
 });

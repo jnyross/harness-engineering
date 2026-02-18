@@ -7592,6 +7592,26 @@ to:
 
 **Result:** Auth-storage credential normalization now preserves strict persisted credential token identity and rejects whitespace-padded credential fields instead of silently trimming malformed values.
 
+---
+
+### 399) ai Gemini CLI JSON apiKey credential parsing normalized whitespace-padded token/project identifiers
+
+**Finding:** `packages/ai/src/providers/google-gemini-cli.ts` parsed JSON apiKey credential fields (`token`, `projectId`) with trimmed non-empty normalization, so whitespace-padded credential identifiers could be silently accepted instead of rejected as malformed request credentials.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/google-gemini-cli.ts`
+- `packages/ai/test/google-gemini-cli-empty-stream.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require strict non-empty string identity (no surrounding whitespace) for JSON apiKey `token` and `projectId`,
+- keep malformed-credential short-circuit behavior before request dispatch,
+- add regression coverage asserting whitespace-padded credential fields are rejected and no outbound request is issued.
+
+**Result:** Gemini CLI credential parsing now preserves strict token/project identifier identity and rejects whitespace-padded JSON apiKey fields instead of silently normalizing malformed credentials.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7836,7 +7856,7 @@ to:
 - agent proxy stream regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts` (includes trailing SSE line without newline, malformed JSON diagnostics, malformed JSON-root-shape filtering, malformed typed-event field-shape filtering, whitespace-padded typed-event identifier rejection, and fractional token-counter rejection with decimal-cost preservation coverage)
 - ai Gemini CLI SSE regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-empty-stream.test.ts` (includes terminal `data:` line without trailing newline, malformed credential-shape rejection, and malformed non-object SSE chunk-root filtering coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-empty-stream.test.ts` (includes terminal `data:` line without trailing newline, malformed + whitespace-padded credential-field rejection, and malformed non-object SSE chunk-root filtering coverage)
 - ai Codex/Gemini SSE regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-stream.test.ts test/google-gemini-cli-empty-stream.test.ts` (includes Codex base64url JWT payload account-id extraction coverage and malformed custom-header-name rejection coverage)
 - ai Codex Responses payload-shape parsing regression tests pass:
