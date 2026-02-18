@@ -33,6 +33,12 @@ describe("loadEntriesFromFile", () => {
 		expect(loadEntriesFromFile(file)).toEqual([]);
 	});
 
+	it("returns empty array for file with blank session id", () => {
+		const file = join(tempDir, "blank-id-header.jsonl");
+		writeFileSync(file, '{"type":"session","id":"   ","timestamp":"2025-01-01T00:00:00Z","cwd":"/tmp"}\n');
+		expect(loadEntriesFromFile(file)).toEqual([]);
+	});
+
 	it("returns empty array for malformed JSON", () => {
 		const file = join(tempDir, "malformed.jsonl");
 		writeFileSync(file, "not json\n");
@@ -110,6 +116,14 @@ describe("findMostRecentSession", () => {
 
 	it("ignores jsonl files without valid session header", () => {
 		writeFileSync(join(tempDir, "invalid.jsonl"), '{"type":"message"}\n');
+		expect(findMostRecentSession(tempDir)).toBeNull();
+	});
+
+	it("ignores session files with blank header id", () => {
+		writeFileSync(
+			join(tempDir, "blank-id.jsonl"),
+			'{"type":"session","id":" ","timestamp":"2025-01-01T00:00:00Z","cwd":"/tmp"}\n',
+		);
 		expect(findMostRecentSession(tempDir)).toBeNull();
 	});
 
@@ -221,5 +235,30 @@ describe("SessionManager.setSessionFile with corrupted files", () => {
 		const sm2 = SessionManager.open(corruptedFile, tempDir);
 		expect(sm2.getSessionId()).toBe(sessionId);
 		expect(sm2.getHeader()?.type).toBe("session");
+	});
+});
+
+describe("SessionManager.list header validation", () => {
+	let tempDir: string;
+
+	beforeEach(() => {
+		tempDir = join(tmpdir(), `session-test-${Date.now()}`);
+		mkdirSync(tempDir, { recursive: true });
+	});
+
+	afterEach(() => {
+		rmSync(tempDir, { recursive: true, force: true });
+	});
+
+	it("ignores session files with blank session ids", async () => {
+		const invalid = join(tempDir, "invalid.jsonl");
+		const valid = join(tempDir, "valid.jsonl");
+
+		writeFileSync(invalid, '{"type":"session","id":" ","timestamp":"2025-01-01T00:00:00Z","cwd":"/tmp"}\n');
+		writeFileSync(valid, '{"type":"session","id":"abc","timestamp":"2025-01-01T00:00:00Z","cwd":"/tmp"}\n');
+
+		const sessions = await SessionManager.list("/tmp", tempDir);
+		expect(sessions.some((session) => session.path === valid)).toBe(true);
+		expect(sessions.some((session) => session.path === invalid)).toBe(false);
 	});
 });

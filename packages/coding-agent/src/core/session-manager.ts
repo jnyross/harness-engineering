@@ -272,6 +272,14 @@ export function migrateSessionEntries(entries: FileEntry[]): void {
 	migrateToCurrentVersion(entries);
 }
 
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
 function parseFileEntryLine(line: string): FileEntry | undefined {
 	let parsed: unknown;
 	try {
@@ -460,8 +468,7 @@ export function loadEntriesFromFile(filePath: string): FileEntry[] {
 	// Validate session header
 	if (entries.length === 0) return entries;
 	const header = entries[0];
-	// biome-ignore lint/suspicious/noExplicitAny: migration
-	if (header.type !== "session" || typeof (header as any).id !== "string") {
+	if (header.type !== "session" || !parseNonEmptyString((header as SessionHeader).id)) {
 		return [];
 	}
 
@@ -480,7 +487,7 @@ function isValidSessionFile(filePath: string): boolean {
 		if (!header || header.type !== "session") {
 			return false;
 		}
-		return header.type === "session" && typeof header.id === "string";
+		return Boolean(parseNonEmptyString((header as SessionHeader).id));
 	} catch {
 		return false;
 	}
@@ -572,6 +579,8 @@ async function buildSessionInfo(filePath: string): Promise<SessionInfo | null> {
 		if (entries.length === 0) return null;
 		const header = entries[0];
 		if (header.type !== "session") return null;
+		const sessionId = parseNonEmptyString((header as SessionHeader).id);
+		if (!sessionId) return null;
 
 		const stats = await stat(filePath);
 		let messageCount = 0;
@@ -604,18 +613,21 @@ async function buildSessionInfo(filePath: string): Promise<SessionInfo | null> {
 			}
 		}
 
-		const cwd = typeof (header as SessionHeader).cwd === "string" ? (header as SessionHeader).cwd : "";
-		const parentSessionPath = (header as SessionHeader).parentSession;
+		const cwd = parseNonEmptyString((header as SessionHeader).cwd) ?? "";
+		const parentSessionPath = parseNonEmptyString((header as SessionHeader).parentSession);
+		const headerTimestamp = parseNonEmptyString((header as SessionHeader).timestamp);
+		const createdTimestamp = headerTimestamp ? new Date(headerTimestamp) : stats.mtime;
+		const created = Number.isNaN(createdTimestamp.getTime()) ? stats.mtime : createdTimestamp;
 
 		const modified = getSessionModifiedDate(entries, header as SessionHeader, stats.mtime);
 
 		return {
 			path: filePath,
-			id: (header as SessionHeader).id,
+			id: sessionId,
 			cwd,
 			name,
 			parentSessionPath,
-			created: new Date((header as SessionHeader).timestamp),
+			created,
 			modified,
 			messageCount,
 			firstMessage: firstMessage || "(no messages)",
