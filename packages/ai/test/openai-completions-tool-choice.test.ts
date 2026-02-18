@@ -230,9 +230,9 @@ describe("openai-completions tool_choice", () => {
 		).result();
 
 		expect(stream.usage.input).toBe(0);
-		expect(stream.usage.output).toBe(2);
-		expect(stream.usage.cacheRead).toBe(1);
-		expect(stream.usage.totalTokens).toBe(3);
+		expect(stream.usage.output).toBe(0);
+		expect(stream.usage.cacheRead).toBe(0);
+		expect(stream.usage.totalTokens).toBe(0);
 	});
 
 	it("ignores non-decimal numeric string usage counters", async () => {
@@ -258,9 +258,9 @@ describe("openai-completions tool_choice", () => {
 		).result();
 
 		expect(stream.usage.input).toBe(0);
-		expect(stream.usage.output).toBe(2);
+		expect(stream.usage.output).toBe(0);
 		expect(stream.usage.cacheRead).toBe(0);
-		expect(stream.usage.totalTokens).toBe(2);
+		expect(stream.usage.totalTokens).toBe(0);
 	});
 
 	it("ignores unsafe integer usage counters", async () => {

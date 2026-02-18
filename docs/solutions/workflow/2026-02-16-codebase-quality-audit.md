@@ -7169,6 +7169,26 @@ to:
 
 **Result:** OpenAI Responses shared usage parsing now preserves strict integer token accounting and rejects malformed fractional usage values.
 
+---
+
+### 378) ai OpenAI Completions usage parsing truncated fractional token counters
+
+**Finding:** `packages/ai/src/providers/openai-completions.ts` normalized usage counters by truncating fractional numeric values (`Math.trunc`) for both numeric and numeric-string token fields. Malformed decimal token values were silently coerced into integers.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/openai-completions.ts`
+- `packages/ai/test/openai-completions-tool-choice.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require non-negative safe integers for OpenAI Completions usage counters (number and decimal-digit string forms),
+- reject fractional usage values instead of truncating them,
+- expand regression coverage expectations for malformed/non-decimal usage payloads that previously depended on truncation.
+
+**Result:** OpenAI Completions usage parsing now enforces strict integer token accounting and rejects malformed fractional usage values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7243,7 +7263,7 @@ to:
 - ai OpenAI Completions thought-signature normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-result-images.test.ts`
 - ai OpenAI/Anthropic usage parser regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts`
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts` (includes OpenAI Completions fractional usage-token rejection coverage)
 - mom model/key resolution regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/agent-model.test.ts`
 - pods required-option parser regression tests pass:

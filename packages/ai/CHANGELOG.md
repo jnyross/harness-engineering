@@ -17,7 +17,8 @@
 - OpenAI Completions history conversion now ignores malformed non-object `thoughtSignature` payloads when building `reasoning_details`, preventing malformed signature roots from propagating invalid reasoning-detail shapes into request payloads.
 - OpenAI Completions stream usage parsing now also accepts numeric-string token counters for prompt/completion/cache/reasoning fields, preventing arithmetic drift when OpenAI-compatible backends serialize usage values as strings.
 - Anthropic Messages stream usage parsing now accepts numeric-string token counters for input/output/cache fields, preserving accurate usage totals when proxy layers serialize token counts as strings.
-- OpenAI Completions and Anthropic stream usage parsing now ignore negative token values and truncate fractional numeric values to integers, preventing malformed usage metadata from producing negative/fractional accounting.
+- OpenAI Completions stream usage parsing now rejects fractional token values (number and numeric-string forms) instead of truncating them, preventing malformed usage metadata from silently coercing decimal token counts.
+- Anthropic stream usage parsing now ignores negative token values and truncates fractional numeric values to integers, preventing malformed usage metadata from producing negative/fractional accounting.
 - Google and Google Vertex stream usage parsing now accepts numeric-string usage metadata values and computes fallback totals when `totalTokenCount` is omitted, preserving non-zero accounting for compatible proxy layers.
 - Google/Bedrock/OpenAI-Responses shared usage parsing now ignores negative token values and truncates fractional numeric values to integers, preventing malformed provider metadata from producing negative/fractional usage accounting.
 - Google/Bedrock/OpenAI-compatible usage parsers now reject non-decimal numeric-string formats (for example `0x10` and `1e2`) instead of accepting broad numeric coercions.

@@ -71,19 +71,17 @@ function hasToolHistory(messages: Message[]): boolean {
 }
 
 function parseUsageNumber(value: unknown): number {
-	if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
-		const normalized = Math.trunc(value);
-		return Number.isSafeInteger(normalized) ? normalized : 0;
+	if (typeof value === "number" && Number.isSafeInteger(value) && value >= 0) {
+		return value;
 	}
 	if (typeof value === "string" && value.trim().length > 0) {
 		const trimmed = value.trim();
-		if (!/^\d+(?:\.\d+)?$/.test(trimmed)) {
+		if (!/^\d+$/.test(trimmed)) {
 			return 0;
 		}
 		const parsed = Number(trimmed);
-		if (Number.isFinite(parsed) && parsed >= 0) {
-			const normalized = Math.trunc(parsed);
-			return Number.isSafeInteger(normalized) ? normalized : 0;
+		if (Number.isSafeInteger(parsed) && parsed >= 0) {
+			return parsed;
 		}
 	}
 	return 0;
