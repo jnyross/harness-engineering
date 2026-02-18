@@ -6192,6 +6192,27 @@ to:
 
 **Result:** project-loop JSON decomposition now fails safely on malformed task entry fields and preserves deterministic normalized task payloads for downstream TDD execution.
 
+---
+
+### 330) coding-agent package-manager manifest parsing accepted malformed `pi.*` entry shapes
+
+**Finding:** `packages/coding-agent/src/core/package-manager.ts` consumed `package.json` `pi` resource arrays (`extensions`/`skills`/`prompts`/`themes`) via unchecked casts; malformed non-string entries could trigger runtime failures during pattern checks/path resolution (`startsWith`, `resolve`, glob filtering).
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/package-manager.ts`
+- `packages/coding-agent/test/package-manager.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize parsed manifest resource arrays to string-only trimmed non-empty entries,
+- ignore malformed/non-string manifest entries during both extension discovery and package resource resolution paths,
+- reuse normalized package-manifest parsing for both directory discovery and package loading flows,
+- add regression coverage for malformed `pi.extensions` values and mixed valid+invalid manifest pattern entries.
+
+**Result:** package-manager manifest loading now tolerates malformed `pi.*` entry shapes without crashing while preserving valid manifest resource directives.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6462,6 +6483,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test`
 - coding-agent package-manager command-settlement regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes async settlement coverage, full async command-invocation diagnostics, sync spawn-start failure diagnostics, and signal-exit rejection diagnostics)
+- coding-agent package-manager manifest normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes malformed `pi.extensions` entry filtering and mixed valid+invalid manifest pattern handling)
 - TUI package tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test`
 - Targeted reviewer parser tests pass:
