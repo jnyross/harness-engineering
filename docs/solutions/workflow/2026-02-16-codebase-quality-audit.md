@@ -6719,6 +6719,26 @@ to:
 
 **Result:** one-shot events now require explicit timezone-aware timestamps at parse time, preventing ambiguous local-time scheduling semantics.
 
+---
+
+### 356) coding-agent model-registry accepted malformed `models.json` provider-map keys
+
+**Finding:** `packages/coding-agent/src/core/model-registry.ts` trusted `models.json` provider-map keys as-is. Blank keys or keys with surrounding whitespace could pass schema validation and be treated as provider identifiers, producing malformed provider namespaces for custom models/overrides.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/model-registry.ts`
+- `packages/coding-agent/test/model-registry.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- validate provider-map keys as non-empty strings without surrounding whitespace,
+- surface explicit load errors for malformed provider keys while preserving built-in model availability,
+- add regression coverage for blank and whitespace-padded provider keys.
+
+**Result:** model-registry now rejects malformed provider-map keys in `models.json`, preventing invalid provider identifier shapes from entering custom model/override resolution.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7005,6 +7025,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes malformed `pi.extensions` entry filtering, mixed valid+invalid manifest pattern handling, and installed-version shape normalization coverage)
 - coding-agent package-manager npm-registry version parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager-registry-version.test.ts test/package-manager.test.ts` (includes malformed npm-registry `version` root/field-shape rejection and trimmed valid-version parsing coverage)
+- coding-agent model-registry provider-key validation regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/model-registry.test.ts` (includes blank and whitespace-padded provider-key rejection coverage for malformed `models.json` provider maps)
 - coding-agent migration parsing normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/migrations.test.ts` (includes oauth legacy-file preservation when no valid oauth providers are migrated)
 - coding-agent session-manager JSONL line-shape normalization regression tests pass:
