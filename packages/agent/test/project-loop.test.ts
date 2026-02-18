@@ -57,10 +57,24 @@ describe("parseTasksFromPlanOutput", () => {
 				description: "Parse args safely",
 				acceptanceCriteria: ["handles quotes", "parses escapes"],
 			},
+		]);
+	});
+
+	it("falls back to markdown parsing when JSON task array has no valid entries", () => {
+		const tasks = parseTasksFromPlanOutput(`[
+			{"title": "   ", "acceptanceCriteria": [1, null]},
+			123
+		]
+
+### Task 1: Keep markdown fallback
+- preserve criteria parsing
+`);
+
+		expect(tasks).toEqual([
 			{
-				title: "Untitled",
+				title: "Keep markdown fallback",
 				description: undefined,
-				acceptanceCriteria: [],
+				acceptanceCriteria: ["preserve criteria parsing"],
 			},
 		]);
 	});

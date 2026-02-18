@@ -30,7 +30,7 @@
 - Proxy stream parsing now flushes a final buffered SSE `data:` line when responses end without trailing newline, preventing dropped terminal events/hanging result promises.
 - Proxy streaming now surfaces an explicit error result when the proxy returns an OK response without a readable body, instead of failing with a null-body runtime exception.
 - Project-loop task parsing now ignores non-task wrapper headings (e.g., `# Plan`, `## Tasks`) so decomposition validation no longer fails on valid plans that include section headers.
-- Project-loop JSON task parsing now normalizes malformed task entry shapes (title/description/acceptance fields) and ignores non-object JSON items, preventing malformed plan JSON from propagating invalid task payloads into TDD execution.
+- Project-loop JSON task parsing now normalizes malformed task entry shapes (title/description/acceptance fields), ignores non-object JSON items, and falls back to markdown task parsing when JSON snippets contain no valid tasks, preventing malformed plan JSON from dropping actionable task decomposition.
 - Proxy SSE parsing now accepts both `data: <json>` and `data:<json>` line prefixes, preventing dropped proxy events when servers omit the optional post-colon space.
 - `runner.ts` / `project-runner.ts` numeric option parsing now rejects malformed or non-positive values (for example `--iterations 3rounds`, `PI_MAX_REDO_ROUNDS=0`) instead of silently coercing via `parseInt` fallback behavior.
 - Shared CLI positive-integer option parsing now rejects unsafe integer values (greater than `Number.MAX_SAFE_INTEGER`) instead of accepting rounded coercions.

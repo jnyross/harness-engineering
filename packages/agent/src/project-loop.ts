@@ -52,14 +52,19 @@ function normalizePlanTask(rawTask: unknown): TddTask | undefined {
 		return undefined;
 	}
 	const task = rawTask as { title?: unknown; description?: unknown; acceptanceCriteria?: unknown };
+	const title = parseNonEmptyTaskString(task.title);
+	const description = parseNonEmptyTaskString(task.description);
 	const acceptanceCriteria = Array.isArray(task.acceptanceCriteria)
 		? task.acceptanceCriteria
 				.map((criterion) => parseNonEmptyTaskString(criterion))
 				.filter((criterion): criterion is string => criterion !== undefined)
 		: [];
+	if (!title && !description && acceptanceCriteria.length === 0) {
+		return undefined;
+	}
 	return {
-		title: parseNonEmptyTaskString(task.title) ?? "Untitled",
-		description: parseNonEmptyTaskString(task.description),
+		title: title ?? "Untitled",
+		description,
 		acceptanceCriteria,
 	};
 }
@@ -103,7 +108,9 @@ export function parseTasksFromPlanOutput(planText: string): TddTask[] {
 					}
 				}
 			}
-			return tasks;
+			if (tasks.length > 0) {
+				return tasks;
+			}
 		} catch {
 			// fall through
 		}
