@@ -6558,6 +6558,26 @@ to:
 
 **Result:** grep tool event parsing now enforces ripgrep event payload shape expectations and safely ignores malformed line payloads.
 
+---
+
+### 348) agent proxy stream parser accepted malformed SSE JSON root shapes
+
+**Finding:** `packages/agent/src/proxy.ts` parsed proxy SSE `data:` payload JSON and cast it directly to `ProxyAssistantMessageEvent`. Valid-but-malformed JSON roots like `null`, numbers, or objects missing a string `type` could propagate to `processProxyEvent(...)`, causing runtime failures (for example null-property access) instead of being safely ignored.
+
+**Action:** Updated:
+
+- `packages/agent/src/proxy.ts`
+- `packages/agent/test/proxy.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to:
+
+- add strict proxy-event payload parsing (`parseProxyEventPayload`) that requires object roots with non-empty string `type`,
+- ignore malformed JSON root shapes while preserving existing explicit errors for syntactically invalid JSON payloads,
+- add regression coverage proving malformed-root frames are ignored and valid trailing `done` frames still complete successfully.
+
+**Result:** proxy streaming now tolerates malformed SSE JSON root payloads without crashing stream processing and continues handling valid events.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6791,7 +6811,7 @@ to:
 - coding-agent bash executor regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/bash-executor.test.ts` (includes signal/null exit non-zero semantics and shell spawn-startup failure coverage)
 - agent proxy stream regression tests pass:
-  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts` (includes trailing SSE line without newline)
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts` (includes trailing SSE line without newline, malformed JSON diagnostics, and malformed JSON-root-shape filtering coverage)
 - ai Gemini CLI SSE regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-empty-stream.test.ts` (includes terminal `data:` line without trailing newline and malformed credential-shape rejection coverage)
 - ai Codex/Gemini SSE regression tests pass:
