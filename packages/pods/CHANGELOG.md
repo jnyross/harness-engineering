@@ -88,6 +88,7 @@
 - Pod setup GPU detection now also preserves memory fields that contain thousands separators (for example `80,000 MiB`) instead of mis-splitting the memory comma into the GPU name.
 - Pod setup GPU detection now rejects unsafe integer GPU IDs (greater than `Number.MAX_SAFE_INTEGER`) instead of accepting rounded numeric coercions.
 - Model start context/PID parsing now uses strict validation (`--context` alias/integer resolution + runner PID parsing) so malformed values like `4096tokens` / `123abc` are rejected instead of being partially coerced via `parseInt`.
+- Model start context-token parsing now also rejects whitespace-padded alias/numeric values instead of trimming/coalescing malformed context option identifiers.
 - Model start memory parsing now validates percentage values strictly (`0 < value <= 100`) so malformed inputs like `50percent` are rejected instead of being partially coerced.
 - Pods config loading now normalizes parsed JSON structure/content (`pods`, `active`, pod/model/GPU entries), ignoring malformed entries and preventing invalid persisted config shapes from propagating into runtime pod selection flows.
 - Pods config loading now also rejects whitespace-padded pod/model keys (and whitespace-padded `active` pod selectors) instead of trimming/coalescing them, preserving strict key identity during persisted config normalization.

@@ -8297,6 +8297,27 @@ to:
 
 **Result:** Pods model option parsing now preserves strict numeric option identity and rejects whitespace-padded `--context` / `--gpus` values instead of silently normalizing malformed inputs.
 
+---
+
+### 433) pods model-start context token parsing normalized whitespace-padded values
+
+**Finding:** `packages/pods/src/commands/models.ts` trimmed runtime `--context` values before alias/integer resolution in `resolveModelContextTokens(...)`, so whitespace-padded context alias/numeric values could be silently accepted instead of rejected as malformed context identifiers.
+
+**Action:** Updated:
+
+- `packages/pods/src/commands/models.ts`
+- `packages/pods/test/models-ssh-status.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- require strict context-string identity (`trimmed === value`) before alias/integer parsing in runtime context resolution,
+- reject whitespace-padded alias/numeric context values instead of trimming/coalescing malformed values,
+- preserve existing alias support and malformed/non-positive/unsafe integer rejection behavior,
+- add regression coverage for whitespace-padded runtime context-value rejection.
+
+**Result:** Pods model-start runtime context parsing now preserves strict context identifier identity and rejects whitespace-padded alias/numeric context values instead of silently normalizing malformed inputs.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8384,7 +8405,7 @@ to:
 - pods memory normalization canonical-format regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts`
 - pods memory precision-overflow regression tests pass:
-  - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts test/models-ssh-status.test.ts`
+  - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts test/models-ssh-status.test.ts` (includes runtime whitespace-padded `--context` rejection coverage)
 - pods process-identifier safe-integer regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/process-identifiers.test.ts`
 - pods GPU CSV parsing regression tests pass:

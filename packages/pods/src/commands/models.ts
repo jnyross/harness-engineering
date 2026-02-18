@@ -28,6 +28,10 @@ const CONTEXT_SIZE_ALIASES: Record<string, number> = {
 };
 
 function parsePositiveSafeInteger(value: string): number | undefined {
+	const trimmed = value.trim();
+	if (trimmed !== value) {
+		return undefined;
+	}
 	if (!/^\d+$/.test(value)) {
 		return undefined;
 	}
@@ -65,6 +69,9 @@ export function parseModelRunnerPid(rawPid: string): number | undefined {
 
 export function resolveModelContextTokens(contextValue: string): number | undefined {
 	const trimmed = contextValue.trim();
+	if (trimmed !== contextValue) {
+		return undefined;
+	}
 	const normalized = trimmed.toLowerCase();
 	const aliasMatch = CONTEXT_SIZE_ALIASES[normalized];
 	if (aliasMatch) {

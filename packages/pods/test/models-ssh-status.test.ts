@@ -71,12 +71,13 @@ describe("resolveModelContextTokens", () => {
 
 	it("resolves explicit positive token counts", () => {
 		assert.equal(resolveModelContextTokens("32768"), 32768);
-		assert.equal(resolveModelContextTokens(" 4096 "), 4096);
 	});
 
 	it("rejects malformed context values", () => {
 		assert.equal(resolveModelContextTokens("16k-extra"), undefined);
 		assert.equal(resolveModelContextTokens("4096tokens"), undefined);
+		assert.equal(resolveModelContextTokens(" 4096 "), undefined);
+		assert.equal(resolveModelContextTokens(" 64k "), undefined);
 		assert.equal(resolveModelContextTokens("0"), undefined);
 		assert.equal(resolveModelContextTokens("9007199254740993"), undefined);
 	});
