@@ -204,6 +204,17 @@ function parseNonEmptyString(value: unknown): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function parseStrictNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
+}
+
 function parsePositiveFiniteNumber(value: unknown): number | undefined {
 	if (typeof value !== "number") {
 		return undefined;
@@ -263,9 +274,9 @@ function parseGoogleCloudTokenPayload(
 	refreshToken?: string;
 } {
 	const tokenPayload = asRecord(value);
-	const accessToken = parseNonEmptyString(tokenPayload?.access_token);
+	const accessToken = parseStrictNonEmptyString(tokenPayload?.access_token);
 	const expiresIn = parsePositiveFiniteNumber(tokenPayload?.expires_in);
-	const refreshToken = parseNonEmptyString(tokenPayload?.refresh_token);
+	const refreshToken = parseStrictNonEmptyString(tokenPayload?.refresh_token);
 	if (!accessToken || !expiresIn) {
 		throw new Error(`Google Cloud token ${context} payload missing required fields`);
 	}

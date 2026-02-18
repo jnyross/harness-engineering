@@ -150,6 +150,40 @@ describe("google-antigravity oauth login", () => {
 		).rejects.toThrow("Antigravity token exchange payload missing required fields");
 	});
 
+	it("rejects whitespace-padded token exchange payload fields", async () => {
+		let authState = "";
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async (input: unknown) => {
+				const url = String(input);
+				if (url === "https://oauth2.googleapis.com/token") {
+					return new Response(
+						JSON.stringify({
+							access_token: " access-token ",
+							refresh_token: "refresh-token",
+							expires_in: 3600,
+						}),
+						{
+							status: 200,
+							headers: { "content-type": "application/json" },
+						},
+					);
+				}
+				throw new Error(`Unexpected fetch URL: ${url}`);
+			}),
+		);
+
+		await expect(
+			loginAntigravity(
+				(info) => {
+					authState = new URL(info.url).searchParams.get("state") ?? "";
+				},
+				undefined,
+				async () => `http://localhost:51121/oauth-callback?code=manual-code&state=${authState}`,
+			),
+		).rejects.toThrow("Antigravity token exchange payload missing required fields");
+	});
+
 	it("rejects malformed token refresh payload fields", async () => {
 		vi.stubGlobal(
 			"fetch",
@@ -171,5 +205,53 @@ describe("google-antigravity oauth login", () => {
 		await expect(refreshAntigravityToken("refresh-token", "project-123")).rejects.toThrow(
 			"Antigravity token refresh payload missing required fields",
 		);
+	});
+
+	it("rejects whitespace-padded access token refresh payload fields", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(
+				async () =>
+					new Response(
+						JSON.stringify({
+							access_token: " access-token ",
+							refresh_token: "refresh-token",
+							expires_in: 3600,
+						}),
+						{
+							status: 200,
+							headers: { "content-type": "application/json" },
+						},
+					),
+			),
+		);
+
+		await expect(refreshAntigravityToken("refresh-token", "project-123")).rejects.toThrow(
+			"Antigravity token refresh payload missing required fields",
+		);
+	});
+
+	it("keeps existing refresh token when payload refresh token is whitespace-padded", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(
+				async () =>
+					new Response(
+						JSON.stringify({
+							access_token: "access-token",
+							refresh_token: " refreshed-token ",
+							expires_in: 3600,
+						}),
+						{
+							status: 200,
+							headers: { "content-type": "application/json" },
+						},
+					),
+			),
+		);
+
+		const credentials = await refreshAntigravityToken("refresh-token", "project-123");
+		expect(credentials.access).toBe("access-token");
+		expect(credentials.refresh).toBe("refresh-token");
 	});
 });
