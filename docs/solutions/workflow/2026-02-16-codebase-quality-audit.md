@@ -6335,6 +6335,26 @@ to:
 
 **Result:** backfill timestamp extraction now tolerates malformed `log.jsonl` lines safely and only forwards valid timestamp values into cursor/dedup logic.
 
+---
+
+### 337) coding-agent session-manager JSONL parsing accepted malformed non-entry line shapes
+
+**Finding:** `packages/coding-agent/src/core/session-manager.ts` parsed session JSONL lines with unchecked casts; malformed non-object/type-less lines could propagate incompatible entry shapes into migration/load/list-validation flows.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/session-manager.ts`
+- `packages/coding-agent/test/session-manager/file-operations.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize parsed JSONL lines to object entries with non-empty `type` fields before accepting them,
+- reuse normalized entry parsing across `parseSessionEntries`, `loadEntriesFromFile`, `isValidSessionFile`, and session info loading,
+- add regression coverage for non-object and missing-type JSONL lines in session file loading.
+
+**Result:** session-manager now safely ignores malformed JSONL line shapes and only processes valid session entry objects in migration/discovery paths.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6615,6 +6635,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes malformed `pi.extensions` entry filtering, mixed valid+invalid manifest pattern handling, and installed-version shape normalization coverage)
 - coding-agent migration parsing normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/migrations.test.ts`
+- coding-agent session-manager JSONL line-shape normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/session-manager/file-operations.test.ts`
 - TUI package tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test`
 - Targeted reviewer parser tests pass:
