@@ -8145,6 +8145,29 @@ to:
 
 **Result:** Anthropic stream usage parsing now preserves strict token-value identity and rejects whitespace-padded numeric-string usage counters instead of silently normalizing malformed metadata.
 
+---
+
+### 426) ai google/gemini usage parsing normalized whitespace-padded numeric-string counters
+
+**Finding:** `packages/ai/src/providers/google-shared.ts` and `packages/ai/src/providers/google-gemini-cli.ts` trimmed usage-counter strings before decimal validation, so whitespace-padded numeric-string token counters in Google/Vertex and Gemini usage payloads could be silently accepted instead of rejected as malformed token metadata.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/google-shared.ts`
+- `packages/ai/src/providers/google-gemini-cli.ts`
+- `packages/ai/test/google-usage-metadata.test.ts`
+- `packages/ai/test/google-gemini-cli-usage-metadata.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require strict numeric-string identity (`trimmed === value`) for Google/Gemini usage-token parsing,
+- reject whitespace-padded numeric-string usage counters instead of trimming/coalescing malformed token values,
+- preserve existing integer-only, non-decimal, and safe-integer usage validation behavior,
+- add regression coverage for whitespace-padded usage-counter rejection across both Google shared and Gemini usage parsers.
+
+**Result:** Google/Vertex and Gemini usage parsing now preserves strict token-value identity and rejects whitespace-padded numeric-string usage counters instead of silently normalizing malformed metadata.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8207,8 +8230,8 @@ to:
 - coding-agent export plain missing-variable regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-export-colors.test.ts`
 - ai usage metadata regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts` (includes fractional usage-token rejection coverage for Gemini CLI / Antigravity usage metadata)
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts` (includes fractional usage-token rejection coverage for Google / Vertex shared usage metadata)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts` (includes fractional and whitespace-padded usage-token rejection coverage for Gemini CLI / Antigravity usage metadata)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts` (includes fractional and whitespace-padded usage-token rejection coverage for Google / Vertex shared usage metadata)
 - ai Gemini retry-delay (including safe-millisecond bounds) regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-retry-delay.test.ts`
 - ai usage safe-integer parser regression tests pass:

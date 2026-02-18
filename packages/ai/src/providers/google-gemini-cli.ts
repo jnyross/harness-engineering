@@ -144,6 +144,9 @@ function parseUsageNumber(value: unknown): number | undefined {
 	}
 	if (typeof value === "string" && value.trim().length > 0) {
 		const trimmed = value.trim();
+		if (trimmed !== value) {
+			return undefined;
+		}
 		if (!/^\d+$/.test(trimmed)) {
 			return undefined;
 		}

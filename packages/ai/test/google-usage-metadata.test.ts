@@ -134,6 +134,25 @@ describe("extractGoogleUsageMetadata", () => {
 		});
 	});
 
+	it("ignores whitespace-padded numeric-string usage values", () => {
+		expect(
+			extractGoogleUsageMetadata({
+				promptTokenCount: " 10 ",
+				candidatesTokenCount: " 4 ",
+				thoughtsTokenCount: " 3 ",
+				cachedContentTokenCount: " 2 ",
+				totalTokenCount: " 19 ",
+			}),
+		).toEqual({
+			input: 0,
+			output: 0,
+			cacheRead: 0,
+			cacheWrite: 0,
+			totalTokens: 0,
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+		});
+	});
+
 	it("returns undefined for non-object usage payloads", () => {
 		expect(extractGoogleUsageMetadata(null)).toBeUndefined();
 		expect(extractGoogleUsageMetadata("invalid")).toBeUndefined();
