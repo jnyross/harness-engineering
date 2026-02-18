@@ -6315,6 +6315,26 @@ to:
 
 **Result:** startup migrations now tolerate malformed auth/session JSON shapes safely and only persist normalized migration entries.
 
+---
+
+### 336) mom backfill timestamp extraction accepted malformed `log.jsonl` line shapes
+
+**Finding:** `packages/mom/src/slack.ts` collected existing backfill timestamps via unchecked `JSON.parse` field access (`entry.ts`), so malformed/non-string/invalid timestamp entries in persisted logs could leak incompatible values into duplicate suppression and backfill cursor selection.
+
+**Action:** Updated:
+
+- `packages/mom/src/slack.ts`
+- `packages/mom/test/slack-log-timestamp-parse.test.ts` (new)
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- normalize backfill timestamp extraction from log lines to valid non-empty Slack timestamp strings only,
+- ignore malformed JSON roots and malformed timestamp shapes during existing-log timestamp scans,
+- add focused regression coverage for valid normalization and malformed fallback behavior.
+
+**Result:** backfill timestamp extraction now tolerates malformed `log.jsonl` lines safely and only forwards valid timestamp values into cursor/dedup logic.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6331,6 +6351,8 @@ to:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts`
 - mom slack timestamp runtime-shape guard regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts test/store.test.ts`
+- mom slack log-line timestamp extraction regression tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-log-timestamp-parse.test.ts test/slack-timestamp.test.ts`
 - mom channel-store timestamp parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/store.test.ts`
 - mom settings normalization regression tests pass:
