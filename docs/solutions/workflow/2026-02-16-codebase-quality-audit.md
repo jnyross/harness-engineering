@@ -6069,7 +6069,28 @@ to:
 
 ---
 
-### 324) ai OAuth CLI auth-file loading accepted malformed credential entry shapes
+### 324) pods CLI package metadata loading accepted malformed package-json shapes
+
+**Finding:** `packages/pods/src/cli.ts` parsed `package.json` directly at module load for version/help output; malformed package metadata could crash startup/help/version flows.
+
+**Action:** Updated:
+
+- `packages/pods/src/package-metadata.ts` (new)
+- `packages/pods/src/cli.ts`
+- `packages/pods/test/package-metadata.test.ts` (new)
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- normalize package metadata parsing for CLI version extraction,
+- fall back safely when metadata is malformed/non-string,
+- add focused regression coverage for valid parsing and malformed fallback behavior.
+
+**Result:** CLI version/help paths now fail safely on malformed package metadata instead of crashing on raw parse assumptions.
+
+---
+
+### 325) ai OAuth CLI auth-file loading accepted malformed credential entry shapes
 
 **Finding:** `packages/ai/src/cli.ts` loaded `auth.json` via direct `JSON.parse(...)` without runtime normalization; malformed root/provider/credential shapes could propagate incompatible auth data into CLI credential reads.
 
@@ -6174,6 +6195,8 @@ to:
   - `npm --workspace "@mariozechner/pi" test -- test/config.test.ts`
 - pods model-config normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/model-configs.test.ts test/config.test.ts`
+- pods package-metadata normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi" test -- test/package-metadata.test.ts test/model-configs.test.ts test/config.test.ts`
 - pods required-option smoke checks pass:
   - `npx tsx packages/pods/src/cli.ts start demo-model --name demo --memory`
   - `npx tsx packages/pods/src/cli.ts pods setup demo "ssh host" --vllm`
