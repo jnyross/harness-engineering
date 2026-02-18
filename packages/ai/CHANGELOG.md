@@ -11,6 +11,8 @@
 - OpenAI Codex Responses request-header construction now rejects whitespace-padded/blank custom header names from model/options headers, preventing malformed header-key normalization and runtime header-set failures.
 - Anthropic client header merge now rejects whitespace-padded/blank custom header names from model/options headers, preventing malformed header-key normalization in merged default headers.
 - OpenAI Completions client header merge now rejects whitespace-padded/blank custom header names from model/options headers, preventing malformed header-key normalization in merged default headers.
+- OpenAI Responses client header merge now rejects whitespace-padded/blank custom header names from model/options headers, preventing malformed header-key normalization in merged default headers.
+- Azure OpenAI Responses client header merge now rejects whitespace-padded/blank custom header names from model/options headers, preventing malformed header-key normalization in merged default headers.
 - Google Gemini CLI / Antigravity credential parsing now requires non-empty string `token` and `projectId` fields in JSON apiKey payloads, rejecting malformed credential shapes before request dispatch.
 - Antigravity OAuth token exchange/refresh parsing now validates JSON payload roots and required token fields (`access_token`, positive `expires_in`), rejecting malformed token-response shapes before credential persistence.
 - Google Gemini CLI OAuth token exchange/refresh parsing now validates JSON payload roots and required token fields (`access_token`, positive `expires_in`), rejecting malformed token-response shapes before credential persistence.

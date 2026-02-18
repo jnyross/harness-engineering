@@ -7369,6 +7369,46 @@ to:
 
 **Result:** OpenAI Completions header merge now preserves strict header-key identity and rejects malformed custom header names before client initialization.
 
+---
+
+### 388) ai OpenAI Responses client header merge accepted whitespace-padded custom header names
+
+**Finding:** `packages/ai/src/providers/openai-responses.ts` merged provider/model/options headers with broad object assignment and accepted whitespace-padded/blank custom header keys in merged default headers.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/openai-responses.ts`
+- `packages/ai/test/openai-responses-headers.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- introduce strict header-name validation (non-empty and no surrounding whitespace),
+- validate header names for model headers, Copilot dynamic headers, and options headers before merge,
+- add regression coverage asserting malformed model/option header keys are excluded while valid keys remain.
+
+**Result:** OpenAI Responses header merge now preserves strict header-key identity and rejects malformed custom header names before client initialization.
+
+---
+
+### 389) ai Azure OpenAI Responses client header merge accepted whitespace-padded custom header names
+
+**Finding:** `packages/ai/src/providers/azure-openai-responses.ts` merged model/options headers without key validation and accepted whitespace-padded/blank custom header keys in merged default headers.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/azure-openai-responses.ts`
+- `packages/ai/test/azure-openai-responses-headers.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- introduce strict header-name validation (non-empty and no surrounding whitespace),
+- validate header names for model and options headers before merge,
+- add regression coverage asserting malformed model/option header keys are excluded while valid keys remain.
+
+**Result:** Azure OpenAI Responses header merge now preserves strict header-key identity and rejects malformed custom header names before client initialization.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7378,7 +7418,7 @@ to:
 - ai model-generator numeric parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/generate-models.test.ts`
 - ai Azure deployment-map parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/azure-openai-responses-deployment-map.test.ts`
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/azure-openai-responses-deployment-map.test.ts test/azure-openai-responses-headers.test.ts` (includes Azure OpenAI Responses whitespace-padded custom-header rejection coverage)
 - ai auth-file parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/auth-file.test.ts` (includes whitespace-padded provider-key rejection coverage)
 - mom slack timestamp normalization regression tests pass:
@@ -7445,6 +7485,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-result-images.test.ts`
 - ai OpenAI/Anthropic usage parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts` (includes OpenAI Completions + Anthropic fractional usage-token rejection coverage and OpenAI Completions + Anthropic whitespace-padded custom-header rejection coverage)
+- ai OpenAI Responses header validation regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-responses-headers.test.ts` (includes model/options whitespace-padded custom-header rejection coverage)
 - mom model/key resolution regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/agent-model.test.ts`
 - pods required-option parser regression tests pass:

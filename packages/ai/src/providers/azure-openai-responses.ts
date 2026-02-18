@@ -187,11 +187,9 @@ function createClient(model: Model<"azure-openai-responses">, apiKey: string, op
 		apiKey = process.env.AZURE_OPENAI_API_KEY;
 	}
 
-	const headers = { ...model.headers };
-
-	if (options?.headers) {
-		Object.assign(headers, options.headers);
-	}
+	const headers: Record<string, string> = {};
+	applyValidatedHeaders(headers, model.headers);
+	applyValidatedHeaders(headers, options?.headers);
 
 	const { baseUrl, apiVersion } = resolveAzureConfig(model, options);
 
@@ -202,6 +200,27 @@ function createClient(model: Model<"azure-openai-responses">, apiKey: string, op
 		defaultHeaders: headers,
 		baseURL: baseUrl,
 	});
+}
+
+function parseHeaderName(value: string): string | undefined {
+	const trimmed = value.trim();
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
+}
+
+function applyValidatedHeaders(target: Record<string, string>, source: Record<string, string> | undefined): void {
+	if (!source) {
+		return;
+	}
+	for (const [rawKey, value] of Object.entries(source)) {
+		const headerName = parseHeaderName(rawKey);
+		if (!headerName) {
+			continue;
+		}
+		target[headerName] = value;
+	}
 }
 
 function buildParams(
