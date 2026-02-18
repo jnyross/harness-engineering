@@ -8168,6 +8168,29 @@ to:
 
 **Result:** Google/Vertex and Gemini usage parsing now preserves strict token-value identity and rejects whitespace-padded numeric-string usage counters instead of silently normalizing malformed metadata.
 
+---
+
+### 427) ai bedrock/openai-responses usage parsing normalized whitespace-padded numeric-string counters
+
+**Finding:** `packages/ai/src/providers/amazon-bedrock.ts` and `packages/ai/src/providers/openai-responses-shared.ts` trimmed usage-counter strings before decimal validation, so whitespace-padded numeric-string token counters in Bedrock and OpenAI Responses-compatible usage payloads could be silently accepted instead of rejected as malformed token metadata.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/amazon-bedrock.ts`
+- `packages/ai/src/providers/openai-responses-shared.ts`
+- `packages/ai/test/amazon-bedrock-usage.test.ts`
+- `packages/ai/test/openai-responses-shared-usage.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require strict numeric-string identity (`trimmed === value`) for Bedrock/OpenAI Responses usage-token parsing,
+- reject whitespace-padded numeric-string usage counters instead of trimming/coalescing malformed token values,
+- preserve existing integer-only, non-decimal, and safe-integer usage validation behavior,
+- add regression coverage for whitespace-padded usage-counter rejection across Bedrock and OpenAI Responses usage parsers.
+
+**Result:** Bedrock and OpenAI Responses usage parsing now preserves strict token-value identity and rejects whitespace-padded numeric-string usage counters instead of silently normalizing malformed metadata.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8237,7 +8260,7 @@ to:
 - ai usage safe-integer parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-responses-shared-usage.test.ts test/amazon-bedrock-usage.test.ts test/google-usage-metadata.test.ts test/google-gemini-cli-usage-metadata.test.ts test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts`
 - ai shared usage parser regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts test/amazon-bedrock-usage.test.ts test/openai-responses-shared-usage.test.ts` (includes OpenAI Responses malformed `thinkingSignature` replay suppression coverage and Google/Bedrock/OpenAI shared fractional-token rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts test/amazon-bedrock-usage.test.ts test/openai-responses-shared-usage.test.ts` (includes OpenAI Responses malformed `thinkingSignature` replay suppression coverage and Google/Bedrock/OpenAI shared fractional + whitespace-padded usage-token rejection coverage)
 - ai streaming JSON parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/json-parse.test.ts`
 - ai OpenAI Completions thought-signature normalization regression tests pass:

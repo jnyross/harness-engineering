@@ -41,6 +41,7 @@
 - Google Gemini CLI / Antigravity stream usage parsing now accepts numeric-string usage metadata values and computes fallback totals when `totalTokenCount` is omitted, preserving non-zero accounting for Cloud Code Assist responses that serialize token counts as strings.
 - Google Gemini CLI / Antigravity usage metadata parsing now rejects fractional token values (number and numeric-string forms) instead of truncating them, preventing malformed usage payloads from silently coercing decimal token counts.
 - Google/Gemini usage metadata parsing now also rejects whitespace-padded numeric-string token counters instead of trimming/coalescing malformed usage values.
+- Bedrock and OpenAI Responses usage parsing now also rejects whitespace-padded numeric-string token counters instead of trimming/coalescing malformed usage values.
 - Bedrock stream usage parsing now accepts numeric-string usage metadata values and computes fallback totals when `totalTokens` is omitted, preserving stable usage accounting for compatible intermediary responses.
 - Updated Codex WebSocket header conversion to iterate with `Headers.forEach()`, avoiding type incompatibilities in consumer check flows that use non-DOM `Headers` typings.
 - Consolidated provider retry sleep into a shared abortable helper that removes abort listeners on resolve/reject, preventing listener leaks across retry backoff paths.

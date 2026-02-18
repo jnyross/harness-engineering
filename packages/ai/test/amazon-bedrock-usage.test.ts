@@ -134,6 +134,25 @@ describe("extractBedrockUsageMetadata", () => {
 		});
 	});
 
+	it("ignores whitespace-padded numeric-string usage values", () => {
+		expect(
+			extractBedrockUsageMetadata({
+				inputTokens: " 8 ",
+				outputTokens: " 3 ",
+				cacheReadInputTokens: " 2 ",
+				cacheWriteInputTokens: " 1 ",
+				totalTokens: " 14 ",
+			}),
+		).toEqual({
+			input: 0,
+			output: 0,
+			cacheRead: 0,
+			cacheWrite: 0,
+			totalTokens: 0,
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+		});
+	});
+
 	it("returns undefined for invalid payloads", () => {
 		expect(extractBedrockUsageMetadata(null)).toBeUndefined();
 		expect(extractBedrockUsageMetadata("invalid")).toBeUndefined();
