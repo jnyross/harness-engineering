@@ -6578,6 +6578,26 @@ to:
 
 **Result:** proxy streaming now tolerates malformed SSE JSON root payloads without crashing stream processing and continues handling valid events.
 
+---
+
+### 349) ai OpenAI Codex OAuth token parsing accepted malformed token-response root shapes
+
+**Finding:** `packages/ai/src/utils/oauth/openai-codex.ts` token exchange and refresh logic cast `response.json()` payloads directly and dereferenced token fields without root-shape validation. Non-object JSON roots (`null`, numbers) could trigger runtime null-property access errors instead of returning structured OAuth failures.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/openai-codex.ts`
+- `packages/ai/test/openai-codex-oauth-abort.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- normalize token exchange/refresh JSON roots via object-shape parsing before field extraction,
+- require non-empty `access_token`/`refresh_token` strings and positive numeric `expires_in` values,
+- add regression coverage proving malformed non-object JSON roots are treated as failed token exchange/refresh results rather than runtime crashes.
+
+**Result:** OpenAI Codex OAuth now converts malformed token payload roots into deterministic login/refresh failures with stable error semantics.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6796,7 +6816,7 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/oauth-authorization-input.test.ts`
 - ai anthropic oauth parsing/state-validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts`
-- ai openai-codex oauth startup/manual-flow/cancellation/base64url-decoding/hash-fragment parsing regression tests pass:
+- ai openai-codex oauth startup/manual-flow/cancellation/base64url-decoding/hash-fragment/non-object-token-payload parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-oauth-abort.test.ts`
 - coding-agent tools regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools.test.ts` (includes pre-aborted write coverage)
