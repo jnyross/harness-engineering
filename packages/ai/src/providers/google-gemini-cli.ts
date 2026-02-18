@@ -379,6 +379,33 @@ interface CloudCodeAssistResponseChunk {
 	traceId?: string;
 }
 
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function parseGoogleCloudCredentials(value: string): { token: string; projectId: string } | undefined {
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(value);
+	} catch {
+		return undefined;
+	}
+	if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+		return undefined;
+	}
+	const record = parsed as { token?: unknown; projectId?: unknown };
+	const token = parseNonEmptyString(record.token);
+	const projectId = parseNonEmptyString(record.projectId);
+	if (!token || !projectId) {
+		return undefined;
+	}
+	return { token, projectId };
+}
+
 export const streamGoogleGeminiCli: StreamFunction<"google-gemini-cli", GoogleGeminiCliOptions> = (
 	model: Model<"google-gemini-cli">,
 	context: Context,
@@ -412,20 +439,12 @@ export const streamGoogleGeminiCli: StreamFunction<"google-gemini-cli", GoogleGe
 				throw new Error("Google Cloud Code Assist requires OAuth authentication. Use /login to authenticate.");
 			}
 
-			let accessToken: string;
-			let projectId: string;
-
-			try {
-				const parsed = JSON.parse(apiKeyRaw) as { token: string; projectId: string };
-				accessToken = parsed.token;
-				projectId = parsed.projectId;
-			} catch {
+			const parsedCredentials = parseGoogleCloudCredentials(apiKeyRaw);
+			if (!parsedCredentials) {
 				throw new Error("Invalid Google Cloud Code Assist credentials. Use /login to re-authenticate.");
 			}
-
-			if (!accessToken || !projectId) {
-				throw new Error("Missing token or projectId in Google Cloud credentials. Use /login to re-authenticate.");
-			}
+			const accessToken = parsedCredentials.token;
+			const projectId = parsedCredentials.projectId;
 
 			const isAntigravity = model.provider === "google-antigravity";
 			const baseUrl = model.baseUrl?.trim();
