@@ -46,7 +46,7 @@ function parseNonNegativeSafeInteger(value: unknown): number | undefined {
 
 function parseLegacyOAuthCredential(
 	value: unknown,
-): { type: "oauth"; refresh: string; access: string; expires: number } | undefined {
+): (Record<string, unknown> & { type: "oauth"; refresh: string; access: string; expires: number }) | undefined {
 	const record = asRecord(value);
 	if (!record) {
 		return undefined;
@@ -57,7 +57,7 @@ function parseLegacyOAuthCredential(
 	if (!refresh || !access || expires === undefined) {
 		return undefined;
 	}
-	return { type: "oauth", refresh, access, expires };
+	return { ...record, type: "oauth", refresh, access, expires };
 }
 
 /**
