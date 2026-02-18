@@ -6989,6 +6989,26 @@ to:
 
 **Result:** OAuth auth-file parsing now preserves strict provider-key identity and rejects malformed whitespace-padded provider keys during credential loading.
 
+---
+
+### 369) coding-agent auth-storage parsing normalized whitespace-padded provider keys into canonical IDs
+
+**Finding:** `packages/coding-agent/src/core/auth-storage.ts` trimmed provider keys while normalizing `auth.json`, so whitespace-padded keys (for example `" anthropic "`) were silently coalesced into canonical provider IDs. This could mask malformed key entries and create provider-key normalization collisions during runtime auth lookup.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/auth-storage.ts`
+- `packages/coding-agent/test/auth-storage.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require provider keys to be non-empty strings without surrounding whitespace during auth-storage normalization,
+- drop whitespace-padded provider-key entries instead of trimming/coalescing them,
+- add regression coverage for whitespace-padded provider-key rejection in auth-storage normalization.
+
+**Result:** coding-agent auth-storage parsing now preserves strict provider-key identity and rejects malformed whitespace-padded provider keys while loading persisted credentials.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7174,7 +7194,7 @@ to:
 - coding-agent keybindings config normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/keybindings.test.ts test/settings-manager.test.ts`
 - coding-agent auth storage normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/auth-storage.test.ts`
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/auth-storage.test.ts` (includes whitespace-padded provider-key rejection coverage)
 - coding-agent extension dialog callback regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extension-dialog-callbacks.test.ts` (includes throwing selector/input/editor callback safety and post-dispose callback suppression across selector/input/editor dialogs)
 - coding-agent session selector disposal regression tests pass:
