@@ -70,10 +70,10 @@ function readFlagValue(
 }
 
 function parseCommaSeparatedValues(value: string): string[] {
-	return value
-		.split(",")
-		.map((entry) => entry.trim())
-		.filter((entry) => entry.length > 0);
+	return value.split(",").filter((entry) => {
+		const trimmed = entry.trim();
+		return trimmed.length > 0 && trimmed === entry;
+	});
 }
 
 export function parseArgs(args: string[], extensionFlags?: Map<string, { type: "boolean" | "string" }>): Args {

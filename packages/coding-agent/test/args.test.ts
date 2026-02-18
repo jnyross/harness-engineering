@@ -129,6 +129,11 @@ describe("parseArgs", () => {
 			const result = parseArgs(["--models", "gpt-4o, ,claude-sonnet,,"]);
 			expect(result.models).toEqual(["gpt-4o", "claude-sonnet"]);
 		});
+
+		test("rejects whitespace-padded entries in --models comma-separated list", () => {
+			const result = parseArgs(["--models", " gpt-4o ,claude-sonnet, gemini-pro "]);
+			expect(result.models).toEqual(["claude-sonnet"]);
+		});
 	});
 
 	describe("--no-session flag", () => {
@@ -247,6 +252,11 @@ describe("parseArgs", () => {
 		test("ignores empty entries in --tools comma-separated list", () => {
 			const result = parseArgs(["--tools", "read,, ,bash,"]);
 			expect(result.tools).toEqual(["read", "bash"]);
+		});
+
+		test("rejects whitespace-padded entries in --tools comma-separated list", () => {
+			const result = parseArgs(["--tools", " read,bash ,grep"]);
+			expect(result.tools).toEqual(["grep"]);
 		});
 
 		test("warns when --tools value contains only empty entries", () => {

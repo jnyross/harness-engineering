@@ -8487,6 +8487,27 @@ to:
 
 **Result:** Extension-loader manifest parsing now preserves strict manifest entry identity and rejects whitespace-padded extension path/pattern entries instead of silently normalizing malformed `pi.*` manifest identifiers.
 
+---
+
+### 442) coding-agent CLI comma-list parsing normalized whitespace-padded model/tool entries
+
+**Finding:** `packages/coding-agent/src/cli/args.ts` trimmed `--models` / `--tools` comma-list entries before filtering, so whitespace-padded model/tool entries could be silently accepted instead of rejected as malformed CLI identifier values.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/cli/args.ts`
+- `packages/coding-agent/test/args.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require strict comma-list entry identity (`trimmed === value`) for `--models` / `--tools` parsing,
+- reject whitespace-padded model/tool entries instead of trimming/coalescing malformed identifiers,
+- preserve existing blank-entry filtering and warning behavior when no usable values remain,
+- add regression coverage for whitespace-padded model/tool entry rejection.
+
+**Result:** CLI comma-list parsing now preserves strict model/tool identifier identity and rejects whitespace-padded entries instead of silently normalizing malformed flag values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8531,7 +8552,7 @@ to:
 - coding-agent changelog/export-color parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/changelog-utils.test.ts test/export-html-color-parsing.test.ts` (includes whitespace-padded changelog `lastVersion` rejection coverage)
 - coding-agent CLI comma-list parsing regression tests pass (including blank-only `--models`/`--tools` warning behavior):
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/args.test.ts`
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/args.test.ts` (includes whitespace-padded model/tool comma-entry rejection coverage)
 - coding-agent tool numeric-parameter safety regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/execution-plan.test.ts test/read-tool.test.ts test/tool-numeric-parameter-safety.test.ts`
 - coding-agent settings-selector numeric parsing regression tests pass:
