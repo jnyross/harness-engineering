@@ -18,14 +18,6 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
 	return value as Record<string, unknown>;
 }
 
-function parseNonEmptyString(value: unknown): string | undefined {
-	if (typeof value !== "string") {
-		return undefined;
-	}
-	const trimmed = value.trim();
-	return trimmed.length > 0 ? trimmed : undefined;
-}
-
 function parseStrictNonEmptyString(value: unknown): string | undefined {
 	if (typeof value !== "string") {
 		return undefined;
@@ -94,7 +86,7 @@ export function migrateAuthToAuthJson(): string[] {
 			if (settings && apiKeys) {
 				for (const [provider, key] of Object.entries(apiKeys)) {
 					const normalizedProvider = parseProviderId(provider);
-					const normalizedKey = parseNonEmptyString(key);
+					const normalizedKey = parseStrictNonEmptyString(key);
 					if (!normalizedProvider || !normalizedKey || migrated[normalizedProvider]) {
 						continue;
 					}

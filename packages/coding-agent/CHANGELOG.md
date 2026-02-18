@@ -63,6 +63,7 @@
 - Startup auth/session migrations now normalize parsed JSON runtime shapes (oauth providers, apiKeys map entries, session header `cwd`) to valid non-empty strings/object records, preventing malformed migration files from injecting invalid provider keys or crashing session relocation logic.
 - Agent-root session migration now rejects whitespace-padded `session` header `type`/`cwd` values (instead of trimming), preserving strict persisted session-header identity during legacy session-file relocation.
 - Startup auth migration now also rejects whitespace-padded oauth/apiKey provider keys instead of trimming/coalescing them, preserving strict provider-key identity while migrating legacy auth/settings files into `auth.json`.
+- Startup auth migration now also rejects whitespace-padded legacy `apiKeys` credential values instead of trimming/coalescing malformed api-key tokens during `auth.json` migration.
 - Startup auth migration now keeps `oauth.json` in place when no valid oauth credential entries are migrated, avoiding false `.migrated` renames that could hide malformed-but-unmigrated legacy auth files.
 - Managed-tool release-version parsing now validates GitHub latest-release payload shape (`tag_name`) before version normalization, rejecting malformed response roots/fields with explicit diagnostics instead of surfacing null-property runtime errors.
 - Managed-tool release-version parsing now also rejects whitespace-padded `tag_name` values, preserving strict release-tag identity instead of trimming/coalescing malformed tag payloads.

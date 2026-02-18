@@ -7735,6 +7735,26 @@ to:
 
 **Result:** Channel-store last-log timestamp parsing now preserves strict persisted timestamp identity and rejects whitespace-padded `ts` values instead of silently normalizing malformed cursor values.
 
+---
+
+### 406) coding-agent legacy auth migration normalized whitespace-padded api-key credential values
+
+**Finding:** `packages/coding-agent/src/migrations.ts` migrated legacy `settings.json` `apiKeys` values using trimmed non-empty normalization, so whitespace-padded legacy api-key values could be silently accepted instead of rejected as malformed credential tokens during `auth.json` migration.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/migrations.ts`
+- `packages/coding-agent/test/migrations.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require strict non-empty api-key credential string identity (no surrounding whitespace) when migrating legacy `settings.json` `apiKeys` entries,
+- preserve existing provider-key strictness and oauth precedence behavior in migration output,
+- add regression coverage for whitespace-padded legacy api-key value rejection while preserving migration of valid providers/keys.
+
+**Result:** Legacy auth migration now preserves strict api-key credential identity and rejects whitespace-padded legacy `apiKeys` values instead of silently normalizing malformed token values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8035,7 +8055,7 @@ to:
 - coding-agent model-registry provider-key validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/model-registry.test.ts` (includes blank and whitespace-padded provider-key rejection coverage for malformed `models.json` provider maps)
 - coding-agent migration parsing normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/migrations.test.ts` (includes oauth legacy-file preservation, whitespace-padded provider-key rejection, and whitespace-padded session-header relocation rejection coverage)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/migrations.test.ts` (includes oauth legacy-file preservation, whitespace-padded provider-key rejection, whitespace-padded legacy api-key value rejection, and whitespace-padded session-header relocation rejection coverage)
 - coding-agent session-manager JSONL line-shape normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/session-manager/file-operations.test.ts` (includes non-object/type-less line filtering, whitespace-padded entry-type rejection, and blank/whitespace-padded session-id header rejection in load/list/recent-session checks)
 - TUI package tests pass:

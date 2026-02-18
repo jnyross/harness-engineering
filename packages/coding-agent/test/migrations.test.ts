@@ -28,7 +28,7 @@ describe("migrations", () => {
 		}
 	});
 
-	it("migrates only valid auth providers and rejects whitespace-padded provider keys", () => {
+	it("migrates only valid auth providers and rejects whitespace-padded provider keys and api keys", () => {
 		const oauthPath = join(agentDir, "oauth.json");
 		const settingsPath = join(agentDir, "settings.json");
 		const authPath = join(agentDir, "auth.json");
@@ -47,7 +47,8 @@ describe("migrations", () => {
 			settingsPath,
 			JSON.stringify({
 				apiKeys: {
-					gemini: "  key-123  ",
+					gemini: "key-123",
+					copilot: "  should-be-dropped  ",
 					" vertex ": "  should-be-dropped  ",
 					" ": "ignored",
 					anthropic: "should-not-overwrite-oauth",
