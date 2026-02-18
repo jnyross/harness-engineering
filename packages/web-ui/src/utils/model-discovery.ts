@@ -2,6 +2,21 @@ import { LMStudioClient } from "@lmstudio/sdk";
 import type { Api, Model } from "@mariozechner/pi-ai";
 import { Ollama } from "ollama/browser";
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
+}
+
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
 function parsePositiveInteger(value: unknown): number | undefined {
 	if (typeof value === "number" && Number.isSafeInteger(value) && value > 0) {
 		return value;
@@ -20,6 +35,15 @@ function parsePositiveInteger(value: unknown): number | undefined {
 
 function parsePositiveIntegerOrFallback(value: unknown, fallback: number): number {
 	return parsePositiveInteger(value) ?? fallback;
+}
+
+function parseDiscoveredModelsResponse(data: unknown, providerLabel: string): unknown[] {
+	const payload = asRecord(data);
+	const models = payload?.data;
+	if (!Array.isArray(models)) {
+		throw new Error(`Invalid response format from ${providerLabel} server`);
+	}
+	return models;
 }
 
 /**
@@ -126,20 +150,26 @@ export async function discoverLlamaCppModels(baseUrl: string, apiKey?: string): 
 		}
 
 		const data = await response.json();
+		const models = parseDiscoveredModelsResponse(data, "llama.cpp");
 
-		if (!data.data || !Array.isArray(data.data)) {
-			throw new Error("Invalid response format from llama.cpp server");
-		}
+		const discoveredModels: Model<Api>[] = [];
+		for (const model of models) {
+			const modelRecord = asRecord(model);
+			if (!modelRecord) {
+				continue;
+			}
+			const id = parseNonEmptyString(modelRecord?.id);
+			if (!id) {
+				continue;
+			}
 
-		// biome-ignore lint/suspicious/noExplicitAny: migration
-		return data.data.map((model: any) => {
 			// llama.cpp doesn't always provide context window info
-			const contextWindow = parsePositiveIntegerOrFallback(model.context_length, 8192);
-			const maxTokens = parsePositiveIntegerOrFallback(model.max_tokens, 4096);
+			const contextWindow = parsePositiveIntegerOrFallback(modelRecord.context_length, 8192);
+			const maxTokens = parsePositiveIntegerOrFallback(modelRecord.max_tokens, 4096);
 
 			const llamaModel: Model<Api> = {
-				id: model.id,
-				name: model.id,
+				id,
+				name: id,
 				// biome-ignore lint/suspicious/noExplicitAny: migration
 				api: "openai-completions" as any,
 				provider: "", // Will be set by caller
@@ -152,12 +182,13 @@ export async function discoverLlamaCppModels(baseUrl: string, apiKey?: string): 
 					cacheRead: 0,
 					cacheWrite: 0,
 				},
-				contextWindow: contextWindow,
-				maxTokens: maxTokens,
+				contextWindow,
+				maxTokens,
 			};
+			discoveredModels.push(llamaModel);
+		}
 
-			return llamaModel;
-		});
+		return discoveredModels;
 	} catch (err) {
 		console.error("Failed to discover llama.cpp models:", err);
 		throw new Error(`llama.cpp discovery failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -190,20 +221,26 @@ export async function discoverVLLMModels(baseUrl: string, apiKey?: string): Prom
 		}
 
 		const data = await response.json();
+		const models = parseDiscoveredModelsResponse(data, "vLLM");
 
-		if (!data.data || !Array.isArray(data.data)) {
-			throw new Error("Invalid response format from vLLM server");
-		}
+		const discoveredModels: Model<Api>[] = [];
+		for (const model of models) {
+			const modelRecord = asRecord(model);
+			if (!modelRecord) {
+				continue;
+			}
+			const id = parseNonEmptyString(modelRecord?.id);
+			if (!id) {
+				continue;
+			}
 
-		// biome-ignore lint/suspicious/noExplicitAny: migration
-		return data.data.map((model: any) => {
 			// vLLM provides max_model_len which is the context window
-			const contextWindow = parsePositiveIntegerOrFallback(model.max_model_len, 8192);
+			const contextWindow = parsePositiveIntegerOrFallback(modelRecord.max_model_len, 8192);
 			const maxTokens = Math.min(contextWindow, 4096); // Cap max tokens
 
 			const vllmModel: Model<Api> = {
-				id: model.id,
-				name: model.id,
+				id,
+				name: id,
 				// biome-ignore lint/suspicious/noExplicitAny: migration
 				api: "openai-completions" as any,
 				provider: "", // Will be set by caller
@@ -216,12 +253,13 @@ export async function discoverVLLMModels(baseUrl: string, apiKey?: string): Prom
 					cacheRead: 0,
 					cacheWrite: 0,
 				},
-				contextWindow: contextWindow,
-				maxTokens: maxTokens,
+				contextWindow,
+				maxTokens,
 			};
+			discoveredModels.push(vllmModel);
+		}
 
-			return vllmModel;
-		});
+		return discoveredModels;
 	} catch (err) {
 		console.error("Failed to discover vLLM models:", err);
 		throw new Error(`vLLM discovery failed: ${err instanceof Error ? err.message : String(err)}`);
