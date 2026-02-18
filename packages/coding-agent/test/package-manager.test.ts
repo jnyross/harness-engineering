@@ -1242,18 +1242,36 @@ export default function(api) { api.registerTool({ name: "test", description: "te
 	});
 
 	describe("npm package version parsing", () => {
-		it("returns trimmed installed version strings and ignores malformed shapes", () => {
+		it("accepts strict semver installed versions and ignores malformed shapes", () => {
 			const validDir = join(tempDir, "valid-version");
 			mkdirSync(validDir, { recursive: true });
-			writeFileSync(join(validDir, "package.json"), JSON.stringify({ version: " 1.2.3 " }));
+			writeFileSync(join(validDir, "package.json"), JSON.stringify({ version: "1.2.3" }));
 			// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
 			expect((packageManager as any).getInstalledNpmVersion(validDir)).toBe("1.2.3");
+
+			const validPrereleaseDir = join(tempDir, "valid-prerelease-version");
+			mkdirSync(validPrereleaseDir, { recursive: true });
+			writeFileSync(join(validPrereleaseDir, "package.json"), JSON.stringify({ version: "1.2.3-beta.1+build.9" }));
+			// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
+			expect((packageManager as any).getInstalledNpmVersion(validPrereleaseDir)).toBe("1.2.3-beta.1+build.9");
 
 			const blankDir = join(tempDir, "blank-version");
 			mkdirSync(blankDir, { recursive: true });
 			writeFileSync(join(blankDir, "package.json"), JSON.stringify({ version: "   " }));
 			// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
 			expect((packageManager as any).getInstalledNpmVersion(blankDir)).toBeUndefined();
+
+			const whitespaceDir = join(tempDir, "whitespace-version");
+			mkdirSync(whitespaceDir, { recursive: true });
+			writeFileSync(join(whitespaceDir, "package.json"), JSON.stringify({ version: " 1.2.3 " }));
+			// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
+			expect((packageManager as any).getInstalledNpmVersion(whitespaceDir)).toBeUndefined();
+
+			const invalidSemverDir = join(tempDir, "invalid-semver-version");
+			mkdirSync(invalidSemverDir, { recursive: true });
+			writeFileSync(join(invalidSemverDir, "package.json"), JSON.stringify({ version: "latest" }));
+			// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
+			expect((packageManager as any).getInstalledNpmVersion(invalidSemverDir)).toBeUndefined();
 
 			const invalidTypeDir = join(tempDir, "invalid-version-type");
 			mkdirSync(invalidTypeDir, { recursive: true });

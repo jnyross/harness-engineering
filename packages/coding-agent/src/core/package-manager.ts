@@ -99,12 +99,18 @@ function normalizeManifestEntries(value: unknown): string[] | undefined {
 		.filter((entry) => entry.length > 0);
 }
 
-function parseNonEmptyString(value: unknown): string | undefined {
+const SEMVER_VERSION_PATTERN =
+	/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
+
+function parsePackageVersion(value: unknown): string | undefined {
 	if (typeof value !== "string") {
 		return undefined;
 	}
 	const trimmed = value.trim();
-	return trimmed.length > 0 ? trimmed : undefined;
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return SEMVER_VERSION_PATTERN.test(value) ? value : undefined;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
@@ -1084,7 +1090,7 @@ export class DefaultPackageManager implements PackageManager {
 		try {
 			const content = readFileSync(packageJsonPath, "utf-8");
 			const pkg = JSON.parse(content) as { version?: unknown };
-			return parseNonEmptyString(pkg.version);
+			return parsePackageVersion(pkg.version);
 		} catch {
 			return undefined;
 		}
@@ -1094,7 +1100,7 @@ export class DefaultPackageManager implements PackageManager {
 		const response = await fetch(`https://registry.npmjs.org/${packageName}/latest`);
 		if (!response.ok) throw new Error(`Failed to fetch npm registry: ${response.status}`);
 		const data = asRecord(await response.json());
-		const version = parseNonEmptyString(data?.version);
+		const version = parsePackageVersion(data?.version);
 		if (!version) {
 			throw new Error("Invalid npm registry response: missing version");
 		}

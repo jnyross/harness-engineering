@@ -7469,6 +7469,27 @@ to:
 
 **Result:** Session-manager persisted-file parsing now rejects whitespace-padded session identifiers/type values instead of silently normalizing malformed session metadata.
 
+---
+
+### 393) coding-agent package-manager version parsing accepted trimmed/non-semver version strings
+
+**Finding:** `packages/coding-agent/src/core/package-manager.ts` validated npm registry and installed `package.json` `version` values as generic trimmed non-empty strings. Whitespace-padded and non-semver literals could be accepted after trimming, allowing malformed version metadata into update comparisons.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/package-manager.ts`
+- `packages/coding-agent/test/package-manager-registry-version.test.ts`
+- `packages/coding-agent/test/package-manager.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require strict semver version strings (no surrounding whitespace) for npm registry latest-version and installed-package version parsing,
+- reject whitespace-padded/non-semver literals (`" 1.2.3 "`, `"latest"`, `"v1.2.3"`),
+- add regression coverage for strict semver acceptance (including prerelease/build metadata) and malformed-version rejection.
+
+**Result:** Package-manager version parsing now preserves strict semver identity and rejects malformed version literals instead of silently trimming/coercing them.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7763,7 +7784,7 @@ to:
 - coding-agent package-manager manifest normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes malformed `pi.extensions` entry filtering, mixed valid+invalid manifest pattern handling, and installed-version shape normalization coverage)
 - coding-agent package-manager npm-registry version parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager-registry-version.test.ts test/package-manager.test.ts` (includes malformed npm-registry `version` root/field-shape rejection and trimmed valid-version parsing coverage)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager-registry-version.test.ts test/package-manager.test.ts` (includes malformed npm-registry `version` root/field-shape rejection, strict semver acceptance, and whitespace-padded/non-semver version literal rejection coverage)
 - coding-agent managed-tool release-version parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools-manager-version-parse.test.ts` (includes malformed GitHub latest-release payload rejection, whitespace-padded tag-name rejection, and `v`-prefix normalization coverage)
 - coding-agent model-registry provider-key validation regression tests pass:

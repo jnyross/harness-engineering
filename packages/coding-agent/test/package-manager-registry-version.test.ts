@@ -33,18 +33,44 @@ describe("package manager npm registry version parsing", () => {
 		vi.restoreAllMocks();
 	});
 
-	it("returns trimmed npm registry version values", async () => {
+	it("accepts strict semver npm registry version values", async () => {
 		global.fetch = vi.fn(
-			async () => new Response(JSON.stringify({ version: " 1.2.3 " }), { status: 200 }),
+			async () => new Response(JSON.stringify({ version: "1.2.3" }), { status: 200 }),
 		) as typeof fetch;
 
 		const manager = createPackageManagerForRegistryTests();
 		await expect(manager.getLatestNpmVersion("example-pkg")).resolves.toBe("1.2.3");
+
+		global.fetch = vi.fn(
+			async () => new Response(JSON.stringify({ version: "1.2.3-beta.1+build.9" }), { status: 200 }),
+		) as typeof fetch;
+		await expect(manager.getLatestNpmVersion("example-pkg")).resolves.toBe("1.2.3-beta.1+build.9");
 	});
 
-	it("rejects malformed npm registry version payload shapes", async () => {
+	it("rejects malformed npm registry version payload shapes and values", async () => {
 		const manager = createPackageManagerForRegistryTests();
 		global.fetch = vi.fn(async () => new Response(JSON.stringify({ version: 123 }), { status: 200 })) as typeof fetch;
+		await expect(manager.getLatestNpmVersion("example-pkg")).rejects.toThrow(
+			"Invalid npm registry response: missing version",
+		);
+
+		global.fetch = vi.fn(
+			async () => new Response(JSON.stringify({ version: " 1.2.3 " }), { status: 200 }),
+		) as typeof fetch;
+		await expect(manager.getLatestNpmVersion("example-pkg")).rejects.toThrow(
+			"Invalid npm registry response: missing version",
+		);
+
+		global.fetch = vi.fn(
+			async () => new Response(JSON.stringify({ version: "latest" }), { status: 200 }),
+		) as typeof fetch;
+		await expect(manager.getLatestNpmVersion("example-pkg")).rejects.toThrow(
+			"Invalid npm registry response: missing version",
+		);
+
+		global.fetch = vi.fn(
+			async () => new Response(JSON.stringify({ version: "v1.2.3" }), { status: 200 }),
+		) as typeof fetch;
 		await expect(manager.getLatestNpmVersion("example-pkg")).rejects.toThrow(
 			"Invalid npm registry response: missing version",
 		);
