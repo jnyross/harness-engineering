@@ -35,4 +35,33 @@ describe("parseTasksFromPlanOutput", () => {
 			acceptanceCriteria: [],
 		});
 	});
+
+	it("normalizes malformed JSON task fields and filters non-task entries", () => {
+		const tasks = parseTasksFromPlanOutput(`[
+			{
+				"title": "  Build parser  ",
+				"description": "  Parse args safely  ",
+				"acceptanceCriteria": [" handles quotes ", "", 1, "parses escapes"]
+			},
+			{
+				"title": 123,
+				"description": null,
+				"acceptanceCriteria": "invalid"
+			},
+			"not-an-object"
+		]`);
+
+		expect(tasks).toEqual([
+			{
+				title: "Build parser",
+				description: "Parse args safely",
+				acceptanceCriteria: ["handles quotes", "parses escapes"],
+			},
+			{
+				title: "Untitled",
+				description: undefined,
+				acceptanceCriteria: [],
+			},
+		]);
+	});
 });

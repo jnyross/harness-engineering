@@ -39,6 +39,31 @@ const NON_TASK_SECTION_TITLES = new Set([
 	"overview",
 ]);
 
+function parseNonEmptyTaskString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function normalizePlanTask(rawTask: unknown): TddTask | undefined {
+	if (!rawTask || typeof rawTask !== "object" || Array.isArray(rawTask)) {
+		return undefined;
+	}
+	const task = rawTask as { title?: unknown; description?: unknown; acceptanceCriteria?: unknown };
+	const acceptanceCriteria = Array.isArray(task.acceptanceCriteria)
+		? task.acceptanceCriteria
+				.map((criterion) => parseNonEmptyTaskString(criterion))
+				.filter((criterion): criterion is string => criterion !== undefined)
+		: [];
+	return {
+		title: parseNonEmptyTaskString(task.title) ?? "Untitled",
+		description: parseNonEmptyTaskString(task.description),
+		acceptanceCriteria,
+	};
+}
+
 function userMessage(text: string): AgentMessage {
 	return {
 		role: "user",
@@ -69,17 +94,14 @@ export function parseTasksFromPlanOutput(planText: string): TddTask[] {
 	const jsonMatch = planText.match(/\[[\s\S]*?\{[\s\S]*?"title"[\s\S]*?\}[\s\S]*?\]/);
 	if (jsonMatch) {
 		try {
-			const arr = JSON.parse(jsonMatch[0]) as {
-				title: string;
-				acceptanceCriteria?: string[];
-				description?: string;
-			}[];
-			for (const t of arr) {
-				tasks.push({
-					title: t.title ?? "Untitled",
-					description: t.description,
-					acceptanceCriteria: Array.isArray(t.acceptanceCriteria) ? t.acceptanceCriteria : [],
-				});
+			const parsed = JSON.parse(jsonMatch[0]) as unknown;
+			if (Array.isArray(parsed)) {
+				for (const rawTask of parsed) {
+					const normalizedTask = normalizePlanTask(rawTask);
+					if (normalizedTask) {
+						tasks.push(normalizedTask);
+					}
+				}
 			}
 			return tasks;
 		} catch {
