@@ -14,6 +14,7 @@ import { promptModel } from "./commands/prompt.js";
 import { getActivePod, loadConfig } from "./config.js";
 import { normalizeContextOption, normalizeGpuCountOption, normalizeMemoryOption } from "./model-options.js";
 import { extractModelsPathFromMountCommand } from "./mount-command.js";
+import { parsePackageVersion } from "./package-metadata.js";
 import { assertValidPodName } from "./pod-name.js";
 import { getSshStreamExitError, parseSshCommand, sshExecStreamDetailed } from "./ssh.js";
 import type { Pod } from "./types.js";
@@ -21,14 +22,14 @@ import type { Pod } from "./types.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const packageJson = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf-8"));
+const APP_VERSION = parsePackageVersion(readFileSync(join(__dirname, "../package.json"), "utf-8"));
 const MODEL_COMMANDS_WITH_POD = new Set(["start", "stop", "list", "logs", "agent"]);
 const DIRECT_COMMANDS = new Set(["shell", "ssh", "start", "stop", "list", "logs", "agent"]);
 const APP_COMMAND = resolveAppCommand(process.argv[1]);
 setCliCommand(APP_COMMAND);
 
 function printHelp() {
-	console.log(`${APP_COMMAND} v${packageJson.version} - Manage vLLM deployments on GPU pods
+	console.log(`${APP_COMMAND} v${APP_VERSION} - Manage vLLM deployments on GPU pods
 
 Pod Management:
   ${APP_COMMAND} pods setup <name> "<ssh>" --mount "<mount>"    Setup pod with mount command
@@ -83,7 +84,7 @@ if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
 }
 
 if (args[0] === "--version" || args[0] === "-v") {
-	console.log(packageJson.version);
+	console.log(APP_VERSION);
 	process.exit(0);
 }
 
