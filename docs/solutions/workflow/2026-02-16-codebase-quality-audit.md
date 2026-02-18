@@ -6618,6 +6618,26 @@ to:
 
 **Result:** oauth migration now preserves unmigrated legacy oauth files and only archives legacy auth data when actual provider migration occurred.
 
+---
+
+### 351) ai Gemini CLI SSE parser accepted malformed non-object JSON chunk roots
+
+**Finding:** `packages/ai/src/providers/google-gemini-cli.ts` parsed SSE `data:` payloads with direct `JSON.parse` casts and immediately dereferenced `chunk.response`. Valid-but-malformed JSON roots like `null`, numbers, or arrays could throw at runtime and terminate the stream before subsequent valid chunks.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/google-gemini-cli.ts`
+- `packages/ai/test/google-gemini-cli-empty-stream.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- add strict object-root chunk parsing (`parseCloudCodeAssistChunk`) for Cloud Code Assist SSE payloads,
+- ignore malformed non-object chunk roots and non-object `response` shapes during SSE processing,
+- add regression coverage for malformed-root chunk parsing and mixed malformed+valid SSE streams to verify recovery.
+
+**Result:** Gemini CLI / Antigravity stream parsing now tolerates malformed non-object SSE chunk payloads and continues processing later valid response chunks.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6853,7 +6873,7 @@ to:
 - agent proxy stream regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts` (includes trailing SSE line without newline, malformed JSON diagnostics, and malformed JSON-root-shape filtering coverage)
 - ai Gemini CLI SSE regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-empty-stream.test.ts` (includes terminal `data:` line without trailing newline and malformed credential-shape rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-empty-stream.test.ts` (includes terminal `data:` line without trailing newline, malformed credential-shape rejection, and malformed non-object SSE chunk-root filtering coverage)
 - ai Codex/Gemini SSE regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-stream.test.ts test/google-gemini-cli-empty-stream.test.ts` (includes Codex base64url JWT payload account-id extraction coverage)
 - coding-agent exec regression tests pass:
