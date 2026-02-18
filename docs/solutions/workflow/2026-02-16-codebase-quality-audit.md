@@ -7490,6 +7490,26 @@ to:
 
 **Result:** Package-manager version parsing now preserves strict semver identity and rejects malformed version literals instead of silently trimming/coercing them.
 
+---
+
+### 394) mom logged Slack timestamp parser normalized whitespace-padded `ts` values
+
+**Finding:** `packages/mom/src/slack.ts` parsed persisted `log.jsonl` timestamps with trimmed non-empty string normalization, so whitespace-padded `ts` values could be accepted and normalized instead of treated as malformed persisted timestamp metadata.
+
+**Action:** Updated:
+
+- `packages/mom/src/slack.ts`
+- `packages/mom/test/slack-log-timestamp-parse.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- require strict non-empty timestamp strings (no surrounding whitespace) when parsing logged Slack `ts` values,
+- keep parseability checks against strict Slack timestamp parsing,
+- add regression coverage asserting whitespace-padded persisted `ts` values are rejected.
+
+**Result:** Logged Slack timestamp parsing now preserves strict timestamp identity and rejects whitespace-padded `ts` values instead of silently normalizing malformed persisted timestamps.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7507,7 +7527,7 @@ to:
 - mom slack timestamp runtime-shape guard regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts test/store.test.ts`
 - mom slack log-line timestamp extraction regression tests pass:
-  - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-log-timestamp-parse.test.ts test/slack-timestamp.test.ts`
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-log-timestamp-parse.test.ts test/slack-timestamp.test.ts` (includes whitespace-padded persisted-log `ts` rejection coverage)
 - mom channel-store timestamp parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/store.test.ts`
 - mom settings normalization regression tests pass:
