@@ -48,6 +48,7 @@
 - Settings-manager string/list reads now reject whitespace-padded string values (provider/model/theme/shell fields, package sources, extension/skill/prompt/theme arrays, enabled-model entries) instead of trimming/coalescing malformed identifiers and path entries.
 - Settings-file root parsing now normalizes non-object JSON roots to empty settings records before migration/load merge paths, preventing malformed scalar/array roots from disabling settings persistence or injecting incompatible settings shapes.
 - Keybindings config loading now normalizes parsed JSON structure and key values (including malformed root/value types), ignoring invalid entries while preserving valid overrides and explicit unbind arrays.
+- Keybindings config loading now also rejects whitespace-padded keybinding strings instead of trimming/coalescing malformed key identifiers.
 - Markdown settings reads now normalize `markdown.codeBlockIndent` to string-only values, falling back to default indentation when malformed non-string values are present in settings files.
 - Auth storage reload now normalizes parsed `auth.json` credentials (api-key/oauth entry shapes), ignoring malformed entries/root types instead of forwarding incompatible credential objects into runtime auth lookup paths.
 - Auth storage reload now also rejects whitespace-padded provider keys in `auth.json` instead of trimming/coalescing them, preventing malformed provider-key normalization collisions during runtime credential lookup.

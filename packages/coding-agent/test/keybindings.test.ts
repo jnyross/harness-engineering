@@ -36,6 +36,8 @@ describe("KeybindingsManager config normalization", () => {
 				interrupt: 123,
 				toggleThinking: ["", " ctrl+t ", null],
 				exit: ["   "],
+				tree: " ctrl+b ",
+				fork: [" alt+f ", "alt+r"],
 				newSession: [],
 				unknownAction: "ctrl+x",
 			}),
@@ -45,6 +47,8 @@ describe("KeybindingsManager config normalization", () => {
 		expect(manager.getKeys("interrupt")).toEqual(["escape"]);
 		expect(manager.getKeys("toggleThinking")).toEqual(["ctrl+t"]);
 		expect(manager.getKeys("exit")).toEqual(["ctrl+d"]);
+		expect(manager.getKeys("tree")).toEqual([]);
+		expect(manager.getKeys("fork")).toEqual(["alt+r"]);
 		expect(manager.getKeys("newSession")).toEqual([]);
 	});
 });

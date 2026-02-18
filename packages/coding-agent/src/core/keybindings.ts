@@ -116,7 +116,10 @@ function isEditorAction(action: string): action is EditorAction {
 function normalizeKeybindingValue(value: unknown): KeyId[] | undefined {
 	if (typeof value === "string") {
 		const trimmed = value.trim();
-		return trimmed.length > 0 ? [trimmed as KeyId] : undefined;
+		if (trimmed.length === 0 || trimmed !== value) {
+			return undefined;
+		}
+		return [value as KeyId];
 	}
 	if (!Array.isArray(value)) {
 		return undefined;
@@ -124,8 +127,10 @@ function normalizeKeybindingValue(value: unknown): KeyId[] | undefined {
 
 	const normalized = value
 		.filter((entry): entry is string => typeof entry === "string")
-		.map((entry) => entry.trim())
-		.filter((entry): entry is KeyId => entry.length > 0);
+		.filter((entry): entry is KeyId => {
+			const trimmed = entry.trim();
+			return trimmed.length > 0 && trimmed === entry;
+		});
 
 	if (normalized.length > 0) {
 		return normalized;

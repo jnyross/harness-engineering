@@ -8082,6 +8082,27 @@ to:
 
 **Result:** Mom settings loading now preserves strict provider/model identifier identity and drops whitespace-padded malformed settings values instead of silently normalizing them.
 
+---
+
+### 423) coding-agent keybindings config normalized whitespace-padded key identifiers
+
+**Finding:** `packages/coding-agent/src/core/keybindings.ts` trimmed configured keybinding strings during normalization, so whitespace-padded key identifiers in `keybindings.json` could be silently accepted instead of rejected as malformed keybinding entries.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/keybindings.ts`
+- `packages/coding-agent/test/keybindings.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require strict non-empty string identity (`trimmed === value`) for scalar and array keybinding entries,
+- reject whitespace-padded keybinding identifiers instead of trimming/coalescing them,
+- preserve malformed-type filtering and explicit empty-array unbind behavior,
+- add regression coverage for rejecting padded scalar/list keybindings while preserving valid strict entries.
+
+**Result:** Keybindings config normalization now preserves strict key identifier identity and drops whitespace-padded malformed keybinding values instead of silently normalizing them.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8268,7 +8289,7 @@ to:
 - coding-agent extension discovery manifest normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extensions-discovery.test.ts` (includes malformed-only `pi.extensions` declaration no-fallback-to-index coverage)
 - coding-agent keybindings config normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/keybindings.test.ts test/settings-manager.test.ts`
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/keybindings.test.ts test/settings-manager.test.ts` (includes whitespace-padded keybinding identifier rejection coverage)
 - coding-agent auth storage normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/auth-storage.test.ts` (includes whitespace-padded provider-key plus api-key/oauth token-field rejection coverage)
 - coding-agent extension dialog callback regression tests pass:
