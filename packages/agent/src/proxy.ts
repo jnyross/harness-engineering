@@ -71,17 +71,147 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
 	return value as Record<string, unknown>;
 }
 
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function parseNonNegativeFiniteNumber(value: unknown): number | undefined {
+	if (typeof value !== "number") {
+		return undefined;
+	}
+	return Number.isFinite(value) && value >= 0 ? value : undefined;
+}
+
+function parseContentIndex(value: unknown): number | undefined {
+	if (typeof value !== "number") {
+		return undefined;
+	}
+	return Number.isSafeInteger(value) && value >= 0 ? value : undefined;
+}
+
+function parseUsage(value: unknown): AssistantMessage["usage"] | undefined {
+	const usage = asRecord(value);
+	const cost = asRecord(usage?.cost);
+	const input = parseNonNegativeFiniteNumber(usage?.input);
+	const output = parseNonNegativeFiniteNumber(usage?.output);
+	const cacheRead = parseNonNegativeFiniteNumber(usage?.cacheRead);
+	const cacheWrite = parseNonNegativeFiniteNumber(usage?.cacheWrite);
+	const totalTokens = parseNonNegativeFiniteNumber(usage?.totalTokens);
+	const costInput = parseNonNegativeFiniteNumber(cost?.input);
+	const costOutput = parseNonNegativeFiniteNumber(cost?.output);
+	const costCacheRead = parseNonNegativeFiniteNumber(cost?.cacheRead);
+	const costCacheWrite = parseNonNegativeFiniteNumber(cost?.cacheWrite);
+	const costTotal = parseNonNegativeFiniteNumber(cost?.total);
+
+	if (
+		input === undefined ||
+		output === undefined ||
+		cacheRead === undefined ||
+		cacheWrite === undefined ||
+		totalTokens === undefined ||
+		costInput === undefined ||
+		costOutput === undefined ||
+		costCacheRead === undefined ||
+		costCacheWrite === undefined ||
+		costTotal === undefined
+	) {
+		return undefined;
+	}
+
+	return {
+		input,
+		output,
+		cacheRead,
+		cacheWrite,
+		totalTokens,
+		cost: {
+			input: costInput,
+			output: costOutput,
+			cacheRead: costCacheRead,
+			cacheWrite: costCacheWrite,
+			total: costTotal,
+		},
+	};
+}
+
 export function parseProxyEventPayload(data: string): ProxyAssistantMessageEvent | undefined {
 	const parsed = JSON.parse(data) as unknown;
 	const record = asRecord(parsed);
 	if (!record) {
 		return undefined;
 	}
-	const type = typeof record.type === "string" ? record.type : undefined;
+	const type = parseNonEmptyString(record.type);
 	if (!type || type.trim().length === 0) {
 		return undefined;
 	}
-	return record as ProxyAssistantMessageEvent;
+
+	switch (type) {
+		case "start":
+			return { type: "start" };
+		case "text_start":
+		case "thinking_start":
+		case "toolcall_end": {
+			const contentIndex = parseContentIndex(record.contentIndex);
+			if (contentIndex === undefined) {
+				return undefined;
+			}
+			return { type, contentIndex };
+		}
+		case "text_delta":
+		case "thinking_delta":
+		case "toolcall_delta": {
+			const contentIndex = parseContentIndex(record.contentIndex);
+			if (contentIndex === undefined || typeof record.delta !== "string") {
+				return undefined;
+			}
+			return { type, contentIndex, delta: record.delta };
+		}
+		case "text_end":
+		case "thinking_end": {
+			const contentIndex = parseContentIndex(record.contentIndex);
+			if (contentIndex === undefined) {
+				return undefined;
+			}
+			if (record.contentSignature !== undefined && typeof record.contentSignature !== "string") {
+				return undefined;
+			}
+			return { type, contentIndex, contentSignature: record.contentSignature };
+		}
+		case "toolcall_start": {
+			const contentIndex = parseContentIndex(record.contentIndex);
+			const id = parseNonEmptyString(record.id);
+			const toolName = parseNonEmptyString(record.toolName);
+			if (contentIndex === undefined || !id || !toolName) {
+				return undefined;
+			}
+			return { type, contentIndex, id, toolName };
+		}
+		case "done": {
+			const reason = record.reason;
+			const usage = parseUsage(record.usage);
+			if ((reason !== "stop" && reason !== "length" && reason !== "toolUse") || !usage) {
+				return undefined;
+			}
+			return { type, reason, usage };
+		}
+		case "error": {
+			const reason = record.reason;
+			const usage = parseUsage(record.usage);
+			if ((reason !== "aborted" && reason !== "error") || !usage) {
+				return undefined;
+			}
+			if (record.errorMessage !== undefined && typeof record.errorMessage !== "string") {
+				return undefined;
+			}
+			return { type, reason, usage, errorMessage: record.errorMessage };
+		}
+		default:
+			return undefined;
+	}
 }
 
 /**
@@ -160,9 +290,10 @@ export function streamProxy(model: Model<Api>, context: Context, options: ProxyS
 			if (!response.ok) {
 				let errorMessage = `Proxy error: ${response.status} ${response.statusText}`;
 				try {
-					const errorData = (await response.json()) as { error?: string };
-					if (errorData.error) {
-						errorMessage = `Proxy error: ${errorData.error}`;
+					const errorData = asRecord(await response.json());
+					const proxyError = parseNonEmptyString(errorData?.error);
+					if (proxyError) {
+						errorMessage = `Proxy error: ${proxyError}`;
 					}
 				} catch {
 					// Couldn't parse error response
