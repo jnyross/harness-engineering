@@ -143,13 +143,24 @@ function runInCwd(cwd: string, command: string | string[]): CommandExecutionResu
 }
 
 function getTestCommand(): string {
-	const configured = process.env.PI_TEST_COMMAND?.trim();
-	return configured && configured.length > 0 ? configured : DEFAULT_TEST_COMMAND;
+	const configured = normalizeGateCommand(process.env.PI_TEST_COMMAND);
+	return configured ?? DEFAULT_TEST_COMMAND;
 }
 
 function getValidateCommand(): string {
-	const configured = process.env.PI_VALIDATE_COMMAND?.trim();
-	return configured && configured.length > 0 ? configured : DEFAULT_VALIDATE_COMMAND;
+	const configured = normalizeGateCommand(process.env.PI_VALIDATE_COMMAND);
+	return configured ?? DEFAULT_VALIDATE_COMMAND;
+}
+
+function normalizeGateCommand(value: string | undefined): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
 }
 
 /**

@@ -90,6 +90,18 @@ describe("mechanical gates commands", () => {
 		expect(result.passed).toBe(false);
 		expect(result.output).not.toMatch(/command is empty/i);
 	});
+
+	it("falls back to default test command when PI_TEST_COMMAND is whitespace-padded", () => {
+		process.env.PI_TEST_COMMAND = ` node -e "process.exit(0)" `;
+		const result = redTestGate(createTempDir());
+		expect(result.passed).toBe(true);
+	});
+
+	it("falls back to default validate command when PI_VALIDATE_COMMAND is whitespace-padded", () => {
+		process.env.PI_VALIDATE_COMMAND = ` node -e "process.exit(0)" `;
+		const result = greenGate(createTempDir());
+		expect(result.passed).toBe(false);
+	});
 });
 
 describe("validateReview", () => {

@@ -17,6 +17,7 @@
 - Red gate now treats test-command invocation failures as gate failures (with diagnostics) instead of counting them as successful "red" outcomes.
 - `validateReview()` now reuses the shared reviewer parser to keep verdict semantics aligned between gate checks and reviewer prompt contracts.
 - Blank/whitespace `PI_TEST_COMMAND` and `PI_VALIDATE_COMMAND` values now fall back to defaults instead of producing empty-command gate failures.
+- Mechanical-gate env command parsing now also rejects whitespace-padded `PI_TEST_COMMAND`/`PI_VALIDATE_COMMAND` values instead of trimming/coalescing malformed command identifiers.
 - Gate command parsing now preserves Windows-style backslashes in binary paths while keeping escaped whitespace/quote support.
 - `spawnScript()` now handles pre-aborted signals and single-settlement cleanup for abort/timeout/error paths, preventing double-settlement races during subprocess teardown.
 - `spawnScript()` now maps signal-terminated child exits to non-zero exit codes, avoiding ambiguous `null` exit semantics in subprocess result handling.

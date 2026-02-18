@@ -8739,6 +8739,27 @@ to:
 
 **Result:** OpenAI Codex endpoint resolution now preserves strict endpoint identifier identity and rejects whitespace-padded model `baseUrl` values instead of silently normalizing malformed endpoint config.
 
+---
+
+### 454) agent mechanical-gate env command parser normalized whitespace-padded command values
+
+**Finding:** `packages/agent/src/gates.ts` trimmed `PI_TEST_COMMAND` / `PI_VALIDATE_COMMAND` before execution fallback checks, so whitespace-padded gate command identifiers could be silently accepted instead of rejected as malformed command configuration values.
+
+**Action:** Updated:
+
+- `packages/agent/src/gates.ts`
+- `packages/agent/test/gates.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to:
+
+- require strict env command identity (`trimmed === value`) for `PI_TEST_COMMAND` / `PI_VALIDATE_COMMAND`,
+- reject whitespace-padded env command values instead of trimming/coalescing malformed command identifiers,
+- preserve existing blank-command fallback behavior to default mechanical-gate commands,
+- add regression coverage for whitespace-padded gate command fallback behavior.
+
+**Result:** Agent mechanical-gate command resolution now preserves strict env command identifier identity and rejects whitespace-padded command values instead of silently normalizing malformed gate command config.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -9141,7 +9162,7 @@ to:
 - review-gate parser alignment behavior:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (covers explicit verdict, clear reject, and unparseable-review failure)
 - blank gate env override behavior:
-  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (covers whitespace `PI_TEST_COMMAND` / `PI_VALIDATE_COMMAND` fallback to defaults)
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/gates.test.ts` (covers blank + whitespace-padded `PI_TEST_COMMAND` / `PI_VALIDATE_COMMAND` fallback to defaults)
 - GPU type extraction helper coverage:
   - `npm --workspace "@mariozechner/pi" test -- test/gpu-name.test.ts`
 - coding-agent blank shell-config command coverage:
