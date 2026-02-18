@@ -8,6 +8,7 @@
 - Updated git update tests to use explicit `git:` source prefixes, matching strict git source parsing rules.
 - Corrected README "See Also" package link from deprecated `@mariozechner/pi-agent` to `@mariozechner/pi-agent-core`.
 - Shell-command value resolution now treats blank `!` commands as empty values (without command execution), normalizes command cache keys by trimmed command text, and has regression coverage in `resolve-config-value` tests.
+- Header value resolution now rejects whitespace-padded/blank header names while resolving configured header values, preventing malformed header-key normalization collisions in custom provider header maps.
 - Environment-variable value resolution now treats explicitly empty env vars as empty/unset values (instead of falling back to literal variable names), with regression coverage.
 - Prompt-template argument parsing now preserves quoted empty args and supports escaped quotes/spaces for shell-style command arguments; both interactive and extension editor external command parsing now use shared safe command-invocation parsing for `$EDITOR`/`$VISUAL`, preventing malformed command strings from crashing editor launch paths.
 - Shared command argument parsing now preserves Windows-style backslashes for non-escaped characters (e.g., `C:\Users\...`) while still supporting escaped spaces/quotes.

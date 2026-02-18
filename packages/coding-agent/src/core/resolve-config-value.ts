@@ -12,6 +12,14 @@ function normalizeCommandConfig(commandConfig: string): string {
 	return `!${commandConfig.slice(1).trim()}`;
 }
 
+function parseHeaderName(value: string): string | undefined {
+	const trimmed = value.trim();
+	if (trimmed.length === 0) {
+		return undefined;
+	}
+	return trimmed === value ? value : undefined;
+}
+
 /**
  * Resolve a config value (API key, header value, etc.) to an actual value.
  * - If starts with "!", executes the rest as a shell command and uses stdout (cached)
@@ -63,9 +71,13 @@ export function resolveHeaders(headers: Record<string, string> | undefined): Rec
 	if (!headers) return undefined;
 	const resolved: Record<string, string> = {};
 	for (const [key, value] of Object.entries(headers)) {
+		const headerName = parseHeaderName(key);
+		if (!headerName) {
+			continue;
+		}
 		const resolvedValue = resolveConfigValue(value);
 		if (resolvedValue) {
-			resolved[key] = resolvedValue;
+			resolved[headerName] = resolvedValue;
 		}
 	}
 	return Object.keys(resolved).length > 0 ? resolved : undefined;

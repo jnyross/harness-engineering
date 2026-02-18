@@ -7089,6 +7089,26 @@ to:
 
 **Result:** Overlay layout now rejects non-finite numeric sizing/positioning inputs consistently across all numeric layout options.
 
+---
+
+### 374) coding-agent header resolution accepted whitespace-padded/blank header names
+
+**Finding:** `packages/coding-agent/src/core/resolve-config-value.ts` resolved header values but forwarded header-name keys exactly as provided. Whitespace-padded/blank header names in configured provider headers could survive normalization and create malformed header maps.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/resolve-config-value.ts`
+- `packages/coding-agent/test/resolve-config-value.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require header names to be non-empty strings without surrounding whitespace before value resolution,
+- drop malformed/whitespace-padded header keys instead of forwarding them into resolved header maps,
+- add regression coverage for whitespace-padded header-name rejection while preserving valid header resolution behavior.
+
+**Result:** coding-agent header resolution now preserves strict header-name identity and rejects malformed whitespace-padded/blank header keys in resolved header maps.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7488,7 +7508,7 @@ to:
 - GPU type extraction helper coverage:
   - `npm --workspace "@mariozechner/pi" test -- test/gpu-name.test.ts`
 - coding-agent blank shell-config command coverage:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/resolve-config-value.test.ts` (covers blank-command short-circuit, cache-key normalization, and empty env-var handling)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/resolve-config-value.test.ts` (covers blank-command short-circuit, cache-key normalization, empty env-var handling, and whitespace-padded header-name rejection)
 - coding-agent prompt-template argument parsing coverage:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-templates.test.ts` (covers escaped quotes/spaces/backslashes and quoted-empty-arg behavior)
 - coding-agent external-editor parser integration coverage:

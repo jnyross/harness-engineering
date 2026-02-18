@@ -80,4 +80,12 @@ describe("resolveHeaders", () => {
 		});
 		expect(headers).toEqual({ "x-literal": "fixed-value" });
 	});
+
+	test("drops malformed header names with surrounding whitespace", () => {
+		const headers = resolveHeaders({
+			" authorization ": "token",
+			"x-valid-header": "value",
+		});
+		expect(headers).toEqual({ "x-valid-header": "value" });
+	});
 });
