@@ -29,17 +29,16 @@ type DeviceCodeResponse = {
 	expires_in: number;
 };
 
-type DeviceTokenSuccessResponse = {
-	access_token: string;
-	token_type?: string;
-	scope?: string;
-};
-
-type DeviceTokenErrorResponse = {
-	error: string;
-	error_description?: string;
-	interval?: number;
-};
+type ParsedDeviceTokenPollResponse =
+	| {
+			type: "success";
+			accessToken: string;
+	  }
+	| {
+			type: "error";
+			error: string;
+			intervalSeconds?: number;
+	  };
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
 	if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -97,6 +96,22 @@ export function parseCopilotTokenResponsePayload(value: unknown): { token: strin
 		return undefined;
 	}
 	return { token, expiresAt };
+}
+
+export function parseDeviceTokenPollPayload(value: unknown): ParsedDeviceTokenPollResponse | undefined {
+	const payload = asRecord(value);
+	const accessToken = parseNonEmptyString(payload?.access_token);
+	if (accessToken) {
+		return { type: "success", accessToken };
+	}
+
+	const error = parseNonEmptyString(payload?.error);
+	if (!error) {
+		return undefined;
+	}
+
+	const intervalSeconds = parsePositiveFiniteNumber(payload?.interval);
+	return { type: "error", error, intervalSeconds };
 }
 
 export function normalizeDomain(input: string): string | null {
@@ -208,19 +223,24 @@ async function pollForGitHubAccessToken(
 			}),
 		});
 
-		if (raw && typeof raw === "object" && typeof (raw as DeviceTokenSuccessResponse).access_token === "string") {
-			return (raw as DeviceTokenSuccessResponse).access_token;
+		const parsedPollResponse = parseDeviceTokenPollPayload(raw);
+		if (parsedPollResponse?.type === "success") {
+			return parsedPollResponse.accessToken;
 		}
 
-		if (raw && typeof raw === "object" && typeof (raw as DeviceTokenErrorResponse).error === "string") {
-			const err = (raw as DeviceTokenErrorResponse).error;
+		if (parsedPollResponse?.type === "error") {
+			const err = parsedPollResponse.error;
 			if (err === "authorization_pending") {
 				await abortableSleep(intervalMs, signal, "Login cancelled");
 				continue;
 			}
 
 			if (err === "slow_down") {
-				intervalMs += 5000;
+				const serverIntervalMs =
+					parsedPollResponse.intervalSeconds !== undefined
+						? Math.max(1000, Math.floor(parsedPollResponse.intervalSeconds * 1000))
+						: undefined;
+				intervalMs = Math.max(intervalMs + 5000, serverIntervalMs ?? 0);
 				await abortableSleep(intervalMs, signal, "Login cancelled");
 				continue;
 			}
