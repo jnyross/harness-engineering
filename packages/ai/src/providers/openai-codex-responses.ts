@@ -87,6 +87,17 @@ function parseNonEmptyString(value: unknown): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function parseStrictNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
+}
+
 function parseHeaderName(value: string): string | undefined {
 	const trimmed = value.trim();
 	if (trimmed.length === 0 || trimmed !== value) {
@@ -858,9 +869,9 @@ async function parseErrorResponse(response: Response): Promise<{ message: string
 	const parsed = parseCodexEventPayload(raw);
 	const err = asRecord(parsed?.error);
 	if (err) {
-		const code = parseNonEmptyString(err.code) ?? parseNonEmptyString(err.type) ?? "";
+		const code = parseStrictNonEmptyString(err.code) ?? parseStrictNonEmptyString(err.type) ?? "";
 		if (/usage_limit_reached|usage_not_included|rate_limit_exceeded/i.test(code) || response.status === 429) {
-			const planType = parseNonEmptyString(err.plan_type);
+			const planType = parseStrictNonEmptyString(err.plan_type);
 			const plan = planType ? ` (${planType.toLowerCase()} plan)` : "";
 			const resetsAt = parsePositiveFiniteNumber(err.resets_at);
 			const mins = resetsAt ? Math.max(0, Math.round((resetsAt * 1000 - Date.now()) / 60000)) : undefined;
