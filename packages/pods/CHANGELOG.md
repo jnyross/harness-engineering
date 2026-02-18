@@ -94,5 +94,6 @@
 - Built-in models config loading now also rejects whitespace-padded model IDs and env keys during normalization, preventing malformed key coalescing when parsing `models.json`.
 - `models` command listing now reuses normalized built-in models parsing, so malformed `models.json` content no longer crashes known-model display paths.
 - Pods CLI package metadata/version loading now validates `package.json` parsing and falls back safely when malformed metadata is encountered, preventing startup/help/version crashes from invalid package-json shapes.
+- Pods package-metadata version parsing now requires strict semver version strings without surrounding whitespace, rejecting malformed/non-semver version values instead of trimming/coercing them during CLI metadata fallback parsing.
 - Model start memory parsing now also rejects non-decimal numeric formats (for example `1e2`, `0x10`, `.5`) instead of accepting them via broad numeric coercion.
 

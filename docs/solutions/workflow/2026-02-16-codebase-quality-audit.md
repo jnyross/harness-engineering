@@ -7109,6 +7109,26 @@ to:
 
 **Result:** coding-agent header resolution now preserves strict header-name identity and rejects malformed whitespace-padded/blank header keys in resolved header maps.
 
+---
+
+### 375) pods package-metadata version parsing accepted whitespace-padded/non-semver version strings
+
+**Finding:** `packages/pods/src/package-metadata.ts` trimmed `package.json` `version` values and accepted any non-empty string. Whitespace-padded or non-semver strings could be surfaced as CLI metadata versions, masking malformed package metadata.
+
+**Action:** Updated:
+
+- `packages/pods/src/package-metadata.ts`
+- `packages/pods/test/package-metadata.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- require `version` values to be strict semver strings with no surrounding whitespace,
+- reject malformed/non-semver version payloads instead of trimming/coercing them,
+- add regression coverage for whitespace-padded and malformed version-string fallback behavior.
+
+**Result:** pods package metadata parsing now preserves strict semver version handling and safely falls back when version payloads are malformed.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7203,7 +7223,7 @@ to:
 - pods model-config normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/model-configs.test.ts test/config.test.ts` (includes whitespace-padded model/env key rejection coverage)
 - pods package-metadata normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi" test -- test/package-metadata.test.ts test/model-configs.test.ts test/config.test.ts`
+  - `npm --workspace "@mariozechner/pi" test -- test/package-metadata.test.ts test/model-configs.test.ts test/config.test.ts` (includes strict semver version parsing + whitespace/non-semver fallback coverage)
 - pods required-option smoke checks pass:
   - `npx tsx packages/pods/src/cli.ts start demo-model --name demo --memory`
   - `npx tsx packages/pods/src/cli.ts pods setup demo "ssh host" --vllm`

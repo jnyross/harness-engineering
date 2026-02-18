@@ -1,9 +1,15 @@
-function parseNonEmptyString(value: unknown): string | undefined {
+const SEMVER_VERSION_PATTERN =
+	/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
+
+function parsePackageVersionValue(value: unknown): string | undefined {
 	if (typeof value !== "string") {
 		return undefined;
 	}
 	const trimmed = value.trim();
-	return trimmed.length > 0 ? trimmed : undefined;
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return SEMVER_VERSION_PATTERN.test(value) ? value : undefined;
 }
 
 export function parsePackageVersion(content: string, fallback = "unknown"): string {
@@ -18,6 +24,6 @@ export function parsePackageVersion(content: string, fallback = "unknown"): stri
 		return fallback;
 	}
 
-	const version = parseNonEmptyString((parsed as { version?: unknown }).version);
+	const version = parsePackageVersionValue((parsed as { version?: unknown }).version);
 	return version ?? fallback;
 }
