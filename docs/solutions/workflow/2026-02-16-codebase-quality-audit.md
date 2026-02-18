@@ -6028,6 +6028,27 @@ to:
 
 **Result:** log-to-session sync now handles malformed timestamp payloads safely and preserves valid epoch timestamps instead of coercing them to current time.
 
+---
+
+### 322) coding-agent auth storage reload accepted malformed credential entry shapes
+
+**Finding:** `packages/coding-agent/src/core/auth-storage.ts` loaded parsed `auth.json` data directly; malformed root/credential entry shapes could propagate incompatible runtime credential objects into auth lookup/refresh code paths.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/auth-storage.ts`
+- `packages/coding-agent/test/auth-storage.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize parsed auth-storage root shape to object records only,
+- normalize credential entries to valid api-key/oauth shapes and ignore malformed entries,
+- trim non-empty credential token/key strings during normalization,
+- add regression coverage for malformed-entry filtering and malformed-root fallback behavior.
+
+**Result:** auth storage reload now fails safely on malformed `auth.json` content and only preserves valid credential entries for runtime auth lookup.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6190,6 +6211,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/settings-manager.test.ts`
 - coding-agent keybindings config normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/keybindings.test.ts test/settings-manager.test.ts`
+- coding-agent auth storage normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/auth-storage.test.ts`
 - coding-agent extension dialog callback regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extension-dialog-callbacks.test.ts` (includes throwing selector/input/editor callback safety and post-dispose callback suppression across selector/input/editor dialogs)
 - coding-agent session selector disposal regression tests pass:
