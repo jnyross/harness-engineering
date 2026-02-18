@@ -6049,6 +6049,24 @@ to:
 
 **Result:** auth storage reload now fails safely on malformed `auth.json` content and only preserves valid credential entries for runtime auth lookup.
 
+---
+
+### 323) pods known-model listing path still parsed raw `models.json` without normalization
+
+**Finding:** `packages/pods/src/commands/models.ts` `showKnownModels()` loaded `models.json` via raw `JSON.parse(...)` even after shared models parsing hardening, so malformed built-in model data could still crash model-listing output paths.
+
+**Action:** Updated:
+
+- `packages/pods/src/commands/models.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- reuse shared `parseModelsData(...)` normalization in the known-model listing path,
+- avoid direct raw JSON assumptions in the display flow.
+
+**Result:** known-model listing now shares the same malformed-input-safe models parsing path as launch config selection.
+
 ## Validation Evidence
 
 - Root quality gate passes:
