@@ -8550,6 +8550,27 @@ to:
 
 **Result:** Pods persisted config normalization now preserves strict GPU metadata identity and rejects whitespace-padded `name`/`memory` values instead of silently normalizing malformed persisted metadata.
 
+---
+
+### 445) pods `--pod=<name>` parser normalized whitespace-padded override values
+
+**Finding:** `packages/pods/src/cli-args.ts` trimmed `--pod=<name>` override values before validation, so whitespace-padded pod override identifiers could be silently accepted instead of rejected as malformed CLI override values.
+
+**Action:** Updated:
+
+- `packages/pods/src/cli-args.ts`
+- `packages/pods/test/cli-args.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- require strict `--pod=<name>` value identity (`trimmed === value`) before applying pod override parsing,
+- reject whitespace-padded `--pod=<name>` values instead of trimming/coalescing malformed pod override identifiers,
+- preserve existing missing/option-like/duplicate pod-override rejection behavior,
+- add regression coverage for whitespace-padded `--pod=<name>` rejection.
+
+**Result:** Pods `--pod=<name>` parsing now preserves strict pod override identifier identity and rejects whitespace-padded override values instead of silently normalizing malformed CLI inputs.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8631,7 +8652,7 @@ to:
 - mom model/key resolution regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/agent-model.test.ts` (includes whitespace-padded provider/model env override rejection coverage)
 - pods required-option parser regression tests pass:
-  - `npm --workspace "@mariozechner/pi" test -- test/cli-options.test.ts test/cli-args.test.ts`
+  - `npm --workspace "@mariozechner/pi" test -- test/cli-options.test.ts test/cli-args.test.ts` (includes whitespace-padded `--pod=<name>` rejection coverage)
 - pods model-option parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts` (includes whitespace-padded `--context`/`--gpus` rejection coverage)
 - pods memory normalization canonical-format regression tests pass:

@@ -40,8 +40,9 @@ export function extractPodOverride(
 			if (!allowPodOverride) {
 				throw new Error("Option --pod is only supported for model commands (start, stop, list, logs, agent).");
 			}
-			const podName = arg.slice("--pod=".length).trim();
-			if (!podName || podName.startsWith("-")) {
+			const podName = arg.slice("--pod=".length);
+			const trimmedPodName = podName.trim();
+			if (!trimmedPodName || trimmedPodName !== podName || podName.startsWith("-")) {
 				throw new Error("Option --pod requires a pod name.");
 			}
 			if (podOverride) {

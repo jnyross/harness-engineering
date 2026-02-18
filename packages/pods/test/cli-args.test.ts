@@ -43,6 +43,10 @@ describe("extractPodOverride", () => {
 		assert.throws(() => extractPodOverride(["agent", "model-a", "--pod=-h"], true), /requires a pod name/);
 	});
 
+	it("rejects whitespace-padded --pod=<name> values", () => {
+		assert.throws(() => extractPodOverride(["agent", "model-a", "--pod= prod "], true), /requires a pod name/);
+	});
+
 	it("rejects duplicate --pod flags", () => {
 		assert.throws(
 			() => extractPodOverride(["agent", "model-a", "--pod", "dev", "--pod=prod"], true),
