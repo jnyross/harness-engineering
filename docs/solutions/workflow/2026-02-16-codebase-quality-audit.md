@@ -6254,6 +6254,26 @@ to:
 
 **Result:** malformed proxy SSE payloads now return clear, actionable error diagnostics instead of ambiguous JSON parse failures.
 
+---
+
+### 333) coding-agent package-manager installed-version parsing accepted malformed `package.json` version shapes
+
+**Finding:** `packages/coding-agent/src/core/package-manager.ts` read installed npm package versions via unchecked casts; malformed/non-string/blank `version` values could propagate invalid version shapes into update checks and create inconsistent update decisions.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/package-manager.ts`
+- `packages/coding-agent/test/package-manager.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize installed package `version` values to non-empty trimmed strings only,
+- ignore malformed/blank version values by treating them as missing,
+- add focused regression coverage for valid, blank, non-string, and malformed-JSON package version reads.
+
+**Result:** package-manager npm installed-version detection now handles malformed package metadata safely and consistently.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6527,7 +6547,7 @@ to:
 - coding-agent package-manager command-settlement regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes async settlement coverage, full async command-invocation diagnostics, sync spawn-start failure diagnostics, and signal-exit rejection diagnostics)
 - coding-agent package-manager manifest normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes malformed `pi.extensions` entry filtering and mixed valid+invalid manifest pattern handling)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes malformed `pi.extensions` entry filtering, mixed valid+invalid manifest pattern handling, and installed-version shape normalization coverage)
 - TUI package tests pass:
   - `npm --workspace "@mariozechner/pi-tui" test`
 - Targeted reviewer parser tests pass:
