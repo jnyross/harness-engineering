@@ -8,8 +8,24 @@
  * - Edge cases and integration between parsing and substitution
  */
 
-import { describe, expect, test } from "vitest";
-import { expandPromptTemplate, parseCommandArgs, substituteArgs } from "../src/core/prompt-templates.js";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, expect, test } from "vitest";
+import {
+	expandPromptTemplate,
+	loadPromptTemplates,
+	parseCommandArgs,
+	substituteArgs,
+} from "../src/core/prompt-templates.js";
+
+const tempDirs: string[] = [];
+
+afterEach(() => {
+	for (const dir of tempDirs.splice(0, tempDirs.length)) {
+		rmSync(dir, { recursive: true, force: true });
+	}
+});
 
 // ============================================================================
 // substituteArgs
@@ -408,5 +424,30 @@ describe("parseCommandArgs + substituteArgs integration", () => {
 				{ name: "tmpl", description: "template", content: "Prompt $ARGUMENTS", source: "project", filePath: "" },
 			]),
 		).toBe("Prompt path with spaces");
+	});
+});
+
+describe("loadPromptTemplates path normalization", () => {
+	test("rejects whitespace-padded explicit prompt template paths", () => {
+		const root = mkdtempSync(join(tmpdir(), "pi-prompt-path-test-"));
+		tempDirs.push(root);
+		const promptDir = join(root, "prompt-dir");
+		mkdirSync(promptDir, { recursive: true });
+		writeFileSync(
+			join(promptDir, "example.md"),
+			`---
+description: Example
+---
+Prompt body`,
+		);
+
+		const loaded = loadPromptTemplates({
+			agentDir: join(root, "agent"),
+			cwd: join(root, "project"),
+			includeDefaults: false,
+			promptPaths: [` ${promptDir} `],
+		});
+
+		expect(loaded).toHaveLength(0);
 	});
 });

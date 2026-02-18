@@ -174,11 +174,10 @@ export interface LoadPromptTemplatesOptions {
 }
 
 function normalizePath(input: string): string {
-	const trimmed = input.trim();
-	if (trimmed === "~") return homedir();
-	if (trimmed.startsWith("~/")) return join(homedir(), trimmed.slice(2));
-	if (trimmed.startsWith("~")) return join(homedir(), trimmed.slice(1));
-	return trimmed;
+	if (input === "~") return homedir();
+	if (input.startsWith("~/")) return join(homedir(), input.slice(2));
+	if (input.startsWith("~")) return join(homedir(), input.slice(1));
+	return input;
 }
 
 function resolvePromptPath(p: string, cwd: string): string {

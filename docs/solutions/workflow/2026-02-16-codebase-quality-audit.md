@@ -8781,6 +8781,27 @@ to:
 
 **Result:** Coding-agent skill-path resolution now preserves strict path identifier identity and rejects whitespace-padded explicit skill paths instead of silently normalizing malformed path values.
 
+---
+
+### 456) coding-agent prompt-template loader path resolver normalized whitespace-padded explicit prompt paths
+
+**Finding:** `packages/coding-agent/src/core/prompt-templates.ts` trimmed explicit `promptPaths` entries before path normalization, so whitespace-padded prompt-path identifiers could be silently accepted instead of rejected as malformed path values.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/prompt-templates.ts`
+- `packages/coding-agent/test/prompt-templates.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- resolve explicit prompt-template paths using strict input identity (without trim-based path coalescing),
+- reject whitespace-padded explicit prompt-path entries instead of trimming/coalescing malformed path identifiers,
+- preserve existing exact `~`/`~/` home-expansion behavior for valid prompt-path strings,
+- add regression coverage for whitespace-padded explicit prompt-path rejection behavior.
+
+**Result:** Coding-agent prompt-template path resolution now preserves strict path identifier identity and rejects whitespace-padded explicit prompt paths instead of silently normalizing malformed path values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -9076,6 +9097,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/resource-loader.test.ts` (includes whitespace-padded additional skill-path rejection coverage)
 - coding-agent skill-loader explicit-path normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/skills.test.ts` (includes whitespace-padded explicit skill-path rejection coverage)
+- coding-agent prompt-template explicit-path normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/prompt-templates.test.ts` (includes whitespace-padded explicit prompt-path rejection coverage)
 - coding-agent package-manager command-settlement regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager.test.ts` (includes async settlement coverage, full async command-invocation diagnostics, sync spawn-start failure diagnostics, and signal-exit rejection diagnostics)
 - coding-agent package-manager manifest normalization regression tests pass:
