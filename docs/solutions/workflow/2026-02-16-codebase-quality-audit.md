@@ -7029,6 +7029,26 @@ to:
 
 **Result:** Legacy auth migration now rejects whitespace-padded provider keys and preserves strict provider-key identity when building migrated `auth.json` entries.
 
+---
+
+### 371) pods model-config normalization trimmed whitespace-padded model/env keys
+
+**Finding:** `packages/pods/src/model-configs.ts` trimmed model IDs and env keys while normalizing built-in `models.json`. Whitespace-padded keys could be silently coalesced into canonical keys during parsing, masking malformed config keys and creating key-collision risk in normalized model definitions.
+
+**Action:** Updated:
+
+- `packages/pods/src/model-configs.ts`
+- `packages/pods/test/model-configs.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- require model IDs and env keys to be non-empty strings without surrounding whitespace,
+- drop whitespace-padded model/env keys instead of trimming/coalescing them during normalization,
+- add regression coverage for whitespace-padded key rejection while preserving normal value trimming.
+
+**Result:** pods built-in model-config parsing now preserves strict key identity for model IDs and env keys, rejecting malformed whitespace-padded key entries.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7121,7 +7141,7 @@ to:
 - pods config normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/config.test.ts`
 - pods model-config normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi" test -- test/model-configs.test.ts test/config.test.ts`
+  - `npm --workspace "@mariozechner/pi" test -- test/model-configs.test.ts test/config.test.ts` (includes whitespace-padded model/env key rejection coverage)
 - pods package-metadata normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/package-metadata.test.ts test/model-configs.test.ts test/config.test.ts`
 - pods required-option smoke checks pass:
