@@ -157,10 +157,11 @@ export function streamProxy(model: Model<Api>, context: Context, options: ProxyS
 			const decoder = new TextDecoder();
 			let buffer = "";
 			const processDataLine = (line: string) => {
-				if (!line.startsWith("data: ")) {
+				const match = line.match(/^data:(.*)$/);
+				if (!match) {
 					return;
 				}
-				const data = line.slice(6).trim();
+				const data = match[1]?.trim();
 				if (!data) {
 					return;
 				}
