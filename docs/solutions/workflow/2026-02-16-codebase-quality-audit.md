@@ -6498,6 +6498,26 @@ to:
 
 **Result:** Gemini CLI/Antigravity provider setup now rejects malformed credential payload shapes early and avoids issuing requests with invalid auth/project identifiers.
 
+---
+
+### 345) ai streaming JSON argument parsing accepted malformed non-object root shapes
+
+**Finding:** `packages/ai/src/utils/json-parse.ts` returned parsed JSON payloads without root-shape normalization. Streaming tool-argument fragments that parsed to primitives/arrays could propagate non-object argument roots into provider/tool-call processing paths expecting object-shaped arguments.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/json-parse.ts`
+- `packages/ai/test/json-parse.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- normalize parsed streaming JSON values to object roots only,
+- treat parsed primitive/array roots as empty objects,
+- add regression coverage for complete/partial object parsing and malformed primitive/array root fallback behavior.
+
+**Result:** streaming tool-argument parsing now enforces object-shaped argument roots and safely falls back to empty objects for malformed root shapes.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6567,6 +6587,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-responses-shared-usage.test.ts test/amazon-bedrock-usage.test.ts test/google-usage-metadata.test.ts test/google-gemini-cli-usage-metadata.test.ts test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts`
 - ai shared usage parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts test/amazon-bedrock-usage.test.ts test/openai-responses-shared-usage.test.ts` (includes OpenAI Responses malformed `thinkingSignature` replay suppression coverage)
+- ai streaming JSON parser regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/json-parse.test.ts`
 - ai OpenAI/Anthropic usage parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts`
 - mom model/key resolution regression tests pass:
