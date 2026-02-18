@@ -409,8 +409,9 @@ function readPiManifest(packageJsonPath: string): PiManifest | null {
 				? (pkg.pi as { extensions?: unknown; themes?: unknown; skills?: unknown; prompts?: unknown })
 				: undefined;
 		if (pi) {
+			const hasExtensionsDeclaration = Array.isArray(pi.extensions);
 			return {
-				extensions: normalizeManifestEntryList(pi.extensions),
+				extensions: hasExtensionsDeclaration ? (normalizeManifestEntryList(pi.extensions) ?? []) : undefined,
 				themes: normalizeManifestEntryList(pi.themes),
 				skills: normalizeManifestEntryList(pi.skills),
 				prompts: normalizeManifestEntryList(pi.prompts),
@@ -440,7 +441,7 @@ function resolveExtensionEntries(dir: string): string[] | null {
 	const packageJsonPath = path.join(dir, "package.json");
 	if (fs.existsSync(packageJsonPath)) {
 		const manifest = readPiManifest(packageJsonPath);
-		if (manifest?.extensions?.length) {
+		if (manifest && manifest.extensions !== undefined) {
 			const entries: string[] = [];
 			for (const extPath of manifest.extensions) {
 				const resolvedExtPath = path.resolve(dir, extPath);
@@ -448,9 +449,7 @@ function resolveExtensionEntries(dir: string): string[] | null {
 					entries.push(resolvedExtPath);
 				}
 			}
-			if (entries.length > 0) {
-				return entries;
-			}
+			return entries;
 		}
 	}
 
