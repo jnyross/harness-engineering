@@ -7429,6 +7429,26 @@ to:
 
 **Result:** Proxy SSE usage parsing now enforces integer token accounting while preserving decimal cost support for proxy stream results.
 
+---
+
+### 391) agent proxy SSE typed-event parser accepted whitespace-padded type/tool identifiers
+
+**Finding:** `packages/agent/src/proxy.ts` accepted whitespace-padded string identifiers for SSE event `type`, `toolcall_start.id`, and `toolcall_start.toolName` because payload parsing used trimming non-empty string normalization. Malformed frame identifiers could be normalized instead of rejected.
+
+**Action:** Updated:
+
+- `packages/agent/src/proxy.ts`
+- `packages/agent/test/proxy.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to:
+
+- require strict non-empty string identity (no surrounding whitespace) for proxy event `type`, tool call `id`, and `toolName` fields,
+- keep trimmed parsing only for human-readable proxy HTTP error messages,
+- add regression coverage confirming whitespace-padded typed-event identifiers are ignored while valid events continue streaming.
+
+**Result:** Proxy SSE typed-event parsing now preserves strict identifier identity and rejects whitespace-padded event/type/tool identifiers instead of silently normalizing them.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7671,7 +7691,7 @@ to:
 - coding-agent bash executor regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/bash-executor.test.ts` (includes signal/null exit non-zero semantics and shell spawn-startup failure coverage)
 - agent proxy stream regression tests pass:
-  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts` (includes trailing SSE line without newline, malformed JSON diagnostics, malformed JSON-root-shape filtering, malformed typed-event field-shape filtering, and fractional token-counter rejection with decimal-cost preservation coverage)
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts` (includes trailing SSE line without newline, malformed JSON diagnostics, malformed JSON-root-shape filtering, malformed typed-event field-shape filtering, whitespace-padded typed-event identifier rejection, and fractional token-counter rejection with decimal-cost preservation coverage)
 - ai Gemini CLI SSE regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-empty-stream.test.ts` (includes terminal `data:` line without trailing newline, malformed credential-shape rejection, and malformed non-object SSE chunk-root filtering coverage)
 - ai Codex/Gemini SSE regression tests pass:

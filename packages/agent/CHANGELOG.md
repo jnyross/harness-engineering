@@ -43,6 +43,7 @@
 - `spawnScript()` now adds fallback stderr diagnostics for signal/unknown/non-zero close statuses when scripts fail silently, so callers receive actionable failure reasons even without child stderr output.
 - `project-runner` CLI option parsing now rejects option-like/missing values for `--iterations`, `--max-tasks`, and `--provider` instead of treating subsequent flags as values.
 - Proxy SSE usage parsing now requires integer token counters (`input`/`output`/`cacheRead`/`cacheWrite`/`totalTokens`) while still accepting non-negative finite decimal cost fields, preventing malformed fractional token accounting from being accepted into reconstructed proxy results.
+- Proxy SSE event parsing now rejects whitespace-padded `type`/tool-call identifier fields instead of trimming them, preserving strict event-shape validation and preventing malformed frame normalization.
 
 ## [0.52.12] - 2026-02-13
 

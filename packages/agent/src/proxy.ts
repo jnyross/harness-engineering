@@ -79,6 +79,17 @@ function parseNonEmptyString(value: unknown): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function parseStrictNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
+}
+
 function parseNonNegativeFiniteNumber(value: unknown): number | undefined {
 	if (typeof value !== "number") {
 		return undefined;
@@ -154,8 +165,8 @@ export function parseProxyEventPayload(data: string): ProxyAssistantMessageEvent
 	if (!record) {
 		return undefined;
 	}
-	const type = parseNonEmptyString(record.type);
-	if (!type || type.trim().length === 0) {
+	const type = parseStrictNonEmptyString(record.type);
+	if (!type) {
 		return undefined;
 	}
 
@@ -193,8 +204,8 @@ export function parseProxyEventPayload(data: string): ProxyAssistantMessageEvent
 		}
 		case "toolcall_start": {
 			const contentIndex = parseContentIndex(record.contentIndex);
-			const id = parseNonEmptyString(record.id);
-			const toolName = parseNonEmptyString(record.toolName);
+			const id = parseStrictNonEmptyString(record.id);
+			const toolName = parseStrictNonEmptyString(record.toolName);
 			if (contentIndex === undefined || !id || !toolName) {
 				return undefined;
 			}

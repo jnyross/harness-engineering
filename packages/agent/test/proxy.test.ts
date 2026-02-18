@@ -212,7 +212,49 @@ describe("streamProxy", () => {
 							"",
 							'data: {"type":"toolcall_start","contentIndex":0,"id":"","toolName":""}',
 							"",
+							'data: {"type":" done ","reason":"stop","usage":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"totalTokens":0,"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":0}}}',
+							"",
 							`data: ${JSON.stringify(malformedUsageDoneEvent)}`,
+							"",
+							`data: ${JSON.stringify(doneEvent)}`,
+						].join("\n"),
+						{
+							status: 200,
+							headers: { "Content-Type": "text/event-stream" },
+						},
+					),
+			),
+		);
+
+		const stream = streamProxy(
+			getModel("openai", "gpt-4o-mini"),
+			{ messages: [] },
+			{ authToken: "token", proxyUrl: "https://proxy.example.com" },
+		);
+
+		const result = await Promise.race([
+			stream.result(),
+			new Promise<never>((_resolve, reject) => setTimeout(() => reject(new Error("timed out")), 1000)),
+		]);
+
+		expect(result.stopReason).toBe("stop");
+		expect(result.errorMessage).toBeUndefined();
+	});
+
+	it("ignores toolcall_start events with whitespace-padded id/toolName fields", async () => {
+		const doneEvent = {
+			type: "done",
+			reason: "stop",
+			usage: emptyUsage,
+		};
+
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(
+				async () =>
+					new Response(
+						[
+							'data: {"type":"toolcall_start","contentIndex":0,"id":" tool-id ","toolName":" tool-name "}',
 							"",
 							`data: ${JSON.stringify(doneEvent)}`,
 						].join("\n"),
