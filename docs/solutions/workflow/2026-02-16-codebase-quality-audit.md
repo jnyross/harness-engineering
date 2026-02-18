@@ -6110,6 +6110,26 @@ to:
 
 **Result:** OAuth CLI auth-file loading now fails safely on malformed `auth.json` content and only preserves valid normalized credential entries.
 
+---
+
+### 326) coding-agent CLI package metadata loading accepted malformed package-json shapes
+
+**Finding:** `packages/coding-agent/src/config.ts` parsed `package.json` directly for app/config/version constants; malformed root/value shapes could propagate invalid metadata into CLI startup/version/config-path behavior.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/config.ts`
+- `packages/coding-agent/test/config-package-metadata.test.ts` (new)
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize parsed package metadata (`piConfig.name`, `piConfig.configDir`, `version`) with string-shape checks,
+- fall back to safe defaults (`pi`, `.pi`, `0.0.0`) for malformed root/value shapes,
+- add focused regression coverage for valid preservation and malformed fallback behavior.
+
+**Result:** coding-agent package metadata reads now fail safely and preserve deterministic app/version/config defaults on malformed package-json content.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6274,6 +6294,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/countdown-timer.test.ts` (includes normal expiry, manual dispose stop, onTick-throw safety coverage, and timeout normalization coverage including positive-infinite clamping)
 - coding-agent settings manager normalization regression tests pass (numeric + boolean + enum + string/list settings):
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/settings-manager.test.ts`
+- coding-agent package metadata normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/config-package-metadata.test.ts test/settings-manager.test.ts`
 - coding-agent keybindings config normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/keybindings.test.ts test/settings-manager.test.ts`
 - coding-agent auth storage normalization regression tests pass:
