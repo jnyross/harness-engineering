@@ -6418,6 +6418,26 @@ to:
 
 **Result:** RPC client event streams now ignore malformed line payload shapes and only resolve matching pending responses, preventing malformed response leakage into event listeners.
 
+---
+
+### 341) ai OpenAI Responses replay conversion crashed on malformed persisted thinking signatures
+
+**Finding:** `packages/ai/src/providers/openai-responses-shared.ts` parsed assistant `thinkingSignature` values with direct `JSON.parse(...)` during history replay conversion. Malformed persisted signature payloads crashed `convertResponsesMessages(...)`, aborting request construction for otherwise valid replay contexts.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/openai-responses-shared.ts`
+- `packages/ai/test/openai-responses-shared-usage.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- normalize and validate parsed `thinkingSignature` payloads as reasoning-object records before replay insertion,
+- skip malformed or non-reasoning signature payloads instead of throwing parse exceptions,
+- add regression coverage for malformed-signature suppression and valid-signature preservation.
+
+**Result:** OpenAI Responses replay conversion now tolerates malformed persisted thinking signatures and continues message conversion without crashing.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6486,7 +6506,7 @@ to:
 - ai usage safe-integer parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-responses-shared-usage.test.ts test/amazon-bedrock-usage.test.ts test/google-usage-metadata.test.ts test/google-gemini-cli-usage-metadata.test.ts test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts`
 - ai shared usage parser regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts test/amazon-bedrock-usage.test.ts test/openai-responses-shared-usage.test.ts`
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts test/amazon-bedrock-usage.test.ts test/openai-responses-shared-usage.test.ts` (includes OpenAI Responses malformed `thinkingSignature` replay suppression coverage)
 - ai OpenAI/Anthropic usage parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts`
 - mom model/key resolution regression tests pass:
