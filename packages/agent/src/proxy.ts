@@ -165,7 +165,14 @@ export function streamProxy(model: Model<Api>, context: Context, options: ProxyS
 				if (!data) {
 					return;
 				}
-				const proxyEvent = JSON.parse(data) as ProxyAssistantMessageEvent;
+				let proxyEvent: ProxyAssistantMessageEvent;
+				try {
+					proxyEvent = JSON.parse(data) as ProxyAssistantMessageEvent;
+				} catch (error) {
+					const details = error instanceof Error ? error.message : String(error);
+					const payloadPreview = data.length > 200 ? `${data.slice(0, 200)}…` : data;
+					throw new Error(`Proxy error: invalid SSE event JSON (${details}): ${payloadPreview}`);
+				}
 				const event = processProxyEvent(proxyEvent, partial);
 				if (event) {
 					stream.push(event);
