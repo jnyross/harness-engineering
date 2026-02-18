@@ -99,6 +99,31 @@ const ANTIGRAVITY_SYSTEM_INSTRUCTION =
 // Counter for generating unique tool call IDs
 let toolCallCounter = 0;
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
+}
+
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+export function parseCloudCodeAssistChunk(value: string): CloudCodeAssistResponseChunk | undefined {
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(value);
+	} catch {
+		return undefined;
+	}
+	return (asRecord(parsed) as CloudCodeAssistResponseChunk | undefined) ?? undefined;
+}
+
 function parseUsageNumber(value: unknown): number | undefined {
 	if (typeof value === "number") {
 		if (!Number.isFinite(value) || value < 0) {
@@ -313,13 +338,11 @@ function isRetryableError(status: number, errorText: string): boolean {
  * Parses JSON error responses and returns just the message field.
  */
 function extractErrorMessage(errorText: string): string {
-	try {
-		const parsed = JSON.parse(errorText) as { error?: { message?: string } };
-		if (parsed.error?.message) {
-			return parsed.error.message;
-		}
-	} catch {
-		// Not JSON, return as-is
+	const parsed = parseCloudCodeAssistChunk(errorText) as { error?: unknown } | undefined;
+	const errorRecord = asRecord(parsed?.error);
+	const message = parseNonEmptyString(errorRecord?.message);
+	if (message) {
+		return message;
 	}
 	return errorText;
 }
@@ -379,14 +402,6 @@ interface CloudCodeAssistResponseChunk {
 	traceId?: string;
 }
 
-function parseNonEmptyString(value: unknown): string | undefined {
-	if (typeof value !== "string") {
-		return undefined;
-	}
-	const trimmed = value.trim();
-	return trimmed.length > 0 ? trimmed : undefined;
-}
-
 function parseGoogleCloudCredentials(value: string): { token: string; projectId: string } | undefined {
 	let parsed: unknown;
 	try {
@@ -394,12 +409,9 @@ function parseGoogleCloudCredentials(value: string): { token: string; projectId:
 	} catch {
 		return undefined;
 	}
-	if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-		return undefined;
-	}
-	const record = parsed as { token?: unknown; projectId?: unknown };
-	const token = parseNonEmptyString(record.token);
-	const projectId = parseNonEmptyString(record.projectId);
+	const record = asRecord(parsed) as { token?: unknown; projectId?: unknown } | undefined;
+	const token = parseNonEmptyString(record?.token);
+	const projectId = parseNonEmptyString(record?.projectId);
 	if (!token || !projectId) {
 		return undefined;
 	}
@@ -592,16 +604,14 @@ export const streamGoogleGeminiCli: StreamFunction<"google-gemini-cli", GoogleGe
 						return;
 					}
 
-					let chunk: CloudCodeAssistResponseChunk;
-					try {
-						chunk = JSON.parse(jsonStr);
-					} catch {
+					const chunk = parseCloudCodeAssistChunk(jsonStr);
+					if (!chunk) {
 						return;
 					}
 
 					// Unwrap the response
 					const responseData = chunk.response;
-					if (!responseData) {
+					if (!responseData || typeof responseData !== "object" || Array.isArray(responseData)) {
 						return;
 					}
 
