@@ -7129,6 +7129,26 @@ to:
 
 **Result:** pods package metadata parsing now preserves strict semver version handling and safely falls back when version payloads are malformed.
 
+---
+
+### 376) coding-agent managed-tool release parsing normalized whitespace-padded GitHub tag names
+
+**Finding:** `packages/coding-agent/src/utils/tools-manager.ts` normalized GitHub release `tag_name` values via trimming. Whitespace-padded tag names could be silently coalesced into canonical versions during managed-tool update checks, masking malformed release payloads.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/utils/tools-manager.ts`
+- `packages/coding-agent/test/tools-manager-version-parse.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require `tag_name` to be a non-empty string without surrounding whitespace before version normalization,
+- reject whitespace-padded malformed tag names instead of trimming/coalescing them,
+- add regression coverage for whitespace-padded tag-name rejection while preserving `v`-prefix normalization for valid tags.
+
+**Result:** managed-tool latest-release parsing now preserves strict tag-name identity and rejects malformed whitespace-padded GitHub release tags.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7422,7 +7442,7 @@ to:
 - coding-agent package-manager npm-registry version parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/package-manager-registry-version.test.ts test/package-manager.test.ts` (includes malformed npm-registry `version` root/field-shape rejection and trimmed valid-version parsing coverage)
 - coding-agent managed-tool release-version parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools-manager-version-parse.test.ts` (includes malformed GitHub latest-release payload rejection and trimmed/`v`-prefixed tag normalization coverage)
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/tools-manager-version-parse.test.ts` (includes malformed GitHub latest-release payload rejection, whitespace-padded tag-name rejection, and `v`-prefix normalization coverage)
 - coding-agent model-registry provider-key validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/model-registry.test.ts` (includes blank and whitespace-padded provider-key rejection coverage for malformed `models.json` provider maps)
 - coding-agent migration parsing normalization regression tests pass:

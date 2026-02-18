@@ -61,6 +61,7 @@
 - Startup auth migration now also rejects whitespace-padded oauth/apiKey provider keys instead of trimming/coalescing them, preserving strict provider-key identity while migrating legacy auth/settings files into `auth.json`.
 - Startup auth migration now keeps `oauth.json` in place when no valid oauth credential entries are migrated, avoiding false `.migrated` renames that could hide malformed-but-unmigrated legacy auth files.
 - Managed-tool release-version parsing now validates GitHub latest-release payload shape (`tag_name`) before version normalization, rejecting malformed response roots/fields with explicit diagnostics instead of surfacing null-property runtime errors.
+- Managed-tool release-version parsing now also rejects whitespace-padded `tag_name` values, preserving strict release-tag identity instead of trimming/coalescing malformed tag payloads.
 - Session-manager JSONL parsing now filters malformed/non-object/type-less lines before migration/loading/listing checks, preventing malformed persisted session lines from propagating incompatible entry shapes into migration and session-discovery paths.
 - Session-manager session-header validation now requires non-empty session IDs during load/list/recent-session checks, preventing malformed blank-id headers from being treated as valid persisted sessions.
 - RPC mode command-line parsing now requires object payloads with non-empty `type` values (and non-empty IDs for `extension_ui_response`), returning explicit parse errors for malformed command shapes.
