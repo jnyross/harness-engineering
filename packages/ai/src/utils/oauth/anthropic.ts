@@ -13,6 +13,46 @@ const TOKEN_URL = "https://console.anthropic.com/v1/oauth/token";
 const REDIRECT_URI = "https://console.anthropic.com/oauth/code/callback";
 const SCOPES = "org:create_api_key user:profile user:inference";
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
+}
+
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function parsePositiveFiniteNumber(value: unknown): number | undefined {
+	if (typeof value !== "number") {
+		return undefined;
+	}
+	return Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+function parseTokenResponsePayload(
+	data: unknown,
+	context: "exchange" | "refresh",
+): {
+	accessToken: string;
+	refreshToken: string;
+	expiresIn: number;
+} {
+	const payload = asRecord(data);
+	const accessToken = parseNonEmptyString(payload?.access_token);
+	const refreshToken = parseNonEmptyString(payload?.refresh_token);
+	const expiresIn = parsePositiveFiniteNumber(payload?.expires_in);
+	if (!accessToken || !refreshToken || !expiresIn) {
+		throw new Error(`Invalid token ${context} response payload`);
+	}
+	return { accessToken, refreshToken, expiresIn };
+}
+
 function assertNotAborted(signal?: AbortSignal): void {
 	if (signal?.aborted) {
 		throw new Error("Login cancelled");
@@ -85,19 +125,15 @@ export async function loginAnthropic(
 		throw new Error(`Token exchange failed: ${error}`);
 	}
 
-	const tokenData = (await tokenResponse.json()) as {
-		access_token: string;
-		refresh_token: string;
-		expires_in: number;
-	};
+	const tokenData = parseTokenResponsePayload(await tokenResponse.json(), "exchange");
 
 	// Calculate expiry time (current time + expires_in seconds - 5 min buffer)
-	const expiresAt = Date.now() + tokenData.expires_in * 1000 - 5 * 60 * 1000;
+	const expiresAt = Date.now() + tokenData.expiresIn * 1000 - 5 * 60 * 1000;
 
 	// Save credentials
 	return {
-		refresh: tokenData.refresh_token,
-		access: tokenData.access_token,
+		refresh: tokenData.refreshToken,
+		access: tokenData.accessToken,
 		expires: expiresAt,
 	};
 }
@@ -121,16 +157,12 @@ export async function refreshAnthropicToken(refreshToken: string): Promise<OAuth
 		throw new Error(`Anthropic token refresh failed: ${error}`);
 	}
 
-	const data = (await response.json()) as {
-		access_token: string;
-		refresh_token: string;
-		expires_in: number;
-	};
+	const data = parseTokenResponsePayload(await response.json(), "refresh");
 
 	return {
-		refresh: data.refresh_token,
-		access: data.access_token,
-		expires: Date.now() + data.expires_in * 1000 - 5 * 60 * 1000,
+		refresh: data.refreshToken,
+		access: data.accessToken,
+		expires: Date.now() + data.expiresIn * 1000 - 5 * 60 * 1000,
 	};
 }
 

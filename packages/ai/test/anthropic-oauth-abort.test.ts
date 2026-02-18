@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { anthropicOAuthProvider, loginAnthropic } from "../src/utils/oauth/anthropic.js";
+import { anthropicOAuthProvider, loginAnthropic, refreshAnthropicToken } from "../src/utils/oauth/anthropic.js";
 
 describe("anthropic oauth login", () => {
 	afterEach(() => {
@@ -154,5 +154,39 @@ describe("anthropic oauth login", () => {
 			throw new Error("Expected fetch to be called once");
 		}
 		expect(String(firstCall[1]?.body)).toContain('"code":"hash-code"');
+	});
+
+	it("rejects non-object token exchange payload roots", async () => {
+		let verifierState: string | null = null;
+		const onAuth = (url: string) => {
+			verifierState = new URL(url).searchParams.get("state");
+		};
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => new Response("null", { status: 200, headers: { "Content-Type": "application/json" } })),
+		);
+
+		await expect(loginAnthropic(onAuth, async () => `code=exchange&state=${verifierState}`)).rejects.toThrow(
+			"Invalid token exchange response payload",
+		);
+	});
+
+	it("rejects malformed token refresh payload fields", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(
+				async () =>
+					new Response(
+						JSON.stringify({
+							access_token: " ",
+							refresh_token: "refresh-token",
+							expires_in: 0,
+						}),
+						{ status: 200, headers: { "Content-Type": "application/json" } },
+					),
+			),
+		);
+
+		await expect(refreshAnthropicToken("refresh-token")).rejects.toThrow("Invalid token refresh response payload");
 	});
 });

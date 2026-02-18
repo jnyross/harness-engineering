@@ -34,6 +34,7 @@
 - OpenAI Codex Responses SSE/WebSocket event parsing now ignores malformed non-object JSON payload roots, and usage-limit error parsing now preserves friendly limit guidance when error fields have malformed non-string/non-numeric shapes.
 - Anthropic OAuth login now honors `AbortSignal` cancellation (including pre-aborted signals) before prompting for user code and during token exchange.
 - Anthropic OAuth login now validates pasted OAuth state values and supports full redirect URL/query-string input by extracting `code`/`state` parameters before token exchange.
+- Anthropic OAuth token exchange/refresh parsing now requires object JSON roots with non-empty token strings and positive numeric `expires_in` values, rejecting malformed token payload shapes before credential persistence.
 - Anthropic and OpenAI Codex OAuth manual input parsing now accepts hash-fragment redirect formats (e.g. `#code=...&state=...`) in addition to query-string forms.
 - Google Gemini CLI and Antigravity OAuth manual input parsing now accepts hash-fragment redirect URL formats (e.g. `#code=...&state=...`) in addition to query-string redirect URLs.
 - OAuth manual-input parsing for Anthropic/Codex/Gemini/Antigravity is now centralized in a shared helper, reducing parser drift across providers.
