@@ -7675,6 +7675,26 @@ to:
 
 **Result:** Google Gemini CLI and Antigravity OAuth token parsing now preserves strict token-field identity by rejecting whitespace-padded required access-token values and ignoring whitespace-padded optional refresh-token payload values instead of silently normalizing malformed token fields.
 
+---
+
+### 403) ai GitHub Copilot OAuth payload parser normalized whitespace-padded token/code/error fields
+
+**Finding:** `packages/ai/src/utils/oauth/github-copilot.ts` parsed device-code, poll, and token payload string fields with trimmed non-empty normalization, so whitespace-padded token/code/error identifiers could be silently accepted instead of rejected as malformed OAuth payload values.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/github-copilot.ts`
+- `packages/ai/test/github-copilot-oauth-payload.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require strict non-empty string identity (no surrounding whitespace) for Copilot payload token/code/error identifier fields,
+- preserve existing malformed-payload rejection behavior for non-object/invalid numeric fields,
+- add regression coverage for whitespace-padded field rejection in device-code, token, and poll response parsing paths.
+
+**Result:** GitHub Copilot OAuth payload parsing now preserves strict token/code/error identifier identity and rejects whitespace-padded payload fields instead of silently normalizing malformed OAuth values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7901,7 +7921,7 @@ to:
 - ai gemini-cli oauth token payload parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-oauth-abort.test.ts` (includes malformed exchange-root, malformed refresh-field payload, whitespace-padded access-token rejection, and whitespace-padded refresh-token fallback-retention coverage)
 - ai github-copilot oauth payload parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/github-copilot-oauth-payload.test.ts` (includes malformed device-code/poll/token payload field rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/github-copilot-oauth-payload.test.ts` (includes malformed device-code/poll/token payload field rejection and whitespace-padded token/code/error identifier rejection coverage)
 - ai openai-codex oauth startup/manual-flow/cancellation/base64url-decoding/hash-fragment/non-object-token-payload parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-oauth-abort.test.ts` (includes malformed exchange/refresh JSON-body parse failure normalization and whitespace-padded token-field rejection coverage)
 - coding-agent tools regression tests pass:
