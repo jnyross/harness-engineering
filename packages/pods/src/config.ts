@@ -38,6 +38,17 @@ function parseNonEmptyString(value: unknown): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function parseStrictNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
+}
+
 function parseConfigKey(value: string): string | undefined {
 	const trimmed = value.trim();
 	if (trimmed.length === 0) {
@@ -68,7 +79,7 @@ function normalizeModel(value: unknown): Model | undefined {
 		return undefined;
 	}
 
-	const model = parseNonEmptyString(record.model);
+	const model = parseStrictNonEmptyString(record.model);
 	const port = parseSafeInteger(record.port, 1);
 	const pid = parseSafeInteger(record.pid, 1);
 	if (!model || port === undefined || pid === undefined) {

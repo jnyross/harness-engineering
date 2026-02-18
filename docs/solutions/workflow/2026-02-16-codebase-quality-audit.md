@@ -7817,6 +7817,26 @@ to:
 
 **Result:** Google OAuth project discovery now preserves strict metadata identifier identity and rejects whitespace-padded discovered identifiers instead of silently normalizing malformed Cloud Code Assist metadata.
 
+---
+
+### 410) pods persisted model-entry parsing normalized whitespace-padded model identifiers
+
+**Finding:** `packages/pods/src/config.ts` parsed persisted model-entry `model` values with trimmed non-empty normalization, so whitespace-padded model identifiers could be silently accepted instead of rejected as malformed persisted model-entry identifiers.
+
+**Action:** Updated:
+
+- `packages/pods/src/config.ts`
+- `packages/pods/test/config.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- require strict non-empty model-identifier identity (no surrounding whitespace) for persisted `models[*].model` values,
+- preserve existing pod/model key and selector normalization behavior,
+- add regression coverage for whitespace-padded persisted model-identifier rejection.
+
+**Result:** Pods persisted model-entry parsing now preserves strict model-identifier identity and rejects whitespace-padded `models[*].model` values instead of silently normalizing malformed model identifiers.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7910,7 +7930,7 @@ to:
 - pods GPU CSV parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/pods-gpu-output.test.ts`
 - pods config normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi" test -- test/config.test.ts` (includes whitespace-padded pod/model key and active-selector rejection coverage)
+  - `npm --workspace "@mariozechner/pi" test -- test/config.test.ts` (includes whitespace-padded pod/model key rejection, whitespace-padded persisted model-identifier rejection, and active-selector rejection coverage)
 - pods model-config normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/model-configs.test.ts test/config.test.ts` (includes whitespace-padded model/env key rejection coverage)
 - pods package-metadata normalization regression tests pass:

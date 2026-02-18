@@ -90,6 +90,7 @@
 - Model start memory parsing now validates percentage values strictly (`0 < value <= 100`) so malformed inputs like `50percent` are rejected instead of being partially coerced.
 - Pods config loading now normalizes parsed JSON structure/content (`pods`, `active`, pod/model/GPU entries), ignoring malformed entries and preventing invalid persisted config shapes from propagating into runtime pod selection flows.
 - Pods config loading now also rejects whitespace-padded pod/model keys (and whitespace-padded `active` pod selectors) instead of trimming/coalescing them, preserving strict key identity during persisted config normalization.
+- Pods config loading now also rejects whitespace-padded persisted model IDs (`models[*].model`) instead of trimming/coalescing malformed model-identifier values.
 - Built-in models config loading now normalizes parsed `models.json` structure/content and drops malformed model/config entries instead of forwarding invalid runtime launch config shapes.
 - Built-in models config loading now also rejects whitespace-padded model IDs and env keys during normalization, preventing malformed key coalescing when parsing `models.json`.
 - `models` command listing now reuses normalized built-in models parsing, so malformed `models.json` content no longer crashes known-model display paths.

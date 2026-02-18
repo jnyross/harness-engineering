@@ -48,6 +48,7 @@ describe("pods config normalization", () => {
 						models: {
 							" model-a ": { model: "llama", port: 8001, gpu: [0], pid: 1234 },
 							"model-b": { model: "bad", port: 8002, gpu: [], pid: 5678 },
+							"model-c": { model: " llama ", port: 8003, gpu: [0], pid: 9012 },
 						},
 						modelsPath: " /models ",
 						vllmVersion: "release",
