@@ -21,6 +21,7 @@
 - One-shot event scheduling now validates timestamp parsing and chunks oversized delays (including `Infinity`) above Node.js timer limits, preventing malformed/oversized schedules from executing immediately via runtime timer clamping.
 - Events payload parsing now validates JSON runtime shapes (`type`, `channelId`, `text`, and schedule fields), ignoring malformed/non-string event payload values instead of forwarding incompatible event objects into scheduling/execution paths.
 - Events payload parsing now also rejects whitespace-padded `type`/`channelId`/one-shot timestamp/schedule/timezone fields instead of trimming/coalescing them, preserving strict event-identifier identity during scheduling.
+- Events payload parsing now preserves event `text` content verbatim (while still rejecting blank-only text), avoiding silent trimming/coalescing of surrounding whitespace in scheduled message bodies.
 - One-shot events now require ISO-8601 timestamps with timezone (`Z` or `±HH:MM`) during payload parsing/scheduling, rejecting ambiguous local-time or numeric timestamp strings before scheduling.
 - Docker sandbox preflight command diagnostics now also distinguish unknown `code=null/signal=null` exits from ordinary non-zero codes, improving `validateSandbox()` failure clarity on rare close-status edge cases.
 - Sandbox Windows process-tree cleanup now handles async `taskkill` spawn errors, preventing uncaught child-process errors during best-effort termination.

@@ -39,6 +39,19 @@ describe("parseMomEventPayload", () => {
 				timezone: "UTC",
 			},
 		);
+
+		assert.deepEqual(
+			parseMomEventPayload({
+				type: "immediate",
+				channelId: "C123",
+				text: "  keep surrounding whitespace  ",
+			}),
+			{
+				type: "immediate",
+				channelId: "C123",
+				text: "  keep surrounding whitespace  ",
+			},
+		);
 	});
 
 	it("rejects malformed payload shapes", () => {

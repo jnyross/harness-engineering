@@ -54,7 +54,7 @@ function parseNonEmptyString(value: unknown): string | undefined {
 		return undefined;
 	}
 	const trimmed = value.trim();
-	return trimmed.length > 0 ? trimmed : undefined;
+	return trimmed.length > 0 ? value : undefined;
 }
 
 function parseStrictNonEmptyString(value: unknown): string | undefined {

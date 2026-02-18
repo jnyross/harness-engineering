@@ -7981,6 +7981,26 @@ to:
 
 **Result:** GitHub Copilot OAuth payload parsing now preserves strict integer timing semantics and rejects fractional timing values instead of silently accepting malformed polling/expiry metadata.
 
+---
+
+### 418) mom event payload parsing normalized surrounding whitespace in event text bodies
+
+**Finding:** `packages/mom/src/events.ts` normalized `text` with trimmed non-empty parsing, so valid event message bodies with intentional surrounding whitespace were silently altered during payload parsing.
+
+**Action:** Updated:
+
+- `packages/mom/src/events.ts`
+- `packages/mom/test/events-parse.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- validate non-empty event text while preserving original `text` payload content verbatim,
+- keep strict identifier/schedule/timestamp parsing rules for event metadata fields,
+- add regression coverage confirming surrounding whitespace in event text is preserved.
+
+**Result:** Event payload parsing now preserves scheduled message body content exactly (while still rejecting blank-only text) instead of silently trimming surrounding whitespace.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8125,7 +8145,7 @@ to:
 - mom one-shot scheduling helper tests pass (including positive-infinite delay clamping/chunking):
   - `npm --workspace "@mariozechner/pi-mom" test -- test/events-scheduling.test.ts`
 - mom events payload parsing normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-mom" test -- test/events-parse.test.ts test/events-scheduling.test.ts` (includes one-shot ISO-8601 timezone requirement, timezone-less/numeric timestamp rejection, and whitespace-padded identifier/schedule field rejection coverage)
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/events-parse.test.ts test/events-scheduling.test.ts` (includes one-shot ISO-8601 timezone requirement, timezone-less/numeric timestamp rejection, whitespace-padded identifier/schedule field rejection coverage, and event-text whitespace preservation coverage)
 - mom read-tool line-count regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/read-tool.test.ts`
 - mom bash timeout validation regression tests pass:
