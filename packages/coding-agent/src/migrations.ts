@@ -11,6 +11,21 @@ const MIGRATION_GUIDE_URL =
 	"https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/CHANGELOG.md#extensions-migration";
 const EXTENSIONS_DOC_URL = "https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/extensions.md";
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
+}
+
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
 /**
  * Migrate legacy oauth.json and settings.json apiKeys to auth.json.
  *
@@ -31,10 +46,15 @@ export function migrateAuthToAuthJson(): string[] {
 	// Migrate oauth.json
 	if (existsSync(oauthPath)) {
 		try {
-			const oauth = JSON.parse(readFileSync(oauthPath, "utf-8"));
-			for (const [provider, cred] of Object.entries(oauth)) {
-				migrated[provider] = { type: "oauth", ...(cred as object) };
-				providers.push(provider);
+			const oauth = asRecord(JSON.parse(readFileSync(oauthPath, "utf-8")));
+			for (const [provider, cred] of Object.entries(oauth ?? {})) {
+				const normalizedProvider = parseNonEmptyString(provider);
+				const normalizedCredential = asRecord(cred);
+				if (!normalizedProvider || !normalizedCredential) {
+					continue;
+				}
+				migrated[normalizedProvider] = { type: "oauth", ...normalizedCredential };
+				providers.push(normalizedProvider);
 			}
 			renameSync(oauthPath, `${oauthPath}.migrated`);
 		} catch {
@@ -46,13 +66,17 @@ export function migrateAuthToAuthJson(): string[] {
 	if (existsSync(settingsPath)) {
 		try {
 			const content = readFileSync(settingsPath, "utf-8");
-			const settings = JSON.parse(content);
-			if (settings.apiKeys && typeof settings.apiKeys === "object") {
-				for (const [provider, key] of Object.entries(settings.apiKeys)) {
-					if (!migrated[provider] && typeof key === "string") {
-						migrated[provider] = { type: "api_key", key };
-						providers.push(provider);
+			const settings = asRecord(JSON.parse(content));
+			const apiKeys = asRecord(settings?.apiKeys);
+			if (settings && apiKeys) {
+				for (const [provider, key] of Object.entries(apiKeys)) {
+					const normalizedProvider = parseNonEmptyString(provider);
+					const normalizedKey = parseNonEmptyString(key);
+					if (!normalizedProvider || !normalizedKey || migrated[normalizedProvider]) {
+						continue;
 					}
+					migrated[normalizedProvider] = { type: "api_key", key: normalizedKey };
+					providers.push(normalizedProvider);
 				}
 				delete settings.apiKeys;
 				writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
@@ -101,10 +125,10 @@ export function migrateSessionsFromAgentRoot(): void {
 			const firstLine = content.split("\n")[0];
 			if (!firstLine?.trim()) continue;
 
-			const header = JSON.parse(firstLine);
-			if (header.type !== "session" || !header.cwd) continue;
-
-			const cwd: string = header.cwd;
+			const header = asRecord(JSON.parse(firstLine));
+			const type = parseNonEmptyString(header?.type);
+			const cwd = parseNonEmptyString(header?.cwd);
+			if (type !== "session" || !cwd) continue;
 
 			// Compute the correct session directory (same encoding as session-manager.ts)
 			const safePath = `--${cwd.replace(/^[/\\]/, "").replace(/[/\\:]/g, "-")}--`;

@@ -51,6 +51,7 @@
 - Extension discovery now normalizes `package.json` `pi.*` manifest entry arrays (string-only, trimmed, non-empty), ignoring malformed extension entry shapes instead of allowing bad values to disrupt package extension resolution.
 - Package manager manifest loading now normalizes `package.json` `pi.*` resource arrays (string-only, trimmed, non-empty), ignoring malformed entry shapes so package resource resolution no longer crashes on invalid manifest values.
 - Package manager installed-version checks now normalize `package.json` `version` to non-empty strings only, ignoring malformed/blank version values so update detection avoids propagating invalid version shapes.
+- Startup auth/session migrations now normalize parsed JSON runtime shapes (oauth providers, apiKeys map entries, session header `cwd`) to valid non-empty strings/object records, preventing malformed migration files from injecting invalid provider keys or crashing session relocation logic.
 - Interactive external-editor launch now reports startup/signal/non-zero exit failures explicitly (while preserving current editor content) instead of silently no-oping.
 - Interactive selector replacement now disposes previous disposable selector components before teardown, and session selector now cancels pending status timers/load updates on dispose, preventing stale async updates after selector close/switch.
 - Interactive chat/pending container clears now dispose disposable child components before removal, preventing leaked background timers/listeners from detached transient message components.
