@@ -26,6 +26,37 @@ export const isBunRuntime = !!process.versions.bun;
 
 export type InstallMethod = "bun-binary" | "npm" | "pnpm" | "yarn" | "bun" | "unknown";
 
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+export function parsePackageMetadata(content: string): { appName: string; configDirName: string; version: string } {
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(content);
+	} catch {
+		return { appName: "pi", configDirName: ".pi", version: "0.0.0" };
+	}
+
+	if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+		return { appName: "pi", configDirName: ".pi", version: "0.0.0" };
+	}
+	const record = parsed as { version?: unknown; piConfig?: unknown };
+	const piConfig =
+		record.piConfig && typeof record.piConfig === "object" && !Array.isArray(record.piConfig)
+			? (record.piConfig as { name?: unknown; configDir?: unknown })
+			: undefined;
+	return {
+		appName: parseNonEmptyString(piConfig?.name) ?? "pi",
+		configDirName: parseNonEmptyString(piConfig?.configDir) ?? ".pi",
+		version: parseNonEmptyString(record.version) ?? "0.0.0",
+	};
+}
+
 export function detectInstallMethod(): InstallMethod {
 	if (isBunBinary) {
 		return "bun-binary";
@@ -162,11 +193,11 @@ export function getChangelogPath(): string {
 // App Config (from package.json piConfig)
 // =============================================================================
 
-const pkg = JSON.parse(readFileSync(getPackageJsonPath(), "utf-8"));
+const packageMetadata = parsePackageMetadata(readFileSync(getPackageJsonPath(), "utf-8"));
 
-export const APP_NAME: string = pkg.piConfig?.name || "pi";
-export const CONFIG_DIR_NAME: string = pkg.piConfig?.configDir || ".pi";
-export const VERSION: string = pkg.version;
+export const APP_NAME: string = packageMetadata.appName;
+export const CONFIG_DIR_NAME: string = packageMetadata.configDirName;
+export const VERSION: string = packageMetadata.version;
 
 // e.g., PI_CODING_AGENT_DIR or TAU_CODING_AGENT_DIR
 export const ENV_AGENT_DIR = `${APP_NAME.toUpperCase()}_CODING_AGENT_DIR`;
