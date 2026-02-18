@@ -6130,6 +6130,27 @@ to:
 
 **Result:** coding-agent package metadata reads now fail safely and preserve deterministic app/version/config defaults on malformed package-json content.
 
+---
+
+### 327) coding-agent extension discovery accepted malformed `pi.extensions` manifest entry shapes
+
+**Finding:** `packages/coding-agent/src/core/extensions/loader.ts` consumed `package.json` `pi.extensions` arrays without runtime entry normalization; non-string/blank manifest entries could disrupt extension path resolution and discovery behavior.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/extensions/loader.ts`
+- `packages/coding-agent/test/extensions-discovery.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- normalize `pi` manifest arrays to string-only trimmed non-empty entries,
+- ignore malformed manifest values (non-array roots, non-string/blank entries),
+- preserve explicit valid extension paths while filtering malformed siblings,
+- add regression coverage for malformed manifest entries alongside valid entries.
+
+**Result:** extension discovery now tolerates malformed manifest entry shapes and still resolves valid declared extension paths deterministically.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6296,6 +6317,8 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/settings-manager.test.ts`
 - coding-agent package metadata normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/config-package-metadata.test.ts test/settings-manager.test.ts`
+- coding-agent extension discovery manifest normalization regression tests pass:
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extensions-discovery.test.ts`
 - coding-agent keybindings config normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/keybindings.test.ts test/settings-manager.test.ts`
 - coding-agent auth storage normalization regression tests pass:
