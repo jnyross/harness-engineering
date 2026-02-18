@@ -7961,6 +7961,26 @@ to:
 
 **Result:** Google OAuth token parsing now preserves strict integer expiry semantics and rejects fractional `expires_in` values instead of silently accepting malformed token expiry metadata.
 
+---
+
+### 417) ai GitHub Copilot OAuth payload parser accepted fractional interval/expiry values
+
+**Finding:** `packages/ai/src/utils/oauth/github-copilot.ts` parsed device-code and poll timing fields (`interval`, `expires_in`) with positive-finite numeric validation, so fractional timing values could be silently accepted instead of rejected as malformed OAuth payload metadata.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/github-copilot.ts`
+- `packages/ai/test/github-copilot-oauth-payload.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require positive safe-integer timing values for Copilot device-code and poll payload fields,
+- preserve strict token/code/error identifier parsing and malformed root/field rejection behavior,
+- add regression coverage for fractional interval/expiry rejection in device-code and poll payload parsing paths.
+
+**Result:** GitHub Copilot OAuth payload parsing now preserves strict integer timing semantics and rejects fractional timing values instead of silently accepting malformed polling/expiry metadata.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8187,7 +8207,7 @@ to:
 - ai gemini-cli oauth token payload parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-oauth-abort.test.ts` (includes malformed exchange-root, malformed refresh-field payload, whitespace-padded access-token rejection, whitespace-padded refresh-token fallback-retention coverage, whitespace-padded discovered-project identifier rejection coverage, whitespace-padded profile-email rejection coverage, and fractional `expires_in` rejection coverage)
 - ai github-copilot oauth payload parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/github-copilot-oauth-payload.test.ts` (includes malformed device-code/poll/token payload field rejection and whitespace-padded token/code/error identifier rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/github-copilot-oauth-payload.test.ts` (includes malformed device-code/poll/token payload field rejection, whitespace-padded token/code/error identifier rejection coverage, and fractional interval/expiry rejection coverage)
 - ai openai-codex oauth startup/manual-flow/cancellation/base64url-decoding/hash-fragment/non-object-token-payload parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-oauth-abort.test.ts` (includes malformed exchange/refresh JSON-body parse failure normalization, whitespace-padded token-field rejection, and fractional `expires_in` rejection coverage)
 - coding-agent tools regression tests pass:

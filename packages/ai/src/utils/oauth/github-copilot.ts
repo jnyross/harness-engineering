@@ -58,13 +58,6 @@ function parseNonEmptyString(value: unknown): string | undefined {
 	return value;
 }
 
-function parsePositiveFiniteNumber(value: unknown): number | undefined {
-	if (typeof value !== "number") {
-		return undefined;
-	}
-	return Number.isFinite(value) && value > 0 ? value : undefined;
-}
-
 function parsePositiveSafeInteger(value: unknown): number | undefined {
 	if (typeof value !== "number") {
 		return undefined;
@@ -77,8 +70,8 @@ export function parseDeviceCodeResponsePayload(value: unknown): DeviceCodeRespon
 	const deviceCode = parseNonEmptyString(payload?.device_code);
 	const userCode = parseNonEmptyString(payload?.user_code);
 	const verificationUri = parseNonEmptyString(payload?.verification_uri);
-	const interval = parsePositiveFiniteNumber(payload?.interval);
-	const expiresIn = parsePositiveFiniteNumber(payload?.expires_in);
+	const interval = parsePositiveSafeInteger(payload?.interval);
+	const expiresIn = parsePositiveSafeInteger(payload?.expires_in);
 	if (!deviceCode || !userCode || !verificationUri || !interval || !expiresIn) {
 		return undefined;
 	}
@@ -113,7 +106,7 @@ export function parseDeviceTokenPollPayload(value: unknown): ParsedDeviceTokenPo
 		return undefined;
 	}
 
-	const intervalSeconds = parsePositiveFiniteNumber(payload?.interval);
+	const intervalSeconds = parsePositiveSafeInteger(payload?.interval);
 	return { type: "error", error, intervalSeconds };
 }
 

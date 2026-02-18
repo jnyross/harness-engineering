@@ -53,6 +53,24 @@ describe("GitHub Copilot OAuth payload parsing", () => {
 				expires_in: 900,
 			}),
 		).toBeUndefined();
+		expect(
+			parseDeviceCodeResponsePayload({
+				device_code: "device-code",
+				user_code: "user-code",
+				verification_uri: "https://github.com/login/device",
+				interval: 5.5,
+				expires_in: 900,
+			}),
+		).toBeUndefined();
+		expect(
+			parseDeviceCodeResponsePayload({
+				device_code: "device-code",
+				user_code: "user-code",
+				verification_uri: "https://github.com/login/device",
+				interval: 5,
+				expires_in: 900.5,
+			}),
+		).toBeUndefined();
 	});
 
 	it("parses valid copilot token payload fields", () => {
@@ -95,6 +113,11 @@ describe("GitHub Copilot OAuth payload parsing", () => {
 		expect(parseDeviceTokenPollPayload({ access_token: " " })).toBeUndefined();
 		expect(parseDeviceTokenPollPayload({ access_token: " gho_device_token " })).toBeUndefined();
 		expect(parseDeviceTokenPollPayload({ error: " slow_down ", interval: 10 })).toBeUndefined();
+		expect(parseDeviceTokenPollPayload({ error: "slow_down", interval: 10.5 })).toEqual({
+			type: "error",
+			error: "slow_down",
+			intervalSeconds: undefined,
+		});
 		expect(parseDeviceTokenPollPayload({ error: "slow_down", interval: 0 })).toEqual({
 			type: "error",
 			error: "slow_down",
