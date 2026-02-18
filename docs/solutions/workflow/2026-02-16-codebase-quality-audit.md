@@ -7149,6 +7149,26 @@ to:
 
 **Result:** managed-tool latest-release parsing now preserves strict tag-name identity and rejects malformed whitespace-padded GitHub release tags.
 
+---
+
+### 377) ai OpenAI Responses usage parsing truncated fractional token counters
+
+**Finding:** `packages/ai/src/providers/openai-responses-shared.ts` normalized usage counters via integer truncation (`Math.trunc`) for both numeric and numeric-string token fields. Fractional token payloads (for example `12.4`) were silently coerced instead of rejected.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/openai-responses-shared.ts`
+- `packages/ai/test/openai-responses-shared-usage.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require usage token values to be non-negative safe integers (number or decimal-digit string),
+- reject fractional token values instead of truncating them,
+- add regression coverage for both numeric and numeric-string fractional token rejection paths.
+
+**Result:** OpenAI Responses shared usage parsing now preserves strict integer token accounting and rejects malformed fractional usage values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7217,7 +7237,7 @@ to:
 - ai usage safe-integer parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-responses-shared-usage.test.ts test/amazon-bedrock-usage.test.ts test/google-usage-metadata.test.ts test/google-gemini-cli-usage-metadata.test.ts test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts`
 - ai shared usage parser regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts test/amazon-bedrock-usage.test.ts test/openai-responses-shared-usage.test.ts` (includes OpenAI Responses malformed `thinkingSignature` replay suppression coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts test/amazon-bedrock-usage.test.ts test/openai-responses-shared-usage.test.ts` (includes OpenAI Responses malformed `thinkingSignature` replay suppression coverage and fractional-token rejection coverage)
 - ai streaming JSON parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/json-parse.test.ts`
 - ai OpenAI Completions thought-signature normalization regression tests pass:

@@ -84,11 +84,29 @@ describe("extractOpenAIResponsesUsage", () => {
 				total_tokens: "broken",
 			}),
 		).toEqual({
-			input: 9,
+			input: 0,
 			output: 0,
-			cacheRead: 3,
+			cacheRead: 0,
 			cacheWrite: 0,
-			totalTokens: 12,
+			totalTokens: 0,
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+		});
+	});
+
+	it("ignores fractional numeric token fields", () => {
+		expect(
+			extractOpenAIResponsesUsage({
+				prompt_tokens: 12.4,
+				completion_tokens: 5.9,
+				prompt_tokens_details: { cached_tokens: 2.7 },
+				total_tokens: 18.3,
+			}),
+		).toEqual({
+			input: 0,
+			output: 0,
+			cacheRead: 0,
+			cacheWrite: 0,
+			totalTokens: 0,
 			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
 		});
 	});

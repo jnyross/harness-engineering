@@ -5,6 +5,7 @@
 ### Fixed
 
 - OpenAI Responses stream usage parsing now falls back to `prompt_tokens`/`completion_tokens` payloads (including cached prompt-token details) and accepts numeric-string token values, preventing zeroed usage accounting with OpenAI-compatible backends that omit `input_tokens`/`output_tokens` or serialize usage counts as strings.
+- OpenAI Responses shared usage parsing now rejects fractional numeric token values (number and numeric-string forms) instead of truncating them, preventing malformed usage metadata from silently coercing decimal token counts.
 - OpenAI Responses history conversion now ignores malformed/non-reasoning `thinkingSignature` payloads instead of throwing during JSON parsing, preventing malformed persisted reasoning signatures from crashing replay message conversion.
 - OpenAI Codex Responses token parsing now accepts base64url JWT payload segments (including missing padding and `-`/`_` characters) when extracting account IDs, preventing malformed-token decode failures during Codex request header construction.
 - Google Gemini CLI / Antigravity credential parsing now requires non-empty string `token` and `projectId` fields in JSON apiKey payloads, rejecting malformed credential shapes before request dispatch.
