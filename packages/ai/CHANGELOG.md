@@ -31,6 +31,7 @@
 - OpenAI Codex OAuth login now waits for lazy Node runtime imports before generating state/callback servers, exits promptly when cancelled after auth startup, and decodes base64url JWT payload segments reliably when extracting account IDs.
 - OpenAI Codex OAuth login now uses explicit CSRF-style state mismatch diagnostics (`OAuth state mismatch - possible CSRF attack`) for manual input validation paths.
 - OpenAI Codex OAuth token exchange/refresh parsing now requires object JSON roots with non-empty token strings and positive numeric `expires_in` values, treating malformed payload roots as structured failures instead of runtime null-property crashes.
+- OpenAI Codex Responses SSE/WebSocket event parsing now ignores malformed non-object JSON payload roots, and usage-limit error parsing now preserves friendly limit guidance when error fields have malformed non-string/non-numeric shapes.
 - Anthropic OAuth login now honors `AbortSignal` cancellation (including pre-aborted signals) before prompting for user code and during token exchange.
 - Anthropic OAuth login now validates pasted OAuth state values and supports full redirect URL/query-string input by extracting `code`/`state` parameters before token exchange.
 - Anthropic and OpenAI Codex OAuth manual input parsing now accepts hash-fragment redirect formats (e.g. `#code=...&state=...`) in addition to query-string forms.

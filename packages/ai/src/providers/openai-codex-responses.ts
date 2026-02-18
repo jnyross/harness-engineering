@@ -79,6 +79,29 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
 	return value as Record<string, unknown>;
 }
 
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function parsePositiveFiniteNumber(value: unknown): number | undefined {
+	if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+		return undefined;
+	}
+	return value;
+}
+
+export function parseCodexEventPayload(data: string): Record<string, unknown> | undefined {
+	try {
+		return asRecord(JSON.parse(data));
+	} catch {
+		return undefined;
+	}
+}
+
 function decodeBase64Segment(segment: string): string {
 	const normalized = segment.replace(/-/g, "+").replace(/_/g, "/");
 	const paddingLength = (4 - (normalized.length % 4)) % 4;
@@ -407,11 +430,7 @@ async function* parseSSE(response: Response): AsyncGenerator<Record<string, unkn
 		if (!data || data === "[DONE]") {
 			return null;
 		}
-		try {
-			return JSON.parse(data) as Record<string, unknown>;
-		} catch {
-			return null;
-		}
+		return parseCodexEventPayload(data) ?? null;
 	};
 
 	while (true) {
@@ -702,16 +721,15 @@ async function* parseWebSocket(socket: WebSocketLike, signal?: AbortSignal): Asy
 			if (!event || typeof event !== "object" || !("data" in event)) return;
 			const text = await decodeWebSocketData((event as { data?: unknown }).data);
 			if (!text) return;
-			try {
-				const parsed = JSON.parse(text) as Record<string, unknown>;
-				const type = typeof parsed.type === "string" ? parsed.type : "";
-				if (type === "response.completed" || type === "response.done") {
-					sawCompletion = true;
-					done = true;
-				}
-				queue.push(parsed);
-				wake();
-			} catch {}
+			const parsed = parseCodexEventPayload(text);
+			if (!parsed) return;
+			const type = typeof parsed.type === "string" ? parsed.type : "";
+			if (type === "response.completed" || type === "response.done") {
+				sawCompletion = true;
+				done = true;
+			}
+			queue.push(parsed);
+			wake();
 		})();
 	};
 
@@ -811,24 +829,20 @@ async function parseErrorResponse(response: Response): Promise<{ message: string
 	let message = raw || response.statusText || "Request failed";
 	let friendlyMessage: string | undefined;
 
-	try {
-		const parsed = JSON.parse(raw) as {
-			error?: { code?: string; type?: string; message?: string; plan_type?: string; resets_at?: number };
-		};
-		const err = parsed?.error;
-		if (err) {
-			const code = err.code || err.type || "";
-			if (/usage_limit_reached|usage_not_included|rate_limit_exceeded/i.test(code) || response.status === 429) {
-				const plan = err.plan_type ? ` (${err.plan_type.toLowerCase()} plan)` : "";
-				const mins = err.resets_at
-					? Math.max(0, Math.round((err.resets_at * 1000 - Date.now()) / 60000))
-					: undefined;
-				const when = mins !== undefined ? ` Try again in ~${mins} min.` : "";
-				friendlyMessage = `You have hit your ChatGPT usage limit${plan}.${when}`.trim();
-			}
-			message = err.message || friendlyMessage || message;
+	const parsed = parseCodexEventPayload(raw);
+	const err = asRecord(parsed?.error);
+	if (err) {
+		const code = parseNonEmptyString(err.code) ?? parseNonEmptyString(err.type) ?? "";
+		if (/usage_limit_reached|usage_not_included|rate_limit_exceeded/i.test(code) || response.status === 429) {
+			const planType = parseNonEmptyString(err.plan_type);
+			const plan = planType ? ` (${planType.toLowerCase()} plan)` : "";
+			const resetsAt = parsePositiveFiniteNumber(err.resets_at);
+			const mins = resetsAt ? Math.max(0, Math.round((resetsAt * 1000 - Date.now()) / 60000)) : undefined;
+			const when = mins !== undefined ? ` Try again in ~${mins} min.` : "";
+			friendlyMessage = `You have hit your ChatGPT usage limit${plan}.${when}`.trim();
 		}
-	} catch {}
+		message = parseNonEmptyString(err.message) ?? friendlyMessage ?? message;
+	}
 
 	return { message, friendlyMessage };
 }
