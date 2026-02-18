@@ -8255,6 +8255,27 @@ to:
 
 **Result:** Agent CLI integer option parsing now preserves strict numeric option identity and rejects whitespace-padded numeric option values instead of silently normalizing malformed inputs.
 
+---
+
+### 431) coding-agent settings-selector numeric parsing normalized whitespace-padded values
+
+**Finding:** `packages/coding-agent/src/modes/interactive/components/settings-selector.ts` trimmed integer option values before numeric validation, so whitespace-padded selector values could be silently accepted instead of rejected as malformed numeric option identifiers.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/components/settings-selector.ts`
+- `packages/coding-agent/test/settings-selector.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require strict integer-string identity (`trimmed === value`) before numeric parsing,
+- reject whitespace-padded integer values instead of trimming/coalescing malformed numeric option inputs,
+- preserve existing malformed-format and unsafe-integer rejection behavior,
+- add regression coverage for whitespace-padded numeric selector value rejection.
+
+**Result:** Settings-selector integer parsing now preserves strict numeric option identity and rejects whitespace-padded values instead of silently normalizing malformed selector input.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8303,7 +8324,7 @@ to:
 - coding-agent tool numeric-parameter safety regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/execution-plan.test.ts test/read-tool.test.ts test/tool-numeric-parameter-safety.test.ts`
 - coding-agent settings-selector numeric parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/settings-selector.test.ts`
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/settings-selector.test.ts` (includes whitespace-padded numeric selector value rejection coverage)
 - coding-agent theme hex validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-hex-validation.test.ts test/theme-colorfgbg.test.ts`
 - coding-agent COLORFGBG range regression tests pass:

@@ -12,6 +12,7 @@ describe("parseSettingsIntegerValue", () => {
 		expect(parseSettingsIntegerValue("3foo")).toBeUndefined();
 		expect(parseSettingsIntegerValue("0x10")).toBeUndefined();
 		expect(parseSettingsIntegerValue("1e2")).toBeUndefined();
+		expect(parseSettingsIntegerValue(" 3 ")).toBeUndefined();
 		expect(parseSettingsIntegerValue("9007199254740993")).toBeUndefined();
 	});
 });

@@ -24,6 +24,9 @@ const THINKING_DESCRIPTIONS: Record<ThinkingLevel, string> = {
 
 export function parseSettingsIntegerValue(value: string): number | undefined {
 	const trimmed = value.trim();
+	if (trimmed !== value) {
+		return undefined;
+	}
 	if (!/^\d+$/.test(trimmed)) {
 		return undefined;
 	}
