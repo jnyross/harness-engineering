@@ -31,11 +31,11 @@ function parseStrictNonEmptyString(value: unknown): string | undefined {
 	return value;
 }
 
-function parsePositiveFiniteNumber(value: unknown): number | undefined {
+function parsePositiveSafeInteger(value: unknown): number | undefined {
 	if (typeof value !== "number") {
 		return undefined;
 	}
-	return Number.isFinite(value) && value > 0 ? value : undefined;
+	return Number.isSafeInteger(value) && value > 0 ? value : undefined;
 }
 
 function parseTokenResponsePayload(
@@ -49,7 +49,7 @@ function parseTokenResponsePayload(
 	const payload = asRecord(data);
 	const accessToken = parseStrictNonEmptyString(payload?.access_token);
 	const refreshToken = parseStrictNonEmptyString(payload?.refresh_token);
-	const expiresIn = parsePositiveFiniteNumber(payload?.expires_in);
+	const expiresIn = parsePositiveSafeInteger(payload?.expires_in);
 	if (!accessToken || !refreshToken || !expiresIn) {
 		throw new Error(`Invalid token ${context} response payload`);
 	}

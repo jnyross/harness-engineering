@@ -196,6 +196,31 @@ describe("anthropic oauth login", () => {
 		);
 	});
 
+	it("rejects fractional expires_in token exchange payload fields", async () => {
+		let verifierState: string | null = null;
+		const onAuth = (url: string) => {
+			verifierState = new URL(url).searchParams.get("state");
+		};
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(
+				async () =>
+					new Response(
+						JSON.stringify({
+							access_token: "access-token",
+							refresh_token: "refresh-token",
+							expires_in: 3600.5,
+						}),
+						{ status: 200, headers: { "Content-Type": "application/json" } },
+					),
+			),
+		);
+
+		await expect(loginAnthropic(onAuth, async () => `code=exchange&state=${verifierState}`)).rejects.toThrow(
+			"Invalid token exchange response payload",
+		);
+	});
+
 	it("rejects malformed token refresh payload fields", async () => {
 		vi.stubGlobal(
 			"fetch",
@@ -225,6 +250,25 @@ describe("anthropic oauth login", () => {
 							access_token: "access-token",
 							refresh_token: " refresh-token ",
 							expires_in: 3600,
+						}),
+						{ status: 200, headers: { "Content-Type": "application/json" } },
+					),
+			),
+		);
+
+		await expect(refreshAnthropicToken("refresh-token")).rejects.toThrow("Invalid token refresh response payload");
+	});
+
+	it("rejects fractional expires_in token refresh payload fields", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(
+				async () =>
+					new Response(
+						JSON.stringify({
+							access_token: "access-token",
+							refresh_token: "refresh-token",
+							expires_in: 3600.5,
 						}),
 						{ status: 200, headers: { "Content-Type": "application/json" } },
 					),

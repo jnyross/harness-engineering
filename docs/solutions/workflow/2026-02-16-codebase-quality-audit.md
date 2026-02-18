@@ -7919,6 +7919,26 @@ to:
 
 **Result:** OpenAI Codex OAuth token parsing now preserves strict integer expiry semantics and rejects fractional `expires_in` values instead of silently accepting malformed token expiry metadata.
 
+---
+
+### 415) ai Anthropic OAuth token parser accepted fractional expires_in values
+
+**Finding:** `packages/ai/src/utils/oauth/anthropic.ts` parsed token payload `expires_in` with positive-finite numeric validation, so fractional expiry durations could be silently accepted instead of rejected as malformed OAuth token metadata.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/anthropic.ts`
+- `packages/ai/test/anthropic-oauth-abort.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require positive safe-integer `expires_in` values for Anthropic token exchange/refresh payloads,
+- preserve existing strict token-field validation and malformed-payload rejection behavior,
+- add regression coverage for fractional `expires_in` rejection in exchange and refresh flows.
+
+**Result:** Anthropic OAuth token parsing now preserves strict integer expiry semantics and rejects fractional `expires_in` values instead of silently accepting malformed token expiry metadata.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8139,7 +8159,7 @@ to:
 - ai shared oauth authorization-input utility regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/oauth-authorization-input.test.ts`
 - ai anthropic oauth parsing/state-validation regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts` (includes malformed exchange-root, malformed refresh-field payload, and whitespace-padded token-field rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts` (includes malformed exchange-root, malformed refresh-field payload, whitespace-padded token-field rejection, and fractional `expires_in` rejection coverage)
 - ai antigravity oauth token payload parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-antigravity-oauth-abort.test.ts` (includes malformed exchange-root, malformed refresh-field payload, whitespace-padded access-token rejection, whitespace-padded refresh-token fallback-retention coverage, whitespace-padded discovered-project identifier rejection coverage, and whitespace-padded profile-email rejection coverage)
 - ai gemini-cli oauth token payload parsing regression tests pass:
