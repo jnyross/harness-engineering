@@ -6638,6 +6638,26 @@ to:
 
 **Result:** Gemini CLI / Antigravity stream parsing now tolerates malformed non-object SSE chunk payloads and continues processing later valid response chunks.
 
+---
+
+### 352) ai OpenAI Codex Responses parser accepted malformed non-object SSE/WebSocket event roots
+
+**Finding:** `packages/ai/src/providers/openai-codex-responses.ts` parsed SSE/WebSocket event payloads via direct `JSON.parse(...) as Record<string, unknown>` casts. Malformed non-object payload roots were inconsistently handled, and malformed usage-limit error field shapes (`plan_type`, `resets_at`, `message`) could suppress user-facing friendly limit diagnostics.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/openai-codex-responses.ts`
+- `packages/ai/test/openai-codex-responses-parsing.test.ts` (new)
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- add shared strict object-root Codex event parser (`parseCodexEventPayload`) and use it for both SSE and WebSocket event ingestion,
+- normalize usage-limit error parsing to string/number-safe field extraction (`code`, `type`, `message`, `plan_type`, `resets_at`),
+- add regression coverage for malformed event-root parsing and malformed usage-limit error-field shapes while preserving friendly usage-limit guidance.
+
+**Result:** OpenAI Codex Responses stream/error parsing now ignores malformed non-object event roots consistently and preserves friendly usage-limit diagnostics under malformed error payload field shapes.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6876,6 +6896,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-empty-stream.test.ts` (includes terminal `data:` line without trailing newline, malformed credential-shape rejection, and malformed non-object SSE chunk-root filtering coverage)
 - ai Codex/Gemini SSE regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-stream.test.ts test/google-gemini-cli-empty-stream.test.ts` (includes Codex base64url JWT payload account-id extraction coverage)
+- ai Codex Responses payload-shape parsing regression tests pass:
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-responses-parsing.test.ts test/openai-codex-stream.test.ts` (includes malformed non-object SSE/WebSocket event-root filtering and malformed usage-limit error-field-shape friendly-message coverage)
 - coding-agent exec regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/exec.test.ts` (includes signal-terminated subprocess failure semantics and forced-kill fallback for SIGTERM-resistant processes)
 - coding-agent execCommand regression tests pass:
