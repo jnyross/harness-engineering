@@ -7269,6 +7269,26 @@ to:
 
 **Result:** Gemini CLI/Antigravity usage parsing now enforces strict integer token accounting and rejects malformed fractional usage values.
 
+---
+
+### 383) ai Google/Vertex shared usage parsing truncated fractional token counters
+
+**Finding:** `packages/ai/src/providers/google-shared.ts` normalized Google/Vertex usage counters by truncating fractional numeric values (numbers and numeric strings). Malformed decimal token fields were silently coerced instead of rejected.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/google-shared.ts`
+- `packages/ai/test/google-usage-metadata.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require usage token values to be non-negative safe integers for Google/Vertex shared usage parsing,
+- reject fractional token values instead of truncating them,
+- add regression coverage for fractional numeric payload rejection and updated malformed/non-decimal expectations.
+
+**Result:** Google/Vertex shared usage parsing now enforces strict integer token accounting and rejects malformed fractional usage values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7332,12 +7352,13 @@ to:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-export-colors.test.ts`
 - ai usage metadata regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts` (includes fractional usage-token rejection coverage for Gemini CLI / Antigravity usage metadata)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts` (includes fractional usage-token rejection coverage for Google / Vertex shared usage metadata)
 - ai Gemini retry-delay (including safe-millisecond bounds) regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-retry-delay.test.ts`
 - ai usage safe-integer parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-responses-shared-usage.test.ts test/amazon-bedrock-usage.test.ts test/google-usage-metadata.test.ts test/google-gemini-cli-usage-metadata.test.ts test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts`
 - ai shared usage parser regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts test/amazon-bedrock-usage.test.ts test/openai-responses-shared-usage.test.ts` (includes OpenAI Responses malformed `thinkingSignature` replay suppression coverage and fractional-token rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts test/amazon-bedrock-usage.test.ts test/openai-responses-shared-usage.test.ts` (includes OpenAI Responses malformed `thinkingSignature` replay suppression coverage and Google/OpenAI shared fractional-token rejection coverage)
 - ai streaming JSON parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/json-parse.test.ts`
 - ai OpenAI Completions thought-signature normalization regression tests pass:

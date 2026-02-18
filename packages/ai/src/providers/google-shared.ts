@@ -317,19 +317,17 @@ export function mapStopReasonString(reason: string): StopReason {
 }
 
 function parseUsageNumber(value: unknown): number | undefined {
-	if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
-		const normalized = Math.trunc(value);
-		return Number.isSafeInteger(normalized) ? normalized : undefined;
+	if (typeof value === "number" && Number.isSafeInteger(value) && value >= 0) {
+		return value;
 	}
 	if (typeof value === "string" && value.trim().length > 0) {
 		const trimmed = value.trim();
-		if (!/^\d+(?:\.\d+)?$/.test(trimmed)) {
+		if (!/^\d+$/.test(trimmed)) {
 			return undefined;
 		}
 		const parsed = Number(trimmed);
-		if (Number.isFinite(parsed) && parsed >= 0) {
-			const normalized = Math.trunc(parsed);
-			return Number.isSafeInteger(normalized) ? normalized : undefined;
+		if (Number.isSafeInteger(parsed) && parsed >= 0) {
+			return parsed;
 		}
 	}
 	return undefined;

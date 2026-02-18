@@ -69,10 +69,10 @@ describe("extractGoogleUsageMetadata", () => {
 			}),
 		).toEqual({
 			input: 0,
-			output: 2,
+			output: 0,
 			cacheRead: 0,
 			cacheWrite: 0,
-			totalTokens: 2,
+			totalTokens: 0,
 			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
 		});
 	});
@@ -88,10 +88,29 @@ describe("extractGoogleUsageMetadata", () => {
 			}),
 		).toEqual({
 			input: 0,
-			output: 2,
+			output: 0,
 			cacheRead: 0,
 			cacheWrite: 0,
-			totalTokens: 2,
+			totalTokens: 0,
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+		});
+	});
+
+	it("ignores fractional numeric usage values", () => {
+		expect(
+			extractGoogleUsageMetadata({
+				promptTokenCount: 10.4,
+				candidatesTokenCount: 4.6,
+				thoughtsTokenCount: 3.2,
+				cachedContentTokenCount: 2.1,
+				totalTokenCount: 19.9,
+			}),
+		).toEqual({
+			input: 0,
+			output: 0,
+			cacheRead: 0,
+			cacheWrite: 0,
+			totalTokens: 0,
 			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
 		});
 	});
