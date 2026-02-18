@@ -107,6 +107,13 @@ function parseNonEmptyString(value: unknown): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
+}
+
 function normalizePiManifest(value: unknown): PiManifest | null {
 	if (!value || typeof value !== "object" || Array.isArray(value)) {
 		return null;
@@ -1086,8 +1093,12 @@ export class DefaultPackageManager implements PackageManager {
 	private async getLatestNpmVersion(packageName: string): Promise<string> {
 		const response = await fetch(`https://registry.npmjs.org/${packageName}/latest`);
 		if (!response.ok) throw new Error(`Failed to fetch npm registry: ${response.status}`);
-		const data = (await response.json()) as { version: string };
-		return data.version;
+		const data = asRecord(await response.json());
+		const version = parseNonEmptyString(data?.version);
+		if (!version) {
+			throw new Error("Invalid npm registry response: missing version");
+		}
+		return version;
 	}
 
 	/**
