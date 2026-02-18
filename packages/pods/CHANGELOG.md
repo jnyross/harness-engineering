@@ -96,6 +96,7 @@
 - Pods config loading now also rejects whitespace-padded persisted model IDs (`models[*].model`) instead of trimming/coalescing malformed model-identifier values.
 - Pods config loading now also rejects whitespace-padded `modelsPath` values instead of trimming/coalescing malformed persisted model-directory identifiers.
 - Pods config loading now also rejects whitespace-padded `ssh` command values instead of trimming/coalescing malformed persisted pod-connection identifiers.
+- Pods config loading now also rejects whitespace-padded GPU `name`/`memory` values instead of trimming/coalescing malformed persisted GPU metadata identifiers.
 - Built-in models config loading now normalizes parsed `models.json` structure/content and drops malformed model/config entries instead of forwarding invalid runtime launch config shapes.
 - Built-in models config loading now also rejects whitespace-padded model IDs and env keys during normalization, preventing malformed key coalescing when parsing `models.json`.
 - Built-in models config loading now also rejects whitespace-padded env values during normalization, preserving strict env-value identity in `models.json` launch configuration.

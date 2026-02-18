@@ -30,14 +30,6 @@ function parseSafeInteger(value: unknown, minimum: number): number | undefined {
 	return value;
 }
 
-function parseNonEmptyString(value: unknown): string | undefined {
-	if (typeof value !== "string") {
-		return undefined;
-	}
-	const trimmed = value.trim();
-	return trimmed.length > 0 ? trimmed : undefined;
-}
-
 function parseStrictNonEmptyString(value: unknown): string | undefined {
 	if (typeof value !== "string") {
 		return undefined;
@@ -64,8 +56,8 @@ function normalizeGpu(value: unknown): GPU | undefined {
 	}
 
 	const id = parseSafeInteger(record.id, 0);
-	const name = parseNonEmptyString(record.name);
-	const memory = parseNonEmptyString(record.memory);
+	const name = parseStrictNonEmptyString(record.name);
+	const memory = parseStrictNonEmptyString(record.memory);
 	if (id === undefined || !name || !memory) {
 		return undefined;
 	}

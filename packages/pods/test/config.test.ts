@@ -55,7 +55,11 @@ describe("pods config normalization", () => {
 					},
 					"good-pod": {
 						ssh: "ssh host",
-						gpus: [{ id: 0, name: "GPU 0", memory: "80GiB" }],
+						gpus: [
+							{ id: 0, name: "GPU 0", memory: "80GiB" },
+							{ id: 1, name: " GPU 1 ", memory: "80GiB" },
+							{ id: 2, name: "GPU 2", memory: " 80GiB " },
+						],
 						models: {
 							" model-a ": { model: "llama", port: 8001, gpu: [0], pid: 1234 },
 							"model-a": { model: "llama", port: 8001, gpu: [0], pid: 1234 },
