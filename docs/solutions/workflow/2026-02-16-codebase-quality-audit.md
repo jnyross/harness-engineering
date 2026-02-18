@@ -6478,6 +6478,26 @@ to:
 
 **Result:** Codex request setup now accepts base64url JWT payload segments reliably when extracting ChatGPT account IDs.
 
+---
+
+### 344) ai Google Gemini CLI credential parsing accepted malformed JSON credential field shapes
+
+**Finding:** `packages/ai/src/providers/google-gemini-cli.ts` parsed JSON apiKey payloads and used `token`/`projectId` fields without runtime string-shape validation. Malformed parsed credential fields (objects/arrays/blank strings) could propagate into request headers/body construction as invalid credential values.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/google-gemini-cli.ts`
+- `packages/ai/test/google-gemini-cli-empty-stream.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- normalize credential payload parsing to object roots with non-empty string `token` and `projectId` fields,
+- reject malformed credential field shapes before request dispatch,
+- add regression coverage for malformed credential-shape rejection (including no outbound fetch on invalid payloads).
+
+**Result:** Gemini CLI/Antigravity provider setup now rejects malformed credential payload shapes early and avoids issuing requests with invalid auth/project identifiers.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6709,7 +6729,7 @@ to:
 - agent proxy stream regression tests pass:
   - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts` (includes trailing SSE line without newline)
 - ai Gemini CLI SSE regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-empty-stream.test.ts` (includes terminal `data:` line without trailing newline)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-empty-stream.test.ts` (includes terminal `data:` line without trailing newline and malformed credential-shape rejection coverage)
 - ai Codex/Gemini SSE regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-stream.test.ts test/google-gemini-cli-empty-stream.test.ts` (includes Codex base64url JWT payload account-id extraction coverage)
 - coding-agent exec regression tests pass:
