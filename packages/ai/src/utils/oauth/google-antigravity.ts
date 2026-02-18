@@ -174,6 +174,50 @@ interface LoadCodeAssistPayload {
 	allowedTiers?: Array<{ id?: string; isDefault?: boolean }>;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
+}
+
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function parsePositiveFiniteNumber(value: unknown): number | undefined {
+	if (typeof value !== "number") {
+		return undefined;
+	}
+	return Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+function parseAntigravityTokenPayload(
+	value: unknown,
+	context: "exchange" | "refresh",
+): {
+	accessToken: string;
+	expiresIn: number;
+	refreshToken?: string;
+} {
+	const tokenPayload = asRecord(value);
+	const accessToken = parseNonEmptyString(tokenPayload?.access_token);
+	const expiresIn = parsePositiveFiniteNumber(tokenPayload?.expires_in);
+	const refreshToken = parseNonEmptyString(tokenPayload?.refresh_token);
+	if (!accessToken || !expiresIn) {
+		throw new Error(`Antigravity token ${context} payload missing required fields`);
+	}
+	return {
+		accessToken,
+		expiresIn,
+		refreshToken,
+	};
+}
+
 function assertNotAborted(signal?: AbortSignal): void {
 	if (signal?.aborted) {
 		throw new Error("Login cancelled");
@@ -225,18 +269,17 @@ async function discoverProject(
 			assertNotAborted(signal);
 
 			if (loadResponse.ok) {
-				const data = (await loadResponse.json()) as LoadCodeAssistPayload;
+				const data = asRecord((await loadResponse.json()) as LoadCodeAssistPayload);
+				const projectId = parseNonEmptyString(data?.cloudaicompanionProject);
+				if (projectId) {
+					return projectId;
+				}
 
 				// Handle both string and object formats
-				if (typeof data.cloudaicompanionProject === "string" && data.cloudaicompanionProject) {
-					return data.cloudaicompanionProject;
-				}
-				if (
-					data.cloudaicompanionProject &&
-					typeof data.cloudaicompanionProject === "object" &&
-					data.cloudaicompanionProject.id
-				) {
-					return data.cloudaicompanionProject.id;
+				const projectObject = asRecord(data?.cloudaicompanionProject);
+				const objectProjectId = parseNonEmptyString(projectObject?.id);
+				if (objectProjectId) {
+					return objectProjectId;
 				}
 			}
 		} catch {
@@ -263,8 +306,8 @@ async function getUserEmail(accessToken: string, signal?: AbortSignal): Promise<
 		});
 
 		if (response.ok) {
-			const data = (await response.json()) as { email?: string };
-			return data.email;
+			const data = asRecord((await response.json()) as { email?: unknown });
+			return parseNonEmptyString(data?.email);
 		}
 	} catch {
 		// Ignore errors, email is optional
@@ -292,16 +335,12 @@ export async function refreshAntigravityToken(refreshToken: string, projectId: s
 		throw new Error(`Antigravity token refresh failed: ${error}`);
 	}
 
-	const data = (await response.json()) as {
-		access_token: string;
-		expires_in: number;
-		refresh_token?: string;
-	};
+	const data = parseAntigravityTokenPayload(await response.json(), "refresh");
 
 	return {
-		refresh: data.refresh_token || refreshToken,
-		access: data.access_token,
-		expires: Date.now() + data.expires_in * 1000 - 5 * 60 * 1000,
+		refresh: data.refreshToken ?? refreshToken,
+		access: data.accessToken,
+		expires: Date.now() + data.expiresIn * 1000 - 5 * 60 * 1000,
 		projectId,
 	};
 }
@@ -443,29 +482,25 @@ export async function loginAntigravity(
 			throw new Error(`Token exchange failed: ${error}`);
 		}
 
-		const tokenData = (await tokenResponse.json()) as {
-			access_token: string;
-			refresh_token: string;
-			expires_in: number;
-		};
+		const tokenData = parseAntigravityTokenPayload(await tokenResponse.json(), "exchange");
 
-		if (!tokenData.refresh_token) {
+		if (!tokenData.refreshToken) {
 			throw new Error("No refresh token received. Please try again.");
 		}
 
 		// Get user email
 		onProgress?.("Getting user info...");
-		const email = await getUserEmail(tokenData.access_token, signal);
+		const email = await getUserEmail(tokenData.accessToken, signal);
 
 		// Discover project
-		const projectId = await discoverProject(tokenData.access_token, onProgress, signal);
+		const projectId = await discoverProject(tokenData.accessToken, onProgress, signal);
 
 		// Calculate expiry time (current time + expires_in seconds - 5 min buffer)
-		const expiresAt = Date.now() + tokenData.expires_in * 1000 - 5 * 60 * 1000;
+		const expiresAt = Date.now() + tokenData.expiresIn * 1000 - 5 * 60 * 1000;
 
 		const credentials: OAuthCredentials = {
-			refresh: tokenData.refresh_token,
-			access: tokenData.access_token,
+			refresh: tokenData.refreshToken,
+			access: tokenData.accessToken,
 			expires: expiresAt,
 			projectId,
 			email,

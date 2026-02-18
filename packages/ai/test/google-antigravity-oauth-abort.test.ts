@@ -1,6 +1,10 @@
 import { createServer } from "node:http";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { antigravityOAuthProvider, loginAntigravity } from "../src/utils/oauth/google-antigravity.js";
+import {
+	antigravityOAuthProvider,
+	loginAntigravity,
+	refreshAntigravityToken,
+} from "../src/utils/oauth/google-antigravity.js";
 
 describe("google-antigravity oauth login", () => {
 	afterEach(() => {
@@ -117,5 +121,55 @@ describe("google-antigravity oauth login", () => {
 				busyServer.close(() => resolve());
 			});
 		}
+	});
+
+	it("rejects malformed token exchange payload roots", async () => {
+		let authState = "";
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async (input: unknown) => {
+				const url = String(input);
+				if (url === "https://oauth2.googleapis.com/token") {
+					return new Response("null", {
+						status: 200,
+						headers: { "content-type": "application/json" },
+					});
+				}
+				throw new Error(`Unexpected fetch URL: ${url}`);
+			}),
+		);
+
+		await expect(
+			loginAntigravity(
+				(info) => {
+					authState = new URL(info.url).searchParams.get("state") ?? "";
+				},
+				undefined,
+				async () => `http://localhost:51121/oauth-callback?code=manual-code&state=${authState}`,
+			),
+		).rejects.toThrow("Antigravity token exchange payload missing required fields");
+	});
+
+	it("rejects malformed token refresh payload fields", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(
+				async () =>
+					new Response(
+						JSON.stringify({
+							access_token: "",
+							expires_in: 0,
+						}),
+						{
+							status: 200,
+							headers: { "content-type": "application/json" },
+						},
+					),
+			),
+		);
+
+		await expect(refreshAntigravityToken("refresh-token", "project-123")).rejects.toThrow(
+			"Antigravity token refresh payload missing required fields",
+		);
 	});
 });
