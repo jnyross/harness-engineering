@@ -36,7 +36,9 @@ describe("migrations", () => {
 		writeFileSync(
 			oauthPath,
 			JSON.stringify({
-				anthropic: { refresh: "token-1" },
+				anthropic: { refresh: "token-1", access: "access-1", expires: 1234 },
+				copilot: { refresh: " token-2 ", access: "access-2", expires: 1234 },
+				codex: { refresh: "token-3", access: "access-3", expires: 1234.5 },
 				" openai ": { access: "token-2" },
 				" ": { ignored: true },
 				invalid: 42,
@@ -63,7 +65,7 @@ describe("migrations", () => {
 		expect(existsSync(join(agentDir, "oauth.json.migrated"))).toBe(true);
 
 		expect(readJson(authPath)).toEqual({
-			anthropic: { type: "oauth", refresh: "token-1" },
+			anthropic: { type: "oauth", refresh: "token-1", access: "access-1", expires: 1234 },
 			gemini: { type: "api_key", key: "key-123" },
 		});
 		expect(readJson(settingsPath)).toEqual({ keep: true });

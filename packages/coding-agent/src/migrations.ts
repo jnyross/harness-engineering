@@ -37,6 +37,29 @@ function parseProviderId(value: string): string | undefined {
 	return trimmed === value ? value : undefined;
 }
 
+function parseNonNegativeSafeInteger(value: unknown): number | undefined {
+	if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
+		return undefined;
+	}
+	return value;
+}
+
+function parseLegacyOAuthCredential(
+	value: unknown,
+): { type: "oauth"; refresh: string; access: string; expires: number } | undefined {
+	const record = asRecord(value);
+	if (!record) {
+		return undefined;
+	}
+	const refresh = parseStrictNonEmptyString(record.refresh);
+	const access = parseStrictNonEmptyString(record.access);
+	const expires = parseNonNegativeSafeInteger(record.expires);
+	if (!refresh || !access || expires === undefined) {
+		return undefined;
+	}
+	return { type: "oauth", refresh, access, expires };
+}
+
 /**
  * Migrate legacy oauth.json and settings.json apiKeys to auth.json.
  *
@@ -61,11 +84,11 @@ export function migrateAuthToAuthJson(): string[] {
 			const oauth = asRecord(JSON.parse(readFileSync(oauthPath, "utf-8")));
 			for (const [provider, cred] of Object.entries(oauth ?? {})) {
 				const normalizedProvider = parseProviderId(provider);
-				const normalizedCredential = asRecord(cred);
+				const normalizedCredential = parseLegacyOAuthCredential(cred);
 				if (!normalizedProvider || !normalizedCredential) {
 					continue;
 				}
-				migrated[normalizedProvider] = { type: "oauth", ...normalizedCredential };
+				migrated[normalizedProvider] = normalizedCredential;
 				providers.push(normalizedProvider);
 				migratedOauthProviders++;
 			}
