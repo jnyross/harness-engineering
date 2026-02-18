@@ -62,12 +62,15 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
 	return value as Record<string, unknown>;
 }
 
-function parseNonEmptyString(value: unknown): string | undefined {
+function parseStrictNonEmptyString(value: unknown): string | undefined {
 	if (typeof value !== "string") {
 		return undefined;
 	}
 	const trimmed = value.trim();
-	return trimmed.length > 0 ? trimmed : undefined;
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
 }
 
 function parsePositiveFiniteNumber(value: unknown): number | undefined {
@@ -85,8 +88,8 @@ function parseOpenAICodexTokenPayload(value: unknown):
 	  }
 	| undefined {
 	const tokenResponse = asRecord(value);
-	const accessToken = parseNonEmptyString(tokenResponse?.access_token);
-	const refreshToken = parseNonEmptyString(tokenResponse?.refresh_token);
+	const accessToken = parseStrictNonEmptyString(tokenResponse?.access_token);
+	const refreshToken = parseStrictNonEmptyString(tokenResponse?.refresh_token);
 	const expiresIn = parsePositiveFiniteNumber(tokenResponse?.expires_in);
 	if (!accessToken || !refreshToken || !expiresIn) {
 		return undefined;

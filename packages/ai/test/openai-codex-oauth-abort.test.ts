@@ -180,6 +180,33 @@ describe("openai-codex oauth login", () => {
 		).rejects.toThrow("Token exchange failed");
 	});
 
+	it("treats whitespace-padded token exchange fields as failed exchanges", async () => {
+		const token = createAccessToken("acct_ws_exchange");
+		const fetchMock = vi.fn(
+			async (_input: unknown, _init?: RequestInit) =>
+				new Response(
+					JSON.stringify({
+						access_token: ` ${token} `,
+						refresh_token: "refresh-token",
+						expires_in: 3600,
+					}),
+					{
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					},
+				),
+		);
+		vi.stubGlobal("fetch", fetchMock);
+
+		await expect(
+			loginOpenAICodex({
+				onAuth: () => {},
+				onPrompt: async () => "",
+				onManualCodeInput: async () => "manual-code",
+			}),
+		).rejects.toThrow("Token exchange failed");
+	});
+
 	it("treats non-object refresh payload roots as failed refreshes", async () => {
 		const fetchMock = vi.fn(
 			async (_input: unknown, _init?: RequestInit) =>
@@ -200,6 +227,27 @@ describe("openai-codex oauth login", () => {
 					status: 200,
 					headers: { "Content-Type": "application/json" },
 				}),
+		);
+		vi.stubGlobal("fetch", fetchMock);
+
+		await expect(refreshOpenAICodexToken("refresh-token")).rejects.toThrow("Failed to refresh OpenAI Codex token");
+	});
+
+	it("treats whitespace-padded refresh payload fields as failed refreshes", async () => {
+		const token = createAccessToken("acct_ws_refresh");
+		const fetchMock = vi.fn(
+			async (_input: unknown, _init?: RequestInit) =>
+				new Response(
+					JSON.stringify({
+						access_token: token,
+						refresh_token: " refresh-token ",
+						expires_in: 3600,
+					}),
+					{
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					},
+				),
 		);
 		vi.stubGlobal("fetch", fetchMock);
 
