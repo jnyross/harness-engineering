@@ -657,6 +657,26 @@ Content`,
 			expect(result.extensions.some((r) => isEnabled(r, "keep.ts"))).toBe(true);
 			expect(result.extensions.some((r) => r.path.endsWith("drop.ts"))).toBe(false);
 		});
+
+		it("should ignore whitespace-padded manifest entries instead of trimming them", async () => {
+			const pkgDir = join(tempDir, "padded-manifest-patterns");
+			mkdirSync(join(pkgDir, "extensions"), { recursive: true });
+			writeFileSync(join(pkgDir, "extensions", "keep.ts"), "export default function() {}");
+			writeFileSync(join(pkgDir, "extensions", "drop.ts"), "export default function() {}");
+			writeFileSync(
+				join(pkgDir, "package.json"),
+				JSON.stringify({
+					name: "padded-manifest-patterns",
+					pi: {
+						extensions: ["extensions", " !**/drop.ts "],
+					},
+				}),
+			);
+
+			const result = await packageManager.resolveExtensionSources([pkgDir]);
+			expect(result.extensions.some((r) => isEnabled(r, "keep.ts"))).toBe(true);
+			expect(result.extensions.some((r) => isEnabled(r, "drop.ts"))).toBe(true);
+		});
 	});
 
 	describe("pattern filtering in package filters", () => {
