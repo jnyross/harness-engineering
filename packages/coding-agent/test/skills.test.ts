@@ -343,6 +343,16 @@ describe("skills", () => {
 			expect(diagnostics).toHaveLength(0);
 		});
 
+		it("should reject whitespace-padded skillPaths entries", () => {
+			const { skills, diagnostics } = loadSkills({
+				agentDir: emptyAgentDir,
+				cwd: emptyCwd,
+				skillPaths: [` ${join(fixturesDir, "valid-skill")} `],
+			});
+			expect(skills).toHaveLength(0);
+			expect(diagnostics.some((d: ResourceDiagnostic) => d.message.includes("does not exist"))).toBe(true);
+		});
+
 		it("should warn when skill path does not exist", () => {
 			const { skills, diagnostics } = loadSkills({
 				agentDir: emptyAgentDir,
