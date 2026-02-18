@@ -6658,6 +6658,26 @@ to:
 
 **Result:** OpenAI Codex Responses stream/error parsing now ignores malformed non-object event roots consistently and preserves friendly usage-limit diagnostics under malformed error payload field shapes.
 
+---
+
+### 353) coding-agent extension discovery fell back to index entrypoints despite explicit malformed `pi.extensions` declarations
+
+**Finding:** `packages/coding-agent/src/core/extensions/loader.ts` normalized malformed `pi.extensions` entries but still fell back to `index.ts`/`index.js` when no valid declared entries resolved. Packages explicitly declaring extension entrypoints could therefore load unintended index fallbacks when manifest entries were malformed or missing.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/core/extensions/loader.ts`
+- `packages/coding-agent/test/extensions-discovery.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- treat explicit `pi.extensions` declarations as authoritative even when normalization yields zero valid entries,
+- keep fallback-to-index behavior only for packages without explicit `pi.extensions` declarations,
+- add regression coverage ensuring malformed-only manifest declarations do not load fallback index entrypoints.
+
+**Result:** extension discovery now honors explicit manifest intent and avoids unintended index fallback loading when `pi.extensions` declarations are present but invalid.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6839,7 +6859,7 @@ to:
 - coding-agent package metadata normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/config-package-metadata.test.ts test/settings-manager.test.ts`
 - coding-agent extension discovery manifest normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extensions-discovery.test.ts`
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extensions-discovery.test.ts` (includes malformed-only `pi.extensions` declaration no-fallback-to-index coverage)
 - coding-agent keybindings config normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/keybindings.test.ts test/settings-manager.test.ts`
 - coding-agent auth storage normalization regression tests pass:
