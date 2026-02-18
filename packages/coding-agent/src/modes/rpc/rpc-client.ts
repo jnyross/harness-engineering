@@ -24,6 +24,21 @@ export function normalizeRpcTimeoutMs(timeout: number, fallbackMs = DEFAULT_RPC_
 	return timeout > MAX_TIMEOUT_MS ? MAX_TIMEOUT_MS : timeout;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
+}
+
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -590,12 +605,24 @@ export class RpcClient {
 
 	private handleLine(line: string): void {
 		try {
-			const data = JSON.parse(line);
+			const parsed = JSON.parse(line);
+			const data = asRecord(parsed);
+			if (!data) {
+				return;
+			}
+			const type = parseNonEmptyString(data.type);
+			if (!type) {
+				return;
+			}
 
 			// Check if it's a response to a pending request
-			if (data.type === "response" && data.id && this.pendingRequests.has(data.id)) {
-				const pending = this.pendingRequests.get(data.id)!;
-				this.pendingRequests.delete(data.id);
+			if (type === "response") {
+				const responseId = parseNonEmptyString(data.id);
+				if (!responseId || !this.pendingRequests.has(responseId)) {
+					return;
+				}
+				const pending = this.pendingRequests.get(responseId)!;
+				this.pendingRequests.delete(responseId);
 				pending.resolve(data as RpcResponse);
 				return;
 			}

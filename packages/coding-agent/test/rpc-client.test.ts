@@ -202,3 +202,63 @@ describe("RpcClient.start", () => {
 		}
 	});
 });
+
+describe("RpcClient.handleLine", () => {
+	it("ignores non-object JSON payloads", () => {
+		const client = new RpcClient();
+		const receivedEvents: unknown[] = [];
+		client.onEvent((event) => {
+			receivedEvents.push(event);
+		});
+
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).handleLine("42");
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).handleLine('"event"');
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).handleLine("[]");
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).handleLine("null");
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).handleLine("{}");
+
+		expect(receivedEvents).toEqual([]);
+	});
+
+	it("ignores response payloads without matching pending request ids", () => {
+		const client = new RpcClient();
+		const receivedEvents: unknown[] = [];
+		client.onEvent((event) => {
+			receivedEvents.push(event);
+		});
+
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).handleLine('{"type":"response","id":"missing","success":true}');
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).handleLine('{"type":"response","id":" ","success":true}');
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).handleLine('{"type":"response","id":123,"success":true}');
+
+		expect(receivedEvents).toEqual([]);
+	});
+
+	it("resolves pending responses with matching request ids", () => {
+		const client = new RpcClient();
+		let resolved: unknown;
+
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).pendingRequests.set("req_1", {
+			resolve: (response: unknown) => {
+				resolved = response;
+			},
+			reject: () => {},
+		});
+
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		(client as any).handleLine('{"type":"response","id":"req_1","success":true}');
+
+		expect(resolved).toEqual({ type: "response", id: "req_1", success: true });
+		// biome-ignore lint/suspicious/noExplicitAny: test instrumentation
+		expect((client as any).pendingRequests.size).toBe(0);
+	});
+});
