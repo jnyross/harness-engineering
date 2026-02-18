@@ -6781,6 +6781,27 @@ to:
 
 **Result:** web-ui model discovery now rejects malformed response-root shapes deterministically and filters invalid row entries instead of returning malformed model IDs.
 
+---
+
+### 359) ai Anthropic OAuth accepted malformed token exchange/refresh payload shapes
+
+**Finding:** `packages/ai/src/utils/oauth/anthropic.ts` trusted token JSON payload fields via direct type assertions during login exchange and refresh flows. Malformed/non-object payload roots or empty token fields could propagate invalid credentials or throw late runtime errors.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/anthropic.ts`
+- `packages/ai/test/anthropic-oauth-abort.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- validate token payload roots as objects before field extraction,
+- require non-empty `access_token`/`refresh_token` strings and positive finite `expires_in`,
+- throw explicit malformed-payload errors for exchange/refresh parsing failures,
+- add regression coverage for non-object exchange payload roots and malformed refresh-field shapes.
+
+**Result:** Anthropic OAuth token exchange/refresh now rejects malformed token payload roots/fields deterministically before credential persistence.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6998,7 +7019,7 @@ to:
 - ai shared oauth authorization-input utility regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/oauth-authorization-input.test.ts`
 - ai anthropic oauth parsing/state-validation regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts`
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts` (includes malformed exchange-root and malformed refresh-field payload rejection coverage)
 - ai openai-codex oauth startup/manual-flow/cancellation/base64url-decoding/hash-fragment/non-object-token-payload parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-codex-oauth-abort.test.ts`
 - coding-agent tools regression tests pass:
