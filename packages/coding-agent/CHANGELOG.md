@@ -52,6 +52,7 @@
 - Auth storage reload now also rejects whitespace-padded provider keys in `auth.json` instead of trimming/coalescing them, preventing malformed provider-key normalization collisions during runtime credential lookup.
 - Auth storage reload now also rejects whitespace-padded api-key and oauth token (`refresh`/`access`) credential fields in `auth.json`, preserving strict persisted credential-token identity instead of trimming malformed values.
 - CLI package metadata loading now normalizes parsed `package.json` app/version/config-dir fields, falling back to safe defaults when malformed root/value shapes are encountered.
+- CLI package metadata loading now also rejects whitespace-padded `piConfig.name`/`piConfig.configDir`/`version` values instead of trimming malformed identifier/version fields.
 - Model-registry `models.json` loading now rejects blank/whitespace provider keys, preventing malformed provider-map keys from being treated as valid provider identifiers during custom model/override loading.
 - Extension discovery now normalizes `package.json` `pi.*` manifest entry arrays (string-only, trimmed, non-empty), ignoring malformed extension entry shapes instead of allowing bad values to disrupt package extension resolution.
 - Extension discovery now treats explicit `pi.extensions` declarations as authoritative (even when they normalize to no valid entries), avoiding unintended fallback loading of `index.ts`/`index.js` when manifests declare only malformed/missing extension paths.

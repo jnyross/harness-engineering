@@ -7695,6 +7695,26 @@ to:
 
 **Result:** GitHub Copilot OAuth payload parsing now preserves strict token/code/error identifier identity and rejects whitespace-padded payload fields instead of silently normalizing malformed OAuth values.
 
+---
+
+### 404) coding-agent package metadata parsing normalized whitespace-padded app/config/version fields
+
+**Finding:** `packages/coding-agent/src/config.ts` parsed `package.json` metadata fields (`piConfig.name`, `piConfig.configDir`, `version`) with trimmed non-empty normalization, so whitespace-padded metadata identifiers could be silently accepted instead of rejected as malformed package metadata.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/config.ts`
+- `packages/coding-agent/test/config-package-metadata.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require strict non-empty string identity (no surrounding whitespace) for parsed package metadata identifiers/version values,
+- preserve existing malformed-root/value fallback behavior to default `pi` metadata values,
+- add regression coverage for whitespace-padded metadata field rejection.
+
+**Result:** coding-agent package metadata parsing now preserves strict app/config/version field identity and rejects whitespace-padded metadata values instead of silently normalizing malformed package metadata.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7877,7 +7897,7 @@ to:
 - coding-agent settings manager normalization regression tests pass (numeric + boolean + enum + string/list settings + malformed root-shape handling):
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/settings-manager.test.ts`
 - coding-agent package metadata normalization regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/config-package-metadata.test.ts test/settings-manager.test.ts`
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/config-package-metadata.test.ts test/settings-manager.test.ts` (includes whitespace-padded package-metadata field rejection coverage)
 - coding-agent extension discovery manifest normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/extensions-discovery.test.ts` (includes malformed-only `pi.extensions` declaration no-fallback-to-index coverage)
 - coding-agent keybindings config normalization regression tests pass:

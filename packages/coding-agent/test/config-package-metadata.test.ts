@@ -46,5 +46,20 @@ describe("parsePackageMetadata", () => {
 			configDirName: ".pi",
 			version: "0.0.0",
 		});
+		expect(
+			parsePackageMetadata(
+				JSON.stringify({
+					version: " 1.2.3 ",
+					piConfig: {
+						name: " my-agent ",
+						configDir: " .my-agent ",
+					},
+				}),
+			),
+		).toEqual({
+			appName: "pi",
+			configDirName: ".pi",
+			version: "0.0.0",
+		});
 	});
 });
