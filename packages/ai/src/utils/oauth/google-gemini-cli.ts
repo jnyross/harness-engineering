@@ -189,6 +189,93 @@ interface GoogleRpcErrorResponse {
 	};
 }
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
+}
+
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function parsePositiveFiniteNumber(value: unknown): number | undefined {
+	if (typeof value !== "number") {
+		return undefined;
+	}
+	return Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+function parseLoadCodeAssistPayload(value: unknown): LoadCodeAssistPayload {
+	const payload = asRecord(value);
+	const projectId = parseNonEmptyString(payload?.cloudaicompanionProject);
+	const currentTierRecord = asRecord(payload?.currentTier);
+	const currentTierId = parseNonEmptyString(currentTierRecord?.id);
+	const allowedTiersRaw = Array.isArray(payload?.allowedTiers) ? payload.allowedTiers : [];
+	const allowedTiers = allowedTiersRaw
+		.map((tier): { id?: string; isDefault?: boolean } | undefined => {
+			const tierRecord = asRecord(tier);
+			if (!tierRecord) {
+				return undefined;
+			}
+			const id = parseNonEmptyString(tierRecord.id);
+			const isDefault = typeof tierRecord.isDefault === "boolean" ? tierRecord.isDefault : undefined;
+			if (!id && isDefault === undefined) {
+				return undefined;
+			}
+			return { ...(id ? { id } : {}), ...(isDefault === undefined ? {} : { isDefault }) };
+		})
+		.filter((tier): tier is { id?: string; isDefault?: boolean } => tier !== undefined);
+
+	return {
+		...(projectId ? { cloudaicompanionProject: projectId } : {}),
+		...(currentTierId ? { currentTier: { id: currentTierId } } : {}),
+		...(allowedTiers.length > 0 ? { allowedTiers } : {}),
+	};
+}
+
+function parseLongRunningOperationResponse(value: unknown): LongRunningOperationResponse {
+	const payload = asRecord(value);
+	const name = parseNonEmptyString(payload?.name);
+	const done = typeof payload?.done === "boolean" ? payload.done : undefined;
+	const responseRecord = asRecord(payload?.response);
+	const projectRecord = asRecord(responseRecord?.cloudaicompanionProject);
+	const projectId = parseNonEmptyString(projectRecord?.id);
+	const response = projectId ? { cloudaicompanionProject: { id: projectId } } : undefined;
+	return {
+		...(name ? { name } : {}),
+		...(done === undefined ? {} : { done }),
+		...(response ? { response } : {}),
+	};
+}
+
+function parseGoogleCloudTokenPayload(
+	value: unknown,
+	context: "exchange" | "refresh",
+): {
+	accessToken: string;
+	expiresIn: number;
+	refreshToken?: string;
+} {
+	const tokenPayload = asRecord(value);
+	const accessToken = parseNonEmptyString(tokenPayload?.access_token);
+	const expiresIn = parsePositiveFiniteNumber(tokenPayload?.expires_in);
+	const refreshToken = parseNonEmptyString(tokenPayload?.refresh_token);
+	if (!accessToken || !expiresIn) {
+		throw new Error(`Google Cloud token ${context} payload missing required fields`);
+	}
+	return {
+		accessToken,
+		expiresIn,
+		refreshToken,
+	};
+}
+
 /**
  * Wait helper for onboarding retries
  */
@@ -242,7 +329,7 @@ async function pollOperation(
 			throw new Error(`Failed to poll operation: ${response.status} ${response.statusText}`);
 		}
 
-		const data = (await response.json()) as LongRunningOperationResponse;
+		const data = parseLongRunningOperationResponse(await response.json());
 		if (data.done) {
 			return data;
 		}
@@ -304,7 +391,7 @@ async function discoverProject(
 			throw new Error(`loadCodeAssist failed: ${loadResponse.status} ${loadResponse.statusText}: ${errorText}`);
 		}
 	} else {
-		data = (await loadResponse.json()) as LoadCodeAssistPayload;
+		data = parseLoadCodeAssistPayload(await loadResponse.json());
 	}
 
 	// If user already has a current tier and project, use it
@@ -363,7 +450,7 @@ async function discoverProject(
 		throw new Error(`onboardUser failed: ${onboardResponse.status} ${onboardResponse.statusText}: ${errorText}`);
 	}
 
-	let lroData = (await onboardResponse.json()) as LongRunningOperationResponse;
+	let lroData = parseLongRunningOperationResponse(await onboardResponse.json());
 
 	// If the operation isn't done yet, poll until completion
 	if (!lroData.done && lroData.name) {
@@ -401,8 +488,8 @@ async function getUserEmail(accessToken: string, signal?: AbortSignal): Promise<
 		});
 
 		if (response.ok) {
-			const data = (await response.json()) as { email?: string };
-			return data.email;
+			const data = asRecord((await response.json()) as { email?: unknown });
+			return parseNonEmptyString(data?.email);
 		}
 	} catch {
 		// Ignore errors, email is optional
@@ -430,16 +517,12 @@ export async function refreshGoogleCloudToken(refreshToken: string, projectId: s
 		throw new Error(`Google Cloud token refresh failed: ${error}`);
 	}
 
-	const data = (await response.json()) as {
-		access_token: string;
-		expires_in: number;
-		refresh_token?: string;
-	};
+	const data = parseGoogleCloudTokenPayload(await response.json(), "refresh");
 
 	return {
-		refresh: data.refresh_token || refreshToken,
-		access: data.access_token,
-		expires: Date.now() + data.expires_in * 1000 - 5 * 60 * 1000,
+		refresh: data.refreshToken ?? refreshToken,
+		access: data.accessToken,
+		expires: Date.now() + data.expiresIn * 1000 - 5 * 60 * 1000,
 		projectId,
 	};
 }
@@ -581,29 +664,25 @@ export async function loginGeminiCli(
 			throw new Error(`Token exchange failed: ${error}`);
 		}
 
-		const tokenData = (await tokenResponse.json()) as {
-			access_token: string;
-			refresh_token: string;
-			expires_in: number;
-		};
+		const tokenData = parseGoogleCloudTokenPayload(await tokenResponse.json(), "exchange");
 
-		if (!tokenData.refresh_token) {
+		if (!tokenData.refreshToken) {
 			throw new Error("No refresh token received. Please try again.");
 		}
 
 		// Get user email
 		onProgress?.("Getting user info...");
-		const email = await getUserEmail(tokenData.access_token, signal);
+		const email = await getUserEmail(tokenData.accessToken, signal);
 
 		// Discover project
-		const projectId = await discoverProject(tokenData.access_token, onProgress, signal);
+		const projectId = await discoverProject(tokenData.accessToken, onProgress, signal);
 
 		// Calculate expiry time (current time + expires_in seconds - 5 min buffer)
-		const expiresAt = Date.now() + tokenData.expires_in * 1000 - 5 * 60 * 1000;
+		const expiresAt = Date.now() + tokenData.expiresIn * 1000 - 5 * 60 * 1000;
 
 		const credentials: OAuthCredentials = {
-			refresh: tokenData.refresh_token,
-			access: tokenData.access_token,
+			refresh: tokenData.refreshToken,
+			access: tokenData.accessToken,
 			expires: expiresAt,
 			projectId,
 			email,

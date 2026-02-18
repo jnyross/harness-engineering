@@ -1,6 +1,10 @@
 import { createServer } from "node:http";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { geminiCliOAuthProvider, loginGeminiCli } from "../src/utils/oauth/google-gemini-cli.js";
+import {
+	geminiCliOAuthProvider,
+	loginGeminiCli,
+	refreshGoogleCloudToken,
+} from "../src/utils/oauth/google-gemini-cli.js";
 
 describe("google-gemini-cli oauth login", () => {
 	afterEach(() => {
@@ -118,5 +122,55 @@ describe("google-gemini-cli oauth login", () => {
 				busyServer.close(() => resolve());
 			});
 		}
+	});
+
+	it("rejects malformed token exchange payload roots", async () => {
+		let authState = "";
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async (input: unknown) => {
+				const url = String(input);
+				if (url === "https://oauth2.googleapis.com/token") {
+					return new Response("null", {
+						status: 200,
+						headers: { "content-type": "application/json" },
+					});
+				}
+				throw new Error(`Unexpected fetch URL: ${url}`);
+			}),
+		);
+
+		await expect(
+			loginGeminiCli(
+				(info) => {
+					authState = new URL(info.url).searchParams.get("state") ?? "";
+				},
+				undefined,
+				async () => `http://localhost:8085/oauth2callback?code=manual-code&state=${authState}`,
+			),
+		).rejects.toThrow("Google Cloud token exchange payload missing required fields");
+	});
+
+	it("rejects malformed token refresh payload fields", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(
+				async () =>
+					new Response(
+						JSON.stringify({
+							access_token: "",
+							expires_in: 0,
+						}),
+						{
+							status: 200,
+							headers: { "content-type": "application/json" },
+						},
+					),
+			),
+		);
+
+		await expect(refreshGoogleCloudToken("refresh-token", "project-123")).rejects.toThrow(
+			"Google Cloud token refresh payload missing required fields",
+		);
 	});
 });

@@ -9,6 +9,7 @@
 - OpenAI Codex Responses token parsing now accepts base64url JWT payload segments (including missing padding and `-`/`_` characters) when extracting account IDs, preventing malformed-token decode failures during Codex request header construction.
 - Google Gemini CLI / Antigravity credential parsing now requires non-empty string `token` and `projectId` fields in JSON apiKey payloads, rejecting malformed credential shapes before request dispatch.
 - Antigravity OAuth token exchange/refresh parsing now validates JSON payload roots and required token fields (`access_token`, positive `expires_in`), rejecting malformed token-response shapes before credential persistence.
+- Google Gemini CLI OAuth token exchange/refresh parsing now validates JSON payload roots and required token fields (`access_token`, positive `expires_in`), rejecting malformed token-response shapes before credential persistence.
 - Google Gemini CLI / Antigravity SSE chunk parsing now ignores malformed non-object JSON `data:` payload roots (for example `null`/numeric frames) instead of crashing stream processing before subsequent valid chunks.
 - Streaming tool-argument JSON parsing now normalizes non-object JSON payloads (primitives/arrays) to empty objects, preventing malformed tool-call argument roots from propagating incompatible runtime shapes.
 - OpenAI Completions history conversion now ignores malformed non-object `thoughtSignature` payloads when building `reasoning_details`, preventing malformed signature roots from propagating invalid reasoning-detail shapes into request payloads.
