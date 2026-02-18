@@ -8403,6 +8403,48 @@ to:
 
 **Result:** Pods memory option parsing now preserves strict memory option identifier formatting and rejects whitespace-padded/separated values instead of silently normalizing malformed input.
 
+---
+
+### 438) coding-agent COLORFGBG parser normalized whitespace-padded palette indices
+
+**Finding:** `packages/coding-agent/src/modes/interactive/theme/theme.ts` trimmed `COLORFGBG` background index values before numeric validation, so whitespace-padded palette indices could be silently accepted instead of rejected as malformed theme-detection metadata.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/modes/interactive/theme/theme.ts`
+- `packages/coding-agent/test/theme-colorfgbg.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require strict palette-index string identity (`trimmed === value`) before integer parsing,
+- reject whitespace-padded background indices instead of trimming/coalescing malformed values,
+- preserve existing unsafe-integer/out-of-range/background-index parsing guards,
+- add regression coverage for whitespace-padded `COLORFGBG` background index rejection.
+
+**Result:** COLORFGBG theme auto-detection now preserves strict palette-index identity and rejects whitespace-padded background indices instead of silently normalizing malformed env metadata.
+
+---
+
+### 439) ai gemini retry-delay header parsing normalized whitespace-padded numeric values
+
+**Finding:** `packages/ai/src/providers/google-gemini-cli.ts` retry-delay header helpers trimmed numeric header values before validation, so whitespace-padded numeric `Retry-After` / `x-ratelimit-reset` / `x-ratelimit-reset-after` values could be silently accepted instead of rejected as malformed retry-delay metadata.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/google-gemini-cli.ts`
+- `packages/ai/test/google-gemini-cli-retry-delay.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require strict numeric-header string identity (`trimmed === value`) before header numeric parsing,
+- reject whitespace-padded numeric retry-delay header values instead of trimming/coalescing malformed metadata,
+- preserve existing non-decimal/unsafe/overflow retry-delay rejection behavior with body-pattern fallback,
+- add regression coverage for whitespace-padded retry-delay header rejection.
+
+**Result:** Gemini retry-delay parsing now preserves strict header-value identity and rejects whitespace-padded numeric retry-delay header values instead of silently normalizing malformed metadata.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8455,7 +8497,7 @@ to:
 - coding-agent theme hex validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-hex-validation.test.ts test/theme-colorfgbg.test.ts`
 - coding-agent COLORFGBG range regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-colorfgbg.test.ts`
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-colorfgbg.test.ts` (includes whitespace-padded background-index rejection coverage)
 - coding-agent export theme color resolution regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-export-colors.test.ts test/theme-hex-validation.test.ts test/theme-colorfgbg.test.ts`
 - coding-agent export missing `$var` regression tests pass:
@@ -8468,7 +8510,7 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts` (includes fractional and whitespace-padded usage-token rejection coverage for Gemini CLI / Antigravity usage metadata)
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-usage-metadata.test.ts` (includes fractional and whitespace-padded usage-token rejection coverage for Google / Vertex shared usage metadata)
 - ai Gemini retry-delay (including safe-millisecond bounds) regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-retry-delay.test.ts`
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-retry-delay.test.ts` (includes whitespace-padded retry-delay header rejection coverage)
 - ai usage safe-integer parser regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-responses-shared-usage.test.ts test/amazon-bedrock-usage.test.ts test/google-usage-metadata.test.ts test/google-gemini-cli-usage-metadata.test.ts test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts`
 - ai shared usage parser regression tests pass:

@@ -25,4 +25,10 @@ describe("initTheme COLORFGBG auto-detection", () => {
 		initTheme(undefined, false);
 		expect(theme.name).toBe("dark");
 	});
+
+	it("ignores whitespace-padded background index and falls back to dark", () => {
+		process.env.COLORFGBG = "0; 15 ";
+		initTheme(undefined, false);
+		expect(theme.name).toBe("dark");
+	});
 });

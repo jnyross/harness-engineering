@@ -61,6 +61,20 @@ describe("extractRetryDelay header parsing", () => {
 		expect(delay).toBe(3000);
 	});
 
+	it("ignores whitespace-padded Retry-After values and falls back to body parsing", () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2025-01-01T00:00:00Z"));
+
+		const response = {
+			headers: {
+				get: (name: string) => (name.toLowerCase() === "retry-after" ? " 2 " : null),
+			},
+		} as unknown as Response;
+		const delay = extractRetryDelay("Please retry in 9s", response);
+
+		expect(delay).toBe(10000);
+	});
+
 	it("ignores non-decimal x-ratelimit-reset-after values and falls back to body parsing", () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2025-01-01T00:00:00Z"));
@@ -86,6 +100,34 @@ describe("extractRetryDelay header parsing", () => {
 		vi.setSystemTime(new Date("2025-01-01T00:00:00Z"));
 
 		const response = new Response("", { headers: { "x-ratelimit-reset": "1735689620oops" } });
+		const delay = extractRetryDelay("Please retry in 2s", response);
+
+		expect(delay).toBe(3000);
+	});
+
+	it("ignores whitespace-padded x-ratelimit-reset header values and falls back to body parsing", () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2025-01-01T00:00:00Z"));
+
+		const response = {
+			headers: {
+				get: (name: string) => (name.toLowerCase() === "x-ratelimit-reset" ? " 1735689620 " : null),
+			},
+		} as unknown as Response;
+		const delay = extractRetryDelay("Please retry in 2s", response);
+
+		expect(delay).toBe(3000);
+	});
+
+	it("ignores whitespace-padded x-ratelimit-reset-after values and falls back to body parsing", () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2025-01-01T00:00:00Z"));
+
+		const response = {
+			headers: {
+				get: (name: string) => (name.toLowerCase() === "x-ratelimit-reset-after" ? " 2.5 " : null),
+			},
+		} as unknown as Response;
 		const delay = extractRetryDelay("Please retry in 2s", response);
 
 		expect(delay).toBe(3000);

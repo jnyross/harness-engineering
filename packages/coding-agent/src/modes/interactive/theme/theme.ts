@@ -623,8 +623,9 @@ function parseColorFgbgBackgroundIndex(colorfgbg: string): number | undefined {
 	if (parts.length < 2) {
 		return undefined;
 	}
-	const backgroundRaw = parts[1]?.trim();
-	if (!backgroundRaw || !/^\d+$/.test(backgroundRaw)) {
+	const backgroundRaw = parts[1];
+	const trimmed = backgroundRaw?.trim();
+	if (!trimmed || trimmed !== backgroundRaw || !/^\d+$/.test(backgroundRaw)) {
 		return undefined;
 	}
 	const background = Number.parseInt(backgroundRaw, 10);

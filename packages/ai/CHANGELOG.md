@@ -71,6 +71,7 @@
 - AI CLI provider selection now also rejects whitespace-padded numeric input values instead of trimming/coalescing malformed provider-selection identifiers.
 - Gemini CLI retry-delay parsing now ignores malformed `x-ratelimit-reset` header values and malformed decimal retry fields instead of partially coercing them, correctly falling back to other delay hints.
 - Gemini CLI retry-delay parsing now also rejects non-decimal numeric header formats (`Retry-After`, `x-ratelimit-reset-after`) instead of accepting broad numeric coercions.
+- Gemini CLI retry-delay parsing now also rejects whitespace-padded numeric header values (`Retry-After`, `x-ratelimit-reset`, `x-ratelimit-reset-after`) instead of trimming/coalescing malformed retry-delay metadata.
 - Gemini CLI retry-delay parsing now rejects unsafe integer `x-ratelimit-reset` values (greater than `Number.MAX_SAFE_INTEGER`) instead of accepting rounded coercions.
 - Gemini CLI retry-delay parsing now also rejects delays that overflow safe integer millisecond precision (headers/body patterns), avoiding rounded oversized retry-delay coercions.
 - Google Gemini CLI SSE parsing now flushes terminal buffered `data:` lines when streams end without trailing newline delimiters.

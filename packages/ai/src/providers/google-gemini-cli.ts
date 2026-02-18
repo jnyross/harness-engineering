@@ -222,6 +222,9 @@ export function extractRetryDelay(errorText: string, response?: Response | Heade
 	};
 	const parseNonNegativeInteger = (value: string): number | undefined => {
 		const trimmed = value.trim();
+		if (trimmed !== value) {
+			return undefined;
+		}
 		if (!/^\d+$/.test(trimmed)) {
 			return undefined;
 		}
@@ -230,6 +233,9 @@ export function extractRetryDelay(errorText: string, response?: Response | Heade
 	};
 	const parseNonNegativeDecimal = (value: string): number | undefined => {
 		const trimmed = value.trim();
+		if (trimmed !== value) {
+			return undefined;
+		}
 		if (!/^\d+(?:\.\d+)?$/.test(trimmed)) {
 			return undefined;
 		}
