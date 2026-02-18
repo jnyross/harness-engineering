@@ -34,7 +34,10 @@ export function isValidSlackTimestamp(timestamp: string | undefined): timestamp 
 	return typeof timestamp === "string" && parseSlackTimestampToMilliseconds(timestamp) !== undefined;
 }
 
-function parseSlackTimestampSortValue(timestamp: string): bigint | undefined {
+function parseSlackTimestampSortValue(timestamp: unknown): bigint | undefined {
+	if (typeof timestamp !== "string") {
+		return undefined;
+	}
 	const trimmed = timestamp.trim();
 	const decimalMatch = trimmed.match(/^(\d+)\.(\d+)$/);
 	if (decimalMatch) {

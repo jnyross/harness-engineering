@@ -58,6 +58,15 @@ describe("getLatestSlackTimestamp", () => {
 		const latest = getLatestSlackTimestamp(["1700000000.123456", "1700000000.123789"]);
 		assert.equal(latest, "1700000000.123789");
 	});
+
+	it("ignores non-string runtime entries in timestamp iterables", () => {
+		const latest = getLatestSlackTimestamp([
+			"1700000000.200000",
+			{ ts: "1700000000.500000" },
+			"1700000000.300000",
+		] as unknown as Iterable<string>);
+		assert.equal(latest, "1700000000.300000");
+	});
 });
 
 describe("isValidSlackTimestamp", () => {

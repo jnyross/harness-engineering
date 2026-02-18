@@ -30,6 +30,7 @@
 - Slack integer timestamp normalization now uses value-magnitude detection (instead of string length), correctly handling integer-second variants even when strings include leading zeros.
 - Slack timestamp millisecond normalization now rejects values that exceed safe integer precision (including oversized decimal/integer-second forms), preventing rounded timestamp coercion.
 - Slack timestamp comparisons now preserve microsecond precision (including startup/backfill age checks), preventing ordering drift for same-millisecond events.
+- Slack timestamp comparison helpers now ignore malformed non-string iterable entries at runtime, preventing backfill cursor selection crashes when persisted timestamp sets contain incompatible values.
 - Channel-download transcript formatting now leaves malformed Slack timestamps as raw text instead of attempting invalid date conversion, preventing `RangeError` crashes during export.
 - Channel-download thread/message iteration now skips invalid/missing Slack timestamps with warnings instead of failing downstream thread fetch/formatting paths.
 - Channel store `getLastTimestamp()` now validates last-log-line timestamp shape (string + non-empty) and returns `null` for malformed entries instead of propagating invalid timestamp values.
