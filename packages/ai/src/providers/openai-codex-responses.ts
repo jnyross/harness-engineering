@@ -72,6 +72,19 @@ interface RequestBody {
 	[key: string]: unknown;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
+}
+
+function decodeBase64Segment(segment: string): string {
+	const normalized = segment.replace(/-/g, "+").replace(/_/g, "/");
+	const paddingLength = (4 - (normalized.length % 4)) % 4;
+	return atob(`${normalized}${"=".repeat(paddingLength)}`);
+}
+
 // ============================================================================
 // Retry Helpers
 // ============================================================================
@@ -828,9 +841,12 @@ function extractAccountId(token: string): string {
 	try {
 		const parts = token.split(".");
 		if (parts.length !== 3) throw new Error("Invalid token");
-		const payload = JSON.parse(atob(parts[1]));
-		const accountId = payload?.[JWT_CLAIM_PATH]?.chatgpt_account_id;
-		if (!accountId) throw new Error("No account ID in token");
+		const payloadSegment = parts[1];
+		if (!payloadSegment) throw new Error("Invalid token");
+		const payload = asRecord(JSON.parse(decodeBase64Segment(payloadSegment)));
+		const authPayload = asRecord(payload?.[JWT_CLAIM_PATH]);
+		const accountId = authPayload?.chatgpt_account_id;
+		if (typeof accountId !== "string" || accountId.length === 0) throw new Error("No account ID in token");
 		return accountId;
 	} catch {
 		throw new Error("Failed to extract accountId from token");
