@@ -105,7 +105,7 @@ function normalizePod(value: unknown): Pod | undefined {
 		return undefined;
 	}
 
-	const ssh = parseNonEmptyString(record.ssh);
+	const ssh = parseStrictNonEmptyString(record.ssh);
 	if (!ssh || !Array.isArray(record.gpus)) {
 		return undefined;
 	}

@@ -63,6 +63,11 @@ describe("pods config normalization", () => {
 						modelsPath: " /models ",
 						vllmVersion: "release",
 					},
+					"ssh-padded": {
+						ssh: " ssh host ",
+						gpus: [{ id: 1, name: "GPU 1", memory: "80GiB" }],
+						models: {},
+					},
 					"bad-pod": {
 						ssh: 123,
 						gpus: [],
