@@ -477,7 +477,7 @@ export const streamGoogleGeminiCli: StreamFunction<"google-gemini-cli", GoogleGe
 			const projectId = parsedCredentials.projectId;
 
 			const isAntigravity = model.provider === "google-antigravity";
-			const baseUrl = model.baseUrl?.trim();
+			const baseUrl = parseStrictNonEmptyString(model.baseUrl);
 			const endpoints = baseUrl ? [baseUrl] : isAntigravity ? ANTIGRAVITY_ENDPOINT_FALLBACKS : [DEFAULT_ENDPOINT];
 
 			const requestBody = buildRequest(model, context, projectId, options, isAntigravity);

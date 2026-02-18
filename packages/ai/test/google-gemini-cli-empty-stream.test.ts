@@ -312,4 +312,67 @@ describe("google-gemini-cli empty stream retry", () => {
 		expect(result.errorMessage).toContain("Invalid Google Cloud Code Assist credentials");
 		expect(fetchMock).not.toHaveBeenCalled();
 	});
+
+	it("ignores whitespace-padded model baseUrl values and falls back to default endpoint", async () => {
+		const sse = `${[
+			`data: ${JSON.stringify({
+				response: {
+					candidates: [
+						{
+							content: { role: "model", parts: [{ text: "Default endpoint" }] },
+							finishReason: "STOP",
+						},
+					],
+					usageMetadata: {
+						promptTokenCount: 1,
+						candidatesTokenCount: 1,
+						totalTokenCount: 2,
+					},
+				},
+			})}`,
+		].join("\n\n")}\n\n`;
+
+		const encoder = new TextEncoder();
+		const dataStream = new ReadableStream<Uint8Array>({
+			start(controller) {
+				controller.enqueue(encoder.encode(sse));
+				controller.close();
+			},
+		});
+
+		const fetchMock = vi.fn(async (input: string | URL) => {
+			expect(String(input).startsWith("https://cloudcode-pa.googleapis.com/")).toBe(true);
+			return new Response(dataStream, {
+				status: 200,
+				headers: { "content-type": "text/event-stream" },
+			});
+		});
+
+		global.fetch = fetchMock as typeof fetch;
+
+		const model: Model<"google-gemini-cli"> = {
+			id: "gemini-2.5-flash",
+			name: "Gemini 2.5 Flash",
+			api: "google-gemini-cli",
+			provider: "google-gemini-cli",
+			baseUrl: " https://example.invalid ",
+			reasoning: false,
+			input: ["text"],
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+			contextWindow: 128000,
+			maxTokens: 8192,
+		};
+
+		const context: Context = {
+			messages: [{ role: "user", content: "Use default endpoint", timestamp: Date.now() }],
+		};
+
+		const stream = streamGoogleGeminiCli(model, context, {
+			apiKey: JSON.stringify({ token: "token", projectId: "project" }),
+		});
+
+		const result = await stream.result();
+		expect(result.stopReason).toBe("stop");
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+	});
 });
