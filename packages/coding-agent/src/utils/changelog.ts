@@ -16,7 +16,11 @@ function parseSafeVersionComponent(value: string): number | undefined {
 }
 
 function parseVersionString(version: string): { major: number; minor: number; patch: number } | undefined {
-	const match = version.trim().match(/^(\d+)\.(\d+)\.(\d+)$/);
+	const trimmed = version.trim();
+	if (trimmed.length === 0 || trimmed !== version) {
+		return undefined;
+	}
+	const match = version.match(/^(\d+)\.(\d+)\.(\d+)$/);
 	if (!match) {
 		return undefined;
 	}

@@ -72,4 +72,14 @@ describe("changelog version parsing", () => {
 		const newEntries = getNewEntries(entries, "9007199254740993.0.0");
 		expect(newEntries).toHaveLength(2);
 	});
+
+	it("treats whitespace-padded lastVersion input as 0.0.0 fallback", () => {
+		const entries = [
+			{ major: 1, minor: 0, patch: 0, content: "one" },
+			{ major: 2, minor: 0, patch: 0, content: "two" },
+		];
+
+		const newEntries = getNewEntries(entries, " 1.0.0 ");
+		expect(newEntries).toHaveLength(2);
+	});
 });

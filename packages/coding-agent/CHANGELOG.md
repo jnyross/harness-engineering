@@ -115,6 +115,7 @@
 - ANSI export HTML conversion now rejects malformed SGR parameter tokens instead of partially coercing numeric prefixes (for example `1x` no longer maps to bold).
 - ANSI export HTML conversion now ignores out-of-range and unsafe-integer SGR color parameters instead of emitting invalid CSS color values from oversized numeric coercions.
 - Interactive changelog parser now rejects unsafe integer version components in changelog headers and last-seen version state, preventing rounded version coercion in update-entry filtering.
+- Interactive changelog parser now also rejects whitespace-padded last-seen version strings instead of trimming/coalescing malformed version identifiers.
 - HTML export color parsing now rejects out-of-range and unsafe-integer `rgb(...)` components, preventing malformed theme colors from being coerced into derived export background values.
 - execution-plan/read/ls/find/grep numeric parameter parsing now rejects unsafe integers (greater than `Number.MAX_SAFE_INTEGER`), preventing rounded coercion of task indices and tool limit/context/offset values.
 - Interactive settings-selector numeric option parsing (`editor-padding`, `autocomplete-max-visible`) now rejects malformed/unsafe integer values instead of forwarding `NaN`/rounded coercions to runtime settings callbacks.

@@ -8212,6 +8212,27 @@ to:
 
 **Result:** Web UI model-discovery metadata parsing now preserves strict numeric value identity and rejects whitespace-padded numeric-string metadata values instead of silently normalizing malformed provider metadata.
 
+---
+
+### 429) coding-agent changelog parser normalized whitespace-padded last-version identifiers
+
+**Finding:** `packages/coding-agent/src/utils/changelog.ts` trimmed `lastVersion` values before semantic-version parsing, so whitespace-padded last-seen version identifiers could be silently accepted instead of rejected as malformed changelog state identifiers.
+
+**Action:** Updated:
+
+- `packages/coding-agent/src/utils/changelog.ts`
+- `packages/coding-agent/test/changelog-utils.test.ts`
+- `packages/coding-agent/CHANGELOG.md`
+
+to:
+
+- require strict version-string identity (`trimmed === value`) before semver component parsing,
+- reject whitespace-padded `lastVersion` values instead of trimming/coalescing malformed version identifiers,
+- preserve existing unsafe-integer component rejection behavior,
+- add regression coverage verifying whitespace-padded `lastVersion` values fall back to the safe baseline comparison path.
+
+**Result:** Changelog last-version parsing now preserves strict version identifier identity and rejects whitespace-padded `lastVersion` values instead of silently normalizing malformed state.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8254,7 +8275,7 @@ to:
 - tui terminal drain-input timeout normalization regression tests pass (including positive-infinite duration clamping):
   - `npm --workspace "@mariozechner/pi-tui" test -- test/terminal-timeouts.test.ts`
 - coding-agent changelog/export-color parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/changelog-utils.test.ts test/export-html-color-parsing.test.ts`
+  - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/changelog-utils.test.ts test/export-html-color-parsing.test.ts` (includes whitespace-padded changelog `lastVersion` rejection coverage)
 - coding-agent CLI comma-list parsing regression tests pass (including blank-only `--models`/`--tools` warning behavior):
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/args.test.ts`
 - coding-agent tool numeric-parameter safety regression tests pass:
