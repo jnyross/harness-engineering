@@ -46,6 +46,7 @@ export function migrateAuthToAuthJson(): string[] {
 	// Migrate oauth.json
 	if (existsSync(oauthPath)) {
 		try {
+			let migratedOauthProviders = 0;
 			const oauth = asRecord(JSON.parse(readFileSync(oauthPath, "utf-8")));
 			for (const [provider, cred] of Object.entries(oauth ?? {})) {
 				const normalizedProvider = parseNonEmptyString(provider);
@@ -55,8 +56,11 @@ export function migrateAuthToAuthJson(): string[] {
 				}
 				migrated[normalizedProvider] = { type: "oauth", ...normalizedCredential };
 				providers.push(normalizedProvider);
+				migratedOauthProviders++;
 			}
-			renameSync(oauthPath, `${oauthPath}.migrated`);
+			if (migratedOauthProviders > 0) {
+				renameSync(oauthPath, `${oauthPath}.migrated`);
+			}
 		} catch {
 			// Skip on error
 		}

@@ -80,4 +80,24 @@ describe("migrations", () => {
 		expect(existsSync(join(agentDir, "sessions", "--tmp-my-project--", "valid.jsonl"))).toBe(true);
 		expect(existsSync(malformedSessionPath)).toBe(true);
 	});
+
+	it("keeps oauth.json in place when no valid oauth credentials are migrated", () => {
+		const oauthPath = join(agentDir, "oauth.json");
+		const migratedOauthPath = join(agentDir, "oauth.json.migrated");
+		writeFileSync(
+			oauthPath,
+			JSON.stringify({
+				invalidProvider: 42,
+				arrayProvider: [],
+				" ": { token: "blank-provider" },
+			}),
+		);
+
+		const migratedProviders = migrateAuthToAuthJson();
+
+		expect(migratedProviders).toEqual([]);
+		expect(existsSync(oauthPath)).toBe(true);
+		expect(existsSync(migratedOauthPath)).toBe(false);
+		expect(existsSync(join(agentDir, "auth.json"))).toBe(false);
+	});
 });
