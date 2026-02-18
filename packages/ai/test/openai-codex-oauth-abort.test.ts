@@ -1,6 +1,10 @@
 import { createServer } from "node:http";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { loginOpenAICodex, openaiCodexOAuthProvider } from "../src/utils/oauth/openai-codex.js";
+import {
+	loginOpenAICodex,
+	openaiCodexOAuthProvider,
+	refreshOpenAICodexToken,
+} from "../src/utils/oauth/openai-codex.js";
 
 function toBase64Url(input: string): string {
 	return Buffer.from(input, "utf8").toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
@@ -136,6 +140,38 @@ describe("openai-codex oauth login", () => {
 		});
 
 		expect(credentials.accountId).toBe("acct_base64url");
+	});
+
+	it("treats non-object token exchange payload roots as failed exchanges", async () => {
+		const fetchMock = vi.fn(
+			async (_input: unknown, _init?: RequestInit) =>
+				new Response("null", {
+					status: 200,
+					headers: { "Content-Type": "application/json" },
+				}),
+		);
+		vi.stubGlobal("fetch", fetchMock);
+
+		await expect(
+			loginOpenAICodex({
+				onAuth: () => {},
+				onPrompt: async () => "",
+				onManualCodeInput: async () => "manual-code",
+			}),
+		).rejects.toThrow("Token exchange failed");
+	});
+
+	it("treats non-object refresh payload roots as failed refreshes", async () => {
+		const fetchMock = vi.fn(
+			async (_input: unknown, _init?: RequestInit) =>
+				new Response("42", {
+					status: 200,
+					headers: { "Content-Type": "application/json" },
+				}),
+		);
+		vi.stubGlobal("fetch", fetchMock);
+
+		await expect(refreshOpenAICodexToken("refresh-token")).rejects.toThrow("Failed to refresh OpenAI Codex token");
 	});
 
 	it("parses manual redirect urls with hash-based code/state values", async () => {
