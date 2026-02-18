@@ -86,6 +86,16 @@ function parseNonNegativeFiniteNumber(value: unknown): number | undefined {
 	return Number.isFinite(value) && value >= 0 ? value : undefined;
 }
 
+function parseNonNegativeSafeInteger(value: unknown): number | undefined {
+	if (typeof value !== "number") {
+		return undefined;
+	}
+	if (!Number.isSafeInteger(value) || value < 0) {
+		return undefined;
+	}
+	return value;
+}
+
 function parseContentIndex(value: unknown): number | undefined {
 	if (typeof value !== "number") {
 		return undefined;
@@ -96,11 +106,11 @@ function parseContentIndex(value: unknown): number | undefined {
 function parseUsage(value: unknown): AssistantMessage["usage"] | undefined {
 	const usage = asRecord(value);
 	const cost = asRecord(usage?.cost);
-	const input = parseNonNegativeFiniteNumber(usage?.input);
-	const output = parseNonNegativeFiniteNumber(usage?.output);
-	const cacheRead = parseNonNegativeFiniteNumber(usage?.cacheRead);
-	const cacheWrite = parseNonNegativeFiniteNumber(usage?.cacheWrite);
-	const totalTokens = parseNonNegativeFiniteNumber(usage?.totalTokens);
+	const input = parseNonNegativeSafeInteger(usage?.input);
+	const output = parseNonNegativeSafeInteger(usage?.output);
+	const cacheRead = parseNonNegativeSafeInteger(usage?.cacheRead);
+	const cacheWrite = parseNonNegativeSafeInteger(usage?.cacheWrite);
+	const totalTokens = parseNonNegativeSafeInteger(usage?.totalTokens);
 	const costInput = parseNonNegativeFiniteNumber(cost?.input);
 	const costOutput = parseNonNegativeFiniteNumber(cost?.output);
 	const costCacheRead = parseNonNegativeFiniteNumber(cost?.cacheRead);

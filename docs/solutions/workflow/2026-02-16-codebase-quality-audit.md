@@ -7409,6 +7409,26 @@ to:
 
 **Result:** Azure OpenAI Responses header merge now preserves strict header-key identity and rejects malformed custom header names before client initialization.
 
+---
+
+### 390) agent proxy usage parser accepted fractional token counters in SSE done/error payloads
+
+**Finding:** `packages/agent/src/proxy.ts` parsed proxy SSE `usage` payloads with a generic non-negative finite-number parser for both token counters and costs. Fractional token counters (`input`/`output`/`cacheRead`/`cacheWrite`/`totalTokens`) could be accepted instead of being rejected as malformed usage accounting.
+
+**Action:** Updated:
+
+- `packages/agent/src/proxy.ts`
+- `packages/agent/test/proxy.test.ts`
+- `packages/agent/CHANGELOG.md`
+
+to:
+
+- require token counter fields to be non-negative safe integers in proxy usage payload parsing,
+- keep cost-field parsing as non-negative finite numbers (allowing decimal costs),
+- add regression coverage asserting malformed fractional token counters are ignored while valid integer-token + decimal-cost payloads remain accepted.
+
+**Result:** Proxy SSE usage parsing now enforces integer token accounting while preserving decimal cost support for proxy stream results.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7651,7 +7671,7 @@ to:
 - coding-agent bash executor regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/bash-executor.test.ts` (includes signal/null exit non-zero semantics and shell spawn-startup failure coverage)
 - agent proxy stream regression tests pass:
-  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts` (includes trailing SSE line without newline, malformed JSON diagnostics, malformed JSON-root-shape filtering, and malformed typed-event field-shape filtering coverage)
+  - `npm --workspace "@mariozechner/pi-agent-core" test -- test/proxy.test.ts` (includes trailing SSE line without newline, malformed JSON diagnostics, malformed JSON-root-shape filtering, malformed typed-event field-shape filtering, and fractional token-counter rejection with decimal-cost preservation coverage)
 - ai Gemini CLI SSE regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-empty-stream.test.ts` (includes terminal `data:` line without trailing newline, malformed credential-shape rejection, and malformed non-object SSE chunk-root filtering coverage)
 - ai Codex/Gemini SSE regression tests pass:
