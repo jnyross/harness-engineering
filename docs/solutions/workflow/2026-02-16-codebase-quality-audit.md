@@ -8318,12 +8318,33 @@ to:
 
 **Result:** Pods model-start runtime context parsing now preserves strict context identifier identity and rejects whitespace-padded alias/numeric context values instead of silently normalizing malformed inputs.
 
+---
+
+### 434) ai CLI provider selection parsing normalized whitespace-padded numeric values
+
+**Finding:** `packages/ai/src/cli-selection.ts` trimmed interactive provider-selection input before numeric validation, so whitespace-padded numeric selections could be silently accepted instead of rejected as malformed provider-selection identifiers.
+
+**Action:** Updated:
+
+- `packages/ai/src/cli-selection.ts`
+- `packages/ai/test/cli-selection.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require strict selection-string identity (`trimmed === value`) before numeric parsing,
+- reject whitespace-padded numeric selections instead of trimming/coalescing malformed selection identifiers,
+- preserve existing non-decimal, out-of-range, and unsafe-integer rejection behavior,
+- add regression coverage for whitespace-padded selection rejection.
+
+**Result:** AI CLI provider selection parsing now preserves strict selection identifier identity and rejects whitespace-padded numeric selections instead of silently normalizing malformed input.
+
 ## Validation Evidence
 
 - Root quality gate passes:
   - `npm run check`
 - ai CLI selection parser regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/cli-selection.test.ts`
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/cli-selection.test.ts` (includes whitespace-padded selection rejection coverage)
 - ai model-generator numeric parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/generate-models.test.ts`
 - ai Azure deployment-map parsing regression tests pass:

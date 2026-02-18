@@ -1,5 +1,8 @@
 export function parseProviderSelection(choice: string, providerCount: number): number | undefined {
 	const trimmed = choice.trim();
+	if (trimmed !== choice) {
+		return undefined;
+	}
 	if (!/^\d+$/.test(trimmed)) {
 		return undefined;
 	}
