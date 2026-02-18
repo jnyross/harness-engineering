@@ -1240,4 +1240,32 @@ export default function(api) { api.registerTool({ name: "test", description: "te
 			).toThrow("exited due to signal SIGTERM");
 		});
 	});
+
+	describe("npm package version parsing", () => {
+		it("returns trimmed installed version strings and ignores malformed shapes", () => {
+			const validDir = join(tempDir, "valid-version");
+			mkdirSync(validDir, { recursive: true });
+			writeFileSync(join(validDir, "package.json"), JSON.stringify({ version: " 1.2.3 " }));
+			// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
+			expect((packageManager as any).getInstalledNpmVersion(validDir)).toBe("1.2.3");
+
+			const blankDir = join(tempDir, "blank-version");
+			mkdirSync(blankDir, { recursive: true });
+			writeFileSync(join(blankDir, "package.json"), JSON.stringify({ version: "   " }));
+			// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
+			expect((packageManager as any).getInstalledNpmVersion(blankDir)).toBeUndefined();
+
+			const invalidTypeDir = join(tempDir, "invalid-version-type");
+			mkdirSync(invalidTypeDir, { recursive: true });
+			writeFileSync(join(invalidTypeDir, "package.json"), JSON.stringify({ version: 123 }));
+			// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
+			expect((packageManager as any).getInstalledNpmVersion(invalidTypeDir)).toBeUndefined();
+
+			const malformedJsonDir = join(tempDir, "malformed-version-json");
+			mkdirSync(malformedJsonDir, { recursive: true });
+			writeFileSync(join(malformedJsonDir, "package.json"), "{");
+			// biome-ignore lint/suspicious/noExplicitAny: testing private helper behavior
+			expect((packageManager as any).getInstalledNpmVersion(malformedJsonDir)).toBeUndefined();
+		});
+	});
 });

@@ -99,6 +99,14 @@ function normalizeManifestEntries(value: unknown): string[] | undefined {
 		.filter((entry) => entry.length > 0);
 }
 
+function parseNonEmptyString(value: unknown): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
 function normalizePiManifest(value: unknown): PiManifest | null {
 	if (!value || typeof value !== "object" || Array.isArray(value)) {
 		return null;
@@ -1068,8 +1076,8 @@ export class DefaultPackageManager implements PackageManager {
 		if (!existsSync(packageJsonPath)) return undefined;
 		try {
 			const content = readFileSync(packageJsonPath, "utf-8");
-			const pkg = JSON.parse(content) as { version?: string };
-			return pkg.version;
+			const pkg = JSON.parse(content) as { version?: unknown };
+			return parseNonEmptyString(pkg.version);
 		} catch {
 			return undefined;
 		}
