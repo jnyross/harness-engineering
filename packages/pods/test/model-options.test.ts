@@ -7,7 +7,7 @@ describe("normalizeMemoryOption", () => {
 		assert.equal(normalizeMemoryOption("50"), "50%");
 		assert.equal(normalizeMemoryOption("50%"), "50%");
 		assert.equal(normalizeMemoryOption("50.0%"), "50%");
-		assert.equal(normalizeMemoryOption(" 12.5% "), "12.5%");
+		assert.equal(normalizeMemoryOption("12.5%"), "12.5%");
 	});
 
 	it("rejects invalid percent values", () => {
@@ -18,6 +18,8 @@ describe("normalizeMemoryOption", () => {
 		assert.throws(() => normalizeMemoryOption("1e2"), /Invalid --memory value/);
 		assert.throws(() => normalizeMemoryOption("0x10"), /Invalid --memory value/);
 		assert.throws(() => normalizeMemoryOption(".5"), /Invalid --memory value/);
+		assert.throws(() => normalizeMemoryOption(" 12.5% "), /Invalid --memory value/);
+		assert.throws(() => normalizeMemoryOption("50 %"), /Invalid --memory value/);
 	});
 });
 

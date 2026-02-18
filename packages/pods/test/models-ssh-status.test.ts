@@ -95,5 +95,7 @@ describe("resolveModelMemoryFraction", () => {
 		assert.equal(resolveModelMemoryFraction("101%"), undefined);
 		assert.equal(resolveModelMemoryFraction("100.0000000000000000001"), undefined);
 		assert.equal(resolveModelMemoryFraction("50percent"), undefined);
+		assert.equal(resolveModelMemoryFraction(" 50% "), undefined);
+		assert.equal(resolveModelMemoryFraction("50 %"), undefined);
 	});
 });

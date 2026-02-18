@@ -27,7 +27,13 @@ export function normalizeMemoryOption(memory: string): string {
 
 export function parseMemoryPercentage(memory: string): number | undefined {
 	const trimmed = memory.trim();
-	const numericPart = trimmed.endsWith("%") ? trimmed.slice(0, -1).trim() : trimmed;
+	if (trimmed !== memory) {
+		return undefined;
+	}
+	const numericPart = trimmed.endsWith("%") ? trimmed.slice(0, -1) : trimmed;
+	if (numericPart !== numericPart.trim()) {
+		return undefined;
+	}
 	if (!/^\d+(?:\.\d+)?$/.test(numericPart)) {
 		return undefined;
 	}

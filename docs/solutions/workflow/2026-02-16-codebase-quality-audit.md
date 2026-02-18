@@ -8381,6 +8381,28 @@ to:
 
 **Result:** Pods built-in model config parsing now preserves strict env-value identity and rejects whitespace-padded env values instead of silently normalizing malformed configuration values.
 
+---
+
+### 437) pods memory option parsing normalized whitespace-padded values
+
+**Finding:** `packages/pods/src/model-options.ts` accepted whitespace-padded memory option values via trimming (including forms like `" 50% "` and `"50 %"`), silently normalizing malformed memory option identifiers.
+
+**Action:** Updated:
+
+- `packages/pods/src/model-options.ts`
+- `packages/pods/test/model-options.test.ts`
+- `packages/pods/test/models-ssh-status.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- require strict memory-option string identity (`trimmed === value`) before percentage parsing,
+- reject whitespace-padded and whitespace-separated percent values instead of trimming/coalescing malformed option identifiers,
+- preserve existing decimal-format and precision-safe range validation behavior,
+- add regression coverage for whitespace-padded/whitespace-separated memory option rejection in both normalization and runtime model-start memory-fraction parsing paths.
+
+**Result:** Pods memory option parsing now preserves strict memory option identifier formatting and rejects whitespace-padded/separated values instead of silently normalizing malformed input.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8466,9 +8488,9 @@ to:
 - pods model-option parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts` (includes whitespace-padded `--context`/`--gpus` rejection coverage)
 - pods memory normalization canonical-format regression tests pass:
-  - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts`
+  - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts` (includes whitespace-padded/whitespace-separated memory option rejection coverage)
 - pods memory precision-overflow regression tests pass:
-  - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts test/models-ssh-status.test.ts` (includes runtime whitespace-padded `--context` rejection coverage)
+  - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts test/models-ssh-status.test.ts` (includes runtime whitespace-padded `--context` and `--memory` rejection coverage)
 - pods process-identifier safe-integer regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/process-identifiers.test.ts`
 - pods GPU CSV parsing regression tests pass:
