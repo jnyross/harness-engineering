@@ -6151,6 +6151,26 @@ to:
 
 **Result:** extension discovery now tolerates malformed manifest entry shapes and still resolves valid declared extension paths deterministically.
 
+---
+
+### 328) mom Slack timestamp latest-value selection could crash on malformed runtime iterable entries
+
+**Finding:** `packages/mom/src/slack-timestamp.ts` latest-timestamp comparison assumed iterable entries were always strings; malformed runtime values (for example, non-string `ts` payloads leaking through persisted sets) could trigger `.trim()` type errors during backfill cursor selection.
+
+**Action:** Updated:
+
+- `packages/mom/src/slack-timestamp.ts`
+- `packages/mom/test/slack-timestamp.test.ts`
+- `packages/mom/CHANGELOG.md`
+
+to:
+
+- harden timestamp sort-value parsing with runtime string checks,
+- ignore malformed non-string iterable entries during latest timestamp selection,
+- add regression coverage validating mixed valid + malformed iterable handling.
+
+**Result:** Slack backfill/latest timestamp selection now skips malformed runtime entry types safely instead of throwing during comparison.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6165,6 +6185,8 @@ to:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/auth-file.test.ts test/cli-selection.test.ts`
 - mom slack timestamp normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts`
+- mom slack timestamp runtime-shape guard regression tests pass:
+  - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts test/store.test.ts`
 - mom channel-store timestamp parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/store.test.ts`
 - mom settings normalization regression tests pass:
