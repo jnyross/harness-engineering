@@ -17,15 +17,20 @@ describe("parseModelsData", () => {
 						configs: [{ gpuCount: 1, args: ["--bad"] }],
 					},
 					"model-a": {
-						name: " Demo Model ",
-						notes: " Notes ",
+						name: "Demo Model",
+						notes: "Notes",
 						configs: [
 							{
 								gpuCount: 1,
 								args: [" --tensor-parallel-size ", "", "--dtype=bfloat16"],
 								gpuTypes: ["H100", "", " H200 "],
 								env: { CUDA_VISIBLE_DEVICES: "0", " BAD ": "1", BAD_VALUE: " 1 " },
-								notes: " config-note ",
+								notes: "config-note",
+							},
+							{
+								gpuCount: 1,
+								args: ["--dtype=float16"],
+								notes: " config-note-padded ",
 							},
 							{ gpuCount: 0, args: ["--bad"] },
 						],
@@ -33,6 +38,10 @@ describe("parseModelsData", () => {
 					"bad-model": {
 						name: "Bad",
 						configs: [{ gpuCount: 1, args: [1] }],
+					},
+					"bad-name": {
+						name: " Bad Name ",
+						configs: [{ gpuCount: 1, args: ["--ok"] }],
 					},
 				},
 			}),
@@ -50,6 +59,10 @@ describe("parseModelsData", () => {
 							gpuTypes: ["H100"],
 							env: { CUDA_VISIBLE_DEVICES: "0" },
 							notes: "config-note",
+						},
+						{
+							gpuCount: 1,
+							args: ["--dtype=float16"],
 						},
 					],
 				},
