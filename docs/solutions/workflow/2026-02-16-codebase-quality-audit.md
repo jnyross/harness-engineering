@@ -7249,6 +7249,26 @@ to:
 
 **Result:** mom event parsing now preserves strict event identifier/schedule identity and rejects malformed whitespace-padded event payload fields.
 
+---
+
+### 382) ai Gemini CLI/Antigravity usage parsing truncated fractional token counters
+
+**Finding:** `packages/ai/src/providers/google-gemini-cli.ts` normalized Cloud Code Assist usage counters via integer truncation for numeric and numeric-string token fields. Fractional token payloads were silently coerced instead of rejected.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/google-gemini-cli.ts`
+- `packages/ai/test/google-gemini-cli-usage-metadata.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require non-negative safe integers for Gemini CLI/Antigravity usage counters (number and decimal-digit string forms),
+- reject fractional token values instead of truncating them,
+- add regression coverage for fractional numeric token payload rejection.
+
+**Result:** Gemini CLI/Antigravity usage parsing now enforces strict integer token accounting and rejects malformed fractional usage values.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7311,7 +7331,7 @@ to:
 - coding-agent export plain missing-variable regression tests pass:
   - `npm --workspace "@mariozechner/pi-coding-agent" test -- test/theme-export-colors.test.ts`
 - ai usage metadata regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts`
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-usage-metadata.test.ts` (includes fractional usage-token rejection coverage for Gemini CLI / Antigravity usage metadata)
 - ai Gemini retry-delay (including safe-millisecond bounds) regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-retry-delay.test.ts`
 - ai usage safe-integer parser regression tests pass:
