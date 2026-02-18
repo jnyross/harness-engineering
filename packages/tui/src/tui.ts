@@ -133,7 +133,9 @@ function parsePositiveSafeInteger(value: string): number | undefined {
 /** Parse a SizeValue into absolute value given a reference size */
 function parseSizeValue(value: SizeValue | undefined, referenceSize: number): number | undefined {
 	if (value === undefined) return undefined;
-	if (typeof value === "number") return value;
+	if (typeof value === "number") {
+		return Number.isFinite(value) ? value : undefined;
+	}
 	const percentage = parsePercentageFraction(value);
 	if (percentage !== undefined) {
 		return Math.floor(referenceSize * percentage);

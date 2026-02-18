@@ -225,6 +225,20 @@ describe("TUI overlay options", () => {
 			assert.strictEqual(overlay.requestedWidth, 80);
 			tui.stop();
 		});
+
+		it("should ignore non-finite numeric width values and use default width", async () => {
+			const terminal = new VirtualTerminal(100, 24);
+			const tui = new TUI(terminal);
+			const overlay = new StaticOverlay(["test"]);
+
+			tui.addChild(new EmptyContent());
+			tui.showOverlay(overlay, { width: Number.NaN });
+			tui.start();
+			await renderAndFlush(tui, terminal);
+
+			assert.strictEqual(overlay.requestedWidth, 80);
+			tui.stop();
+		});
 	});
 
 	describe("anchor positioning", () => {
@@ -509,6 +523,22 @@ describe("TUI overlay options", () => {
 			assert.ok(content.includes("L1"), "Should include L1");
 			assert.ok(content.includes("L5"), "Should include L5");
 			assert.ok(!content.includes("L6"), "Should NOT include L6");
+			tui.stop();
+		});
+
+		it("should ignore non-finite numeric maxHeight values", async () => {
+			const terminal = new VirtualTerminal(80, 10);
+			const tui = new TUI(terminal);
+			const overlay = new StaticOverlay(["L1", "L2", "L3", "L4", "L5"]);
+
+			tui.addChild(new EmptyContent());
+			tui.showOverlay(overlay, { maxHeight: Number.NaN });
+			tui.start();
+			await renderAndFlush(tui, terminal);
+
+			const content = terminal.getViewport().join("\n");
+			assert.ok(content.includes("L1"), "Should include L1 when maxHeight is invalid");
+			assert.ok(content.includes("L5"), "Should include L5 when maxHeight is invalid");
 			tui.stop();
 		});
 	});
