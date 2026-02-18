@@ -7,7 +7,7 @@ import { getCliCommand } from "../cli-command.js";
 import { getActivePod, loadConfig, saveConfig } from "../config.js";
 import { extractGpuType } from "../gpu-name.js";
 import { getLogStreamExitError } from "../log-stream-exit-status.js";
-import { getModelConfig, getModelName, isKnownModel } from "../model-configs.js";
+import { getModelConfig, getModelName, isKnownModel, parseModelsData } from "../model-configs.js";
 import { assertValidModelId } from "../model-id.js";
 import { assertValidModelInstanceName, isValidModelInstanceName } from "../model-name.js";
 import { parseMemoryPercentage } from "../model-options.js";
@@ -850,8 +850,7 @@ export const showKnownModels = async () => {
 	const __filename = fileURLToPath(import.meta.url);
 	const __dirname = dirname(__filename);
 	const modelsJsonPath = join(__dirname, "..", "models.json");
-	const modelsJson = JSON.parse(readFileSync(modelsJsonPath, "utf-8"));
-	const models = modelsJson.models;
+	const models = parseModelsData(readFileSync(modelsJsonPath, "utf-8")).models;
 
 	// Get active pod info if available
 	const activePod = getActivePod();
