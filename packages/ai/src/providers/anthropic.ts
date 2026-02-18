@@ -63,6 +63,14 @@ function parseUsageNumber(value: unknown): number {
 	return 0;
 }
 
+function parseHeaderName(value: string): string | undefined {
+	const trimmed = value.trim();
+	if (trimmed.length === 0 || trimmed !== value) {
+		return undefined;
+	}
+	return value;
+}
+
 function getCacheControl(
 	baseUrl: string,
 	cacheRetention?: CacheRetention,
@@ -201,7 +209,13 @@ function mergeHeaders(...headerSources: (Record<string, string> | undefined)[]):
 	const merged: Record<string, string> = {};
 	for (const headers of headerSources) {
 		if (headers) {
-			Object.assign(merged, headers);
+			for (const [rawKey, value] of Object.entries(headers)) {
+				const headerName = parseHeaderName(rawKey);
+				if (!headerName) {
+					continue;
+				}
+				merged[headerName] = value;
+			}
 		}
 	}
 	return merged;

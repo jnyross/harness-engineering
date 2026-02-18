@@ -154,6 +154,32 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		expect(headers["anthropic-beta"]).toContain("interleaved-thinking-2025-05-14");
 	});
 
+	it("drops whitespace-padded custom header names", async () => {
+		mockState.useStringUsage = false;
+		mockState.useMalformedUsage = false;
+		mockState.useNonDecimalUsage = false;
+		mockState.useUnsafeUsage = false;
+		mockState.useFractionalNumberUsage = false;
+		const model = getModel("github-copilot", "claude-sonnet-4");
+		const { streamAnthropic } = await import("../src/providers/anthropic.js");
+		const s = streamAnthropic(model, context, {
+			apiKey: "tid_copilot_session_test_token",
+			headers: {
+				"x-option-valid": "yes",
+				" x-option-invalid ": "no",
+				"": "blank",
+			},
+		});
+		for await (const event of s) {
+			if (event.type === "error") break;
+		}
+
+		const headers = mockState.constructorOpts!.defaultHeaders as Record<string, string>;
+		expect(headers["x-option-valid"]).toBe("yes");
+		expect(Object.keys(headers)).not.toContain(" x-option-invalid ");
+		expect(Object.keys(headers)).not.toContain("");
+	});
+
 	it("normalizes numeric-string usage counters from Anthropic stream events", async () => {
 		mockState.useStringUsage = true;
 		mockState.useMalformedUsage = false;

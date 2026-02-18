@@ -7329,6 +7329,26 @@ to:
 
 **Result:** Anthropic stream usage parsing now enforces strict integer token accounting and rejects malformed fractional usage values.
 
+---
+
+### 386) ai Anthropic client header merge accepted whitespace-padded custom header names
+
+**Finding:** `packages/ai/src/providers/anthropic.ts` merged `model.headers`, dynamic Copilot headers, and `options.headers` with `Object.assign(...)` and no key validation. Whitespace-padded/blank custom header keys were accepted into merged default headers.
+
+**Action:** Updated:
+
+- `packages/ai/src/providers/anthropic.ts`
+- `packages/ai/test/github-copilot-anthropic.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- introduce strict header-name validation (non-empty and no surrounding whitespace),
+- drop malformed custom header keys during Anthropic header merge,
+- add regression coverage asserting malformed option header keys are excluded while valid keys remain.
+
+**Result:** Anthropic header merge now preserves strict header-key identity and rejects malformed custom header names before request construction.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -7404,7 +7424,7 @@ to:
 - ai OpenAI Completions thought-signature normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-result-images.test.ts`
 - ai OpenAI/Anthropic usage parser regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts` (includes OpenAI Completions and Anthropic fractional usage-token rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/openai-completions-tool-choice.test.ts test/github-copilot-anthropic.test.ts` (includes OpenAI Completions and Anthropic fractional usage-token rejection coverage plus Anthropic whitespace-padded custom-header rejection coverage)
 - mom model/key resolution regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/agent-model.test.ts`
 - pods required-option parser regression tests pass:
