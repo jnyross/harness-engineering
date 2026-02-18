@@ -6969,6 +6969,26 @@ to:
 
 **Result:** Overlay layout now rejects non-finite numeric size inputs deterministically and preserves default overlay rendering behavior.
 
+---
+
+### 368) ai auth-file parsing normalized whitespace-padded provider keys into canonical IDs
+
+**Finding:** `packages/ai/src/auth-file.ts` trimmed provider keys while loading OAuth credential maps. Whitespace-padded keys (for example `" anthropic "`) were silently coalesced into canonical provider IDs, which could mask malformed key entries and create normalization collisions.
+
+**Action:** Updated:
+
+- `packages/ai/src/auth-file.ts`
+- `packages/ai/test/auth-file.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require provider keys to be non-empty strings without surrounding whitespace,
+- drop whitespace-padded provider-key entries instead of trimming/coalescing them,
+- add regression coverage for whitespace-padded provider-key rejection.
+
+**Result:** OAuth auth-file parsing now preserves strict provider-key identity and rejects malformed whitespace-padded provider keys during credential loading.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -6980,7 +7000,7 @@ to:
 - ai Azure deployment-map parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/azure-openai-responses-deployment-map.test.ts`
 - ai auth-file parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/auth-file.test.ts test/cli-selection.test.ts`
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/auth-file.test.ts` (includes whitespace-padded provider-key rejection coverage)
 - mom slack timestamp normalization regression tests pass:
   - `npm --workspace "@mariozechner/pi-mom" test -- test/slack-timestamp.test.ts` (includes near-safe-integer decimal timestamp exact millisecond flooring coverage without floating-point drift)
 - mom slack timestamp runtime-shape guard regression tests pass:
