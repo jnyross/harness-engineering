@@ -29,7 +29,6 @@ describe("normalizeContextOption", () => {
 
 	it("accepts numeric token counts", () => {
 		assert.equal(normalizeContextOption("32768"), "32768");
-		assert.equal(normalizeContextOption(" 4096 "), "4096");
 	});
 
 	it("rejects invalid context values", () => {
@@ -39,13 +38,15 @@ describe("normalizeContextOption", () => {
 		assert.throws(() => normalizeContextOption("4096tokens"), /Invalid --context value/);
 		assert.throws(() => normalizeContextOption("16k-extra"), /Invalid --context value/);
 		assert.throws(() => normalizeContextOption("9007199254740993"), /Invalid --context value/);
+		assert.throws(() => normalizeContextOption(" 4096 "), /Invalid --context value/);
+		assert.throws(() => normalizeContextOption(" 64k "), /Invalid --context value/);
 	});
 });
 
 describe("normalizeGpuCountOption", () => {
 	it("accepts positive integer GPU counts", () => {
 		assert.equal(normalizeGpuCountOption("1"), 1);
-		assert.equal(normalizeGpuCountOption(" 4 "), 4);
+		assert.equal(normalizeGpuCountOption("4"), 4);
 	});
 
 	it("rejects invalid GPU count values", () => {
@@ -54,5 +55,6 @@ describe("normalizeGpuCountOption", () => {
 		assert.throws(() => normalizeGpuCountOption("2gpu"), /Invalid --gpus value/);
 		assert.throws(() => normalizeGpuCountOption("abc"), /Invalid --gpus value/);
 		assert.throws(() => normalizeGpuCountOption("9007199254740993"), /Invalid --gpus value/);
+		assert.throws(() => normalizeGpuCountOption(" 4 "), /Invalid --gpus value/);
 	});
 });

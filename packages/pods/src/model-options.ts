@@ -2,6 +2,9 @@ const CONTEXT_SIZE_ALIASES = new Set(["4k", "8k", "16k", "32k", "64k", "128k"]);
 
 function parsePositiveSafeIntegerOption(value: string, optionName: "--context" | "--gpus"): number {
 	const trimmed = value.trim();
+	if (trimmed !== value) {
+		throw new Error(`Invalid ${optionName} value. Use a positive integer.`);
+	}
 	if (!/^\d+$/.test(trimmed)) {
 		throw new Error(`Invalid ${optionName} value. Use a positive integer.`);
 	}
@@ -50,6 +53,9 @@ export function parseMemoryPercentage(memory: string): number | undefined {
 
 export function normalizeContextOption(context: string): string {
 	const trimmed = context.trim();
+	if (trimmed !== context) {
+		throw new Error("Invalid --context value. Use 4k/8k/16k/32k/64k/128k or a positive token count.");
+	}
 	const normalized = trimmed.toLowerCase();
 
 	if (CONTEXT_SIZE_ALIASES.has(normalized)) {

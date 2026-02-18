@@ -8276,6 +8276,27 @@ to:
 
 **Result:** Settings-selector integer parsing now preserves strict numeric option identity and rejects whitespace-padded values instead of silently normalizing malformed selector input.
 
+---
+
+### 432) pods model option parsing normalized whitespace-padded numeric values
+
+**Finding:** `packages/pods/src/model-options.ts` trimmed `--context` / `--gpus` numeric option values before integer/alias validation, so whitespace-padded numeric values could be silently accepted instead of rejected as malformed option identifiers.
+
+**Action:** Updated:
+
+- `packages/pods/src/model-options.ts`
+- `packages/pods/test/model-options.test.ts`
+- `packages/pods/CHANGELOG.md`
+
+to:
+
+- require strict numeric/alias value identity (`trimmed === value`) for `--context` and `--gpus` option parsing,
+- reject whitespace-padded numeric and alias values instead of trimming/coalescing malformed option inputs,
+- preserve existing alias handling (`4k`..`128k`) and non-numeric/unsafe integer rejection behavior,
+- add regression coverage for whitespace-padded `--context` and `--gpus` rejection.
+
+**Result:** Pods model option parsing now preserves strict numeric option identity and rejects whitespace-padded `--context` / `--gpus` values instead of silently normalizing malformed inputs.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8359,7 +8380,7 @@ to:
 - pods required-option parser regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/cli-options.test.ts test/cli-args.test.ts`
 - pods model-option parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts`
+  - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts` (includes whitespace-padded `--context`/`--gpus` rejection coverage)
 - pods memory normalization canonical-format regression tests pass:
   - `npm --workspace "@mariozechner/pi" test -- test/model-options.test.ts`
 - pods memory precision-overflow regression tests pass:

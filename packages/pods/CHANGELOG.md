@@ -79,6 +79,7 @@
 - `--context` normalization now rejects mixed alphanumeric inputs (for example `4096tokens`) instead of truncating via `parseInt`, ensuring only aliases or positive integer token counts are accepted.
 - `--gpus` option parsing now rejects mixed/non-numeric values (for example `2gpu`) instead of truncating via `parseInt`, ensuring only positive integer GPU counts are accepted.
 - `--context` and `--gpus` numeric parsing now rejects unsafe integer values (greater than `Number.MAX_SAFE_INTEGER`) instead of silently accepting rounded values.
+- `--context` and `--gpus` numeric parsing now also rejects whitespace-padded numeric values instead of trimming/coalescing malformed numeric option identifiers.
 - model command `--context` resolution now also rejects unsafe integer values (greater than `Number.MAX_SAFE_INTEGER`) instead of silently accepting rounded values.
 - CLI required-option parsing now rejects missing values (including single/double-dash option-like next tokens) for `pods setup` and `start` flags, preventing silent fallback when values are omitted.
 - `start --vllm` now requires at least one passthrough argument, preventing silent fallback to standard launch options when the flag is provided without values.
