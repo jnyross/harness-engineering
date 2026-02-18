@@ -116,11 +116,54 @@ describe("google-antigravity oauth login", () => {
 			expect(credentials.refresh).toBe("refresh-token");
 			expect(credentials.access).toBe("access-token");
 			expect(credentials.projectId).toBe("project-from-api");
+			expect(credentials.email).toBe("user@example.com");
 		} finally {
 			await new Promise<void>((resolve) => {
 				busyServer.close(() => resolve());
 			});
 		}
+	});
+
+	it("ignores whitespace-padded user email values from profile lookup", async () => {
+		const fetchMock = vi.fn(async (input: unknown) => {
+			const url = String(input);
+			if (url === "https://oauth2.googleapis.com/token") {
+				return new Response(
+					JSON.stringify({
+						access_token: "access-token",
+						refresh_token: "refresh-token",
+						expires_in: 3600,
+					}),
+					{ status: 200, headers: { "content-type": "application/json" } },
+				);
+			}
+			if (url === "https://www.googleapis.com/oauth2/v1/userinfo?alt=json") {
+				return new Response(JSON.stringify({ email: " user@example.com " }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			}
+			if (url.includes("/v1internal:loadCodeAssist")) {
+				return new Response(JSON.stringify({ cloudaicompanionProject: "project-from-api" }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			}
+			throw new Error(`Unexpected fetch URL: ${url}`);
+		});
+		vi.stubGlobal("fetch", fetchMock);
+
+		let authState = "";
+		const credentials = await loginAntigravity(
+			(info) => {
+				authState = new URL(info.url).searchParams.get("state") ?? "";
+			},
+			undefined,
+			async () => `http://localhost:51121/oauth-callback?code=manual-code&state=${authState}`,
+		);
+
+		expect(credentials.projectId).toBe("project-from-api");
+		expect(credentials.email).toBeUndefined();
 	});
 
 	it("falls back to default project when discovered project identifiers are whitespace-padded", async () => {

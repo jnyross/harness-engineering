@@ -19,6 +19,7 @@
 - Google Gemini CLI OAuth token exchange/refresh parsing now validates JSON payload roots and required token fields (`access_token`, positive `expires_in`), rejecting malformed token-response shapes before credential persistence.
 - Antigravity and Google Gemini CLI OAuth token exchange/refresh parsing now also rejects whitespace-padded `access_token` values, and ignores whitespace-padded `refresh_token` values (retaining the existing refresh token on refresh flows) instead of trimming malformed token payload fields.
 - Antigravity and Google Gemini CLI OAuth project-discovery parsing now also rejects whitespace-padded discovered project/tier/operation identifier fields instead of trimming malformed Cloud Code Assist metadata.
+- Antigravity and Google Gemini CLI OAuth user-profile parsing now also rejects whitespace-padded `email` values instead of trimming malformed profile identifiers.
 - GitHub Copilot OAuth device-code/poll/token payload parsing now validates required response field shapes (non-empty token/code strings plus positive numeric interval/expiry values), rejecting malformed payload roots/fields before polling or credential persistence.
 - GitHub Copilot OAuth device-code/poll/token payload parsing now also rejects whitespace-padded token/code/error identifier fields instead of trimming malformed payload values.
 - Google Gemini CLI / Antigravity SSE chunk parsing now ignores malformed non-object JSON `data:` payload roots (for example `null`/numeric frames) instead of crashing stream processing before subsequent valid chunks.

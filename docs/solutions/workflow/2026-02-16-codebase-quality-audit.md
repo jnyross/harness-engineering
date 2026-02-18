@@ -7837,6 +7837,28 @@ to:
 
 **Result:** Pods persisted model-entry parsing now preserves strict model-identifier identity and rejects whitespace-padded `models[*].model` values instead of silently normalizing malformed model identifiers.
 
+---
+
+### 411) ai Google OAuth profile parsing normalized whitespace-padded email identifiers
+
+**Finding:** `packages/ai/src/utils/oauth/google-gemini-cli.ts` and `packages/ai/src/utils/oauth/google-antigravity.ts` parsed profile `email` fields with trimmed non-empty normalization, so whitespace-padded OAuth profile email identifiers could be silently accepted instead of rejected as malformed profile metadata.
+
+**Action:** Updated:
+
+- `packages/ai/src/utils/oauth/google-gemini-cli.ts`
+- `packages/ai/src/utils/oauth/google-antigravity.ts`
+- `packages/ai/test/google-gemini-cli-oauth-abort.test.ts`
+- `packages/ai/test/google-antigravity-oauth-abort.test.ts`
+- `packages/ai/CHANGELOG.md`
+
+to:
+
+- require strict non-empty email identifier identity (no surrounding whitespace) when parsing Google OAuth profile responses,
+- preserve existing OAuth token/project discovery behavior while dropping malformed padded profile email values,
+- add regression coverage for whitespace-padded profile email rejection in Gemini CLI and Antigravity login flows.
+
+**Result:** Google OAuth profile parsing now preserves strict email-identifier identity and rejects whitespace-padded profile email values instead of silently normalizing malformed profile metadata.
+
 ## Validation Evidence
 
 - Root quality gate passes:
@@ -8059,9 +8081,9 @@ to:
 - ai anthropic oauth parsing/state-validation regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/anthropic-oauth-abort.test.ts` (includes malformed exchange-root, malformed refresh-field payload, and whitespace-padded token-field rejection coverage)
 - ai antigravity oauth token payload parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-antigravity-oauth-abort.test.ts` (includes malformed exchange-root, malformed refresh-field payload, whitespace-padded access-token rejection, whitespace-padded refresh-token fallback-retention coverage, and whitespace-padded discovered-project identifier rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-antigravity-oauth-abort.test.ts` (includes malformed exchange-root, malformed refresh-field payload, whitespace-padded access-token rejection, whitespace-padded refresh-token fallback-retention coverage, whitespace-padded discovered-project identifier rejection coverage, and whitespace-padded profile-email rejection coverage)
 - ai gemini-cli oauth token payload parsing regression tests pass:
-  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-oauth-abort.test.ts` (includes malformed exchange-root, malformed refresh-field payload, whitespace-padded access-token rejection, whitespace-padded refresh-token fallback-retention coverage, and whitespace-padded discovered-project identifier rejection coverage)
+  - `npm --workspace "@mariozechner/pi-ai" test -- test/google-gemini-cli-oauth-abort.test.ts` (includes malformed exchange-root, malformed refresh-field payload, whitespace-padded access-token rejection, whitespace-padded refresh-token fallback-retention coverage, whitespace-padded discovered-project identifier rejection coverage, and whitespace-padded profile-email rejection coverage)
 - ai github-copilot oauth payload parsing regression tests pass:
   - `npm --workspace "@mariozechner/pi-ai" test -- test/github-copilot-oauth-payload.test.ts` (includes malformed device-code/poll/token payload field rejection and whitespace-padded token/code/error identifier rejection coverage)
 - ai openai-codex oauth startup/manual-flow/cancellation/base64url-decoding/hash-fragment/non-object-token-payload parsing regression tests pass:

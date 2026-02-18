@@ -181,14 +181,6 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
 	return value as Record<string, unknown>;
 }
 
-function parseNonEmptyString(value: unknown): string | undefined {
-	if (typeof value !== "string") {
-		return undefined;
-	}
-	const trimmed = value.trim();
-	return trimmed.length > 0 ? trimmed : undefined;
-}
-
 function parseStrictNonEmptyString(value: unknown): string | undefined {
 	if (typeof value !== "string") {
 		return undefined;
@@ -318,7 +310,7 @@ async function getUserEmail(accessToken: string, signal?: AbortSignal): Promise<
 
 		if (response.ok) {
 			const data = asRecord((await response.json()) as { email?: unknown });
-			return parseNonEmptyString(data?.email);
+			return parseStrictNonEmptyString(data?.email);
 		}
 	} catch {
 		// Ignore errors, email is optional
